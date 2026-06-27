@@ -1,104 +1,33 @@
 # RULES — 01-VISION-TamNhin
 
-## 1. Mục đích
+Tuân theo [DOCUMENT_RULES.md](../DOCUMENT_RULES.md) và [ARCHITECTURE.md](../ARCHITECTURE.md).
 
-Đây là **Source of Truth** cho tầm nhìn của sản phẩm.
+## Mục đích
 
-Folder này trả lời các câu hỏi:
+Source of Truth cho định hướng dài hạn của QC-OMS:
 
-- QC-OMS là gì?
-- Vì sao QC-OMS tồn tại?
-- Giải quyết vấn đề gì?
-- Dành cho ai?
-- Giá trị cốt lõi là gì?
+- Vision và Mission
+- mục tiêu và phạm vi sản phẩm
+- đối tượng sử dụng
+- vấn đề cần giải quyết
+- giá trị cốt lõi và triết lý sản phẩm
 
----
+## Được ghi
 
-## 2. CHỈ GHI
+- In Scope / Out of Scope
+- định hướng và mục tiêu dài hạn
+- mô tả khái quát Feature, Business hoặc công nghệ khi cần giải thích Vision
 
-- ✓ Vision
-- ✓ Mission
-- ✓ Mục tiêu sản phẩm
-- ✓ Phạm vi (In Scope / Out of Scope)
-- ✓ Triết lý sản phẩm
-- ✓ Đối tượng sử dụng
-- ✓ Giá trị cốt lõi
-- ✓ Vấn đề cần giải quyết
+## Không được ghi
 
----
+- Feature Specification hoặc UI/Wireframe
+- Business Rule chi tiết
+- Database Schema hoặc API
+- code, framework hoặc kiến trúc triển khai
 
-## 3. ĐƯỢC PHÉP THAM CHIẾU
+## Ranh giới
 
-Có thể nhắc đến:
-
-- Feature
-- Business
-- Database
-- Backend
-- Công nghệ
-
-nếu chỉ nhằm giải thích Vision.
-
-Không được đặc tả chi tiết.
-
----
-
-## 4. KHÔNG ĐẶC TẢ
-
-Không được đặc tả:
-
-- ✗ Feature Specification
-- ✗ UI / Wireframe / Mockup
-- ✗ Business Rule
-- ✗ Database Schema
-- ✗ API Specification
-- ✗ Code
-- ✗ Kiến trúc kỹ thuật
-- ✗ Framework hoặc công nghệ triển khai
-
-Các nội dung trên phải được ghi tại đúng tầng theo [ARCHITECTURE.md](http://ARCHITECTURE.md).
-
----
-
-## 5. Nguyên tắc
-
-- Vision là Source of Truth cho định hướng sản phẩm.
-- Vision phải ổn định trong nhiều năm.
-- Không thay đổi vì lý do kỹ thuật hoặc công nghệ.
-- Không chứa chi tiết triển khai.
-- Khi cần giải thích bằng ví dụ, chỉ tham chiếu, không đặc tả.
-
----
-
-## 6. Cấu trúc chuẩn
-
-Một tài liệu Vision nên có:
-
-1. Mục tiêu
-2. Vấn đề
-3. Đối tượng sử dụng
-4. Giá trị mang lại
-5. Phạm vi
-6. Triết lý phát triển
-
-Không bắt buộc phải có đủ nếu tài liệu ngắn.
-
----
-
-## 7. Quy tắc bảo trì
-
-- Khuyến nghị: 100–250 dòng / file.
-- Nếu vượt khoảng 300 dòng, đề xuất tách.
-- Không tự tách khi chưa được người dùng phê duyệt.
-
----
-
-## 8. Quy trình cập nhật
-
-Chỉ cập nhật Vision khi:
-
-- thay đổi định hướng sản phẩm
-- thay đổi phạm vi sản phẩm
-- thay đổi mục tiêu dài hạn
-
-Không cập nhật Vision vì thay đổi Feature, Business, Database hoặc Backend.
+- Vision phải độc lập với công nghệ và ổn định trong thời gian dài.
+- Chỉ cập nhật khi định hướng, phạm vi hoặc mục tiêu dài hạn thay đổi.
+- Thay đổi Feature, Business hoặc kỹ thuật không tự động làm thay đổi Vision.
+- Khi cần chi tiết từ tầng khác, chỉ liên kết đến Source of Truth tương ứng.

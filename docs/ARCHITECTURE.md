@@ -256,18 +256,12 @@ Triển khai hệ thống.
 
 # 4. Quy tắc xử lý khi Audit
 
-Nếu AI phát hiện tài liệu sai tầng:
+Nếu phát hiện tài liệu sai tầng, Codex phải xác định Source of Truth và tác động liên quan.
 
-Không được tự di chuyển.
-
-AI phải:
-
-1. Đánh dấu Issue.
-2. Chỉ rõ Rule bị vi phạm.
-3. Đề xuất vị trí phù hợp.
-4. Chờ người dùng phê duyệt.
-
-Chỉ sau khi được phê duyệt mới được sửa.
+- Nếu Owner chỉ yêu cầu audit: báo issue và đề xuất vị trí, không sửa.
+- Nếu Owner yêu cầu xử lý: Codex được di chuyển hoặc sửa nội dung trong phạm vi đã xác nhận.
+- Nếu việc xử lý làm thay đổi Business Rule hoặc phạm vi sản phẩm: phải hỏi Owner.
+- Sau khi xử lý phải cập nhật liên kết và kiểm tra nội dung trùng.
 
 ---
 
@@ -327,24 +321,32 @@ Không được tự quyết định.
 
 Kiến trúc tài liệu là nền tảng của dự án.
 
-Mọi tài liệu mới phải tuân theo [ARCHITECTURE.md](http://ARCHITECTURE.md).
+Mọi tài liệu mới phải tuân theo [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 Nếu có mâu thuẫn:
 
-DOCUMENT_[RULES.md](http://RULES.md)
+Quyết định nghiệp vụ của Owner
 
 ↓
 
-[ARCHITECTURE.md](http://ARCHITECTURE.md)
+[AI_TEAM_RULES.md](../AI_TEAM_RULES.md)
 
 ↓
 
-_[RULES.md](http://RULES.md)
+[DOCUMENT_RULES.md](./DOCUMENT_RULES.md)
 
 ↓
 
-[README.md](http://README.md)
+[ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ↓
 
-Nội dung tài liệu
+`_RULES.md` của tầng
+
+↓
+
+`*_CONVENTIONS.md`
+
+↓
+
+`README.md` và nội dung tài liệu

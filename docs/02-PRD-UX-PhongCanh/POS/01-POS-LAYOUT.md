@@ -73,7 +73,7 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 > *Để hiểu cách các khối phối hợp với nhau, hãy xem quy trình xử lý một đơn hàng thực tế tại xưởng Văn Lâm.*
 
 **Bước 1 — Tiếp nhận từ xưởng:**
-Máy in bạt dưới xưởng chạy xong file, `K02-D` lập tức nhấp nháy báo có file mới. Thu ngân click vào file, hệ thống tự đẩy thông số m² lên giỏ hàng `K02-A`.
+Máy in/cắt dưới xưởng gửi thông báo file mới, `K02-D` nhấp nháy báo có file chờ. Thu ngân mở danh sách tên file, chọn `[NHẬP HĐ NHÁP]` hoặc `[HỦY]`; hệ thống chỉ parse dữ liệu khi nhập vào hóa đơn nháp.
 
 **Bước 2 — Định danh khách hàng:**
 Thu ngân gõ tìm khách hàng ở `K03-A` (`F4`). Nếu khách thiếu SĐT, `K03-B` bắn bong bóng cam "⚠️ Bổ sung SĐT KH" — click nhập nhanh rồi `Enter`.
@@ -94,7 +94,7 @@ Thu ngân bấm `THANH TOÁN` (`F9`) tại `K03-D`. Hệ thống trừ kho, lưu
 | K02-A | Giỏ hàng động — Công thức tính m², form nhập ĐVT, giao diện Combo/BOM | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
 | K02-B | Ghi chú tổng toàn đơn hàng | [03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md) |
 | K02-C | Bộ đếm tổng m² & tiền realtime | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
-| K02-D | Hàng đợi máy trạm — Xử lý gộp đơn / hủy lệnh từ xưởng | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
+| K02-D | Hàng đợi máy trạm — Danh sách tên file, nhập vào hóa đơn nháp / hủy thông báo | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
 | K03-A | Hồ sơ đối tác — Tìm/thêm KH (`F4`), áp bảng giá chiết khấu | [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) |
 | K03-B | Bong bóng Toast — Pop-over nhập nhanh SĐT | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
 | K03-C | Lưới chọn nhanh sản phẩm (3 cột + phân trang) | [03-K03C-LUOI-SP.md](./K03/03-K03C-LUOI-SP.md) |
@@ -102,28 +102,10 @@ Thu ngân bấm `THANH TOÁN` (`F9`) tại `K03-D`. Hệ thống trừ kho, lưu
 
 ---
 
-## V. QUY TẮC CẤU TRÚC CODE (ARCHITECTURE CODE RULES)
+## V. Tham chiếu kỹ thuật liên quan
 
-| Nội dung | Chi tiết |
-|---|---|
-| State Manager, Actions, cấu trúc thư mục | [→ ARCHITECTURE.md §1](../../05-BACKEND-MayChu/POS/ARCHITECTURE.md#1-kiến-trúc-state-manager-pos-store) |
-| LocalStorage persistence (key, debounce, vòng đời) | [→ ARCHITECTURE.md §2](../../05-BACKEND-MayChu/POS/ARCHITECTURE.md#2-persistence--lưu-trữ-local-chống-sập-nguồn) |
-| Khóa tranh chấp khi nhiều người cùng sửa đơn | [→ ARCHITECTURE.md §3](../../05-BACKEND-MayChu/POS/ARCHITECTURE.md#3-concurrency-lock--khóa-đơn-tranh-chấp) |
-| Tab Overflow (scroll, không cần lưu scroll position) | [→ ARCHITECTURE.md §4](../../05-BACKEND-MayChu/POS/ARCHITECTURE.md#4-tab-overflow--xử-lý-tràn-dải-tab) |
-
-> **Lưu ý:** Section V thuộc Giai đoạn 1 (UI Spec + Architecture Rule). Chi tiết Action bên trong Store sẽ được sinh code ở Giai đoạn 2.
-
----
-
-## VI. CƠ CHẾ PHÂN QUYỀN (PERMISSION-BASED ACCESS CONTROL)
-
-| Nội dung | Chi tiết |
-|---|---|
-| Mô hình Permission-based (không Role cứng) | [→ AUTH.md §1](../../05-BACKEND-MayChu/POS/AUTH.md#1-mô-hình) |
-| Seed Permissions, đặc điểm kỹ thuật | [→ AUTH.md §3-4](../../05-BACKEND-MayChu/POS/AUTH.md#3-đặc-điểm-kỹ-thuật) |
-| Ràng buộc triển khai UI | [→ AUTH.md §5](../../05-BACKEND-MayChu/POS/AUTH.md#5-ràng-buộc-triển-khai-ui) |
-
-> Áp dụng cho toàn hệ thống QC-OMS: POS, Kho, Báo cáo, Back-office.
+*   **Quy tắc cấu trúc code (Architecture Code Rules):** [→ ARCHITECTURE.md](../../05-BACKEND-MayChu/POS/ARCHITECTURE.md)
+*   **Cơ chế phân quyền (Permission-based Access Control):** [→ AUTH.md](../../05-BACKEND-MayChu/POS/AUTH.md)
 
 ---
 

@@ -1,111 +1,33 @@
 # RULES — 02-PRD-UX-PhongCanh
 
-## 1. Mục đích
+Tuân theo [DOCUMENT_RULES.md](../DOCUMENT_RULES.md) và [ARCHITECTURE.md](../ARCHITECTURE.md).
 
-Đây là **Source of Truth** cho **Feature** và **UI/UX**.
+## Mục đích
 
-Folder này trả lời các câu hỏi:
+Source of Truth cho Feature và trải nghiệm người dùng: người dùng làm gì, giao diện hiển thị gì và hệ thống phản hồi ra sao.
 
-- Tính năng dùng để làm gì?
-- Người dùng thao tác như thế nào?
-- Giao diện hiển thị ra sao?
-- Hệ thống phản hồi như thế nào từ góc nhìn người dùng?
+## Được ghi
 
----
+- Feature Specification
+- User Flow
+- UI, Wireframe, Mockup
+- Shortcut, Popup, Modal
+- trạng thái Loading, Empty, Error, Success
+- điều kiện hiển thị và tương tác hợp lệ
+- Acceptance Criteria về UI/UX
+- hành vi hệ thống nhìn từ phía người dùng
 
-## 2. CHỈ GHI
+## Không được ghi
 
-- ✓ Feature Specification
-- ✓ UI / Wireframe / Mockup
-- ✓ User Flow
-- ✓ Shortcut
-- ✓ Popup / Modal
-- ✓ Trạng thái giao diện (Loading, Empty, Error, Success...)
-- ✓ Điều kiện hiển thị
-- ✓ Acceptance Criteria (UI/UX — hành vi giao diện: trạng thái nào hiển thị, interaction nào hợp lệ, điều kiện hiển thị component)
-- ✓ Mô tả hành vi của hệ thống từ góc nhìn người dùng
+- Business Rule đầy đủ hoặc công thức nghiệp vụ gốc
+- Database Schema, Table, Column hoặc SQL
+- API Specification hoặc Backend Workflow
+- code React, JSX, CSS, TypeScript
+- chi tiết triển khai kỹ thuật
 
----
+## Ranh giới
 
-## 3. ĐƯỢC PHÉP THAM CHIẾU
-
-Được phép nhắc đến nếu chỉ nhằm giải thích hành vi của tính năng:
-
-- Business Rule
-- Database
-- API
-- Workflow
-- Permission
-- Đồng bộ dữ liệu
-
-**Lưu ý:**
-
-Chỉ được mô tả ở mức cần thiết để người đọc hiểu tính năng.
-
-Không được đặc tả chi tiết.
-
----
-
-## 4. KHÔNG ĐẶC TẢ
-
-Không được đặc tả:
-
-- ✗ Business Rule đầy đủ
-- ✗ Database Schema
-- ✗ Table / Column
-- ✗ SQL
-- ✗ API Specification
-- ✗ Backend Workflow
-- ✗ Code (React, JSX, CSS, TypeScript...)
-- ✗ Triển khai kỹ thuật
-
-Các nội dung trên phải được ghi tại đúng tầng theo [ARCHITECTURE.md](http://ARCHITECTURE.md).
-
----
-
-## 5. Nguyên tắc
-
-- Mỗi Feature có một file riêng.
-- Một Feature chỉ có một Source of Truth.
-- Không sao chép nội dung giữa nhiều file.
-- Khi cần dùng thông tin từ tầng khác, chỉ tham chiếu, không đặc tả lại.
-- Nếu một nội dung vừa là UI vừa là Business, chỉ mô tả phần liên quan đến UI; phần nghiệp vụ phải tham chiếu sang 03-BUSINESS.
-- Nếu không chắc nội dung thuộc tầng nào, không tự quyết định. Thực hiện theo DOCUMENT_[RULES.md](http://RULES.md).
-
----
-
-## 6. Cấu trúc chuẩn của một Feature
-
-Mỗi Feature nên có các mục sau:
-
-1. Mục đích
-2. Người sử dụng
-3. Khi nào sử dụng
-4. User Flow
-5. Giao diện
-6. Điều kiện hiển thị
-7. Trường hợp đặc biệt
-8. Acceptance Criteria
-
-Không bắt buộc phải có đủ nếu Feature đơn giản.
-
----
-
-## 7. Quy tắc bảo trì
-
-- Khuyến nghị: 150–300 dòng / file.
-- Nếu vượt khoảng 400 dòng, đề xuất tách file.
-- Không tự tách khi chưa được người dùng phê duyệt.
-
----
-
-## 8. Quy trình cập nhật
-
-Khi thay đổi Feature:
-
-1. Cập nhật Feature / UI tại thư mục này.
-2. Nếu ảnh hưởng Business → cập nhật 03-BUSINESS.
-3. Nếu ảnh hưởng Database → cập nhật 04-DATABASE.
-4. Nếu ảnh hưởng Backend → cập nhật 05-BACKEND.
-
-Business, Database và Backend vẫn là Source of Truth của tầng tương ứng.
+- Mỗi Feature có một Source of Truth.
+- PRD được mô tả Business, Permission, đồng bộ hoặc API ở mức đủ hiểu hành vi; chi tiết phải liên kết sang tầng gốc.
+- Nếu nội dung vừa là UI vừa là Business, file PRD chỉ giữ phần tương tác và tham chiếu 03-BUSINESS cho quy tắc cốt lõi.
+- Khi Feature thay đổi, rà soát ảnh hưởng tới Business, Database, Backend và Integration.

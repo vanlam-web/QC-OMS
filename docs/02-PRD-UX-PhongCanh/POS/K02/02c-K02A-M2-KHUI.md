@@ -99,7 +99,7 @@ Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy trạm 
 
 **Vị trí:** Thanh công cụ đỉnh (Top Bar) — cố định, hiển thị cho mọi người dùng xưởng.
 
-**Wireframe Top Bar (minh họa rút gọn — xem wireframe chuẩn tại [K01/01-K01-TOPBAR.md](../../K01/01-K01-TOPBAR.md)):**
+**Wireframe Top Bar (minh họa rút gọn — xem wireframe chuẩn tại [K01/01-K01-TOPBAR.md](../K01/01-K01-TOPBAR.md)):**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐

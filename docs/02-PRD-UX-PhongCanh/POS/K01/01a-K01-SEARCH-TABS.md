@@ -64,11 +64,13 @@
 
 **Mở POS lần đầu:**
 
-- Mặc định mở sẵn **Hóa đơn 1** — đây là tab đầu tiên và đang active.
+- Nếu máy không có nháp đang mở, mặc định mở sẵn tab trống **Hóa đơn 1** — đây là tab đầu tiên và đang active.
 - Tên tab hiển thị số cụ thể (`Hóa đơn 1`, `Hóa đơn 2`, ...). `[X]` trong tài liệu chỉ là ký hiệu mô tả quy luật tăng số, không hiển thị trên UI.
 
 **Mỗi tab là một hóa đơn nháp độc lập:**
 
+- Mỗi tab có thể đang **chưa chọn khách hàng**.
+- Một khách hàng có thể có **nhiều hóa đơn nháp** cùng lúc.
 - Mỗi tab lưu riêng:
   - Giỏ hàng (danh sách hàng đã thêm).
   - Khách hàng.
@@ -78,7 +80,8 @@
 
 **Khởi tạo tab mới:**
 
-- Bấm nút `[+]` ở cuối dải tab hoặc dùng phím tắt → sinh tab mới với tên `Hóa đơn [n]` (n tăng tự động).
+- Bấm nút `[+]` ở cuối dải tab hoặc dùng phím tắt → sinh tab mới theo **số nhỏ nhất đang trống**.
+- Ví dụ đang có `Hóa đơn 3`, nhưng `Hóa đơn 1` và `Hóa đơn 2` đã xử lý xong/đã đóng → tab mới quay lại dùng `Hóa đơn 1`.
 
 **Giới hạn số tab đang mở:**
 
@@ -86,7 +89,7 @@
 - Khi đã đủ 10 tab: nút `[+]` chuyển sang trạng thái **disabled** + hiển thị tooltip giải thích: `Đã đạt tối đa 10 hóa đơn đang mở`.
 - Không tạo thêm tab thứ 11.
 
-**Giữ hóa đơn nháp theo máy bán hàng (Draft Persistence by POS Machine):**
+**Giữ hóa đơn nháp theo từng máy bán hàng (Draft Persistence by POS Machine):**
 
 - Trên **cùng một máy bán hàng**, các hóa đơn nháp đang mở phải được giữ lại. Mục đích: nhân viên không mất dữ liệu khi có sự cố gián đoạn phiên.
 - POS phải **khôi phục lại các tab hóa đơn nháp chưa hoàn tất của máy đó** khi nhân viên:
@@ -105,7 +108,24 @@
   - Nếu còn tab khác → tự chuyển sang tab kế bên.
   - Nếu không còn tab nào → tự tạo lại `Hóa đơn 1` trống.
 - **Giới hạn tối đa 10 tab hóa đơn đang mở** vẫn áp dụng ngay cả với các tab được khôi phục sau reload/tắt máy. Nếu dữ liệu khôi phục vượt quá 10 → chỉ khôi phục tối đa 10 tab, các tab còn lại không tự động khôi phục trong phiên này.
-- **Phạm vi tài liệu:** file này chỉ ghi **hành vi người dùng và yêu cầu UX**. Cơ chế lưu trữ cụ thể (RAM, localStorage, IndexedDB, API, Database, v.v.) thuộc tầng Architecture/Backend — không đặc tả trong file PRD này.
+
+**Quan hệ hóa đơn nháp giữa nhiều máy POS:**
+
+- Mỗi máy POS hoạt động với **bộ hóa đơn nháp riêng** của máy đó.
+- Hóa đơn nháp đang mở trên máy A **không tự xuất hiện** trên máy B.
+- Không có luồng `[Nhận xử lý]` nháp từ máy khác trong phạm vi POS hiện tại.
+- Máy sản xuất có thể gửi cùng một thông báo file đến nhiều máy POS; mỗi máy xử lý thông báo đó theo các hóa đơn nháp đang có trên chính máy mình.
+- Nếu nhập thông báo máy sản xuất vào khách đang có 1 nháp trên máy hiện tại → mặc định thêm vào nháp đó.
+- Nếu khách chưa có nháp trên máy hiện tại → tạo nháp mới cho khách.
+- Nếu khách có nhiều nháp trên máy hiện tại → hỏi thu ngân chọn nháp nào.
+
+**Ngoại lệ tạo nháp từ đơn hàng đã lưu:**
+
+- Trường hợp một đơn hàng đã lưu cần sửa và được đẩy lại thành nháp sẽ được đặc tả sau ở luồng quản lý đơn hàng.
+- Nháp tạo từ đơn hàng đã lưu dùng tên theo dạng `HDxxxx.stt`.
+- Các nháp ngoại lệ dạng `HDxxxx.stt` **không tính vào giới hạn 10 tab hóa đơn bán hàng mới**; quy tắc giới hạn riêng sẽ được đặc tả khi làm module đơn hàng.
+
+**Phạm vi tài liệu:** file này chỉ ghi **hành vi người dùng và yêu cầu UX**. Cơ chế lưu trữ cụ thể (RAM, localStorage, IndexedDB, API, Database, v.v.) và cơ chế đồng bộ realtime thuộc tầng Architecture/Backend — không đặc tả trong file PRD này.
 
 **Quy tắc thêm hàng và chuyển tab:**
 

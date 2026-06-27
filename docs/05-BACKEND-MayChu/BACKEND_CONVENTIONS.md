@@ -1,260 +1,88 @@
-# Quy ước phát triển Backend của QC-OMS
+# Quy ước phát triển Backend QC-OMS
 
-## 1. Mục đích
+Tuân theo [DOCUMENT_RULES.md](../DOCUMENT_RULES.md), [ARCHITECTURE.md](../ARCHITECTURE.md) và [_RULES.md](./_RULES.md).
 
-Tài liệu này quy định các tiêu chuẩn kỹ thuật khi thiết kế và phát triển Backend.
+## 1. Phạm vi
 
-Mục tiêu:
+Backend chỉ hiện thực nghiệp vụ đã được xác định tại 03-BUSINESS và cấu trúc dữ liệu tại 04-DATABASE. Không tự tạo Business Rule hoặc Database Schema mới.
 
-- Thống nhất cách triển khai.
-- Dễ bảo trì.
-- Dễ mở rộng.
-- Mọi AI tạo Backend theo cùng một chuẩn.
+## 2. API
 
----
-
-# 2. Kiến trúc
-
-Backend chỉ thực hiện nghiệp vụ đã được định nghĩa trong:
-
-- 03-BUSINESS-NghiepVu
-- 04-DATABASE
-
-Không tự tạo Business Rule mới.
-
----
-
-# 3. API Convention
-
-- Sử dụng REST API.
-- Prefix: `/api/v1/`
-- Danh từ số nhiều.
+- Dùng REST API với prefix `/api/v1/`.
+- Resource dùng danh từ số nhiều, ví dụ `/api/v1/orders`.
+- API thay đổi không tương thích phải dùng version mới; không phá API cũ khi chưa có kế hoạch ngừng hỗ trợ.
 
 Ví dụ:
 
-```
+```text
 GET    /api/v1/orders
 POST   /api/v1/orders
 PUT    /api/v1/orders/{id}
 DELETE /api/v1/orders/{id}
-
 ```
 
----
+## 3. Request và Response
 
-# 4. Request / Response
+- Backend phải validate toàn bộ input; validation Frontend chỉ phục vụ UX.
+- Không tin dữ liệu, quyền hoặc trạng thái do Client gửi lên.
 
-Request
-
-- Validate đầy đủ.
-- Không tin dữ liệu từ Client.
-
-Response
-
-Thống nhất:
+Response thành công:
 
 ```json
-{
-  "success": true,
-  "data": {},
-  "message": "",
-  "trace_id": ""
-}
-
+{"success": true, "data": {}, "message": "", "trace_id": ""}
 ```
 
-Error
+Response lỗi:
 
 ```json
-{
-  "success": false,
-  "code": "",
-  "message": "",
-  "trace_id": ""
-}
-
+{"success": false, "code": "", "message": "", "trace_id": ""}
 ```
 
----
+Không trả stack trace hoặc lỗi hệ thống trực tiếp cho Client.
 
-# 5. Validation
+## 4. Authentication và Permission
 
-Mọi dữ liệu đều phải validate ở Backend.
+- Mọi API cần xác định rõ yêu cầu Authentication, Authorization và Permission.
+- Quyền phải được kiểm tra tại Backend, không phụ thuộc việc Frontend có ẩn nút hay không.
+- Áp dụng nguyên tắc quyền tối thiểu.
 
-Validation phía Frontend chỉ phục vụ UX.
+## 5. Use Case và Transaction
 
-Backend luôn là lớp kiểm tra cuối cùng.
+- Một Use Case nghiệp vụ tương ứng một workflow thực thi rõ ràng.
+- Không gộp các nghiệp vụ độc lập chỉ để tái sử dụng endpoint.
+- Thao tác ghi nhiều bảng liên quan phải dùng transaction phù hợp.
+- Không để dữ liệu ở trạng thái trung gian có thể quan sát được.
 
----
+## 6. Event và Idempotency
 
-# 6. Permission
+- Event Handler phải chạy lại an toàn khi có khả năng nhận lại sự kiện.
+- Các thao tác retry phải có idempotency key hoặc cơ chế chống trùng tương đương.
+- Tên event dùng quá khứ, ví dụ `OrderCreated`.
 
-Không tin Frontend.
+## 7. Error và Logging
 
-Mọi API đều phải kiểm tra:
+- Lỗi nghiệp vụ phải có error code ổn định, message phù hợp và trace ID.
+- Ghi log các thao tác quan trọng như đăng nhập, tạo/sửa/hủy đơn và thanh toán.
+- Không ghi password, token, secret hoặc dữ liệu nhạy cảm không cần thiết.
+- Backend định nghĩa log và metric phát ra; 07-DEPLOYMENT sở hữu thu thập, lưu giữ, dashboard và cảnh báo.
 
-- Authentication
-- Authorization
-- Permission
+## 8. Naming
 
----
-
-# 7. Workflow
-
-Một Business Use Case
-
-↓
-
-Một Backend Workflow.
-
-Không gộp nhiều nghiệp vụ vào một Workflow.
-
----
-
-# 8. Transaction
-
-Các thao tác ghi nhiều bảng phải sử dụng Transaction.
-
-Không để dữ liệu ở trạng thái trung gian.
-
----
-
-# 9. Event
-
-Domain Event
-
-↓
-
-Backend xử lý.
-
-Event Handler phải:
-
-- Idempotent.
-- Có thể chạy lại.
-- Không tạo dữ liệu trùng.
-
----
-
-# 10. Logging
-
-Mọi thao tác quan trọng phải ghi Log.
-
-Ví dụ:
-
-- Login
-- Logout
-- Tạo đơn
-- Sửa đơn
-- Xóa đơn
-- Thanh toán
-
----
-
-# 11. Error Handling
-
-Không trả lỗi hệ thống trực tiếp.
-
-Mọi lỗi phải:
-
-- Có Error Code.
-- Có Message.
-- Có Trace ID.
-
----
-
-# 12. Naming
-
-API
-
-```
-POST /orders
-
+```text
+Service:    OrderService
+Use Case:   CreateOrder
+Permission: order.create
+Event:      OrderCreated
 ```
 
-Service
+Tên phải phản ánh đúng domain và hành động, tránh viết tắt không có quy ước.
 
-```
-OrderService
+## 9. Source of Truth
 
-```
+- Business Rule: 03-BUSINESS.
+- Database Structure: 04-DATABASE.
+- Backend workflow và API: 05-BACKEND.
+- Kết nối hệ thống ngoài: 06-INTEGRATION.
+- Hạ tầng và vận hành: 07-DEPLOYMENT.
 
-Use Case
-
-```
-CreateOrder
-
-```
-
-Permission
-
-```
-order.create
-
-```
-
-Event
-
-```
-OrderCreated
-
-```
-
----
-
-# 13. Versioning
-
-API sử dụng version.
-
-Ví dụ
-
-```
-/api/v1/
-/api/v2/
-
-```
-
-Không thay đổi API cũ nếu chưa ngừng hỗ trợ.
-
----
-
-# 14. Source of Truth
-
-Backend không được tự định nghĩa:
-
-- Business Rule
-- Database Structure
-- UI
-
-Backend chỉ hiện thực hóa các tài liệu đã được phê duyệt.
-
----
-
-# 15. Nguyên tắc cuối cùng
-
-Nếu có mâu thuẫn:
-
-DOCUMENT_[RULES.md](http://RULES.md)
-
-↓
-
-[ARCHITECTURE.md](http://ARCHITECTURE.md)
-
-↓
-
-03-BUSINESS
-
-↓
-
-04-DATABASE
-
-↓
-
-BACKEND_[CONVENTIONS.md](http://CONVENTIONS.md)
-
-↓
-
-05-BACKEND
-
-Backend phải tuân theo tầng trên.
-
-Không được tự thay đổi kiến trúc.
+Khi có mâu thuẫn, áp dụng thứ tự tại [DOCUMENT_RULES.md](../DOCUMENT_RULES.md).

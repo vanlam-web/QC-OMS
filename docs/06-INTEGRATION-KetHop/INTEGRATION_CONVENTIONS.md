@@ -1,272 +1,92 @@
-# Quy ước phát triển Integration của QC-OMS
+# Quy ước phát triển Integration QC-OMS
 
-## 1. Mục đích
+Tuân theo [DOCUMENT_RULES.md](../DOCUMENT_RULES.md), [ARCHITECTURE.md](../ARCHITECTURE.md) và [_RULES.md](./_RULES.md).
 
-Tài liệu này quy định các tiêu chuẩn kỹ thuật khi tích hợp QC-OMS với hệ thống bên ngoài.
+## 1. Phạm vi
 
-Mục tiêu:
+Integration chỉ giao tiếp với hệ thống hoặc thiết bị bên ngoài. Business thuộc 03-BUSINESS; workflow nội bộ thuộc 05-BACKEND.
 
-- Thống nhất cách tích hợp.
-- Dễ bảo trì.
-- Dễ thay thế dịch vụ.
-- Mọi AI triển khai Integration theo cùng một chuẩn.
+Luồng chuẩn: `Business -> Backend -> Integration -> External System`. UI không gọi trực tiếp Integration.
 
----
+## 2. Protocol
 
-# 2. Nguyên tắc chung
+Mỗi Integration phải ghi rõ protocol và version sử dụng. Có thể dùng:
 
-- Integration không được tự tạo Business Rule.
-- Integration chỉ thực hiện giao tiếp với hệ thống bên ngoài.
-- Business vẫn thuộc 03-BUSINESS.
-- Workflow nội bộ vẫn thuộc 05-BACKEND.
+- HTTPS/REST, Webhook hoặc WebSocket
+- SFTP
+- Serial hoặc TCP cho thiết bị
+- queue/message broker kết nối hệ thống ngoài
 
----
+Queue nghiệp vụ nội bộ không thuộc Integration.
 
-# 3. Kiến trúc
+## 3. Authentication và Secret
 
-Luồng chuẩn:
+- Không hardcode API key, password, token hoặc secret.
+- Lấy thông tin xác thực từ environment variable hoặc secret manager.
+- Xác định rõ cơ chế cấp mới, hết hạn và thu hồi credential.
 
-Business
+## 4. Timeout, Retry và Idempotency
 
-↓
+- Mọi kết nối phải có timeout; không chờ vô hạn.
+- Chỉ retry lỗi tạm thời, có giới hạn số lần và khoảng nghỉ phù hợp.
+- Không retry lỗi nghiệp vụ hoặc input không hợp lệ.
+- Thao tác có thể gửi lại phải idempotent để không tạo dữ liệu trùng.
 
-Backend
+## 5. Error và Logging
 
-↓
+- Lỗi phải có code, message và trace ID khi có thể.
+- Không hiển thị lỗi kỹ thuật trực tiếp cho người dùng.
+- Ghi log request, response, error, retry và timeout ở mức cần thiết.
+- Không ghi credential hoặc dữ liệu nhạy cảm không cần thiết.
+- Integration định nghĩa log/metric phát ra; Deployment sở hữu thu thập, lưu giữ, dashboard và cảnh báo.
 
-Integration
+## 6. Queue bên ngoài
 
-↓
+Nếu dùng queue để kết nối hệ thống ngoài:
 
-External System
+- message phải có ID và trạng thái xử lý
+- có retry và chống xử lý trùng
+- có Dead Letter Queue khi phù hợp
+- cấu hình broker và vận hành hạ tầng thuộc 07-DEPLOYMENT
 
-Integration không được gọi trực tiếp từ UI.
+## 7. Webhook
 
----
+- Xác thực nguồn gửi và kiểm tra signature khi dịch vụ hỗ trợ.
+- Xử lý idempotent.
+- Trả HTTP status đúng theo kết quả nhận/xử lý.
+- Không dùng response webhook để thực hiện workflow kéo dài.
 
-# 4. Protocol
+## 8. Đồng bộ dữ liệu
 
-Ưu tiên sử dụng:
+Phải xác định:
 
-- HTTPS / REST
-- Webhook
-- WebSocket
-- Queue / Message Broker
-- SFTP (nếu cần)
-- Serial / TCP (thiết bị phần cứng)
+- một chiều hay hai chiều
+- realtime hay theo lịch
+- hệ thống nào là Source of Truth cho từng dữ liệu
+- cách giải quyết xung đột và dữ liệu đến trễ
 
-Mỗi Integration phải ghi rõ protocol sử dụng.
+Không để hai hệ thống cùng ghi đè dữ liệu khi chưa có quy tắc.
 
----
+## 9. Version và thay đổi nhà cung cấp
 
-# 5. Authentication
+- Ghi rõ version API ngoài và ngày kiểm tra tài liệu gần nhất.
+- Đánh giá ảnh hưởng trước khi nâng version.
+- Cô lập logic nhà cung cấp để có thể thay thế mà không làm thay đổi Business Rule.
 
-Không lưu trực tiếp:
+## 10. Security và Observability
 
-- API Key
-- Secret
-- Password
-- Token
+- Ưu tiên HTTPS và kiểm tra chứng chỉ.
+- Chỉ truyền dữ liệu cần thiết.
+- Integration nên phát health status, success rate, error rate, retry count và timeout count.
+- Dashboard, alert threshold và retention thuộc 07-DEPLOYMENT.
 
-Tất cả phải lấy từ:
+## 11. Cấu trúc tài liệu
 
-- Environment Variables
-- Secret Manager
+Mỗi hệ thống ngoài có thư mục riêng. Tùy độ phức tạp có thể gồm:
 
----
+- `README.md`
+- `API.md`
+- `CONFIG.md`
+- `ERRORS.md`
 
-# 6. Timeout
-
-Mọi Integration phải có Timeout.
-
-Không được chờ vô hạn.
-
-Nếu Timeout:
-
-- ghi log
-- trả lỗi phù hợp
-- không làm treo hệ thống
-
----
-
-# 7. Retry Policy
-
-Retry chỉ áp dụng với lỗi tạm thời.
-
-Retry phải:
-
-- giới hạn số lần
-- có khoảng nghỉ giữa các lần
-- tránh gửi trùng dữ liệu
-
-Không retry với lỗi nghiệp vụ.
-
----
-
-# 8. Idempotency
-
-Các thao tác có thể gọi lại phải hỗ trợ Idempotency.
-
-Không tạo dữ liệu trùng khi nhận cùng một yêu cầu nhiều lần.
-
----
-
-# 9. Logging
-
-Mọi Integration phải ghi Log:
-
-- Request
-- Response
-- Error
-- Retry
-- Timeout
-
-Không ghi:
-
-- Password
-- API Key
-- Secret
-- Token
-
----
-
-# 10. Error Handling
-
-Mọi lỗi phải:
-
-- có mã lỗi
-- có mô tả
-- có Trace ID
-- ghi log đầy đủ
-
-Không hiển thị lỗi kỹ thuật trực tiếp cho người dùng.
-
----
-
-# 11. Queue
-
-Nếu sử dụng Queue:
-
-- Message phải có ID
-- Có trạng thái xử lý
-- Có cơ chế Retry
-- Có cơ chế Dead Letter Queue (nếu áp dụng)
-
----
-
-# 12. Webhook
-
-Webhook phải:
-
-- xác thực nguồn gửi
-- kiểm tra chữ ký (Signature) nếu có
-- xử lý Idempotency
-- trả HTTP Status đúng chuẩn
-
----
-
-# 13. Đồng bộ dữ liệu
-
-Phải xác định rõ:
-
-- Một chiều hay hai chiều
-- Đồng bộ thời gian thực hay theo lịch
-- Dữ liệu nào là Source of Truth
-
-Không để hai hệ thống cùng ghi đè dữ liệu mà không có quy tắc.
-
----
-
-# 14. Phiên bản API
-
-Nếu hệ thống ngoài có Version:
-
-- ghi rõ Version
-- ghi ngày cập nhật
-- ghi tài liệu tham chiếu
-
-Không nâng Version khi chưa đánh giá ảnh hưởng.
-
----
-
-# 15. Monitoring
-
-Mọi Integration nên có:
-
-- Health Check
-- Error Rate
-- Retry Count
-- Timeout Count
-- Success Rate
-
-Để dễ theo dõi và xử lý sự cố.
-
----
-
-# 16. Security
-
-- Luôn dùng HTTPS nếu hỗ trợ.
-- Kiểm tra chứng chỉ khi kết nối.
-- Không ghi thông tin nhạy cảm vào Log.
-- Không hardcode thông tin xác thực.
-
----
-
-# 17. Naming Convention
-
-Mỗi Integration có một thư mục riêng.
-
-Ví dụ:
-
-Printer/
-
-Zalo/
-
-QR/
-
-Email/
-
-Webhook/
-
-AI/
-
-Payment/
-
-Mỗi Integration nên có:
-
-- [README.md](http://README.md)
-- [API.md](http://API.md)
-- [CONFIG.md](http://CONFIG.md)
-- [ERRORS.md](http://ERRORS.md) (nếu cần)
-
----
-
-# 18. Nguyên tắc cuối cùng
-
-Nếu có mâu thuẫn:
-
-DOCUMENT_[RULES.md](http://RULES.md)
-
-↓
-
-[ARCHITECTURE.md](http://ARCHITECTURE.md)
-
-↓
-
-03-BUSINESS
-
-↓
-
-05-BACKEND
-
-↓
-
-INTEGRATION_[CONVENTIONS.md](http://CONVENTIONS.md)
-
-↓
-
-06-INTEGRATION
-
-Integration chỉ hiện thực hóa việc kết nối.
-
-Không quyết định nghiệp vụ.
+Khi có mâu thuẫn, áp dụng thứ tự tại [DOCUMENT_RULES.md](../DOCUMENT_RULES.md).

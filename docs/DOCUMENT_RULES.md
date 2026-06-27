@@ -1,134 +1,79 @@
-# Quy tắc quản lý tài liệu dự án QC-OMS
+# Quy tắc quản lý tài liệu QC-OMS
 
-## 1. Mục đích
+## 1. Phạm vi
 
-Tất cả AI (Cursor, ChatGPT, Codex...) phải tuân theo cùng một quy tắc để đảm bảo tài liệu nhất quán, đúng kiến trúc và dễ bảo trì.
+File này quy định cách tổ chức, tạo, sửa, audit và bảo trì tài liệu trong `docs/`.
 
----
+Quyền hạn AI và workflow được quy định tại [AI_TEAM_RULES.md](../AI_TEAM_RULES.md). Phân loại nội dung theo tầng được quy định tại [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 2. Thứ tự ưu tiên
 
-Khi có mâu thuẫn:
+Khi có mâu thuẫn, áp dụng theo thứ tự:
 
-1. DOCUMENT_[RULES.md](http://RULES.md)
-2. [ARCHITECTURE.md](http://ARCHITECTURE.md)
-3. _[RULES.md](http://RULES.md) của thư mục
-4. [README.md](http://README.md) của thư mục
-5. Nội dung tài liệu
+1. Quyết định nghiệp vụ mới nhất của Owner.
+2. [AI_TEAM_RULES.md](../AI_TEAM_RULES.md) — quyền hạn và workflow AI.
+3. [DOCUMENT_RULES.md](./DOCUMENT_RULES.md) — quản trị tài liệu chung.
+4. [ARCHITECTURE.md](./ARCHITECTURE.md) — phân tầng nội dung.
+5. `_RULES.md` của tầng — phạm vi cục bộ.
+6. `*_CONVENTIONS.md` — tiêu chuẩn kỹ thuật của tầng.
+7. `README.md` và tài liệu cụ thể.
 
----
+Luật cấp dưới không được ghi đè luật cấp trên.
 
-## 3. Quy trình bắt buộc
+## 3. Quy trình làm việc
 
-Trước khi tạo, sửa hoặc Audit tài liệu, AI phải:
+Trước khi sửa tài liệu, Codex phải:
 
-1. Đọc DOCUMENT_[RULES.md](http://RULES.md).
-2. Đọc [ARCHITECTURE.md](http://ARCHITECTURE.md).
-3. Xác định loại thông tin.
-4. Xác định đúng thư mục.
-5. Đọc [README.md](http://README.md) và _[RULES.md](http://RULES.md).
-6. Kiểm tra tài liệu hiện có.
-7. Đề xuất thay đổi.
+1. Đọc các luật liên quan và file hiện tại.
+2. Xác định loại thông tin và Source of Truth.
+3. Kiểm tra liên kết, nội dung trùng và ảnh hưởng liên tầng.
+4. Chỉ thay đổi trong phạm vi yêu cầu.
+5. Kiểm tra `git diff`, file tạm và lỗi định dạng sau khi sửa.
 
----
+Gemini chỉ được phân tích nội dung Codex cung cấp, theo `AI_TEAM_RULES.md`.
 
 ## 4. Source of Truth
 
 - Một thông tin chỉ có một nơi gốc.
-- Không sao chép nội dung sang nhiều tài liệu.
-- Các tài liệu khác chỉ được tham chiếu.
+- Tài liệu khác chỉ tóm tắt ở mức cần thiết và liên kết đến nơi gốc.
+- Không sao chép nguyên khối quy tắc giữa nhiều tầng.
+- Khi nội dung vừa thuộc UI vừa thuộc nghiệp vụ, PRD mô tả hành vi người dùng và tham chiếu Business cho quy tắc cốt lõi.
 
----
+## 5. Phạm vi chỉnh sửa
 
-## 5. Không tự quyết định
+- Sửa đúng yêu cầu, tránh refactor không liên quan.
+- Codex được tạo, sửa, đổi tên hoặc di chuyển file khi yêu cầu đã được Owner chấp thuận và việc đó cần thiết để hoàn thành task.
+- Thay đổi Business Rule, phạm vi sản phẩm hoặc workflow vận hành phải được Owner quyết định.
+- Thay đổi kỹ thuật và cách tổ chức tài liệu do Codex quyết định, nhưng phải báo rủi ro quan trọng.
+- Không tự tách file chỉ vì vượt ngưỡng dòng nếu việc tách làm thay đổi Source of Truth hoặc điều hướng; phải đánh giá ảnh hưởng trước.
 
-AI không được tự ý:
+## 6. Audit và xử lý lỗi
 
-- tạo / xóa / đổi tên file
-- di chuyển nội dung
-- đổi cấu trúc
-- mở rộng phạm vi
-- chọn vị trí mới khi chưa được phê duyệt
+- Nếu Owner chỉ yêu cầu audit/review: chỉ báo cáo, không sửa.
+- Nếu Owner yêu cầu xử lý/fix: Codex được sửa các lỗi đã xác nhận trong phạm vi.
+- Mỗi issue phải có file, vị trí, mức độ, tác động và khuyến nghị.
+- Mâu thuẫn nghiệp vụ phải chuyển Owner quyết định.
+- Mâu thuẫn kỹ thuật hoặc tài liệu do Codex quyết định.
 
-Nếu không chắc phải hỏi hoặc đề xuất tối đa 3 phương án.
+## 7. Độ dài và cấu trúc
 
----
+- Khuyến nghị 150–300 dòng cho tài liệu thông thường.
+- Trên 400 dòng: đánh giá khả năng tách, không bắt buộc tách.
+- File luật nên ngắn, ưu tiên liên kết thay vì lặp nội dung.
+- `_RULES.md` chỉ nên chứa: mục đích, được ghi, không được ghi và ranh giới đặc biệt.
+- `*_CONVENTIONS.md` chỉ chứa tiêu chuẩn kỹ thuật riêng của tầng.
 
-## 6. Quy tắc chỉnh sửa
+## 8. Ranh giới nội dung dùng chung
 
-- Chỉ sửa đúng Issue hoặc phạm vi được yêu cầu.
-- Không rewrite toàn bộ tài liệu.
-- Không tự tối ưu văn phong.
-- Không sửa ngoài phạm vi yêu cầu.
-- Ưu tiên thay đổi ít nhất (Minimum Change Principle).
+- Backend và Integration định nghĩa log/metric mà thành phần của mình phát ra.
+- Deployment định nghĩa thu thập, lưu giữ, dashboard, cảnh báo và vận hành log/metric.
+- Queue kết nối hệ thống ngoài thuộc Integration.
+- Queue xử lý nghiệp vụ nội bộ thuộc Backend.
+- Cấu hình hạ tầng queue thuộc Deployment.
 
----
+## 9. Liên kết
 
-## 7. Quy tắc tạo tài liệu
-
-Nếu cần tạo tài liệu mới, AI phải:
-
-- giải thích lý do
-- đề xuất vị trí
-- chờ người dùng phê duyệt
-
----
-
-## 8. Quy tắc độ dài
-
-Khuyến nghị:
-
-- 150–300 dòng / file.
-
-Nếu vượt khoảng 400 dòng:
-
-- đề xuất tách
-- không tự tách
-- chờ người dùng phê duyệt
-
----
-
-## 9. Audit Mode
-
-Khi người dùng yêu cầu Audit hoặc Review:
-
-AI phải:
-
-- đọc DOCUMENT_[RULES.md](http://RULES.md)
-- đọc [ARCHITECTURE.md](http://ARCHITECTURE.md)
-- đọc [README.md](http://README.md) và _[RULES.md](http://RULES.md)
-- đối chiếu tài liệu
-- lập báo cáo
-
-Mỗi Issue phải có:
-
-- Issue ID
-- File
-- Section
-- Rule vi phạm
-- Mức độ (Critical / Major / Minor)
-- Giải thích
-- Tối đa 3 phương án xử lý
-
-AI không được tự sửa hoặc tự di chuyển nội dung sau Audit.
-
----
-
-## 10. Vai trò của AI
-
-AI là trợ lý tài liệu.
-
-AI có nhiệm vụ:
-
-- phân tích
-- review
-- audit
-- đề xuất
-
-AI không có quyền:
-
-- quyết định nghiệp vụ
-- quyết định kiến trúc
-- tự ý thay đổi tài liệu
-
-Người dùng là nguồn sự thật cuối cùng.
+- Dùng đường dẫn Markdown tương đối thật cho file tồn tại.
+- Không dùng link giả dạng `http://FILENAME.md`.
+- Tên file mang tính ví dụ phải dùng code inline, ví dụ `README.md`.
+- Sau khi đổi tên hoặc di chuyển file phải kiểm tra liên kết đến file đó.
