@@ -41,7 +41,12 @@ function Test-SupabaseApi {
 
 function Invoke-InProject {
   param([string]$Command)
-  cmd.exe /d /s /c "pushd `"$ProjectRoot`" && $Command"
+  Push-Location -LiteralPath "$env:SystemDrive\"
+  try {
+    cmd.exe /d /s /c "pushd `"$ProjectRoot`" && $Command"
+  } finally {
+    Pop-Location
+  }
 }
 
 Write-Log "Starting QC-OMS server from $ProjectRoot"
