@@ -26,6 +26,7 @@
 | [00-OVERVIEW-TongQuan/README.md](./00-OVERVIEW-TongQuan/README.md) | Tổng quan toàn bộ hệ thống tài liệu | ✅ |
 | [DOCUMENT_RULES.md](./DOCUMENT_RULES.md) | Quy tắc quản lý tài liệu (nguồn gốc) | ✅ |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Kiến trúc 8 tầng — Source of Truth | ✅ |
+| [DEVELOPMENT-PLAN.md](./DEVELOPMENT-PLAN.md) | Roadmap phát triển FE + BE theo từng giai đoạn | ✅ |
 | [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Báo cáo audit tuân thủ — 2026-06-26 | ✅ |
 | [AUDIT-V2.md](./AUDIT-V2.md) | Đối chiếu audit & checklist patch — 2026-06-27 | ✅ |
 
@@ -103,6 +104,9 @@
 |---|---|---|
 | [04-DATABASE/README.md](./04-DATABASE/README.md) | Mục lục Database | ✅ |
 | [04-DATABASE/_RULES.md](./04-DATABASE/_RULES.md) | Quy tắc layer 04 | ✅ |
+| [04-DATABASE/01-ERD.md](./04-DATABASE/01-ERD.md) | ERD theo giai đoạn; Foundation/System đã chốt | 🔨 |
+| [04-DATABASE/03-RLS.md](./04-DATABASE/03-RLS.md) | RLS Foundation/System | ✅ |
+| [04-DATABASE/System/AUTH-PERMISSIONS.md](./04-DATABASE/System/AUTH-PERMISSIONS.md) | Schema Auth, Profile, Workstation và Permission | ✅ |
 | [04-DATABASE/Sales/README.md](./04-DATABASE/Sales/README.md) | Mục lục Schema Sales | 🔨 |
 | [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema bảng POS | 🔨 |
 
@@ -115,9 +119,11 @@
 | [05-BACKEND-MayChu/README.md](./05-BACKEND-MayChu/README.md) | Mục lục Backend | ✅ |
 | [05-BACKEND-MayChu/_RULES.md](./05-BACKEND-MayChu/_RULES.md) | Quy tắc layer 05 | ✅ |
 | [05-BACKEND-MayChu/BACKEND_CONVENTIONS.md](./05-BACKEND-MayChu/BACKEND_CONVENTIONS.md) | Quy ước phát triển Backend | ✅ |
+| [05-BACKEND-MayChu/FOUNDATION-TECHNICAL-DESIGN.md](./05-BACKEND-MayChu/FOUNDATION-TECHNICAL-DESIGN.md) | Kiến trúc FE–BE và source layout nền tảng | ✅ |
+| [05-BACKEND-MayChu/FOUNDATION-API.md](./05-BACKEND-MayChu/FOUNDATION-API.md) | API Auth, Profile, Permission và Workstation | ✅ |
 | [05-BACKEND-MayChu/POS/README.md](./05-BACKEND-MayChu/POS/README.md) | Mục lục Backend POS | 🔨 |
 | [05-BACKEND-MayChu/POS/ARCHITECTURE.md](./05-BACKEND-MayChu/POS/ARCHITECTURE.md) | Kiến trúc Backend POS | 🔨 |
-| [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | API xác thực POS | 🔨 |
+| [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | Phân quyền POS | ✅ |
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
 
 ---
@@ -140,14 +146,15 @@
 | [07-DEPLOYMENT-TrienKhai/README.md](./07-DEPLOYMENT-TrienKhai/README.md) | Mục lục Deployment | ✅ |
 | [07-DEPLOYMENT-TrienKhai/_RULES.md](./07-DEPLOYMENT-TrienKhai/_RULES.md) | Quy tắc layer 07 | ✅ |
 | [07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md](./07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md) | Quy ước triển khai & vận hành | ✅ |
-| `07-DEPLOYMENT-TrienKhai/*/` | **Chưa có Deployment cụ thể** — đang chờ 05-BACKEND & 06-INTEGRATION | ⬜ |
+| [07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md](./07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md) | Local, staging và CI/CD baseline | ✅ |
+| `07-DEPLOYMENT-TrienKhai/*/` | Chưa có deployment riêng cho từng domain | ⬜ |
 
 ---
 
 ## 🔄 Thứ tự phát triển
 
 ```
-Vision ✅ → PRD-UX 🔨 → Business 🔨 → Database 🔨 → Backend 🔨 → Integration ⬜ → Deployment ⬜
+Vision ✅ → PRD-UX 🔨 → Business 🔨 → Database 🔨 → Backend 🔨 → Integration ⬜ → Deployment 🔨 (baseline)
 ```
 
 Mỗi tầng phải **chờ tầng trên hoàn thiện** trước khi bắt đầu chi tiết.
@@ -167,8 +174,8 @@ Xem chi tiết: [ARCHITECTURE.md](./ARCHITECTURE.md)
 | 4 — Cơ sở dữ liệu | `04-DATABASE/` | 🔨 |
 | 5 — Máy chủ & API | `05-BACKEND-MayChu/` | 🔨 |
 | 6 — Tích hợp | `06-INTEGRATION-KetHop/` | ⬜ |
-| 7 — Triển khai | `07-DEPLOYMENT-TrienKhai/` | ⬜ |
+| 7 — Triển khai | `07-DEPLOYMENT-TrienKhai/` | 🔨 Baseline Giai đoạn 0 |
 
 ---
 
-*Cập nhật: 2026-06-27 — Theo AUDIT_REPORT.md + AUDIT-V2.md*
+*Cập nhật: 2026-06-28 — Chốt roadmap và thiết kế kỹ thuật Giai đoạn 0*

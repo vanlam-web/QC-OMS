@@ -11,6 +11,9 @@ Backend chỉ hiện thực nghiệp vụ đã được xác định tại 03-BU
 - Dùng REST API với prefix `/api/v1/`.
 - Resource dùng danh từ số nhiều, ví dụ `/api/v1/orders`.
 - API thay đổi không tương thích phải dùng version mới; không phá API cũ khi chưa có kế hoạch ngừng hỗ trợ.
+- Frontend chỉ dùng Supabase SDK trực tiếp cho Auth và Realtime subscription.
+- Dữ liệu nghiệp vụ phải đọc/ghi qua `/api/v1`; UI không gọi trực tiếp `supabase.from()`, RPC hoặc Admin API.
+- Realtime chỉ phát tín hiệu/trạng thái sau khi dữ liệu đã được ghi thành công; không thay thế API command.
 
 Ví dụ:
 

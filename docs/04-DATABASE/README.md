@@ -1,6 +1,6 @@
 # PHẦN 3: KIẾN TRÚC DỮ LIỆU (DATABASE SCHEMA)
 
-> 🔨 Đang xây dựng — Sales domain mới có một phần, các domain khác dự kiến
+> 🔨 Đang xây dựng — Foundation/System đã chốt Giai đoạn 0; Sales mới có một phần
 
 ---
 
@@ -8,9 +8,10 @@
 
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
+| [01-ERD.md](./01-ERD.md) | ERD phát triển theo giai đoạn; Foundation/System đã chốt | 🔨 Một phần |
+| [03-RLS.md](./03-RLS.md) | RLS Foundation/System | ✅ Chốt Giai đoạn 0 |
+| [System/AUTH-PERMISSIONS.md](./System/AUTH-PERMISSIONS.md) | Organization, Profile, Workstation và Permission | ✅ Chốt Giai đoạn 0 |
 | `Sales/POS-TABLES.md` | Bảng phục vụ POS (customers, price_lists, products, auth.users, realtime) | 🔨 Một phần |
-| `01-ERD.md` | Sơ đồ quan hệ thực thể (Entity Relationship Diagram) | ⬜ Chưa có |
-| `03-RLS.md` | Row Level Security & Policies | ⬜ Chưa có |
 
 ---
 
@@ -27,7 +28,7 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 | **Sales** | customers, price_lists, products đã có; orders, order_items chưa đặc tả | 🔨 Một phần |
 | **Finance** | payments, expenses, cashbook | ⬜ Chưa có |
 | **Inventory** | inventory, inventory_logs | ⬜ Chưa có |
-| **System** | users, audit_logs | ⬜ Chưa có |
+| **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |
 
 ---
 

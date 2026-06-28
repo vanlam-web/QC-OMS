@@ -27,10 +27,12 @@ Folder này trả lời các câu hỏi:
 
 ## Thứ tự phát triển
 
-**07-DEPLOYMENT chỉ được thiết kế khi**:
+Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tương ứng đã chốt. Riêng baseline local, staging và CI/CD được thiết kế từ Giai đoạn 0 để mỗi vertical slice đều deploy và kiểm thử được.
 
-1. ✅ 05-BACKEND đã có đủ API
-2. ✅ 06-INTEGRATION đã có cấu hình kết nối bên ngoài
+Điều kiện cho deployment domain:
+
+1. 05-BACKEND đã chốt API tương ứng.
+2. 06-INTEGRATION đã chốt cấu hình kết nối liên quan.
 
 ---
 
@@ -40,6 +42,7 @@ Folder này trả lời các câu hỏi:
 |------|--------|------------|
 | `DEPLOYMENT_CONVENTIONS.md` | Quy ước chung: Docker, CI/CD, Backup, Monitoring, DR | ✅ Hoàn tất |
 | `PHASE-0-RUNBOOK.md` | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
+| [ENVIRONMENTS-CI.md](./ENVIRONMENTS-CI.md) | Local, staging, production baseline và CI/CD | ✅ Chốt Giai đoạn 0 |
 
 ---
 
@@ -47,11 +50,11 @@ Folder này trả lời các câu hỏi:
 
 | Môi trường | Mô tả | Trạng thái |
 |------------|--------|------------|
-| **Dev** | Cấu hình local, Supabase dev instance | ⬜ Chi tiết sắp tới |
-| **Staging** | Cấu hình staging, smoke test | ⬜ Chi tiết sắp tới |
+| **Dev** | Cấu hình local, Supabase local | ✅ Baseline Giai đoạn 0 |
+| **Staging** | Vercel + Supabase staging, smoke test | ✅ Baseline Giai đoạn 0 |
 | **Production** | Cấu hình production, monitoring, alert | ⬜ Chi tiết sắp tới |
 
-> Chi tiết theo từng môi trường sẽ nằm trong sub-folder khi đủ nội dung.
+> Baseline xem tại `ENVIRONMENTS-CI.md`; tài liệu vận hành production chi tiết sẽ được bổ sung khi đủ nội dung.
 
 ---
 
