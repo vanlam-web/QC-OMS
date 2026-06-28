@@ -1,5 +1,5 @@
 param(
-  [string]$ProjectRoot = "Y:\QC-OMS",
+  [string]$ProjectRoot = "\\192.168.1.188\AI\QC-OMS",
   [int]$DockerTimeoutSeconds = 180,
   [int]$AppPort = 3000
 )
@@ -15,7 +15,13 @@ $LogFile = Join-Path $LogDir "qc-oms-server.log"
 function Write-Log {
   param([string]$Message)
   $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-  "[$timestamp] $Message" | Tee-Object -FilePath $LogFile -Append
+  $line = "[$timestamp] $Message"
+  Write-Output $line
+  try {
+    Add-Content -LiteralPath $LogFile -Value $line -ErrorAction Stop
+  } catch {
+    Write-Output "[$timestamp] Could not write to log file: $($_.Exception.Message)"
+  }
 }
 
 function Test-PortListening {
@@ -31,6 +37,11 @@ function Test-SupabaseApi {
   } catch {
     return $false
   }
+}
+
+function Invoke-InProject {
+  param([string]$Command)
+  cmd.exe /d /s /c "pushd `"$ProjectRoot`" && $Command"
 }
 
 Write-Log "Starting QC-OMS server from $ProjectRoot"
@@ -63,7 +74,7 @@ if (Test-SupabaseApi) {
   Write-Log "Supabase API is already responding"
 } else {
   Write-Log "Starting local Supabase"
-  npx.cmd supabase start 2>&1 | Tee-Object -FilePath $LogFile -Append
+  Invoke-InProject "npx.cmd supabase start" 2>&1 | Tee-Object -FilePath $LogFile -Append
   if ($LASTEXITCODE -ne 0 -and -not (Test-SupabaseApi)) {
     throw "Supabase failed to start"
   }
@@ -75,4 +86,5 @@ if (Test-PortListening -Port $AppPort) {
 }
 
 Write-Log "Starting QC-OMS app on 0.0.0.0:$AppPort"
-npm.cmd run dev:server 2>&1 | Tee-Object -FilePath $LogFile -Append
+$AppLogFile = Join-Path $LogDir "qc-oms-app.log"
+Invoke-InProject "npm.cmd run dev:server" 2>&1 | Tee-Object -FilePath $AppLogFile -Append

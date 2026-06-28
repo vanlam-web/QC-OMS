@@ -1,5 +1,5 @@
 param(
-  [string]$ProjectRoot = "Y:\QC-OMS",
+  [string]$ProjectRoot = "\\192.168.1.188\AI\QC-OMS",
   [string]$TaskName = "QC-OMS Server Watchdog",
   [int]$IntervalMinutes = 5
 )
