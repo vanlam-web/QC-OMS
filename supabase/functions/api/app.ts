@@ -1,9 +1,11 @@
 import { ApiError, corsHeaders, createTraceId, errorResponse, preflightResponse } from "./http.ts";
-import { routeRequest } from "./routes/router.ts";
+import { routeRequest, type RouterDependencies } from "./routes/router.ts";
 
 export interface AppOptions {
   version: string;
   allowedOrigins?: readonly string[];
+  auth?: RouterDependencies["auth"];
+  repository?: RouterDependencies["repository"];
 }
 
 export type AppHandler = (request: Request) => Promise<Response>;
@@ -23,6 +25,8 @@ export function createApp(options: AppOptions): AppHandler {
     try {
       const response = await routeRequest(request, traceId, {
         version: options.version,
+        auth: options.auth,
+        repository: options.repository,
       });
 
       for (const [key, value] of Object.entries(headers)) {
