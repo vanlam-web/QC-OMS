@@ -35,6 +35,13 @@ function createRepository(record: CurrentUserRecord | null): FoundationRepositor
       assertEquals(input.userId, userId);
       return Promise.resolve(record);
     },
+    listWorkstations: () => Promise.resolve([]),
+    createWorkstation: () => {
+      throw new Error("not implemented");
+    },
+    updateWorkstation: () => {
+      throw new Error("not implemented");
+    },
   };
 }
 

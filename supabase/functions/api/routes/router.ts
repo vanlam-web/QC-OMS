@@ -1,5 +1,6 @@
 import { ApiError, successResponse } from "../http.ts";
 import { handleMe } from "./me.ts";
+import { handleWorkstations } from "./workstations.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import type { FoundationRepository } from "../contracts.ts";
 
@@ -42,6 +43,21 @@ export function routeRequest(
     }
 
     return handleMe(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/workstations" || url.pathname.startsWith("/api/v1/workstations/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleWorkstations(request, traceId, {
       auth: options.auth,
       repository: options.repository,
     });

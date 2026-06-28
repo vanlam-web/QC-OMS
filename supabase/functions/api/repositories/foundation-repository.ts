@@ -1,5 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { CurrentUserRecord, FoundationRepository, GetCurrentUserInput } from "../contracts.ts";
+import type {
+  CurrentUserRecord,
+  FoundationRepository,
+  GetCurrentUserInput,
+  WorkstationData,
+} from "../contracts.ts";
 
 type DatabaseClient = SupabaseClient;
 
@@ -77,6 +82,65 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         permissions: (permissionRows ?? []).map((row) => row.permission_code),
         workstationInvalid,
       };
+    },
+    async listWorkstations(organizationId: string): Promise<WorkstationData[]> {
+      const { data, error } = await client
+        .from("workstations")
+        .select("id, code, name, status")
+        .eq("organization_id", organizationId)
+        .eq("status", "active")
+        .order("code", { ascending: true });
+
+      if (error !== null) {
+        throw error;
+      }
+
+      return data ?? [];
+    },
+    async createWorkstation(input): Promise<WorkstationData> {
+      const { data, error } = await client
+        .from("workstations")
+        .insert({
+          organization_id: input.organizationId,
+          code: input.code,
+          name: input.name,
+          status: "active",
+        })
+        .select("id, code, name, status")
+        .single();
+
+      if (error !== null) {
+        throw error;
+      }
+
+      return data;
+    },
+    async updateWorkstation(input): Promise<WorkstationData | null> {
+      const patch: { code?: string; name?: string; status?: "active" | "inactive" } = {};
+
+      if (input.code !== undefined) {
+        patch.code = input.code;
+      }
+      if (input.name !== undefined) {
+        patch.name = input.name;
+      }
+      if (input.status !== undefined) {
+        patch.status = input.status;
+      }
+
+      const { data, error } = await client
+        .from("workstations")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, status")
+        .maybeSingle();
+
+      if (error !== null) {
+        throw error;
+      }
+
+      return data;
     },
   };
 }
