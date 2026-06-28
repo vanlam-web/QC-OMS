@@ -38,7 +38,7 @@
 |---|---|
 | **Chưa chọn** | Input placeholder: `Tìm khách hàng (F4)...`, chưa gắn khách vào tab hóa đơn |
 | **Đã chọn** | Hiển thị tên KH, mã KH, dư nợ, tổng doanh thu, tên bảng giá, chiết khấu nếu có và nút `[× Bỏ chọn KH]` |
-| **Thiếu SĐT** | Kích hoạt Toast `K03-B` nhắc nhở bổ sung SĐT |
+| **Thiếu SĐT** | Khi người dùng chọn khách đã tồn tại, kích hoạt `K03-B` nếu khách còn thiếu SĐT |
 
 ---
 
@@ -53,6 +53,7 @@
 - Mỗi kết quả tìm kiếm hiển thị tên khách hàng, mã khách hàng, SĐT và dư nợ hiện tại.
 - Trong danh sách kết quả, dùng phím `↑`/`↓` để di chuyển, `Enter` để chọn và `Esc` để đóng danh sách.
 - Khi chọn khách, hệ thống gắn khách vào tab hóa đơn đang active.
+- Cảnh báo bổ sung thông tin khách hàng chỉ được kiểm tra khi người dùng chọn khách hàng đã tồn tại; không tự bật khi người dùng chỉ đứng yên ở màn hình POS.
 - Nếu tab đang active đã có hàng, khi chọn hoặc đổi khách thì hệ thống tự cập nhật lại giá và chiết khấu theo dữ liệu của khách vừa chọn, đồng thời hiện thông báo ngắn. Chỉ các dòng đang dùng giá tự động được tính lại; dòng đã sửa giá thủ công được giữ nguyên và có dấu hiệu nhận biết. Số lượng, kích thước và ghi chú của các dòng hàng được giữ nguyên.
 - Khi bỏ chọn khách, các dòng đang dùng giá tự động được tính lại theo Bảng giá chung; dòng đã sửa giá thủ công được giữ nguyên.
 - Nếu khách hàng không được gán bảng giá thì áp dụng Bảng giá chung.
@@ -69,12 +70,23 @@
 - Thông tin tùy chọn gồm:
   - Địa chỉ, Tỉnh/Thành phố và Phường/Xã; danh sách Phường/Xã phụ thuộc Tỉnh/Thành phố đã chọn.
   - Một nhóm khách hàng chính dùng để áp dụng bảng giá.
-  - Một ID nhóm Zalo, không bắt buộc.
   - Email.
-  - Link Facebook.
+  - Nút cấu hình gửi tin nhắn/bill cho khách.
   - Ghi chú.
 - Không sử dụng ảnh khách hàng, chi nhánh, ngày sinh hoặc giới tính trong hồ sơ khách hàng QC-OMS.
 - Các trường tùy chọn được đặt trong phần **Thông tin thêm** để thao tác thêm nhanh vẫn gọn.
+- Nút cấu hình gửi tin nhắn dùng để bật/tắt hỗ trợ gửi bill và chọn một trong ba phương thức gửi:
+  - Zalo cá nhân.
+  - Nhóm Zalo.
+  - Facebook.
+- Khi bấm nút cấu hình gửi tin nhắn, hệ thống mở popup cấu hình riêng; các trường định danh/link nằm trong popup này.
+- Các thông tin kỹ thuật cần để mở đúng nơi gửi được lưu trong cấu hình gửi tin nhắn, không hiển thị thành các trường rời trong form khách hàng.
+- Cấu hình gửi tin nhắn phải lưu đủ dữ liệu để thử mở đúng nơi gửi:
+  - Zalo cá nhân: định danh/link Zalo của khách.
+  - Nhóm Zalo: định danh/link nhóm.
+  - Facebook: username/link hội thoại phù hợp.
+- Chỉ hỗ trợ sinh ảnh bill và mở nơi gửi khi hồ sơ khách đã bật hỗ trợ gửi bill và cấu hình phương thức gửi hợp lệ.
+- Nếu chưa bật hỗ trợ gửi bill hoặc cấu hình phương thức gửi chưa hợp lệ, hệ thống không tự mở nơi gửi cho khách.
 - Trước khi kiểm tra trùng, SĐT được chuẩn hóa bằng cách loại bỏ khoảng trắng và các ký tự trình bày không cần thiết.
 - Nếu SĐT đã tồn tại, hệ thống hiển thị khách hàng tương ứng để người dùng chọn lại và không cho tạo hồ sơ trùng.
 - Nút `[Lưu]` tạo hồ sơ khách hàng. Nút `[Bỏ qua]` hoặc `[X]` đóng modal; nếu đã nhập dữ liệu thì phải xác nhận trước khi bỏ thay đổi.
@@ -99,13 +111,28 @@
 - Phần đầu bảng hiển thị:
   - Chế độ Thêm mới: tiêu đề `Thêm khách hàng`; thông tin khách, dư nợ và tổng doanh thu chưa có dữ liệu.
   - Chế độ Chỉnh sửa: tên khách hàng, mã khách hàng, dư nợ hiện tại và tổng doanh thu. Tổng doanh thu chỉ tính các hóa đơn ở trạng thái Hoàn thành, không tính hóa đơn Đã hủy.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Thêm khách hàng / Chi tiết khách hàng                                  [X]  │
+│ [Tên KH]  [Mã KH]        Dư nợ: [...]        Tổng doanh thu: [...]           │
+│                                                                              │
+│ [Thông tin] [Thông tin xuất hóa đơn] [Lịch sử bán hàng] [Dư nợ]              │
+│                                                                              │
+│ Nội dung tab đang chọn                                                       │
+│                                                                              │
+│                                                        [Bỏ qua] [Lưu]        │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Ở chế độ Thêm mới, hai tab **Lịch sử bán hàng** và **Dư nợ** không hiển thị.
 - Bảng chi tiết gồm bốn tab:
   - **Thông tin:** hồ sơ và thông tin liên hệ của khách.
   - **Thông tin xuất hóa đơn:** thông tin phục vụ xuất hóa đơn.
   - **Lịch sử bán hàng:** các giao dịch bán hàng của khách.
   - **Dư nợ:** lịch sử phát sinh và thanh toán công nợ.
-- Người dùng có quyền sử dụng POS được sửa toàn bộ thông tin khách hàng trong bảng này, gồm cả nhóm khách hàng và ID nhóm Zalo.
-- Các trường thông tin gồm: mã khách hàng, tên khách hàng, SĐT, địa chỉ, nhóm khách hàng, ID nhóm Zalo, email, link Facebook, ghi chú và thông tin xuất hóa đơn. Cấu trúc trường phải thống nhất với form thêm khách hàng.
+- Người dùng có quyền sử dụng POS được sửa toàn bộ thông tin khách hàng trong bảng này, gồm cả nhóm khách hàng và cấu hình gửi tin nhắn.
+- Các trường thông tin gồm: mã khách hàng, tên khách hàng, SĐT, địa chỉ, nhóm khách hàng, email, nút cấu hình gửi tin nhắn/bill, ghi chú và thông tin xuất hóa đơn. Cấu trúc trường phải thống nhất với form thêm khách hàng.
 - Nút `[Lưu]` tạo khách trong chế độ Thêm mới hoặc ghi nhận thay đổi trong chế độ Chỉnh sửa. Nút `[Bỏ qua]`, `[X]` hoặc phím `Esc` dùng để đóng bảng; nhấp ra ngoài modal không đóng bảng.
 - Nếu khách đang được gắn vào tab hóa đơn active và việc chỉnh sửa làm thay đổi nhóm khách hàng hoặc bảng giá áp dụng, sau khi lưu hệ thống tính lại các dòng đang dùng giá tự động và giữ nguyên các dòng đã sửa giá thủ công.
 - Nếu đóng bảng hoặc bấm `[Bỏ qua]` khi có dữ liệu đã thay đổi nhưng chưa lưu, hệ thống yêu cầu xác nhận bỏ thay đổi.
@@ -150,6 +177,7 @@
 ### V.3. Tab Dư nợ
 
 - Danh sách được sắp xếp theo thời gian mới nhất ở trên cùng.
+- Quy tắc nghiệp vụ công nợ xem tại [POS-CUSTOMER-DEBT.md](../../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md).
 - Bảng gồm các cột:
   - Mã chứng từ.
   - Thời gian.
@@ -160,11 +188,7 @@
   - Nhấp mã hóa đơn để chuyển đến chi tiết tương ứng tại trang Đơn hàng.
   - Nhấp mã phiếu thu để chuyển đến chi tiết tương ứng tại trang Sổ quỹ.
   - Giao diện và hành vi tại trang đích được quy định trong đặc tả của trang đó.
-- Giao dịch **Bán hàng** làm tăng công nợ theo số tiền khách còn nợ của hóa đơn, không tăng theo toàn bộ tổng hóa đơn nếu khách đã thanh toán một phần.
-- Hóa đơn đã thanh toán đủ không tạo biến động công nợ.
-- Giao dịch **Thu tiền khách** làm giảm công nợ.
-- Khi hủy hóa đơn đang còn nợ, hệ thống tạo một giao dịch đảo để giảm công nợ tương ứng; không xóa hoặc sửa giao dịch lịch sử ban đầu.
-- Cột Dư nợ sau giao dịch thể hiện số dư lũy kế ngay sau khi ghi nhận từng giao dịch.
+- Cột Dư nợ sau giao dịch hiển thị số dư lũy kế theo quy tắc Business.
 - Số dư âm được hiển thị là **Khách trả trước**.
 - Mỗi trang hiển thị 20 giao dịch, có điều hướng phân trang và tổng số giao dịch.
 - Hỗ trợ lọc theo mã chứng từ, thời gian và loại giao dịch.
@@ -179,6 +203,7 @@
 |---|---|---|
 | Hồ sơ đối tác | Lưu thông tin khách hàng / đối tác | [→ POS-TABLES.md §1](../../../04-DATABASE/Sales/POS-TABLES.md#1-bảng-publiccustomers--đối-tác--khách-hàng) |
 | Bảng giá | Danh sách bảng giá áp dụng | [→ POS-TABLES.md §2](../../../04-DATABASE/Sales/POS-TABLES.md#2-bảng-publicprice_lists--bảng-giá) |
+| Công nợ khách hàng | Quy tắc phát sinh nợ, thu tiền và số dư lũy kế | [→ POS-CUSTOMER-DEBT.md](../../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) |
 
 ---
 

@@ -22,7 +22,7 @@
 | Thành phần                   | Mô tả                                                                                            |
 | ---------------------------- | ------------------------------------------------------------------------------------------------ |
 | **Ô nhập văn bản diện rộng** | Ghi nhận yêu cầu chung của toàn đơn hàng                                                         |
-| **Hiển thị lại**             | Nội dung ghi chú hiển thị trong Dialog thanh toán và Zalo Bill                                   |
+| **Hiển thị lại**             | Nội dung ghi chú hiển thị trong Dialog thanh toán và bill                                       |
 | **Ví dụ thực tế**            | `"Giao trước 14h ngày mai"`, `"Khách lấy hàng tự vận chuyển"`, `"In lại màu chuẩn theo file cũ"` |
 
 
@@ -65,7 +65,7 @@
 | **Xóa đơn hàng (hủy)**            | Ghi chú bị xóa cùng đơn — không còn hiển thị ở đâu                    |
 | **Mở lại đơn cũ (undo hủy)**      | Ghi chú được khôi phục cùng đơn                                       |
 | **Copy-paste nội dung dài**       | Hệ thống tự cắt tại 500 ký tự — không throw error                     |
-| **Dòng mới (Enter)**              | Cho phép xuống dòng trong ô nhập — hiển thị xuống dòng trên bill text |
+| **Dòng mới (Enter)**              | Cho phép xuống dòng trong ô nhập — hiển thị xuống dòng trên bill |
 
 
 ---

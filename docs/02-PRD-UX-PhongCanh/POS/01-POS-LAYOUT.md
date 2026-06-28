@@ -16,10 +16,10 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 || K02: KHỐI GIỎ HÀNG & ĐIỀU PHỐI MÁY TRẠM (~65%)| K03: KHỐI ĐỐI TÁC & CHỌN SẢN PHẨM (~35%)     |
 ||-----------------------------------------------|----------------------------------------------|
 || [K02-A] Giỏ hàng động — Tính m² & Bung Combo  | [K03-A] Hồ sơ đối tác & Bộ lọc bảng giá      |
-|| [K02-B] Ghi chú tổng toàn đơn hàng            | [K03-B] Bong bóng nhắc nhở SĐT (Tự ẩn 3s)    |
+|| [K02-B] Ghi chú tổng toàn đơn hàng            | [K03-B] Nhắc bổ sung SĐT KH (Tự ẩn 8s)       |
 || [K02-C] Bộ đếm tổng m² & Tiền (Realtime)      | [K03-C] Lưới chọn nhanh sản phẩm (3 cột)     |
 ||-----------------------------------------------|----------------------------------------------|
-|| [K02-D] Hàng đợi máy trạm (IN BẠT/DECAL/CNC)                 [K03-D] [THANH TOÁN] (Phím F9)  |
+|| [K02-D] Hàng đợi máy trạm (IN BẠT/DECAL/CNC)       [K03-D] [BÁO GIÁ] / [THANH TOÁN] (F9)  |
 ================================================================================================
 ```
 
@@ -62,9 +62,9 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 | Khối con | File |
 |---|---|
 | K03-A: Hồ sơ đối tác & Bộ lọc giá | [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) |
-| K03-B: Bong bóng nhắc nhở SĐT (Toast) | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
+| K03-B: Nhắc bổ sung SĐT KH (Toast) | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
 | K03-C: Lưới chọn nhanh sản phẩm (3 cột) | [03-K03C-LUOI-SP.md](./K03/03-K03C-LUOI-SP.md) |
-| K03-D: Nút [IN] / [THANH TOÁN] | [04-K03D-THANH-TOAN.md](./K03/04-K03D-THANH-TOAN.md) |
+| K03-D: Báo giá / Thanh toán | [04-K03D-THANH-TOAN.md](./K03/04-K03D-THANH-TOAN.md) |
 
 ---
 
@@ -73,16 +73,16 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 > *Để hiểu cách các khối phối hợp với nhau, hãy xem quy trình xử lý một đơn hàng thực tế tại xưởng Văn Lâm.*
 
 **Bước 1 — Tiếp nhận từ xưởng:**
-Máy in/cắt dưới xưởng gửi thông báo file mới, `K02-D` nhấp nháy báo có file chờ. Thu ngân mở danh sách tên file, chọn `[NHẬP HĐ NHÁP]` hoặc `[HỦY]`; hệ thống chỉ parse dữ liệu khi nhập vào hóa đơn nháp.
+Máy in/cắt dưới xưởng gửi thông báo file mới, `K02-D` nhấp nháy báo có file chờ. Thu ngân mở danh sách tên file, chọn icon `+` để đưa vào hóa đơn nháp hoặc icon thùng rác để hủy; hệ thống chỉ parse dữ liệu khi đưa vào hóa đơn nháp.
 
 **Bước 2 — Định danh khách hàng:**
-Thu ngân gõ tìm khách hàng ở `K03-A` (`F4`). Nếu khách thiếu SĐT, `K03-B` bắn bong bóng cam "⚠️ Bổ sung SĐT KH" — click nhập nhanh rồi `Enter`.
+Thu ngân gõ tìm khách hàng ở `K03-A` (`F4`). Nếu khách thiếu SĐT, `K03-B` hiện nhắc bổ sung; nhấp vào cảnh báo để nhập nhanh. Cấu hình gửi tin nhắn/bill nằm trong hồ sơ khách hàng, không dùng Toast.
 
 **Bước 3 — Gia công cấu trúc Combo:**
 Đơn phức tạp cần biển bảng nhiều thành phần — thu ngân click dòng sản phẩm tại `K02-A` để bung form Combo, bóc nhanh mã Keo, Vít, Led từ bộ lọc Vật tư phụ.
 
-**Bước 4 — Chốt đơn & Bắn Zalo:**
-Thu ngân bấm `THANH TOÁN` (`F9`) tại `K03-D`. Hệ thống trừ kho, lưu quỹ, tự copy bill vào Clipboard. Thu ngân mở Zalo, `Ctrl + V` — khách nhận bill ngay.
+**Bước 4 — Chốt đơn & Gửi bill:**
+Thu ngân bấm `BÁO GIÁ` để lưu mã `BG...` và gửi giá cho khách, hoặc bấm `THANH TOÁN` (`F9`) tại `K03-D` để chốt bán. Khi thanh toán, hệ thống trừ kho, lưu quỹ nếu có tiền thực thu, sinh bill theo các mẫu đã chọn và mở nơi gửi nếu khách đã bật cấu hình gửi tin nhắn hợp lệ.
 
 ---
 
@@ -95,10 +95,10 @@ Thu ngân bấm `THANH TOÁN` (`F9`) tại `K03-D`. Hệ thống trừ kho, lưu
 | K02-B | Ghi chú tổng toàn đơn hàng | [03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md) |
 | K02-C | Bộ đếm tổng m² & tiền realtime | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
 | K02-D | Hàng đợi máy trạm — Danh sách tên file, nhập vào hóa đơn nháp / hủy thông báo | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
-| K03-A | Hồ sơ đối tác — Tìm/thêm KH (`F4`), áp bảng giá chiết khấu | [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) |
-| K03-B | Bong bóng Toast — Pop-over nhập nhanh SĐT | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
+| K03-A | Hồ sơ đối tác — Tìm/thêm KH (`F4`), áp bảng giá và chiết khấu | [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) |
+| K03-B | Bong bóng Toast — Pop-over nhập nhanh SĐT khách hàng | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
 | K03-C | Lưới chọn nhanh sản phẩm (3 cột + phân trang) | [03-K03C-LUOI-SP.md](./K03/03-K03C-LUOI-SP.md) |
-| K03-D | Nút chốt đơn — Logic trừ kho, sổ quỹ, cấu trúc text Zalo | [04-K03D-THANH-TOAN.md](./K03/04-K03D-THANH-TOAN.md) |
+| K03-D | Báo giá / Thanh toán — Lưu `BG...`, trừ kho, sổ quỹ, bill và cấu hình gửi tin | [04-K03D-THANH-TOAN.md](./K03/04-K03D-THANH-TOAN.md) |
 
 ---
 
