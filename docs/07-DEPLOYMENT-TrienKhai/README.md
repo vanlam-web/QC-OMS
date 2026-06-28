@@ -39,6 +39,7 @@ Folder này trả lời các câu hỏi:
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
 | `DEPLOYMENT_CONVENTIONS.md` | Quy ước chung: Docker, CI/CD, Backup, Monitoring, DR | ✅ Hoàn tất |
+| `PHASE-0-RUNBOOK.md` | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
 
 ---
 
