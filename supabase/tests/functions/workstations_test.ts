@@ -2,7 +2,6 @@ import { createApp } from "../../functions/api/app.ts";
 import type {
   CurrentUserRecord,
   FoundationRepository,
-  GetCurrentUserInput,
   PermissionCode,
 } from "../../functions/api/contracts.ts";
 import type { AuthClient } from "../../functions/api/middleware/auth.ts";
@@ -34,7 +33,7 @@ function currentUser(permissions: PermissionCode[] = ["perm.manage_users"]): Cur
 
 function repo(overrides: Partial<FoundationRepository> = {}): FoundationRepository {
   return {
-    getCurrentUser: (_input: GetCurrentUserInput) => Promise.resolve(currentUser()),
+    getCurrentUser: () => Promise.resolve(currentUser()),
     listWorkstations: () =>
       Promise.resolve([
         { id: "w-1", code: "POS-01", name: "Quầy 1", status: "active" },
