@@ -70,22 +70,26 @@ select results_eq(
 select throws_ok(
   $$ insert into public.organizations (code, name) values ('ORG-C', 'Organization C') $$,
   '42501',
+  'permission denied for table organizations',
   'authenticated user cannot insert organizations'
 );
 select throws_ok(
   $$ update public.profiles set display_name = 'Hacked' $$,
   '42501',
+  'permission denied for table profiles',
   'authenticated user cannot update profiles directly'
 );
 select throws_ok(
   $$ insert into public.user_permissions (user_id, permission_code, granted_by)
      values ('10000000-0000-4000-8000-000000000001', 'perm.manage_users', '10000000-0000-4000-8000-000000000001') $$,
   '42501',
+  'permission denied for table user_permissions',
   'authenticated user cannot insert permissions directly'
 );
 select throws_ok(
   $$ delete from public.workstations $$,
   '42501',
+  'permission denied for table workstations',
   'authenticated user cannot delete workstations directly'
 );
 select throws_ok(
@@ -96,6 +100,7 @@ select throws_ok(
        'rls-test'
      ) $$,
   '42501',
+  'permission denied for function replace_user_permissions',
   'authenticated user cannot execute administrative transaction functions'
 );
 
