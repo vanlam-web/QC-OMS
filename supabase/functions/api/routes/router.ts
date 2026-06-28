@@ -1,18 +1,23 @@
 import { ApiError, successResponse } from "../http.ts";
 import { handleMe } from "./me.ts";
 import { handleWorkstations } from "./workstations.ts";
+import { handlePermissions } from "./permissions.ts";
+import { handleUsers } from "./users.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import type { FoundationRepository } from "../contracts.ts";
+import type { RateLimiter } from "../middleware/rate-limit.ts";
 
 export interface RouterOptions {
   version: string;
   auth?: AuthClient;
   repository?: FoundationRepository;
+  rateLimiter?: RateLimiter;
 }
 
 export interface RouterDependencies {
   auth: AuthClient;
   repository: FoundationRepository;
+  rateLimiter?: RateLimiter;
 }
 
 export function routeRequest(
@@ -60,6 +65,32 @@ export function routeRequest(
     return handleWorkstations(request, traceId, {
       auth: options.auth,
       repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/permissions") {
+    if (options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+    return handlePermissions(options.repository, traceId);
+  }
+
+  if (url.pathname === "/api/v1/users" || url.pathname.startsWith("/api/v1/users/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+    return handleUsers(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+      rateLimiter: options.rateLimiter,
     });
   }
 

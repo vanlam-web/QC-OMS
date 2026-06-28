@@ -1,0 +1,136 @@
+import { createApp } from "../../functions/api/app.ts";
+import type {
+  CurrentUserRecord,
+  FoundationRepository,
+  PermissionCode,
+  UserListItem,
+} from "../../functions/api/contracts.ts";
+import type { AuthClient } from "../../functions/api/middleware/auth.ts";
+import { MemoryRateLimiter } from "../../functions/api/middleware/rate-limit.ts";
+
+const actorId = "80000000-0000-4000-8000-000000000001";
+const organizationId = "80000000-0000-4000-8000-000000000101";
+
+function assertEquals<T>(actual: T, expected: T): void {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`Expected ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`);
+  }
+}
+
+function auth(): AuthClient {
+  return { getUser: () => Promise.resolve({ user: { id: actorId, email: "admin@example.test" } }) };
+}
+
+function currentUser(permissions: PermissionCode[] = ["perm.manage_users"]): CurrentUserRecord {
+  return {
+    user: { id: actorId, email: "admin@example.test", displayName: "Admin" },
+    organization: { id: organizationId, code: "VAN-LAM", name: "Xưởng Văn Lâm" },
+    workstation: null,
+    permissions,
+    workstationInvalid: false,
+  };
+}
+
+const user: UserListItem = {
+  id: "u-1",
+  email: "cashier@example.test",
+  display_name: "Cashier",
+  status: "active",
+  permissions: ["perm.create_order"],
+};
+
+function repo(overrides: Partial<FoundationRepository> = {}): FoundationRepository {
+  return {
+    getCurrentUser: () => Promise.resolve(currentUser()),
+    listWorkstations: () => Promise.resolve([]),
+    createWorkstation: () => {
+      throw new Error("not implemented");
+    },
+    updateWorkstation: () => Promise.resolve(null),
+    listUsers: () => Promise.resolve({ items: [user], total: 1 }),
+    getUser: ({ userId }) => Promise.resolve(userId === "u-1" ? user : null),
+    createUser: (input) =>
+      Promise.resolve({
+        id: "u-new",
+        email: input.email,
+        display_name: input.displayName,
+        status: "active",
+        permissions: input.permissions,
+      }),
+    updateUser: (input) =>
+      Promise.resolve(input.userId === "u-1" ? { ...user, display_name: input.displayName ?? user.display_name } : null),
+    replaceUserPermissions: (input) =>
+      Promise.resolve(input.userId === "u-1" ? { ...user, permissions: input.permissions } : null),
+    listPermissions: () =>
+      Promise.resolve([
+        { code: "perm.create_order", module: "sales", description: "Create sales orders" },
+      ]),
+    ...overrides,
+  };
+}
+
+async function call(path: string, init: RequestInit, repository = repo()): Promise<Response> {
+  return await createApp({
+    version: "test",
+    auth: auth(),
+    repository,
+    rateLimiter: new MemoryRateLimiter(),
+  })(
+    new Request(`http://local${path}`, {
+      ...init,
+      headers: {
+        authorization: "Bearer token",
+        "content-type": "application/json",
+        "x-request-id": "trace-users",
+        ...init.headers,
+      },
+    }),
+  );
+}
+
+Deno.test("user and permission route matrix works for manage_users", async () => {
+  assertEquals((await call("/api/v1/users", { method: "GET" })).status, 200);
+  assertEquals((await call("/api/v1/users/u-1", { method: "GET" })).status, 200);
+  assertEquals((await call("/api/v1/permissions", { method: "GET" })).status, 200);
+  assertEquals(
+    (await call("/api/v1/users", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "new@example.test",
+        password: "password123",
+        display_name: "New User",
+        permissions: ["perm.create_order"],
+      }),
+    })).status,
+    201,
+  );
+  assertEquals(
+    (await call("/api/v1/users/u-1", {
+      method: "PATCH",
+      body: JSON.stringify({ display_name: "Cashier 2" }),
+    })).status,
+    200,
+  );
+  assertEquals(
+    (await call("/api/v1/users/u-1/permissions", {
+      method: "PUT",
+      body: JSON.stringify({ permissions: ["perm.create_order"] }),
+    })).status,
+    200,
+  );
+});
+
+Deno.test("user admin validates input and maps final admin conflict", async () => {
+  const invalid = await call("/api/v1/users", {
+    method: "POST",
+    body: JSON.stringify({ email: "bad", password: "short", display_name: "", permissions: [] }),
+  });
+  assertEquals(invalid.status, 400);
+
+  const conflict = await call(
+    "/api/v1/users/u-1/permissions",
+    { method: "PUT", body: JSON.stringify({ permissions: ["perm.create_order"] }) },
+    repo({ replaceUserPermissions: () => Promise.reject({ message: "LAST_ADMIN_REQUIRED" }) }),
+  );
+  assertEquals(conflict.status, 409);
+});

@@ -6,6 +6,7 @@ export interface AppOptions {
   allowedOrigins?: readonly string[];
   auth?: RouterDependencies["auth"];
   repository?: RouterDependencies["repository"];
+  rateLimiter?: RouterDependencies["rateLimiter"];
 }
 
 export type AppHandler = (request: Request) => Promise<Response>;
@@ -27,6 +28,7 @@ export function createApp(options: AppOptions): AppHandler {
         version: options.version,
         auth: options.auth,
         repository: options.repository,
+        rateLimiter: options.rateLimiter,
       });
 
       for (const [key, value] of Object.entries(headers)) {

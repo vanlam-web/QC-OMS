@@ -51,6 +51,14 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
           name: input.name ?? "Quầy 1",
           status: input.status ?? "active",
         }),
+    listUsers: () => Promise.resolve({ items: [], total: 0 }),
+    getUser: () => Promise.resolve(null),
+    createUser: () => {
+      throw new Error("not implemented");
+    },
+    updateUser: () => Promise.resolve(null),
+    replaceUserPermissions: () => Promise.resolve(null),
+    listPermissions: () => Promise.resolve([]),
     ...overrides,
   };
 }

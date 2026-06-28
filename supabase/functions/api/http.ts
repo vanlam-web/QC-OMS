@@ -6,6 +6,7 @@ export type ErrorCode =
   | "VALIDATION_ERROR"
   | "RESOURCE_CONFLICT"
   | "RESOURCE_NOT_FOUND"
+  | "RATE_LIMITED"
   | "INTERNAL_ERROR";
 
 export interface ApiErrorInit {

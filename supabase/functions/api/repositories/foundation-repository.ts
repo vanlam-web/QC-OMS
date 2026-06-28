@@ -3,6 +3,9 @@ import type {
   CurrentUserRecord,
   FoundationRepository,
   GetCurrentUserInput,
+  PermissionCode,
+  PermissionData,
+  UserListItem,
   WorkstationData,
 } from "../contracts.ts";
 
@@ -142,6 +145,110 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       return data;
     },
+    async listUsers(input): Promise<{ items: UserListItem[]; total: number }> {
+      let query = client
+        .from("profiles")
+        .select("user_id, display_name, status", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("display_name", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.status !== undefined) query = query.eq("status", input.status);
+      if (input.search !== undefined) query = query.ilike("display_name", `%${input.search}%`);
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      const items = await Promise.all((data ?? []).map((row) => hydrateUser(client, row, "")));
+      return { items, total: count ?? 0 };
+    },
+    async getUser(input): Promise<UserListItem | null> {
+      const { data, error } = await client
+        .from("profiles")
+        .select("user_id, display_name, status")
+        .eq("organization_id", input.organizationId)
+        .eq("user_id", input.userId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data === null ? null : await hydrateUser(client, data, "");
+    },
+    async createUser(input): Promise<UserListItem> {
+      const { data: authUser, error: authError } = await client.auth.admin.createUser({
+        email: input.email,
+        password: input.password,
+        email_confirm: true,
+      });
+      if (authError !== null) throw authError;
+      const createdId = authUser.user.id;
+      try {
+        const { error } = await client.rpc("create_profile_with_permissions", {
+          p_actor_user_id: input.actorUserId,
+          p_user_id: createdId,
+          p_display_name: input.displayName,
+          p_permission_codes: input.permissions,
+          p_trace_id: input.traceId,
+        });
+        if (error !== null) throw error;
+      } catch (cause) {
+        await client.auth.admin.deleteUser(createdId);
+        throw cause;
+      }
+      return {
+        id: createdId,
+        email: input.email,
+        display_name: input.displayName,
+        status: "active",
+        permissions: [...input.permissions].sort(),
+      };
+    },
+    async updateUser(input): Promise<UserListItem | null> {
+      const { error } = await client.rpc("update_profile_status", {
+        p_actor_user_id: input.actorUserId,
+        p_target_user_id: input.userId,
+        p_display_name: input.displayName ?? null,
+        p_status: input.status ?? null,
+      });
+      if (error !== null) throw error;
+      return await this.getUser({ organizationId: input.organizationId, userId: input.userId });
+    },
+    async replaceUserPermissions(input): Promise<UserListItem | null> {
+      const { error } = await client.rpc("replace_user_permissions", {
+        p_actor_user_id: input.actorUserId,
+        p_target_user_id: input.userId,
+        p_permission_codes: input.permissions,
+        p_trace_id: input.traceId,
+      });
+      if (error !== null) throw error;
+      return await this.getUser({ organizationId: input.organizationId, userId: input.userId });
+    },
+    async listPermissions(): Promise<PermissionData[]> {
+      const { data, error } = await client
+        .from("permissions")
+        .select("code, module, description")
+        .eq("status", "active")
+        .order("code", { ascending: true });
+      if (error !== null) throw error;
+      return (data ?? []) as PermissionData[];
+    },
+  };
+}
+
+async function hydrateUser(
+  client: DatabaseClient,
+  row: { user_id: string; display_name: string; status: "active" | "inactive" },
+  email: string,
+): Promise<UserListItem> {
+  const { data: permissionRows, error } = await client
+    .from("user_permissions")
+    .select("permission_code")
+    .eq("user_id", row.user_id)
+    .order("permission_code", { ascending: true });
+  if (error !== null) throw error;
+  return {
+    id: row.user_id,
+    email,
+    display_name: row.display_name,
+    status: row.status,
+    permissions: (permissionRows ?? []).map((permission) => permission.permission_code as PermissionCode),
   };
 }
 

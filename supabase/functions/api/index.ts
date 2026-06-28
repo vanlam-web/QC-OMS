@@ -1,5 +1,6 @@
 import { createApp } from "./app.ts";
 import { createSupabaseRepositoryFromEnv } from "./repositories/foundation-repository.ts";
+import { MemoryRateLimiter } from "./middleware/rate-limit.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -44,4 +45,5 @@ Deno.serve(createApp({
     },
   },
   repository: createSupabaseRepositoryFromEnv(),
+  rateLimiter: new MemoryRateLimiter(),
 }));

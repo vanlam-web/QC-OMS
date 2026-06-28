@@ -42,6 +42,14 @@ function createRepository(record: CurrentUserRecord | null): FoundationRepositor
     updateWorkstation: () => {
       throw new Error("not implemented");
     },
+    listUsers: () => Promise.resolve({ items: [], total: 0 }),
+    getUser: () => Promise.resolve(null),
+    createUser: () => {
+      throw new Error("not implemented");
+    },
+    updateUser: () => Promise.resolve(null),
+    replaceUserPermissions: () => Promise.resolve(null),
+    listPermissions: () => Promise.resolve([]),
   };
 }
 
