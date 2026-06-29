@@ -1,4 +1,3 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type {
   CurrentUserRecord,
   FoundationRepository,
@@ -9,7 +8,23 @@ import type {
   WorkstationData,
 } from "../contracts.ts";
 
-type DatabaseClient = SupabaseClient;
+type QueryClient = {
+  // deno-lint-ignore no-explicit-any -- Supabase's fluent query builder is intentionally structural here.
+  from: (relation: string) => any;
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+  auth: {
+    admin: {
+      createUser: (input: {
+        email: string;
+        password: string;
+        email_confirm: boolean;
+      }) => Promise<{ data: { user: { id: string } }; error: unknown }>;
+      deleteUser: (userId: string) => Promise<unknown>;
+    };
+  };
+};
+
+type DatabaseClient = QueryClient;
 
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
   return {
@@ -260,5 +275,44 @@ export function createSupabaseRepositoryFromEnv(): FoundationRepository {
     throw new Error("Supabase API environment variables are required.");
   }
 
-  return createFoundationRepository(createClient(url, serviceRoleKey));
+  let repositoryPromise: Promise<FoundationRepository> | undefined;
+  const getRepository = async () => {
+    repositoryPromise ??= import("@supabase/supabase-js").then(({ createClient }) =>
+      createFoundationRepository(createClient(url, serviceRoleKey))
+    );
+    return await repositoryPromise;
+  };
+
+  return {
+    async getCurrentUser(input) {
+      return await (await getRepository()).getCurrentUser(input);
+    },
+    async listWorkstations(organizationId) {
+      return await (await getRepository()).listWorkstations(organizationId);
+    },
+    async createWorkstation(input) {
+      return await (await getRepository()).createWorkstation(input);
+    },
+    async updateWorkstation(input) {
+      return await (await getRepository()).updateWorkstation(input);
+    },
+    async listUsers(input) {
+      return await (await getRepository()).listUsers(input);
+    },
+    async getUser(input) {
+      return await (await getRepository()).getUser(input);
+    },
+    async createUser(input) {
+      return await (await getRepository()).createUser(input);
+    },
+    async updateUser(input) {
+      return await (await getRepository()).updateUser(input);
+    },
+    async replaceUserPermissions(input) {
+      return await (await getRepository()).replaceUserPermissions(input);
+    },
+    async listPermissions() {
+      return await (await getRepository()).listPermissions();
+    },
+  };
 }
