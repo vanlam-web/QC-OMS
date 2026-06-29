@@ -38,6 +38,7 @@
 |---|---|---|
 | [01-VISION-TamNhin/README.md](./01-VISION-TamNhin/README.md) | Mục lục tầm nhìn | ✅ |
 | [01-VISION-TamNhin/01-VISION.md](./01-VISION-TamNhin/01-VISION.md) | Vision, Mission, Giá trị cốt lõi | ✅ |
+| [01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md](./01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md) | Dich den cuoi cung: QC-OMS la he thong duy nhat thay QuanLyXuong cu | ✅ |
 | [01-VISION-TamNhin/_RULES.md](./01-VISION-TamNhin/_RULES.md) | Quy tắc layer 01 | ✅ |
 
 ---
@@ -135,6 +136,7 @@
 | [06-INTEGRATION-KetHop/README.md](./06-INTEGRATION-KetHop/README.md) | Mục lục Integration | ✅ |
 | [06-INTEGRATION-KetHop/_RULES.md](./06-INTEGRATION-KetHop/_RULES.md) | Quy tắc layer 06 | ✅ |
 | [06-INTEGRATION-KetHop/INTEGRATION_CONVENTIONS.md](./06-INTEGRATION-KetHop/INTEGRATION_CONVENTIONS.md) | Quy ước phát triển Integration | ✅ |
+| [06-INTEGRATION-KetHop/Legacy-QuanLyXuong/README.md](./06-INTEGRATION-KetHop/Legacy-QuanLyXuong/README.md) | Ngu canh he QuanLyXuong cu de QC-OMS hoc luong va di tru | 🔨 |
 | `06-INTEGRATION-KetHop/*/` | **Chưa có Integration cụ thể** — đang chờ 05-BACKEND | ⬜ |
 
 ---

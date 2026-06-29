@@ -39,6 +39,7 @@ Theo nguyên tắc top-down, **06-INTEGRATION chỉ được thiết kế khi**:
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
 | `INTEGRATION_CONVENTIONS.md` | Quy ước chung: Zalo, Printer, QR, Email, Webhook, AI/LLM | ✅ Hoàn tất |
+| [Legacy-QuanLyXuong/README.md](./Legacy-QuanLyXuong/README.md) | Ngu canh he QuanLyXuong cu de QC-OMS hoc luong va di tru | Dang xay dung |
 
 ---
 
