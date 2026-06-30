@@ -115,6 +115,7 @@ Nhân viên bấm [THANH TOÁN] (F9)
 │ Thanh toán nợ cũ      [0...............]     │
 │ Phương thức           [Tiền mặt ▼]           │
 │ Tiền mặt              [................]     │
+│ Tài khoản nhận CK     [................▼]    │
 │ Chuyển khoản          [................]     │
 │ Mã GD/Ghi chú CK      [................]     │
 │ Tiền thừa / Còn nợ    [...]                  │
@@ -129,12 +130,16 @@ Nhân viên bấm [THANH TOÁN] (F9)
 - Tiền thanh toán nợ cũ được tự động cấn vào các hóa đơn còn nợ theo thứ tự cũ nhất trước.
 - Phương thức thanh toán gồm **Tiền mặt**, **Chuyển khoản** và **Kết hợp**.
 - Nếu chọn **Tiền mặt**, chỉ nhập tiền mặt; hệ thống ghi vào quỹ tiền mặt.
-- Nếu chọn **Chuyển khoản**, chỉ nhập tiền chuyển khoản; có thể nhập mã giao dịch/ghi chú chuyển khoản; hệ thống ghi vào quỹ ngân hàng.
+- Nếu chọn **Chuyển khoản**, chỉ nhập tiền chuyển khoản, bắt buộc chọn tài khoản nhận tiền; có thể nhập mã giao dịch/ghi chú chuyển khoản; hệ thống ghi vào đúng quỹ ngân hàng đã chọn.
 - Nếu chọn **Kết hợp**, nhập cả tiền mặt và chuyển khoản; tổng thực thu là tổng hai khoản.
+- Trong MVP, một lần thanh toán chỉ chọn tối đa một tài khoản nhận chuyển khoản.
 - Tiền trả nợ cũ dùng cùng phương thức thanh toán đang chọn trong dialog.
 - Nếu có tiền thực thu, hệ thống ghi vào Sổ Quỹ theo từng phương thức thanh toán.
 - Nếu không có tiền thực thu, không ghi Sổ Quỹ.
 - Tiền thực thu trong dialog gồm tiền thanh toán hóa đơn hiện tại và tiền thanh toán nợ cũ.
+- Nếu khách còn nợ tổng và số tiền khách đưa lớn hơn tiền cần trả của hóa đơn mới, phần dư được hỏi nhanh: **Trả lại khách** hoặc **Cấn vào nợ cũ**.
+- Nếu chọn **Cấn vào nợ cũ**, hệ thống tự điền phần dư vào **Thanh toán nợ cũ** và phân bổ vào hóa đơn còn nợ cũ nhất trước.
+- Nếu chọn **Trả lại khách**, hệ thống hiển thị tiền thừa cần trả và không tạo khoản công nợ âm.
 - `Enter` xác nhận khi dữ liệu hợp lệ. `Esc` đóng dialog nếu chưa xác nhận.
 
 ---

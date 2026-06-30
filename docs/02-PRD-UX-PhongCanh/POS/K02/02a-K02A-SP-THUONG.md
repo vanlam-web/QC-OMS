@@ -45,6 +45,13 @@ Khi một mặt hàng được chọn vào giỏ, cấu trúc giao diện ngoài
 | `Đơn giá`      | Lấy từ bảng giá   | —        |
 | `Thành tiền`   | `SL × Đơn giá`    | —        |
 
+**Quy tắc giá trên dòng:**
+
+- Đơn giá mặc định lấy theo bảng giá đang áp dụng của khách hàng; nếu khách không gán nhóm/bảng giá thì dùng Bảng giá chung.
+- Thu ngân được sửa đơn giá trực tiếp trên dòng hàng.
+- Dòng đã sửa giá thủ công phải có dấu hiệu nhận biết để khi đổi khách hoặc đổi bảng giá không bị tự tính đè.
+- Có nút nhỏ cạnh ô đơn giá để mở danh sách **5 giá gần đây** của đúng cặp khách hàng + sản phẩm.
+- Danh sách giá gần đây chỉ là gợi ý chọn nhanh; giá mặc định của dòng mới vẫn luôn lấy từ bảng giá hiện hành.
 
 **Quy tắc cộng dồn:** Nếu sản phẩm **đã có** trong giỏ, chọn lại sẽ **tự cộng +1** vào SL dòng cũ.
 
@@ -92,6 +99,13 @@ Thành tiền = Số lượng × Đơn giá
 | `Đơn giá`      | Lấy từ bảng giá (hiển thị /m²) | —        |
 | `Thành tiền`   | `Tổng m² × Đơn giá`            | —        |
 
+**Quy tắc giá trên dòng:**
+
+- Đơn giá mặc định lấy theo bảng giá đang áp dụng của khách hàng; nếu khách không gán nhóm/bảng giá thì dùng Bảng giá chung.
+- Thu ngân được sửa đơn giá trực tiếp trên dòng hàng.
+- Dòng đã sửa giá thủ công phải có dấu hiệu nhận biết để khi đổi khách hoặc đổi bảng giá không bị tự tính đè.
+- Có nút nhỏ cạnh ô đơn giá để mở danh sách **5 giá gần đây** của đúng cặp khách hàng + sản phẩm.
+- Danh sách giá gần đây chỉ là gợi ý chọn nhanh; giá mặc định của dòng mới vẫn luôn lấy từ bảng giá hiện hành.
 
 > **Quy tắc:** Ô `[Tổng m²]` là **chỉ đọc (khóa chết)**. Không cho phép gõ đè thủ công để tránh thợ tính nhầm sai lệch với kích thước file in.
 
