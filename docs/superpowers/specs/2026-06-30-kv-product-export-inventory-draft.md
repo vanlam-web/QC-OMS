@@ -590,11 +590,13 @@ Phieu kiem kho duoc tao tu dong khi cap nhat Hang hoa: <Ten hang> (<Ma hang>)
 Ghi chu rieng cho hang `roll` va `sheet`:
 
 - Hang `normal`: kiem theo so luong ton chinh.
-- Hang `roll`: kiem theo tung cuon neu can chinh xac; tong ton chi la tong hop tu cac cuon.
-- Hang `sheet`: kiem rieng tam nguyen va tam lo/tam do neu can.
-- Can bang kho hang `roll`/`sheet` khong nen chi sua tong so, vi se mat thong tin cuon/tam. MVP co the:
-  - cho kiem tong voi hang thuong
-  - voi cuon/tam, yeu cau chon cuon/tam cu the hoac dung man hinh chuyen sau sau
+- Hang `roll`: khong sua tong ton truc tiep; phai kiem/sua theo tung cuon.
+- Hang `sheet`: khong sua tong ton truc tiep; phai kiem/sua theo tam nguyen, tam lo hoac tam do cu the.
+- Tong ton cua hang `roll`/`sheet` chi la so tong hop tu cac doi tuong vat ly ben duoi.
+- Khi sua ton trong trang Hang hoa:
+  - `normal`: cho sua tong ton va tu sinh phieu kiem kho
+  - `roll`: mo luong sua danh sach cuon
+  - `sheet`: mo luong sua danh sach tam/tam lo
 
 De xuat chot:
 
@@ -602,7 +604,7 @@ De xuat chot:
 QC-OMS giu luong Kiem kho giong KV o muc phieu tam -> can bang -> huy.
 Khi sua ton truc tiep trong Hang hoa, he thong tu dong tao phieu kiem kho da can bang de truy vet.
 Can bang kho tao stock movement dieu chinh.
-Hang cuon/tam can xu ly can than theo doi tuong vat ly, khong chi sua tong ton neu viec do lam mat chi tiet.
+Hang cuon/tam bat buoc xu ly theo doi tuong vat ly, khong sua tong ton truc tiep.
 ```
 
 ## 6. De xuat thu tu dac ta tiep theo
