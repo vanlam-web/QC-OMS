@@ -326,35 +326,36 @@ Status: 🔨 Đang làm trên branch `codex/phase-2a-pos-direct-checkout-ui`
 - [x] Price Book: giá khai báo `0` là giá hợp lệ; không fallback vì giá falsy.
 - [x] Reports có End Of Day SoT cho phase sau, nhưng không implement trong Phase 2A.
 - [x] Inventory adjustment SoT mới dành cho future Inventory branch; không đưa vào POS checkout UI.
+- [x] MVP scope lock `c4c4f67`: direct checkout tại xưởng; không mở lại Orders/Giao hàng/COD/HĐĐT/VAT/kênh online/HR/payroll trong MVP.
 
 ### Phạm vi Phase 2A
 
 - [x] Product quick grid cơ bản.
 - [x] Customer search/create/select cơ bản.
-- [ ] Sync docs SoT mới vào implementation branch.
-- [ ] Cart lines editable: số lượng, đơn giá, xóa dòng.
-- [ ] Manual price marker và preserve khi đổi khách/bảng giá.
-- [ ] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu.
-- [ ] Customer debt display trong checkout.
-- [ ] Tách tiền trả hóa đơn hiện tại và tiền thu nợ cũ trong UI/payload.
-- [ ] Cash/bank/mixed payment tối đa một tài khoản bank.
-- [ ] Return-change/apply-old-debt surplus choice.
-- [ ] Retail debt note validation khi khách lẻ còn nợ.
-- [ ] Receipt summary rõ hơn: mã hóa đơn, mã phiếu thu, đã trả/còn nợ, cảnh báo tồn.
-- [ ] E2E direct checkout có chỉnh số lượng/thanh toán.
+- [x] Sync docs SoT mới vào implementation branch.
+- [x] Cart lines editable: số lượng, đơn giá, xóa dòng.
+- [x] Manual price marker và preserve khi đổi khách/bảng giá.
+- [x] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu.
+- [x] Customer debt display trong checkout.
+- [x] Tách tiền trả hóa đơn hiện tại và tiền thu nợ cũ trong UI/payload.
+- [x] Cash/bank/mixed payment tối đa một tài khoản bank.
+- [x] Return-change/apply-old-debt surplus choice.
+- [x] Retail debt note validation khi khách lẻ còn nợ.
+- [x] Receipt summary rõ hơn: mã hóa đơn, mã phiếu thu, đã trả/còn nợ, cảnh báo tồn.
+- [x] E2E direct checkout có chỉnh số lượng/thanh toán.
 
 ### Verification
 
 - [x] Baseline `npm test`: 17 files / 44 tests trên worktree mới.
-- [ ] Local `git diff --check`
-- [ ] Local `npm run lint`
-- [ ] Local `npm run typecheck`
-- [ ] Local `npm test`
-- [ ] Local `npm run build`
-- [ ] Local `npm run test:functions`
-- [ ] Local `npx deno check supabase/functions/api/index.ts`
-- [ ] Local `npm run test:e2e`
-- [ ] Server shared-dev verification nếu branch đụng runtime/API hoặc trước merge.
+- [x] Local `git diff --check`
+- [x] Local `npm run lint`
+- [x] Local `npm run typecheck`
+- [x] Local `npm test`: 17 files / 49 tests
+- [x] Local `npm run build`
+- [x] Local `npm run test:functions`: 34 passed
+- [x] Local `npx deno check supabase/functions/api/index.ts`
+- [x] Local `npm run test:e2e`: 2 passed
+- [ ] Server shared-dev verification trước merge.
 
 ## Phase 2 — POS business UI
 

@@ -31,9 +31,10 @@ test("login, create a cash invoice from POS, and show receipt summary", async ({
 
   await page.getByRole("button", { name: /Standee chữ X/ }).click();
   await expect(page.getByLabel("K02 giỏ hàng").getByText("Standee chữ X")).toBeVisible();
-  await page.getByLabel("Tiền mặt trả hóa đơn").fill("180000");
+  await page.getByLabel("Số lượng Standee chữ X").fill("2");
+  await page.getByLabel("Tiền mặt trả hóa đơn").fill("360000");
   await page.getByRole("button", { name: "Tạo hóa đơn" }).click();
 
   await expect(page.getByLabel("Kết quả checkout").getByText(/^HD[0-9]{6}$/)).toBeVisible();
-  await expect(page.getByLabel("Kết quả checkout").getByText("Đã trả 180.000")).toBeVisible();
+  await expect(page.getByLabel("Kết quả checkout").getByText("Đã trả 360.000")).toBeVisible();
 });

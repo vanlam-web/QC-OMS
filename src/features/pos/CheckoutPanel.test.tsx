@@ -81,7 +81,11 @@ it('calculates cart total and submits cash checkout', async () => {
       payment: expect.objectContaining({ cash_amount: 240000, bank_amount: 0 }),
     }),
   )
-  expect(await screen.findByText('HD000001')).toBeInTheDocument()
+  const receipt = await screen.findByLabelText('Kết quả checkout')
+  expect(within(receipt).getByText('HD000001')).toBeInTheDocument()
+  expect(within(receipt).getByText('PT000001')).toBeInTheDocument()
+  expect(within(receipt).getByText('Đã trả 240.000')).toBeInTheDocument()
+  expect(within(receipt).getByText('Còn nợ 0')).toBeInTheDocument()
 })
 
 it('requires a bank account when bank amount is entered', async () => {

@@ -278,8 +278,9 @@ export function CheckoutPanel({
       {result ? (
         <section aria-label="Kết quả checkout" className="checkout-result">
           <strong>{result.order.code}</strong>
-          <span>Đã trả {formatMoney(result.order.paid_amount)}</span>
-          <span>Còn nợ {formatMoney(result.order.debt_amount)}</span>
+          {result.payment_receipt ? <span>{result.payment_receipt.code}</span> : null}
+          <p>{`Đã trả ${formatMoney(result.order.paid_amount)}`}</p>
+          <p>{`Còn nợ ${formatMoney(result.order.debt_amount)}`}</p>
           {result.inventory_warnings.map((warning) => (
             <p key={`${warning.product_id}-${warning.message}`}>{warning.message}</p>
           ))}
