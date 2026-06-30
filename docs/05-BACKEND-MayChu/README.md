@@ -1,6 +1,6 @@
 # PHẦN 5: MÁY CHỦ & API (BACKEND)
 
-> 🔨 Đang xây dựng — POS module mới có một phần, các module khác dự kiến
+> 🔨 Đang xây dựng — Foundation đã chốt Giai đoạn 0; POS mới có một phần
 
 ---
 
@@ -8,8 +8,10 @@
 
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
+| [FOUNDATION-TECHNICAL-DESIGN.md](./FOUNDATION-TECHNICAL-DESIGN.md) | Kiến trúc FE–BE, source layout và security baseline | ✅ Chốt Giai đoạn 0 |
+| [FOUNDATION-API.md](./FOUNDATION-API.md) | API Auth/Profile/Permission/Workstation | ✅ Chốt Giai đoạn 0 |
 | `POS/ARCHITECTURE.md` | Kiến trúc State Manager, LocalStorage, Concurrency Lock | 🔨 Một phần |
-| `POS/AUTH.md` | Permission-based Access Control | 🔨 Một phần |
+| `POS/AUTH.md` | Permission-based Access Control | ✅ Nền tảng Giai đoạn 0 |
 | `POS/TOAST-API.md` | API xử lý Toast SĐT (K03-B) | ✅ Hoàn tất |
 | `BACKEND_CONVENTIONS.md` | Quy ước API, naming, validation, error handling | ✅ Hoàn tất |
 

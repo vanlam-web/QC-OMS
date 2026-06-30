@@ -1,6 +1,6 @@
 # AUTH — Phân quyền Permission-based Access Control
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> **Trạng thái:** ✅ Chốt mô hình nền tảng Giai đoạn 0; bổ sung permission theo từng module
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md` (Section VI)
 
 ---
@@ -21,7 +21,7 @@ Trang Quản lý tài khoản (back-office, ngoài POS)
     ↓
 Admin click [Tạo tài khoản mới] hoặc [Sửa tài khoản]
     ↓
-Hiển thị form: Tên / Email / Mật khẩu / ...
+Hiển thị form: Email / Tên hiển thị / Mật khẩu ban đầu / ...
     ↓
 Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
     ☑ perm.view_shift_report
@@ -30,7 +30,7 @@ Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
     ☐ perm.edit_price_book
     ...
     ↓
-    Lưu → permissions[] lưu vào hồ sơ phân quyền của tài khoản
+    Lưu → Backend cập nhật quan hệ user_permissions
 ```
 
 ---
@@ -39,13 +39,13 @@ Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
 
 | Đặc điểm | Mô tả |
 |---|---|
-| **Lưu trữ** | Mảng cờ `permissions: string[]` trong hồ sơ phân quyền của tài khoản |
+| **Lưu trữ** | Quan hệ `user_permissions`; schema tại `04-DATABASE/System/AUTH-PERMISSIONS.md` |
 | **Số lượng quyền/tài khoản** | Không giới hạn — 1 tài khoản có thể được tick nhiều quyền |
 | **Thay đổi quyền** | Áp dụng **realtime** — tài khoản bị bỏ quyền sẽ mất truy cập trong vòng 1 chu kỳ Realtime push |
 | **Mặc định khi tạo mới** | Tài khoản mặc định **không có quyền gì** — Admin phải tick thủ công |
-| **Audit** | Mỗi lần đổi quyền ghi log: `actor_id`, `target_user_id`, `permissions_before`, `permissions_after`, `at` |
+| **Audit** | Mỗi lần đổi quyền ghi `actor_user_id`, `target_user_id`, before/after, `trace_id`, `created_at` |
 
-> Database Source of Truth sẽ chốt bảng lưu hồ sơ phân quyền. Không ghi trực tiếp vào `auth.users` nếu bảng đó do Supabase Auth quản lý.
+> Database Source of Truth: [AUTH-PERMISSIONS.md](../../04-DATABASE/System/AUTH-PERMISSIONS.md). Không ghi dữ liệu ứng dụng trực tiếp vào `auth.users`.
 
 ---
 
@@ -72,6 +72,10 @@ Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
 - Khi tài khoản không có quyền tương ứng → **không render DOM** (không dùng `display:none`) cho nút/tính năng đó, để tránh lộ đường dẫn hoặc logic qua DevTools.
 - Phím tắt kích hoạt tính năng không có quyền → chặn sự kiện + Toast cảnh báo `Không có quyền truy cập`.
 - Kiểm tra quyền nên đặt trong **Store** (centralized) chứ không rải rác trong component UI.
+
+Backend vẫn phải kiểm tra permission trên mọi endpoint được bảo vệ. Chi tiết API xem [FOUNDATION-API.md](../FOUNDATION-API.md).
+
+Máy trạm được quản lý độc lập với user. Sau khi đăng nhập, user chọn máy trạm active trên thiết bị đang sử dụng; không gán cứng mã máy trạm vào tài khoản.
 
 ---
 

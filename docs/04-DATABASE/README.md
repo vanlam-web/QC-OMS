@@ -1,6 +1,6 @@
 # PHẦN 3: KIẾN TRÚC DỮ LIỆU (DATABASE SCHEMA)
 
-> 🔨 Đang xây dựng — Sales domain mới có một phần, các domain khác dự kiến
+> 🔨 Đang xây dựng — Foundation/System đã chốt Giai đoạn 0; Sales mới có một phần
 
 ---
 
@@ -28,7 +28,7 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 | **Sales** | customers, customer_groups, price_lists, price_list_items, products, price history, orders, order_items đã có; checkout/finance chưa đặc tả | 🔨 Một phần |
 | **Finance** | payments, expenses, cashbook | ⬜ Chưa có |
 | **Inventory** | inventory, inventory_logs | ⬜ Chưa có |
-| **System** | users, audit_logs | ⬜ Chưa có |
+| **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |
 
 ---
 

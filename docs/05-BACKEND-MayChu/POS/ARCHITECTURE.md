@@ -17,7 +17,8 @@ Component UI **TUYỆT ĐỐI KHÔNG** viết trực tiếp trong `.tsx` / `.sve
 
 - Tính toán nghiệp vụ: `m² = R × D × SL`, `Thành tiền = m² × Đơn giá`
 - Thao tác mảng giỏ hàng: `cart.push()`, `cart.find()`, `cart.reduce()`
-- Gọi Supabase: `supabase.from(...).insert()`, `supabase.channel(...)`
+- Gọi dữ liệu nghiệp vụ trực tiếp: `supabase.from(...).insert()`, `supabase.rpc(...)`
+- Đăng ký Realtime trực tiếp trong component thay vì qua lớp `lib/realtime`
 - Sinh bill text: template Zalo, format tiền
 - Validation: check SĐT rỗng, check giỏ rỗng trước thanh toán
 
@@ -66,7 +67,7 @@ function K02A_Row({ row }) {
 | Ràng buộc | Chi tiết |
 |---|---|
 | Component ≤ 200 dòng | Trừ K02-A có nhiều row |
-| Không import `supabase` trong UI | Chỉ Store được phép gọi DB |
+| Không import Supabase data client trong UI | Dữ liệu nghiệp vụ chỉ đi qua API Client; Supabase SDK chỉ dùng tại lớp Auth/Realtime |
 | Công thức tính đặt tại `lib/pos/calc.ts` | `m²`, `Thành tiền`, `Tiền thừa` |
 | Action trong Store phải **pure** | Hoặc có doc rõ side-effect |
 
@@ -78,8 +79,11 @@ src/
 │   └── posStore.ts          ← State tập trung + Actions
 ├── lib/pos/
 │   ├── calc.ts              ← Công thức tính (m², tiền, bill)
-│   ├── supabase.ts          ← Wrapper gọi DB, channel
+│   ├── api.ts               ← API Client gọi /api/v1
+│   ├── realtime.ts          ← Supabase Realtime subscriptions
 │   └── types.ts             ← TypeScript types cho Row, Tab, Customer
+├── lib/auth/
+│   └── supabase.ts          ← Supabase Auth client
 └── components/pos/
     ├── K01/
     ├── K02/
@@ -140,7 +144,7 @@ Nhân viên click [Sửa] HD010664
     ↓
 Tab mới được sinh ra trên POS
     ↓
-Ngay lập tức gọi: supabase.rpc('lock_order', { order_id: 'HD010664' })
+Ngay lập tức gọi: POST /api/v1/orders/HD010664/lock
     ↓
 Server ghi cờ locked_by + locked_at vào bảng orders
     ↓
