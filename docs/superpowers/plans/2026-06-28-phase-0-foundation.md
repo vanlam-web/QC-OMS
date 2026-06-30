@@ -911,7 +911,7 @@ Document developer prerequisites, shared-server Supabase connection, server-side
 
 Update the Deployment README with one relative link to the runbook; do not duplicate its contents.
 
-- [ ] **Step 8: Run the complete verification suite**
+- [x] **Step 8: Run the complete verification suite**
 
 Run:
 
@@ -927,18 +927,22 @@ git diff --check
 
 Expected on a dev machine connected to the shared server: frontend checks, function unit tests, and E2E smoke pass; `git diff --check` prints nothing. Server-side `npm run supabase:reset`, `npm run test:db`, and integration function checks are recorded separately by the operator/server.
 
-- [ ] **Step 9: Review scope and secrets before commit**
+Verified 2026-06-30 on dev machine: `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:functions`, `npm run test:e2e`, `git diff --check`, and secret scan passed. Function integration requiring service-role access was skipped on the dev machine by design.
+
+- [x] **Step 9: Review scope and secrets before commit**
 
 Run: `git status --short && git diff --stat && git grep -nE '(service_role|E2E_ADMIN_PASSWORD)=.+' -- ':!package-lock.json'`
 
 Expected: only Phase 0 implementation/documentation paths are changed and the secret search returns no assigned value.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add supabase/tests/functions/foundation_integration_test.ts tests/e2e playwright.config.ts .github/workflows/ci.yml docs/07-DEPLOYMENT-TrienKhai/PHASE-0-RUNBOOK.md docs/07-DEPLOYMENT-TrienKhai/README.md package.json package-lock.json
 git commit -m "ci: verify phase 0 foundation end to end"
 ```
+
+Committed as `61245a7 docs: align phase 0 verification with shared supabase`.
 
 ### Task 13: Deploy and verify the staging vertical slice
 
@@ -952,6 +956,8 @@ git commit -m "ci: verify phase 0 foundation end to end"
 Run: `npx supabase projects list && npx vercel whoami`
 
 Expected: the authorized staging Supabase project is listed and Vercel returns the authenticated account. If either command lacks access, stop only this task and report staging as an open acceptance item; do not weaken local/CI gates.
+
+Attempted 2026-06-30 on dev machine: `npx supabase projects list` failed because no Supabase access token is configured. `npx vercel whoami` could not complete because the local npm cache blocked installing the Vercel CLI. Staging deployment remains an open acceptance item until the operator provides Supabase/Vercel access or performs these steps on the server/deployment machine.
 
 - [ ] **Step 2: Link and migrate the staging database**
 
