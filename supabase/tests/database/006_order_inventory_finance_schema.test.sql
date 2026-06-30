@@ -1,6 +1,6 @@
 begin;
 
-select plan(74);
+select plan(79);
 
 select has_table('public', 'orders', 'orders table exists');
 select has_table('public', 'order_items', 'order_items table exists');
@@ -74,6 +74,11 @@ select has_column('public', 'customer_debt_entries', 'balance_after_order', 'cus
 select has_column('public', 'customer_debt_allocations', 'order_debt_before', 'customer_debt_allocations.order_debt_before exists');
 select has_column('public', 'cashbook_entries', 'source_type', 'cashbook_entries.source_type exists');
 select has_column('public', 'cashbook_entries', 'amount_delta', 'cashbook_entries.amount_delta exists');
+select has_column('public', 'cashbook_entries', 'is_business_accounted', 'cashbook_entries.is_business_accounted exists');
+select has_column('public', 'cashbook_vouchers', 'is_business_accounted', 'cashbook_vouchers.is_business_accounted exists');
+select has_column('public', 'cashbook_vouchers', 'counterparty_type', 'cashbook_vouchers.counterparty_type exists');
+select has_column('public', 'cashbook_vouchers', 'counterparty_name', 'cashbook_vouchers.counterparty_name exists');
+select has_column('public', 'cashbook_vouchers', 'counterparty_phone', 'cashbook_vouchers.counterparty_phone exists');
 
 select results_eq(
   $$ select count(*)::integer from public.permissions where code = 'perm.manage_finance' $$,

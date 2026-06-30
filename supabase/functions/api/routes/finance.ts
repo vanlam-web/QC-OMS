@@ -4,8 +4,11 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   collectCustomerDebt,
+  getCashbookEntry,
   getCustomerDebt,
+  getPaymentReceipt,
   listCashbookBalances,
+  listCashbookEntries,
   listCashbookVouchers,
   listCustomerDebts,
   listFinanceAccounts,
@@ -63,12 +66,26 @@ export async function handleFinance(
     );
   }
 
+  if (url.pathname === "/api/v1/finance/cashbook" && request.method === "GET") {
+    return successResponse(await listCashbookEntries(dependencies.repository, context, url), traceId);
+  }
+
   if (url.pathname === "/api/v1/finance/cashbook/balances" && request.method === "GET") {
     return successResponse(await listCashbookBalances(dependencies.repository, context), traceId);
   }
 
   if (url.pathname === "/api/v1/finance/cashbook/vouchers" && request.method === "GET") {
     return successResponse(await listCashbookVouchers(dependencies.repository, context), traceId);
+  }
+
+  const cashbookEntryMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook\/([^/]+)$/);
+  if (cashbookEntryMatch !== null && request.method === "GET") {
+    return successResponse(await getCashbookEntry(dependencies.repository, context, cashbookEntryMatch[1]), traceId);
+  }
+
+  const paymentReceiptMatch = url.pathname.match(/^\/api\/v1\/finance\/payment-receipts\/([^/]+)$/);
+  if (paymentReceiptMatch !== null && request.method === "GET") {
+    return successResponse(await getPaymentReceipt(dependencies.repository, context, paymentReceiptMatch[1]), traceId);
   }
 
   if (url.pathname === "/api/v1/finance/reconciliations" && request.method === "GET") {

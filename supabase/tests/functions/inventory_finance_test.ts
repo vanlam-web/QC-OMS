@@ -3,6 +3,7 @@ import type {
   CurrentUserRecord,
   FoundationRepository,
   PermissionCode,
+  PaymentReceiptDetailData,
   StocktakeData,
   UserListItem,
 } from "../../functions/api/contracts.ts";
@@ -47,6 +48,28 @@ const stocktake: StocktakeData = {
   created_at: "2026-07-01T00:00:00Z",
   balanced_at: "2026-07-01T00:00:00Z",
   note: "Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa: Standee chữ X (STANDEE)",
+};
+
+const receiptDetail: PaymentReceiptDetailData = {
+  id: "receipt-1",
+  code: "TTHD010973",
+  status: "posted",
+  receipt_type: "sale_payment",
+  total_received_amount: 120000,
+  created_at: "2026-06-30T10:00:00Z",
+  customer: { id: "customer-1", code: "KH000001", name: "Cong ty ABC" },
+  source_order: { id: "order-1", code: "HD010973", total_amount: 240000 },
+  methods: [{ method_type: "cash", amount: 120000, finance_account: { id: "cash-1", code: "CASH", name: "Tiền mặt" } }],
+  allocations: [
+    {
+      order_id: "order-1",
+      order_code: "HD010973",
+      order_total_amount: 240000,
+      collected_before: 0,
+      allocated_amount: 120000,
+      remaining_after: 120000,
+    },
+  ],
 };
 
 function repo(
@@ -109,6 +132,44 @@ function repo(
     listCustomerDebts: () => Promise.resolve({ items: [], total: 0 }),
     getCustomerDebt: () => Promise.resolve(null),
     collectCustomerDebt: () => Promise.resolve({ payment_receipt_id: "receipt-1", allocated_amount: 100000 }),
+    listCashbookEntries: () =>
+      Promise.resolve({
+        summary: { opening_balance: 0, total_in: 120000, total_out: 0, ending_balance: 120000 },
+        items: [
+          {
+            id: "entry-1",
+            code: "TTHD010973",
+            status: "posted",
+            direction: "in",
+            amount_delta: 120000,
+            finance_account: { id: "cash-1", code: "CASH", name: "Tiền mặt", account_type: "cash" },
+            is_business_accounted: true,
+            source_type: "payment_receipt_method",
+            created_at: "2026-06-30T10:00:00Z",
+            note: "Thu hóa đơn HD010973",
+          },
+        ],
+        page: 1,
+        page_size: 20,
+        total: 1,
+      }),
+    getCashbookEntry: () =>
+      Promise.resolve({
+        id: "entry-1",
+        code: "TTHD010973",
+        status: "posted",
+        direction: "in",
+        amount_delta: 120000,
+        finance_account: { id: "cash-1", code: "CASH", name: "Tiền mặt", account_type: "cash" },
+        is_business_accounted: true,
+        created_by: { id: actorId, name: "Admin" },
+        counterparty: { type: "customer", name: "Cong ty ABC", phone: null },
+        payment_method: "cash",
+        note: "Thu hóa đơn HD010973",
+        source: { type: "payment_receipt", id: "receipt-1", code: "TTHD010973", order_code: "HD010973" },
+        allocations: receiptDetail.allocations,
+      }),
+    getPaymentReceipt: () => Promise.resolve(receiptDetail),
     listCashbookBalances: () => Promise.resolve([]),
     listCashbookVouchers: () => Promise.resolve({ items: [], total: 0 }),
     listReconciliations: () => Promise.resolve({ items: [], total: 0 }),
@@ -209,6 +270,61 @@ Deno.test("source-linked cashbook vouchers cannot be edited independently", asyn
   );
 
   assertEquals(response.status, 404);
+});
+
+Deno.test("cashbook exact voucher search ignores default date filters", async () => {
+  let observedFrom: string | undefined = "";
+  let observedTo: string | undefined = "";
+  const response = await call(
+    "/api/v1/finance/cashbook?search=TTHD010973&from=2026-07-01&to=2026-07-31",
+    { method: "GET" },
+    repo(["perm.view_shift_report"], {
+      listCashbookEntries: (input: { search?: string; from?: string; to?: string }) => {
+        observedFrom = input.from;
+        observedTo = input.to;
+        assertEquals(input.search, "TTHD010973");
+        return Promise.resolve({
+          summary: { opening_balance: 0, total_in: 120000, total_out: 0, ending_balance: 120000 },
+          items: [],
+          page: 1,
+          page_size: 20,
+          total: 0,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observedFrom, undefined);
+  assertEquals(observedTo, undefined);
+});
+
+Deno.test("cashbook entry detail includes source and allocation snapshot", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook/entry-1",
+    { method: "GET" },
+    repo(["perm.manage_finance"]),
+  );
+
+  const result = await data(response) as Record<string, unknown>;
+  assertEquals(response.status, 200);
+  assertEquals(result.code, "TTHD010973");
+  assertEquals((result.source as Record<string, unknown>).order_code, "HD010973");
+  assertEquals((result.allocations as unknown[]).length, 1);
+});
+
+Deno.test("payment receipt detail includes methods and invoice allocations", async () => {
+  const response = await call(
+    "/api/v1/finance/payment-receipts/receipt-1",
+    { method: "GET" },
+    repo(["perm.view_shift_report"]),
+  );
+
+  const result = await data(response) as PaymentReceiptDetailData;
+  assertEquals(response.status, 200);
+  assertEquals(result.methods[0].finance_account.code, "CASH");
+  assertEquals(result.allocations[0].order_code, "HD010973");
+  assertEquals(result.allocations[0].remaining_after, 120000);
 });
 
 Deno.test("inventory products hide inactive rows for create_order-only actor", async () => {

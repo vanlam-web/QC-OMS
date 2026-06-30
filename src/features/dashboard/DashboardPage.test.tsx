@@ -30,7 +30,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   expect(screen.getByText('Admin')).toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Bán hàng' }))
+  await userEvent.click(screen.getByRole('button', { name: 'POS' }))
   await userEvent.click(screen.getByRole('button', { name: 'Quản trị' }))
   await userEvent.click(screen.getByRole('button', { name: 'Đăng xuất' }))
 
@@ -51,9 +51,9 @@ it('disables modules when the account lacks the matching permission', () => {
     />,
   )
 
-  expect(screen.getByRole('button', { name: 'Bán hàng' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'POS' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Quản trị' })).toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Hàng hóa' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Bảng giá' })).toBeDisabled()
 })
 
 it('enables product catalog for accounts with edit price book permission', async () => {
@@ -68,6 +68,6 @@ it('enables product catalog for accounts with edit price book permission', async
     />,
   )
 
-  await userEvent.click(screen.getByRole('button', { name: 'Hàng hóa' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Bảng giá' }))
   expect(onOpenCatalog).toHaveBeenCalled()
 })

@@ -1,6 +1,9 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.108.2";
 import type {
   CashbookBalanceData,
+  CashbookEntryData,
+  CashbookEntryDetailData,
+  CashbookListData,
   CashbookVoucherData,
   CheckoutResultData,
   CustomerData,
@@ -15,6 +18,8 @@ import type {
   InventoryProductData,
   PermissionCode,
   PermissionData,
+  PaymentReceiptAllocationData,
+  PaymentReceiptDetailData,
   PriceListData,
   ProductData,
   ReconciliationData,
@@ -635,6 +640,75 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         allocated_amount: Number(data.paid_amount ?? data.allocated_amount ?? 0),
       };
     },
+    async listCashbookEntries(input): Promise<CashbookListData> {
+      let query = client
+        .from("cashbook_entries")
+        .select(
+          "id, finance_account_id, entry_time, source_type, payment_receipt_method_id, cashbook_voucher_id, status, direction, amount_delta, is_business_accounted, description, created_at, finance_accounts(id, code, name, account_type)",
+          { count: "exact" },
+        )
+        .eq("organization_id", input.organizationId)
+        .order("entry_time", { ascending: false });
+
+      if (input.financeAccountId !== undefined) query = query.eq("finance_account_id", input.financeAccountId);
+      if (input.direction !== undefined) query = query.eq("direction", input.direction);
+      if (input.sourceType !== undefined) query = query.eq("source_type", input.sourceType);
+      if (input.isBusinessAccounted !== undefined) {
+        query = query.eq("is_business_accounted", input.isBusinessAccounted);
+      }
+      if (input.from !== undefined) query = query.gte("entry_time", input.from);
+      if (input.to !== undefined) query = query.lte("entry_time", input.to);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+
+      let items = await Promise.all((data ?? []).map((row) => hydrateCashbookEntry(client, input.organizationId, row)));
+      if (input.search !== undefined) {
+        const search = input.search.toLocaleLowerCase("vi");
+        items = items.filter((item) =>
+          item.code.toLocaleLowerCase("vi").includes(search) ||
+          item.note?.toLocaleLowerCase("vi").includes(search) === true
+        );
+      }
+
+      const summaryItems = items.filter((item) => item.status === "posted");
+      const totalIn = summaryItems
+        .filter((item) => item.amount_delta > 0)
+        .reduce((sum, item) => sum + item.amount_delta, 0);
+      const totalOut = summaryItems
+        .filter((item) => item.amount_delta < 0)
+        .reduce((sum, item) => sum + item.amount_delta, 0);
+      const page = paginate(items, input.page, input.pageSize);
+
+      return {
+        summary: {
+          opening_balance: 0,
+          total_in: totalIn,
+          total_out: totalOut,
+          ending_balance: totalIn + totalOut,
+        },
+        items: page.items,
+        page: input.page,
+        page_size: input.pageSize,
+        total: page.total,
+      };
+    },
+    async getCashbookEntry(input): Promise<CashbookEntryDetailData | null> {
+      const { data, error } = await client
+        .from("cashbook_entries")
+        .select(
+          "id, finance_account_id, entry_time, source_type, payment_receipt_method_id, cashbook_voucher_id, status, direction, amount_delta, is_business_accounted, description, created_by, created_at, finance_accounts(id, code, name, account_type)",
+        )
+        .eq("id", input.entryId)
+        .eq("organization_id", input.organizationId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      if (data === null) return null;
+      return await hydrateCashbookEntryDetail(client, input.organizationId, data);
+    },
+    async getPaymentReceipt(input): Promise<PaymentReceiptDetailData | null> {
+      return await loadPaymentReceiptDetail(client, input.organizationId, input.receiptId);
+    },
     async listCashbookBalances(input): Promise<CashbookBalanceData[]> {
       const accounts = await this.listFinanceAccounts({ organizationId: input.organizationId, isActive: true });
       const { data: entries, error } = await client
@@ -845,6 +919,262 @@ function toCheckoutResultData(value: unknown): CheckoutResultData {
         };
       })
       : [],
+  };
+}
+
+async function hydrateCashbookEntry(
+  client: DatabaseClient,
+  organizationId: string,
+  row: Record<string, unknown>,
+): Promise<CashbookEntryData> {
+  const account = Array.isArray(row.finance_accounts) ? row.finance_accounts[0] : row.finance_accounts;
+  let code = String(row.id);
+  let note = row.description === null ? null : String(row.description ?? "");
+
+  if (row.source_type === "payment_receipt_method" && typeof row.payment_receipt_method_id === "string") {
+    const receipt = await loadReceiptForPaymentMethod(client, organizationId, row.payment_receipt_method_id);
+    if (receipt !== null) {
+      code = receipt.code;
+      note = note || `Thu ${receipt.code}`;
+    }
+  }
+
+  if (row.source_type === "cashbook_voucher" && typeof row.cashbook_voucher_id === "string") {
+    const { data: voucher, error } = await client
+      .from("cashbook_vouchers")
+      .select("code, reason")
+      .eq("id", row.cashbook_voucher_id)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (error !== null) throw error;
+    if (voucher !== null) {
+      code = voucher.code;
+      note = voucher.reason;
+    }
+  }
+
+  return {
+    id: String(row.id),
+    code,
+    status: String(row.status) as "posted" | "cancelled",
+    direction: String(row.direction) as "in" | "out",
+    amount_delta: Number(row.amount_delta),
+    finance_account: toFinanceAccountRef(account),
+    is_business_accounted: row.is_business_accounted !== false,
+    source_type: String(row.source_type) as "payment_receipt_method" | "cashbook_voucher",
+    created_at: String(row.entry_time ?? row.created_at),
+    note,
+  };
+}
+
+async function hydrateCashbookEntryDetail(
+  client: DatabaseClient,
+  organizationId: string,
+  row: Record<string, unknown>,
+): Promise<CashbookEntryDetailData> {
+  const base = await hydrateCashbookEntry(client, organizationId, row);
+  const createdBy = await loadProfileName(client, String(row.created_by));
+  const detail: CashbookEntryDetailData = {
+    ...base,
+    created_by: { id: String(row.created_by), name: createdBy },
+    counterparty: { type: "none", name: null, phone: null },
+    payment_method: "manual",
+    source: { type: "manual_voucher", id: String(row.cashbook_voucher_id ?? ""), code: base.code, order_code: null },
+    allocations: [],
+  };
+
+  if (row.source_type === "payment_receipt_method" && typeof row.payment_receipt_method_id === "string") {
+    const receiptRow = await loadReceiptForPaymentMethod(client, organizationId, row.payment_receipt_method_id);
+    if (receiptRow !== null) {
+      const receipt = await loadPaymentReceiptDetail(client, organizationId, receiptRow.id);
+      detail.payment_method = receiptRow.method_type as "cash" | "bank_transfer";
+      detail.source = {
+        type: "payment_receipt",
+        id: receiptRow.id,
+        code: receiptRow.code,
+        order_code: receipt?.source_order?.code ?? null,
+      };
+      detail.counterparty = {
+        type: receipt?.customer === null ? "none" : "customer",
+        name: receipt?.customer?.name ?? null,
+        phone: null,
+      };
+      detail.allocations = receipt?.allocations ?? [];
+    }
+  }
+
+  if (row.source_type === "cashbook_voucher" && typeof row.cashbook_voucher_id === "string") {
+    const { data: voucher, error } = await client
+      .from("cashbook_vouchers")
+      .select("id, code, counterparty_type, counterparty_name, counterparty_phone")
+      .eq("id", row.cashbook_voucher_id)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (error !== null) throw error;
+    if (voucher !== null) {
+      detail.counterparty = {
+        type: voucher.counterparty_type,
+        name: voucher.counterparty_name,
+        phone: voucher.counterparty_phone,
+      };
+      detail.source = { type: "manual_voucher", id: voucher.id, code: voucher.code, order_code: null };
+    }
+  }
+
+  return detail;
+}
+
+async function loadReceiptForPaymentMethod(
+  client: DatabaseClient,
+  organizationId: string,
+  paymentReceiptMethodId: string,
+): Promise<{ id: string; code: string; method_type: string } | null> {
+  const { data: method, error: methodError } = await client
+    .from("payment_receipt_methods")
+    .select("method_type, payment_receipt_id")
+    .eq("id", paymentReceiptMethodId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (methodError !== null) throw methodError;
+  if (method === null) return null;
+
+  const { data: receipt, error: receiptError } = await client
+    .from("payment_receipts")
+    .select("id, code")
+    .eq("id", method.payment_receipt_id)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (receiptError !== null) throw receiptError;
+  return receipt === null ? null : { id: receipt.id, code: receipt.code, method_type: method.method_type };
+}
+
+async function loadPaymentReceiptDetail(
+  client: DatabaseClient,
+  organizationId: string,
+  receiptId: string,
+): Promise<PaymentReceiptDetailData | null> {
+  const { data: receipt, error } = await client
+    .from("payment_receipts")
+    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_at")
+    .eq("id", receiptId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  if (receipt === null) return null;
+
+  const { data: methods, error: methodsError } = await client
+    .from("payment_receipt_methods")
+    .select("method_type, amount, finance_accounts(id, code, name)")
+    .eq("payment_receipt_id", receipt.id)
+    .eq("organization_id", organizationId)
+    .order("line_no", { ascending: true });
+  if (methodsError !== null) throw methodsError;
+
+  const customer = typeof receipt.customer_id === "string"
+    ? await loadCustomerRef(client, organizationId, receipt.customer_id)
+    : null;
+  const sourceOrder = typeof receipt.order_id === "string"
+    ? await loadOrderRef(client, organizationId, receipt.order_id)
+    : null;
+
+  return {
+    id: receipt.id,
+    code: receipt.code,
+    status: receipt.status,
+    receipt_type: receipt.receipt_type,
+    total_received_amount: Number(receipt.total_received_amount),
+    created_at: receipt.created_at,
+    customer,
+    source_order: sourceOrder,
+    methods: (methods ?? []).map((method) => {
+      const account = Array.isArray(method.finance_accounts) ? method.finance_accounts[0] : method.finance_accounts;
+      return {
+        method_type: method.method_type,
+        amount: Number(method.amount),
+        finance_account: {
+          id: String(account?.id ?? ""),
+          code: String(account?.code ?? ""),
+          name: String(account?.name ?? ""),
+        },
+      };
+    }),
+    allocations: await loadPaymentReceiptAllocations(client, organizationId, receipt.id),
+  };
+}
+
+async function loadPaymentReceiptAllocations(
+  client: DatabaseClient,
+  organizationId: string,
+  receiptId: string,
+): Promise<PaymentReceiptAllocationData[]> {
+  const { data, error } = await client
+    .from("customer_debt_allocations")
+    .select("order_id, allocated_amount, order_debt_before, order_debt_after")
+    .eq("payment_receipt_id", receiptId)
+    .eq("organization_id", organizationId)
+    .order("line_no", { ascending: true });
+  if (error !== null) throw error;
+
+  return await Promise.all((data ?? []).map(async (allocation) => {
+    const order = await loadOrderRef(client, organizationId, allocation.order_id);
+    return {
+      order_id: allocation.order_id,
+      order_code: order?.code ?? "",
+      order_total_amount: order?.total_amount ?? 0,
+      collected_before: Math.max(Number(allocation.order_debt_before) - Number(allocation.allocated_amount), 0),
+      allocated_amount: Number(allocation.allocated_amount),
+      remaining_after: Number(allocation.order_debt_after),
+    };
+  }));
+}
+
+async function loadCustomerRef(
+  client: DatabaseClient,
+  organizationId: string,
+  customerId: string,
+): Promise<{ id: string; code: string; name: string } | null> {
+  const { data, error } = await client
+    .from("customers")
+    .select("id, code, name")
+    .eq("id", customerId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data;
+}
+
+async function loadOrderRef(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<{ id: string; code: string; total_amount: number } | null> {
+  const { data, error } = await client
+    .from("orders")
+    .select("id, code, total_amount")
+    .eq("id", orderId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data === null ? null : { id: data.id, code: data.code, total_amount: Number(data.total_amount) };
+}
+
+async function loadProfileName(client: DatabaseClient, userId: string): Promise<string> {
+  const { data, error } = await client
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data?.display_name ?? "";
+}
+
+function toFinanceAccountRef(value: unknown): { id: string; code: string; name: string; account_type: "cash" | "bank" } {
+  const account = isRecord(value) ? value : {};
+  return {
+    id: String(account.id ?? ""),
+    code: String(account.code ?? ""),
+    name: String(account.name ?? ""),
+    account_type: String(account.account_type ?? "cash") as "cash" | "bank",
   };
 }
 

@@ -579,6 +579,10 @@ create table public.cashbook_vouchers (
   status text not null default 'posted',
   finance_account_id uuid not null,
   amount numeric(12,0) not null,
+  is_business_accounted boolean not null default true,
+  counterparty_type text not null default 'none',
+  counterparty_name text,
+  counterparty_phone text,
   related_order_id uuid references public.orders(id) on delete restrict,
   related_customer_id uuid references public.customers(id) on delete restrict,
   revised_from_voucher_id uuid references public.cashbook_vouchers(id) on delete restrict,
@@ -593,6 +597,9 @@ create table public.cashbook_vouchers (
   constraint cashbook_vouchers_direction_check check (voucher_direction in ('in', 'out')),
   constraint cashbook_vouchers_type_check check (
     voucher_type in ('other_income', 'material_purchase', 'customer_refund', 'operating_expense', 'other_expense')
+  ),
+  constraint cashbook_vouchers_counterparty_type_check check (
+    counterparty_type in ('customer', 'supplier', 'employee', 'other', 'none')
   ),
   constraint cashbook_vouchers_status_check check (status in ('posted', 'cancelled')),
   constraint cashbook_vouchers_amount_check check (amount > 0),
@@ -625,6 +632,7 @@ create table public.cashbook_entries (
   status text not null default 'posted',
   direction text not null,
   amount_delta numeric(12,0) not null,
+  is_business_accounted boolean not null default true,
   running_balance numeric(12,0),
   description text,
   created_by uuid not null references public.profiles(user_id) on delete restrict,

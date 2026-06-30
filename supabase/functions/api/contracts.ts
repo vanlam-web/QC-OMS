@@ -155,6 +155,66 @@ export interface CashbookVoucherData {
   amount: number;
 }
 
+export interface CashbookEntryData {
+  id: string;
+  code: string;
+  status: "posted" | "cancelled";
+  direction: "in" | "out";
+  amount_delta: number;
+  finance_account: { id: string; code: string; name: string; account_type: "cash" | "bank" };
+  is_business_accounted: boolean;
+  source_type: "payment_receipt_method" | "cashbook_voucher";
+  created_at: string;
+  note: string | null;
+}
+
+export interface CashbookListData {
+  summary: {
+    opening_balance: number;
+    total_in: number;
+    total_out: number;
+    ending_balance: number;
+  };
+  items: CashbookEntryData[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface PaymentReceiptAllocationData {
+  order_id: string;
+  order_code: string;
+  order_total_amount: number;
+  collected_before: number;
+  allocated_amount: number;
+  remaining_after: number;
+}
+
+export interface CashbookEntryDetailData extends CashbookEntryData {
+  created_by: { id: string; name: string };
+  counterparty: { type: "customer" | "supplier" | "employee" | "other" | "none"; name: string | null; phone: string | null };
+  payment_method: "cash" | "bank_transfer" | "manual";
+  source: { type: "payment_receipt" | "manual_voucher"; id: string; code: string; order_code: string | null };
+  allocations: PaymentReceiptAllocationData[];
+}
+
+export interface PaymentReceiptDetailData {
+  id: string;
+  code: string;
+  status: "posted" | "cancelled";
+  receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
+  total_received_amount: number;
+  created_at: string;
+  customer: { id: string; code: string; name: string } | null;
+  source_order: { id: string; code: string; total_amount: number } | null;
+  methods: Array<{
+    method_type: "cash" | "bank_transfer";
+    amount: number;
+    finance_account: { id: string; code: string; name: string };
+  }>;
+  allocations: PaymentReceiptAllocationData[];
+}
+
 export interface ReconciliationData {
   id: string;
   code: string;
@@ -379,6 +439,26 @@ export interface FoundationRepository {
     actorUserId: string;
     payload: Record<string, unknown>;
   }): Promise<DebtCollectionResultData>;
+  listCashbookEntries(input: {
+    organizationId: string;
+    financeAccountId?: string;
+    search?: string;
+    direction?: "in" | "out";
+    sourceType?: "payment_receipt_method" | "cashbook_voucher";
+    isBusinessAccounted?: boolean;
+    from?: string;
+    to?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<CashbookListData>;
+  getCashbookEntry(input: {
+    organizationId: string;
+    entryId: string;
+  }): Promise<CashbookEntryDetailData | null>;
+  getPaymentReceipt(input: {
+    organizationId: string;
+    receiptId: string;
+  }): Promise<PaymentReceiptDetailData | null>;
   listCashbookBalances(input: { organizationId: string }): Promise<CashbookBalanceData[]>;
   listCashbookVouchers(input: { organizationId: string }): Promise<{ items: CashbookVoucherData[]; total: number }>;
   listReconciliations(input: { organizationId: string }): Promise<{ items: ReconciliationData[]; total: number }>;

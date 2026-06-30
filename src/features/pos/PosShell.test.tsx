@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PosShell } from './PosShell'
 import type { CatalogService } from '../catalog/catalog-service'
+import type { OrderService } from '../orders/order-service'
 
 function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogService {
   return {
@@ -52,10 +53,21 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
   }
 }
 
+function makeOrderService(): OrderService {
+  return {
+    validateCart: vi.fn(),
+    checkout: vi.fn(),
+    listFinanceAccounts: vi.fn(async () => ({ items: [] })),
+    getCustomerDebt: vi.fn(),
+    listRecentCustomerProductPrices: vi.fn(async () => ({ items: [] })),
+  }
+}
+
 it('renders POS landmarks, profile identity, and active product grid', async () => {
   render(
     <PosShell
       catalogService={makeCatalogService()}
+      orderService={makeOrderService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
@@ -86,6 +98,7 @@ it('resolves prices again with the selected customer', async () => {
   render(
     <PosShell
       catalogService={service}
+      orderService={makeOrderService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },

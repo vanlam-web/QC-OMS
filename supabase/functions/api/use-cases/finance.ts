@@ -1,5 +1,6 @@
 import type {
   CashbookBalanceData,
+  CashbookEntryDetailData,
   CashbookVoucherData,
   CustomerDebtDetailData,
   CustomerDebtSummaryData,
@@ -8,6 +9,7 @@ import type {
   FoundationRepository,
   PermissionCode,
   ReconciliationData,
+  PaymentReceiptDetailData,
 } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 
@@ -85,6 +87,51 @@ export async function listCashbookBalances(
 ): Promise<{ items: CashbookBalanceData[] }> {
   requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
   return { items: await repository.listCashbookBalances({ organizationId: context.organizationId }) };
+}
+
+export async function listCashbookEntries(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  url: URL,
+) {
+  requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
+  const { page, pageSize } = parsePagedSearch(url);
+  const search = url.searchParams.get("search")?.trim() || undefined;
+  const isExactVoucherSearch = search !== undefined && /^[A-Z]{2,}[A-Z0-9]*[0-9]{3,}(?:\.[0-9]{2})?$/.test(search);
+  return await repository.listCashbookEntries({
+    organizationId: context.organizationId,
+    financeAccountId: url.searchParams.get("finance_account_id")?.trim() || undefined,
+    search,
+    direction: parseOptionalEnum(url.searchParams.get("direction"), ["in", "out"]),
+    sourceType: parseOptionalEnum(url.searchParams.get("source_type"), ["payment_receipt_method", "cashbook_voucher"]),
+    isBusinessAccounted: parseOptionalBoolean(url.searchParams.get("is_business_accounted")),
+    from: isExactVoucherSearch ? undefined : url.searchParams.get("from")?.trim() || undefined,
+    to: isExactVoucherSearch ? undefined : url.searchParams.get("to")?.trim() || undefined,
+    page,
+    pageSize,
+  });
+}
+
+export async function getCashbookEntry(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  entryId: string,
+): Promise<CashbookEntryDetailData> {
+  requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
+  const result = await repository.getCashbookEntry({ organizationId: context.organizationId, entryId });
+  if (result === null) throw notFound();
+  return result;
+}
+
+export async function getPaymentReceipt(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  receiptId: string,
+): Promise<PaymentReceiptDetailData> {
+  requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
+  const result = await repository.getPaymentReceipt({ organizationId: context.organizationId, receiptId });
+  if (result === null) throw notFound();
+  return result;
 }
 
 export async function listCashbookVouchers(
