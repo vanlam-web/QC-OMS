@@ -261,6 +261,7 @@ Source of Truth kỹ thuật còn cần tạo sau Business:
 
 - Bán thiếu tồn: cảnh báo nhưng vẫn cho bán tiếp, tồn có thể âm.
 - MVP tạo/lưu đơn bán chính thức là mốc trừ kho.
+- Hàng đợi máy trạm vẫn được gửi thông báo vào POS để tạo hóa đơn nháp; nháp này chưa trừ kho cho tới khi chốt/lưu hóa đơn.
 - Dữ liệu máy sản xuất dùng để đối soát, không tự trừ kho trong MVP.
 - Mỗi sản phẩm có một đơn vị tồn chính; đơn vị bán phụ phải quy đổi.
 - Hàng cuộn quản lý theo từng cuộn vật lý, không sửa tổng tồn trực tiếp.
