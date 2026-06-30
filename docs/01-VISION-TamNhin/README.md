@@ -8,7 +8,7 @@
 
 ## 🎯 Tầm nhìn
 
-Hệ thống OMS chuyên biệt cho xưởng quảng cáo Văn Lâm, đồng bộ Realtime từ máy trạm đến quầy thu ngân. Kiến trúc chuẩn chỉnh, sẵn sàng đóng gói SaaS.
+Hệ thống OMS chuyên biệt cho xưởng quảng cáo Văn Lâm, đồng bộ Realtime từ máy sản xuất đến quầy thu ngân. Kiến trúc chuẩn chỉnh, sẵn sàng đóng gói SaaS.
 
 ## 👥 Phân quyền
 

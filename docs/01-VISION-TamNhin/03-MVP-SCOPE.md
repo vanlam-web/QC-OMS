@@ -24,7 +24,7 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 | Nhom | Noi dung giu |
 |---|---|
 | POS ban hang | Ban dut tai quay, bao gia, mo lai bao gia de checkout thanh hoa don |
-| Hang doi may tram | May tram/may san xuat gui thong bao vao POS de nhan vien tao hoa don nhap; thong bao nay chi la dau vao thao tac, chua phai ton kho/doanh thu |
+| Hang doi may san xuat | May san xuat gui thong bao vao POS de nhan vien tao hoa don nhap; thong bao nay chi la dau vao thao tac, chua phai ton kho/doanh thu |
 | Chung tu ban hang | Bao gia `BG...`, hoa don `HD...`, hoa don sua dang `MaCu.01`, chung tu da huy |
 | Khach hang | Ma khach, ten khach, SĐT tuy chon/unique neu co, nhom khach, bang gia, lich su ban, cong no |
 | Bang gia | Bang gia chung, bang gia theo nhom khach, gia sua tay luu lich su theo khach + san pham |
@@ -63,7 +63,7 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 |---|---|
 | Nha cung cap/Purchase | Khi chot nhap kho vat ly theo cuon/tam, gia von va cong no NCC |
 | Gia von/lai lo day du | Khi Purchase, chi phi san xuat va phuong phap gia von da chot |
-| May san xuat tu tru kho | Khi giai quyet duoc cach doi soat/chot tru kho tu du lieu may san xuat; MVP van cho may tram tao hoa don nhap, nhung kho chi tru theo hoa don da luu |
+| May san xuat tu tru kho | Khi giai quyet duoc cach doi soat/chot tru kho tu du lieu may san xuat; MVP van cho may san xuat gui thong bao de tao hoa don nhap, nhung kho chi tru theo hoa don da luu |
 | Production/Work Orders | Neu sau nay can quan ly viec can san xuat/cho lay hang rieng voi POS |
 | Gui tin tu dong | Sau khi bill, khach hang va log gui on dinh; hien tai chi ho tro mo/copy de nhan vien gui |
 
@@ -75,7 +75,7 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 2. Neu can luu thong tin phu nhu ten cong ty, MST, dia chi phap ly, chi xem la thong tin noi bo cua khach, khong mo luong HĐĐT/VAT.
 3. Bao gia khong giu hang, khong tru kho, khong tao doanh thu, khong tao so quy va khong tao cong no.
 4. Hoa don da luu la moc ghi nhan ban hang: tru kho, ghi thanh toan/cong no, so quy va bao cao.
-5. Thong bao may tram co the tao/sua hoa don nhap trong POS, nhung khong duoc tu dong tao stock movement khi chua chot hoa don.
+5. Thong bao may san xuat co the tao/sua hoa don nhap trong POS, nhung khong duoc tu dong tao stock movement khi chua chot hoa don.
 6. Doi voi spec moi tham khao KiotViet, phai doi chieu file nay truoc khi chuyen vao Source of Truth chi tiet.
 
 ---

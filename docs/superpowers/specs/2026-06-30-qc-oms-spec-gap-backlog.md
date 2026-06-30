@@ -261,7 +261,7 @@ Source of Truth kỹ thuật còn cần tạo sau Business:
 
 - Bán thiếu tồn: cảnh báo nhưng vẫn cho bán tiếp, tồn có thể âm.
 - MVP tạo/lưu đơn bán chính thức là mốc trừ kho.
-- Hàng đợi máy trạm vẫn được gửi thông báo vào POS để tạo hóa đơn nháp; nháp này chưa trừ kho cho tới khi chốt/lưu hóa đơn.
+- Hàng đợi máy sản xuất vẫn được gửi thông báo vào POS để tạo hóa đơn nháp; nháp này chưa trừ kho cho tới khi chốt/lưu hóa đơn.
 - Dữ liệu máy sản xuất dùng để đối soát, không tự trừ kho trong MVP.
 - Mỗi sản phẩm có một đơn vị tồn chính; đơn vị bán phụ phải quy đổi.
 - Hàng cuộn quản lý theo từng cuộn vật lý, không sửa tổng tồn trực tiếp.
@@ -368,13 +368,13 @@ Owner cần chốt:
 - Tấm lỡ dưới `0.3m2` mặc định bỏ có cần sinh lịch sử hủy không.
 - Dùng nội bộ có cần theo dõi ngay không.
 
-#### 3.10. Workstation queue và Integration máy sản xuất
+#### 3.10. Hàng đợi máy sản xuất và Integration máy sản xuất
 
 Source of Truth cần tạo/bổ sung:
 
 - Business Workstation hoặc Sales queue rule
 - Database queue/event/history tables
-- Backend Workstation queue API
+- Backend production queue API
 - Integration contract cho máy in/CNC
 
 Thiếu hiện tại:
@@ -442,7 +442,7 @@ Thiếu hiện tại:
 5. ~~Viết draft Order persistence: nháp, báo giá, hóa đơn, snapshot dòng hàng.~~ Đã cập nhật `POS-ORDER-LIFECYCLE.md`, `POS-TABLES.md` và tạo `ORDER-API.md`.
 6. Viết Finance/Checkout spec: payment, cashbook, debt allocation, idempotency. Đã tạo `03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`; còn cần Database/API cho Finance và Checkout idempotency.
 7. Viết Inventory policy draft trước khi động đến BOM/khui vật tư sâu.
-8. Viết Workstation queue + Integration contract cho Phase 6.
+8. Viết Production queue + Integration contract cho Phase 6.
 9. Viết Bill/Printer/Messaging spec cho Phase 7.
 10. Viết Production/Backup/Monitoring trước Phase 8.
 

@@ -67,7 +67,7 @@ Khi cắt, hệ thống chạy thuật toán chia tấm thẳng. Phần diện t
 
 ## 3. Cơ chế "Cảnh báo khui động" (CHO CUỘN & TẤM)
 
-Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy trạm (K02-D)** hoặc màn hình điều phối file khi hệ thống phát hiện vật tư dùng dở hiện tại **không đủ** để đáp ứng lệnh sản xuất.
+Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy sản xuất (K02-D)** hoặc màn hình điều phối file khi hệ thống phát hiện vật tư dùng dở hiện tại **không đủ** để đáp ứng lệnh sản xuất.
 
 ---
 
@@ -86,7 +86,7 @@ Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy trạm 
 
 | Trạng thái | Xử lý |
 |---|---|
-| **Điều kiện kích hoạt** | Lệnh gia công CNC/Laser được chuyển xuống máy trạm. Hệ thống kiểm tra "Bể tấm lỡ khổ phù hợp" và "Tấm dở đang cắt tại máy" đều bằng 0 hoặc không có tấm nào đủ kích thước để chứa phôi cắt của đơn hàng. |
+| **Điều kiện kích hoạt** | Lệnh gia công CNC/Laser được chuyển xuống máy sản xuất. Hệ thống kiểm tra "Bể tấm lỡ khổ phù hợp" và "Tấm dở đang cắt tại máy" đều bằng 0 hoặc không có tấm nào đủ kích thước để chứa phôi cắt của đơn hàng. |
 | **Cảnh báo** | Hệ thống hiển thị: `"Không có tấm lỡ phù hợp. Cần bẻ tấm nguyên!"` kèm Icon động `[⚠️ 🍾 Khui tấm mới]`. |
 | **Hành động thợ** | Thợ lấy tấm Alu/Mica nguyên khổ `1.22m × 2.44m` đặt lên bàn máy, click `[⚠️ 🍾 Khui tấm mới]`. |
 | **Xử lý ngầm** | (1) Trừ -1 Tấm nguyên trong Kho tổng lớn. (2) Tạo phiên làm việc tấm dở hiện tại. (3) Phần thừa còn lại (nếu đạt chuẩn giữ lại) được treo "Chờ thu hồi" hoặc nạp thẳng vào danh sách Tấm lỡ khổ ngay khi máy chạy xong. |
@@ -147,7 +147,7 @@ Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy trạm 
 | **Khổ dài** (Bạt/Decal/PP) | Thợ chọn đúng Khổ rộng cần khui (VD: bạt khổ 2.2m). Hệ thống ép cuộn dở cũ của khổ đó về 0 → Trừ 1 cuộn nguyên khổ 2.2m ở kho lớn để bù vào. |
 | **Tấm** (Alu/Mica) | Thợ chọn đúng khổ tấm. Hệ thống ép tấm dở cũ về 0 → Trừ 1 tấm nguyên khổ `1.22 × 2.44` ở kho lớn. |
 
-> **Tóm tắt luồng tổng:** Ngoài POS cứ bán `m²` tính tiền bình thường cho khách. Còn máy trạm của thợ in, thợ CNC tự động theo dõi số **mét dài** và **số tấm** thực tế để ép khui kho chính xác.
+> **Tóm tắt luồng tổng:** Ngoài POS cứ bán `m²` tính tiền bình thường cho khách. Còn máy sản xuất của thợ in, thợ CNC tự động theo dõi số **mét dài** và **số tấm** thực tế để ép khui kho chính xác.
 
 ---
 

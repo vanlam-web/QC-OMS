@@ -1,4 +1,4 @@
-# 04-K02D-HANG-DOI.md — K02-D: HÀNG ĐỢI MÁY TRẠM
+# 04-K02D-HANG-DOI.md — K02-D: HÀNG ĐỢI MÁY SẢN XUẤT
 
 > **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
@@ -8,7 +8,7 @@
 
 ## 0. Phạm vi đã chốt
 
-K02-D là hàng đợi thông báo từ máy trạm/máy sản xuất vào POS để nhân viên tạo hoặc bổ sung hóa đơn nháp.
+K02-D là hàng đợi thông báo từ máy sản xuất vào POS để nhân viên tạo hoặc bổ sung hóa đơn nháp.
 
 Ranh giới quan trọng:
 
@@ -71,7 +71,7 @@ Nhấn giữ Khối máy
    - Nếu có nhiều thông báo trùng tên file, vẫn hiển thị thành nhiều dòng riêng.
    - Nếu tên file quá dài, hiển thị rút gọn trên 1 dòng bằng dấu `...`; khi rê chuột hoặc chọn dòng thì xem được tên đầy đủ.
 
-Quy chuẩn sắp xếp mặc định cho toàn hệ thống sẽ được đặc tả sau; trong phạm vi K02-D hiện tại, danh sách thông báo máy trạm mặc định sắp xếp theo thời điểm nhận mới nhất ở trên.
+Quy chuẩn sắp xếp mặc định cho toàn hệ thống sẽ được đặc tả sau; trong phạm vi K02-D hiện tại, danh sách thông báo máy sản xuất mặc định sắp xếp theo thời điểm nhận mới nhất ở trên.
 
 Thời gian nhận chỉ để thu ngân phân biệt thông báo mới/cũ, không đưa vào hóa đơn nháp và không ảnh hưởng tính tiền.
 3. **Rê chuột vào 1 dòng** → Hiển thị 2 icon thao tác trên cùng dòng

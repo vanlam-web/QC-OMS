@@ -19,7 +19,7 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 || [K02-B] Ghi chú tổng toàn đơn hàng            | [K03-B] Nhắc bổ sung SĐT KH (Tự ẩn 8s)       |
 || [K02-C] Bộ đếm tổng m² & Tiền (Realtime)      | [K03-C] Lưới chọn nhanh sản phẩm (3 cột)     |
 ||-----------------------------------------------|----------------------------------------------|
-|| [K02-D] Hàng đợi máy trạm (IN BẠT/DECAL/CNC)       [K03-D] [BÁO GIÁ] / [THANH TOÁN] (F9)  |
+|| [K02-D] Hàng đợi máy sản xuất (IN BẠT/DECAL/CNC)   [K03-D] [BÁO GIÁ] / [THANH TOÁN] (F9)  |
 ================================================================================================
 ```
 
@@ -51,7 +51,7 @@ Loại bỏ hoàn toàn dải nút đáy cũ của KiotViet (Bán thường, Bá
 |---|---|
 | K02-A + K02-C: Giỏ hàng động & Bộ đếm tổng | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
 | K02-B: Ghi chú đơn hàng tổng | [03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md) |
-| K02-D: Hàng đợi máy trạm | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
+| K02-D: Hàng đợi máy sản xuất | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
 
 ---
 
@@ -94,7 +94,7 @@ Thu ngân bấm `BÁO GIÁ` để lưu mã `BG...` và gửi giá cho khách, ho
 | K02-A | Giỏ hàng động — Công thức tính m², form nhập ĐVT, giao diện Combo/BOM | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
 | K02-B | Ghi chú tổng toàn đơn hàng | [03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md) |
 | K02-C | Bộ đếm tổng m² & tiền realtime | [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) |
-| K02-D | Hàng đợi máy trạm — Danh sách tên file, nhập vào hóa đơn nháp / hủy thông báo | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
+| K02-D | Hàng đợi máy sản xuất — Danh sách tên file, nhập vào hóa đơn nháp / hủy thông báo | [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) |
 | K03-A | Hồ sơ đối tác — Tìm/thêm KH (`F4`), áp bảng giá và chiết khấu | [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) |
 | K03-B | Bong bóng Toast — Pop-over nhập nhanh SĐT khách hàng | [02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) |
 | K03-C | Lưới chọn nhanh sản phẩm (3 cột + phân trang) | [03-K03C-LUOI-SP.md](./K03/03-K03C-LUOI-SP.md) |

@@ -17,7 +17,7 @@ máy sản xuất thực tế chạy gì
 
 Trong MVP, dữ liệu này có hai vai trò tách biệt:
 
-- Hàng đợi máy trạm có thể đưa thông báo/file vào POS để nhân viên tạo hoặc bổ sung hóa đơn nháp.
+- Hàng đợi máy sản xuất có thể đưa thông báo/file vào POS để nhân viên tạo hoặc bổ sung hóa đơn nháp.
 - Kho chính thức vẫn chỉ trừ khi hóa đơn được lưu/chốt theo quy tắc bán hàng; dữ liệu máy sản xuất không tự động tạo bút toán kho.
 
 ---
@@ -28,7 +28,7 @@ Trong MVP, dữ liệu này có hai vai trò tách biệt:
 
 MVP không dùng dữ liệu máy sản xuất để tự động trừ kho chính thức.
 
-Máy trạm vẫn được gửi thông báo vào hàng đợi POS để tạo hóa đơn nháp. Dòng nháp sinh từ thông báo máy trạm chỉ là dữ liệu bán hàng chờ nhân viên kiểm tra/chốt, chưa phải bút toán kho.
+Máy sản xuất vẫn được gửi thông báo vào hàng đợi POS để tạo hóa đơn nháp. Dòng nháp sinh từ thông báo máy sản xuất chỉ là dữ liệu bán hàng chờ nhân viên kiểm tra/chốt, chưa phải bút toán kho.
 
 Lý do:
 
@@ -86,7 +86,7 @@ Spec sau phải chốt rõ:
 ## 5. Acceptance Criteria
 
 - Production data không tự tạo stock movement trong MVP.
-- Hàng đợi máy trạm vẫn có thể tạo hóa đơn nháp trong POS.
+- Hàng đợi máy sản xuất vẫn có thể tạo hóa đơn nháp trong POS.
 - Báo cáo đối soát hiển thị được chênh lệch giữa bill và máy chạy.
 - File chạy chưa khớp bill không làm thay đổi tồn kho.
 - Hệ thống vẫn có thể dùng dữ liệu máy sản xuất để cảnh báo và phân tích hao hụt tham khảo.

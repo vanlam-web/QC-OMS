@@ -21,7 +21,7 @@ Khối K02 (Chiếm **65%** bên trái màn hình) được xếp chồng theo c
 +-------------------------------------------------------------------------+
 | [K02-C] Thanh hiển thị: Tổng m² in: ... | TỔNG TIỀN HÀNG: ...           |
 +-------------------------------------------------------------------------+
-| [K02-D] Khối Hàng đợi Máy trạm dưới đáy [IN BẠT] [IN DECAL] [CẮT CNC]   |
+| [K02-D] Khối Hàng đợi Máy sản xuất dưới đáy [IN BẠT] [IN DECAL] [CẮT CNC] |
 +-------------------------------------------------------------------------+
 ```
 
@@ -32,7 +32,7 @@ Chi tiết từng khối con:
 | ---------------------------------------------- | -------------------------------------------- |
 | K02-A: Dòng sản phẩm động + BOM              | [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md)   |
 | K02-B: Ghi chú đơn hàng tổng                  | [03-K02B-GHI-CHU.md](./03-K02B-GHI-CHU.md)  |
-| K02-D: Hàng đợi máy trạm                      | [04-K02D-HANG-DOI.md](./04-K02D-HANG-DOI.md) |
+| K02-D: Hàng đợi máy sản xuất                  | [04-K02D-HANG-DOI.md](./04-K02D-HANG-DOI.md) |
 
 
 ---

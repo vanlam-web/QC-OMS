@@ -4,7 +4,7 @@
 
 ## 🎯 1. TẦM NHÌN PHÁT TRIỂN (VISION)
 
-**Hiện tại:** Hệ thống quản lý vận hành nội bộ (OMS) chuyên biệt cho xưởng quảng cáo Văn Lâm, đồng bộ Realtime từ máy trạm sản xuất đến quầy thu ngân.
+**Hiện tại:** Hệ thống quản lý vận hành nội bộ (OMS) chuyên biệt cho xưởng quảng cáo Văn Lâm, đồng bộ Realtime từ máy sản xuất đến quầy thu ngân.
 
 **Tương lai:** Kiến trúc chuẩn chỉnh, sẵn sàng đóng gói thành giải pháp thương mại (SaaS) độc lập để bán cho các xưởng quảng cáo khác.
 
