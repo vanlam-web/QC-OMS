@@ -27,12 +27,18 @@
         ├── [02-K03B-TOAST.md](./POS/K03/02-K03B-TOAST.md)            ← Bong bóng Toast SĐT (K03-B)
         ├── [03-K03C-LUOI-SP.md](./POS/K03/03-K03C-LUOI-SP.md)      ← Lưới sản phẩm nhanh (K03-C)
         └── [04-K03D-THANH-TOAN.md](./POS/K03/04-K03D-THANH-TOAN.md) ← Nút chốt đơn (K03-D)
-└── Inventory/                   ← Kho hàng & Hàng hóa
+├── Inventory/                   ← Kho hàng & Hàng hóa
     ├── [Inventory/README.md](./Inventory/README.md)
     ├── [Inventory/01-INVENTORY-LAYOUT.md](./Inventory/01-INVENTORY-LAYOUT.md)
     ├── [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md)
     ├── [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md)
     └── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
+└── Finance/                     ← Sổ quỹ, công nợ và đối soát
+    ├── [Finance/README.md](./Finance/README.md)
+    ├── [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md)
+    ├── [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md)
+    ├── [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md)
+    └── [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md)
 ```
 
 > Mỗi trang mới (Kho hàng, Nhân viên, Báo cáo...) sẽ có thư mục riêng cùng cấp với `POS/`.
@@ -57,6 +63,10 @@
 | Product Stock List | [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md) | 🔨 |
 | Roll/Sheet Objects | [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md) | 🔨 |
 | Stocktake UX | [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md) | 🔨 |
+| Finance Layout | [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md) | 🔨 |
+| Cashbook UX | [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md) | 🔨 |
+| Customer Debt UX | [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md) | 🔨 |
+| Reconciliation UX | [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md) | 🔨 |
 
 ---
 

@@ -56,11 +56,26 @@
 |---|---|---|
 | [02-PRD-UX-PhongCanh/POS/README.md](./02-PRD-UX-PhongCanh/POS/README.md) | Mục lục POS | ✅ |
 | [02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md](./02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md) | Bản đồ tổng thể màn hình POS | ✅ |
+
+#### Module Kho hàng & Hàng hóa
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
 | [02-PRD-UX-PhongCanh/Inventory/README.md](./02-PRD-UX-PhongCanh/Inventory/README.md) | Mục lục Kho hàng & Hàng hóa | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md](./02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md) | Bố cục tổng thể module Kho/Hàng hóa | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md](./02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md) | Danh sách hàng hóa, tồn kho, bộ lọc và thao tác chính | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
+
+#### Module Tài chính
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Finance/README.md](./02-PRD-UX-PhongCanh/Finance/README.md) | Mục lục Sổ quỹ, công nợ và đối soát | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/01-FINANCE-LAYOUT.md](./02-PRD-UX-PhongCanh/Finance/01-FINANCE-LAYOUT.md) | Bố cục tổng thể module Tài chính | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md](./02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md) | Sổ quỹ, số dư theo tiền mặt/tài khoản và phiếu thu/chi | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md](./02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md) | Công nợ khách hàng và thu nợ | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md](./02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md) | Đối soát cuối ngày theo quỹ/tài khoản | 🔨 |
 
 #### K01 — Thanh đỉnh (Top Bar)
 

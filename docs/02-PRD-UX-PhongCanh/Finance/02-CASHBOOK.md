@@ -1,0 +1,132 @@
+# CASHBOOK — UX sổ quỹ và phiếu thu/chi
+
+> **Trạng thái:** 🔨 Đang xây dựng
+> **Nguồn tham khảo UI:** KiotViet Sổ quỹ tiền mặt.
+
+---
+
+## 1. Mục đích
+
+Màn Sổ quỹ cho phép xem dòng tiền vào/ra và tạo phiếu thu/chi thủ công.
+
+MVP của QC-OMS hỗ trợ:
+
+- tiền mặt
+- tài khoản ngân hàng
+
+Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
+
+---
+
+## 2. Bố cục
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ Sổ quỹ                                     [Tìm mã phiếu] [+ Thu] [+ Chi] [Cột]    │
+├───────────────────────┬────────────────────────────────────────────────────────────┤
+│ Quỹ tiền              │ Tổng thu              Tổng chi              Tồn quỹ        │
+│ ○ Tiền mặt            │ 32,358,370           -19,857,000            25,761,570     │
+│ ○ MB Bank             ├────────────────────────────────────────────────────────────┤
+│ ○ Vietcombank         │ □ ☆ Mã phiếu | Thời gian | Loại thu chi | Người | Giá trị │
+│ ○ Tổng quỹ            │ CTM001170 | ... | Chi phí khác      | Tý    | -50,000     │
+│                       │ TTHD010973| ... | Thu tiền khách trả| KL2   | 114,000     │
+│ Thời gian             │                                                            │
+│ Loại chứng từ         │                                                            │
+│ Trạng thái            │                                                            │
+└───────────────────────┴────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Bộ lọc MVP
+
+| Bộ lọc | Giá trị |
+|---|---|
+| Quỹ tiền | Tiền mặt, từng tài khoản ngân hàng, tổng quỹ |
+| Thời gian | Hôm nay, tháng này, tùy chỉnh |
+| Loại chứng từ | Phiếu thu, phiếu chi |
+| Loại thu chi | Thu bán hàng, thu nợ, thu khác, chi mua vật tư, chi hoàn tiền, chi phí vận hành, chi khác |
+| Trạng thái | Đã ghi sổ, đã hủy |
+| Người tạo | Nhân viên |
+| Người nộp/nhận | Khách/nhà cung cấp/người nhận nếu có |
+
+---
+
+## 4. Summary
+
+| Card | Ý nghĩa |
+|---|---|
+| Tổng thu | Tổng dòng thu theo tài khoản/thời gian đang lọc |
+| Tổng chi | Tổng dòng chi theo tài khoản/thời gian đang lọc |
+| Tồn quỹ | Số dư hiệu lực theo tài khoản đang chọn |
+
+Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài khoản trong drilldown hoặc report phụ, không chỉ hiển thị một con số chung khi đối soát.
+
+---
+
+## 5. Bảng sổ quỹ
+
+| Cột | Ghi chú |
+|---|---|
+| Mã phiếu | Link mở chi tiết phiếu |
+| Thời gian | Ngày giờ ghi sổ |
+| Loại thu chi | Tên loại thu/chi |
+| Người nộp/nhận | Khách, nhân viên hoặc ghi chú |
+| Quỹ/tài khoản | Tiền mặt hoặc tên ngân hàng |
+| Giá trị | Thu dương, chi âm |
+| Trạng thái | Đã ghi sổ/đã hủy |
+
+---
+
+## 6. Phiếu thu/chi thủ công
+
+### Tạo phiếu thu
+
+Form tối thiểu:
+
+- quỹ/tài khoản nhận tiền
+- loại thu
+- số tiền
+- người nộp nếu có
+- lý do/ghi chú
+
+### Tạo phiếu chi
+
+Form tối thiểu:
+
+- quỹ/tài khoản chi tiền
+- loại chi
+- số tiền
+- người nhận nếu có
+- lý do/ghi chú
+
+### Sửa phiếu
+
+- Chỉ phiếu thủ công có nút sửa.
+- Sửa phiếu tạo phiên bản mới `MaCu.01`.
+- Phiếu cũ chuyển trạng thái đã hủy nhưng vẫn xem được.
+
+---
+
+## 7. Phiếu sinh từ POS/thu nợ
+
+Các phiếu sinh từ checkout POS hoặc thu nợ khách:
+
+- hiển thị trong sổ quỹ
+- mở xem chi tiết được
+- không có nút sửa rời
+- nếu cần sửa phải đi qua nghiệp vụ gốc
+
+---
+
+## 8. Acceptance Criteria UX
+
+1. Người dùng lọc được sổ quỹ theo tiền mặt hoặc từng tài khoản ngân hàng.
+2. Thu/chi hiển thị khác màu và dễ phân biệt.
+3. Tạo phiếu thu/chi thủ công không đi qua duyệt nhiều bước trong MVP.
+4. Phiếu thủ công sửa theo bản mới, không sửa đè.
+5. Phiếu từ POS/thu nợ không có nút sửa rời.
+
+---
+
+← [Quay về Finance README](./README.md)
