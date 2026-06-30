@@ -156,15 +156,23 @@ Không tạo báo cáo khách trả trước trong MVP vì hệ thống không t
 
 ---
 
-## 4. Câu hỏi cần Owner chốt
+## 4. Quyết định hiện tại / giả định để làm tiếp
 
-1. Báo cáo cuối ngày cần in/xuất file hay chỉ xem trên màn hình?
-2. Có cần chốt báo cáo cuối ngày thành một bản khóa lịch sử không, hay chỉ là báo cáo động?
-3. Doanh thu tính theo thời điểm checkout hay thời điểm thanh toán đủ?
-4. Hóa đơn còn nợ tính vào doanh thu ngày bán hay đợi thu đủ tiền?
-5. Báo cáo lợi nhuận có cần trong MVP không, khi giá vốn cuộn/tấm chưa chắc đã đủ?
-6. Có cần báo cáo theo nhân viên bán ngay từ đầu không?
-7. Báo cáo công nợ cần chia nhóm theo thời gian nợ bao lâu: 7/15/30 ngày hay chỉ danh sách nợ?
+Các điểm đã chuyển sang PRD-UX `Reports/01-END-OF-DAY.md`:
+
+- Báo cáo cuối ngày có nút in/xuất file.
+- Báo cáo cuối ngày là báo cáo động theo khoảng thời gian; phiên nhập số thực tế và chốt thuộc module Đối soát.
+- Doanh thu tính theo thời điểm checkout hóa đơn hoàn thành, không chờ thu đủ tiền.
+- Hóa đơn còn nợ vẫn tính vào doanh thu ngày bán; phần chưa thu đi vào công nợ mới.
+- Thực thu, tiền mặt và chuyển khoản phải khớp với Sổ quỹ trong cùng kỳ.
+- Chuyển khoản phải tách theo từng tài khoản ngân hàng.
+- Chứng từ sửa/hủy trong ngày phải hiện để kiểm tra.
+
+Các điểm để sau:
+
+- Báo cáo lợi nhuận chuẩn kế toán chưa làm khi chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
+- Báo cáo công nợ theo tuổi nợ 7/15/30 ngày để sau; trước mắt có danh sách nợ theo khách/hóa đơn và hóa đơn nợ lâu ngày.
+- Báo cáo nhân viên bán có thể làm sau báo cáo cuối ngày, khi phân quyền/nhân viên ổn định hơn.
 
 ---
 
@@ -172,7 +180,7 @@ Không tạo báo cáo khách trả trước trong MVP vì hệ thống không t
 
 - Báo cáo kênh bán online.
 - Báo cáo theo kênh bán nói chung.
-- Báo cáo VAT/HĐĐT.
+- Báo cáo VAT/HĐĐT/thuế kế toán.
 - Báo cáo trả hàng.
 - Báo cáo lợi nhuận chuẩn kế toán.
 - Báo cáo theo thương hiệu/thuộc tính như retail.

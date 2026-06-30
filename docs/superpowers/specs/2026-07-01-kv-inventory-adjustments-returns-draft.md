@@ -129,30 +129,28 @@ Owner đã chốt QC-OMS không có nghiệp vụ trả hàng trong POS MVP.
 
 ---
 
-## 4. Câu hỏi cần Owner chốt
+## 4. Quyết định hiện tại
 
-1. Có cần phiếu hủy vật tư riêng trong MVP không, hay chỉ cần thao tác sửa/tạo tấm lỡ rồi bỏ?
-2. Khi tấm lỡ dưới `0.3m2` mặc định bỏ, có cần tự sinh lịch sử hủy không?
-3. Vật tư hỏng ngoài sản xuất nên ghi bằng lý do `Hủy hỏng` hay cần nhiều lý do chi tiết?
-4. Có cần `Dùng nội bộ` trong MVP không, hay để sau?
-5. Nếu hóa đơn bán sai và khách muốn trả/hoàn tiền, có xử lý bằng sửa hóa đơn `.01` + phiếu chi thủ công đủ chưa?
+Owner đã chốt hướng tối giản:
+
+- Không làm các module riêng: Xuất dùng nội bộ, Trả hàng nhập, Trả hàng bán.
+- Không làm phiếu hủy nhiều bước nếu thao tác gây rườm rà.
+- Với tấm lỡ dưới `0.3m2`, mặc định bỏ.
+- Nếu tấm lỡ vẫn tận dụng được, phải có thao tác giữ lại/chỉnh sửa/xóa tấm lỡ để không trừ kho sai.
+- Vật tư hỏng ngoài sản xuất ghi lịch sử theo lý do tối giản, không cần module lớn.
+- Hóa đơn bán sai xử lý bằng sửa chứng từ `MaCu.01` và hủy chứng từ cũ; nếu có hoàn tiền đặc biệt thì dùng phiếu chi thủ công có ghi chú, không tạo nghiệp vụ trả hàng bán.
 
 ---
 
-## 5. Đề xuất tối giản để hỏi Owner
+## 5. Đề xuất SoT khi nâng lên PRD-UX
 
-Phương án khuyến nghị sau khi xét dữ liệu KiotViet dài hạn:
-
-- Không làm các module riêng: Xuất dùng nội bộ, Trả hàng nhập, Trả hàng bán.
-- Chỉ cân nhắc **Điều chỉnh giảm tồn / Hủy vật tư** ở mức rất gọn nếu Owner cần kiểm soát vật tư bỏ/hỏng.
-- Lý do gồm:
-  - Hủy hỏng.
-  - Tấm lỡ bỏ.
-  - Dùng nội bộ.
-  - Khác.
-- Nếu vẫn ít dùng, chỉ ghi lịch sử trong chi tiết vật tư/cuộn/tấm, chưa làm màn danh sách phiếu riêng.
-
-Nếu Owner thấy vẫn rườm rà:
+Khi chuyển draft này vào đặc tả chính, nên dùng mô hình:
 
 - Chỉ ghi lịch sử tự động cho các thao tác hủy/tấm bỏ đã phát sinh từ quản lý cuộn/tấm.
 - Chưa tạo màn danh sách phiếu riêng; xem lịch sử trong chi tiết vật tư/cuộn/tấm.
+- Lý do chuẩn ban đầu:
+  - `tam_lo_bo`
+  - `huy_hong`
+  - `dung_noi_bo`
+  - `khac`
+- Chỉ tạo màn danh sách điều chỉnh tồn riêng nếu sau này phát sinh nhiều thao tác cần kiểm tra tập trung.
