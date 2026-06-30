@@ -315,6 +315,23 @@ Owner cần chốt:
 - Có cần công nợ nhà cung cấp trong MVP không.
 - Giá vốn dùng phương pháp nào.
 
+#### 3.7B. MVP Scope lock
+
+Source of Truth đã tạo:
+
+- `docs/01-VISION-TamNhin/03-MVP-SCOPE.md`
+
+Đã chốt:
+
+- QC-OMS MVP là bán đứt tại xưởng, không copy các module KiotViet không dùng.
+- Không làm Đặt hàng KiotViet, vận đơn, COD, bán online, HĐĐT/VAT, thương hiệu retail, điểm thưởng, chấm công/lương/hoa hồng.
+- Báo giá chỉ là bản giá, không giữ hàng, không trừ kho, không tạo tiền/công nợ/doanh thu.
+- Purchase/Supplier, giá vốn/lợi nhuận đầy đủ, máy sản xuất tự trừ kho và gửi tin tự động để sau MVP.
+
+Ý nghĩa với implement:
+
+- Khi làm UI/API/DB mới, phải kiểm tra scope lock này trước khi thêm trường/chức năng từ KiotViet.
+
 #### 3.8. Reporting draft
 
 Draft tham khảo KiotViet đã tạo:

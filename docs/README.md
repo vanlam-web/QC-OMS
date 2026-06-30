@@ -39,6 +39,7 @@
 | [01-VISION-TamNhin/README.md](./01-VISION-TamNhin/README.md) | Mục lục tầm nhìn | ✅ |
 | [01-VISION-TamNhin/01-VISION.md](./01-VISION-TamNhin/01-VISION.md) | Vision, Mission, Giá trị cốt lõi | ✅ |
 | [01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md](./01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md) | Dich den cuoi cung: QC-OMS la he thong duy nhat thay QuanLyXuong cu | ✅ |
+| [01-VISION-TamNhin/03-MVP-SCOPE.md](./01-VISION-TamNhin/03-MVP-SCOPE.md) | Pham vi MVP hien tai: trong scope, ngoai scope va cac phan de sau | ✅ |
 | [01-VISION-TamNhin/_RULES.md](./01-VISION-TamNhin/_RULES.md) | Quy tắc layer 01 | ✅ |
 
 ---
@@ -66,6 +67,7 @@
 | [02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md](./02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md) | Danh sách hàng hóa, tồn kho, bộ lọc và thao tác chính | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md](./02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md) | Điều chỉnh tồn, hủy vật tư và lý do giảm tồn tối giản | 🔨 |
 
 #### Module Chứng từ bán hàng
 
