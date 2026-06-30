@@ -1,0 +1,344 @@
+# QC-OMS Spec Gap Backlog — Draft
+
+> Ngày lập: 2026-06-30  
+> Trạng thái: Draft điều phối, không phải Source of Truth nghiệp vụ  
+> Mục tiêu: Ghi lại các phần đặc tả còn thiếu sau khi rà `docs/`, để ưu tiên viết tiếp mà không sửa chồng lên luồng implementation hiện tại.
+
+---
+
+## 1. Phạm vi rà soát
+
+Đã rà cấu trúc và quy tắc tài liệu:
+
+- `AI_TEAM_RULES.md`
+- `docs/DOCUMENT_RULES.md`
+- `_RULES.md` của các tầng 00-07
+- `docs/README.md`
+- `docs/DEVELOPMENT-PLAN.md`
+- `docs/PHASE-CHECKLIST.md`
+- `docs/AUDIT-V2.md`
+- nhóm PRD-UX POS, Business Sales, Database, Backend, Integration và Deployment hiện có
+
+Nguyên tắc áp dụng:
+
+- File này chỉ là backlog/draft điều phối, không chốt business rule mới.
+- Khi một mục được làm thật, phải viết vào Source of Truth đúng tầng.
+- Nếu chưa chắc business rule, ưu tiên tạo draft riêng trước, rồi Owner chốt trước khi cập nhật SoT.
+- Tránh sửa trực tiếp các file đang có khả năng được luồng implementation sử dụng cho Phase 1A.
+
+---
+
+## 2. Trạng thái hiện tại
+
+### Đã tương đối ổn
+
+- Vision và target state đã có.
+- Phase 0 Foundation đã có spec, plan, checklist và tài liệu API/DB/Deployment tương ứng.
+- PRD-UX POS đã phủ khung chính K01/K02/K03 và nhiều tương tác người dùng.
+- Business Sales đã có các mảng nền:
+  - tính giỏ hàng
+  - vòng đời đơn POS/báo giá/hóa đơn
+  - checkout/thanh toán
+  - công nợ khách hàng
+- Database/System và Backend/Foundation đã chốt cho Giai đoạn 0.
+- Audit consistency cũ trong `AUDIT-V2.md` đã đánh dấu hoàn tất các patch lớn.
+
+### Còn lệch giữa roadmap và spec chi tiết
+
+Roadmap đã đi đến Giai đoạn 8, nhưng Source of Truth chi tiết mới chắc nhất ở Foundation và một phần POS/Sales. Các giai đoạn 1-7 vẫn cần viết dần theo tầng 02 -> 03 -> 04 -> 05 -> 06/07.
+
+---
+
+## 3. Khoảng trống đặc tả theo mức ưu tiên
+
+### P0 — Cần trước khi làm Phase 1B/Phase 1 ổn định
+
+#### 3.1. Product, Customer, Price List — Business
+
+Source of Truth đã tạo/cập nhật:
+
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md`
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-PRICING.md`
+
+Ghi chú còn lại:
+
+- Chưa cần tách `POS-PRODUCT-CATALOG.md` trong Phase 1; quy tắc sản phẩm liên quan tới bán hàng đang nằm trong `POS-PRICING.md`.
+- Database/API cho Customer, Product và Pricing vẫn cần đặc tả ở tầng 04/05 sau Business.
+
+Đã có trong PRD hiện tại:
+
+- F3 tìm theo mã hàng hoặc tên hàng hóa/dịch vụ; không tìm theo viết tắt tự chế.
+- F3 hỗ trợ tìm không dấu và không phân biệt cách nhập dấu tiếng Việt.
+- F3 không hỗ trợ QR/barcode scan, không có nút quét mã cạnh ô tìm kiếm.
+- POS không cho tạo nhanh hàng hóa từ dropdown tìm kiếm; tạo mới hàng hóa thuộc module Danh mục hàng hóa.
+- K03-C chỉ hiển thị sản phẩm/dịch vụ đang bật bán trên POS.
+
+Đã chốt bởi Owner:
+
+- SĐT khách hàng không được trùng trong phạm vi dữ liệu của xưởng/organization.
+- Cho phép tạo khách hàng không có SĐT.
+- Mỗi khách hàng bắt buộc có mã khách và tên khách.
+- Nếu khi tạo khách không nhập mã khách, hệ thống tự sinh mã khách dạng `KH000001`, `KH000002`, tăng dần trong phạm vi xưởng/organization.
+- Mã khách không được trùng trong phạm vi xưởng/organization, dù là nhập tay hay tự sinh.
+- Khách hàng có thể thuộc một nhóm khách; nhóm khách quyết định bảng giá áp dụng.
+- Khách hàng không gán nhóm vẫn hợp lệ; khi đó POS áp dụng bảng giá chung.
+- Khi đổi khách trên đơn, giá các dòng hàng được cập nhật theo bảng giá của nhóm khách mới.
+- Giá mặc định khi bán hàng luôn lấy theo bảng giá của nhóm khách.
+- Nếu nhân viên sửa giá khác bảng giá, đó là giá sửa tay cho lần bán đó; không tự cập nhật ngược vào bảng giá.
+- Giá sửa tay được lưu vào lịch sử giá theo cặp khách hàng + sản phẩm.
+- Lần sau bán cùng khách hàng + sản phẩm, POS vẫn hiện giá mặc định theo bảng giá nhóm khách trước.
+- POS có một nút nhỏ để xem giá gần đây; khi bấm nút, hiển thị 5 giá gần nhất để nhân viên chọn lại.
+- Nút xem giá gần đây chỉ hiện khi khách hàng đó đã có lịch sử giá riêng với sản phẩm đó.
+- Phase 1 không có chiết khấu riêng theo khách/nhóm khách. Mức ưu đãi được thể hiện bằng bảng giá của nhóm khách.
+- Sản phẩm ngưng bán không xuất hiện trong tìm kiếm POS bán hàng.
+- Sản phẩm ngưng bán chỉ được tìm thấy trong danh sách sản phẩm ở trang Hàng hóa, thông qua bộ lọc trạng thái.
+- Không bán trực tiếp theo đơn vị `Cuộn`; vật tư dạng cuộn được quy đổi ra `m²` khi bán.
+- `Tấm` chủ yếu bán theo đơn vị `m` ghi là mét tới: ví dụ tấm khổ `2.44 x 1.22`, bán `1 m tới` nghĩa là bán phần `1 m x 1.22 m`.
+- Với sản phẩm bán theo `m tới`, bảng giá lưu giá theo `1 m tới`, không phải giá theo `m²`.
+- `Tấm` vẫn có thể bán nguyên tấm hoặc quy đổi/bán theo `m²` khi nghiệp vụ cần.
+- `Cái` trong tài liệu hiện tại là cách nói chung cho nhóm hàng bán theo số lượng; về sau có thể có nhiều tên đơn vị cụ thể khác.
+
+Lý do ưu tiên:
+
+- Giai đoạn 1 cần sản phẩm, khách hàng và bảng giá.
+- Database hiện có `customers`, `price_lists`, `products` nhưng schema còn một phần và chưa đủ quyết định chuẩn hóa.
+- Backend README đang ghi Customers/Order/Checkout chưa có API riêng.
+
+#### 3.2. Price List — Database decision
+
+Source of Truth đã cập nhật:
+
+- `docs/04-DATABASE/Sales/POS-TABLES.md`
+- `docs/04-DATABASE/01-ERD.md`
+
+Đã chốt:
+
+- Bảng giá dùng mô hình chuẩn hóa `price_lists` + `price_list_items`, không dùng `discount_items jsonb`.
+- Sales Phase 1 có `organization_id` để scope dữ liệu theo xưởng/organization.
+- `customers`, `customer_groups`, `price_lists`, `price_list_items`, `products` và `customer_product_price_history` đã được đặc tả.
+- Constraint chính cho mã khách, SĐT chuẩn hóa, mã bảng giá, mã sản phẩm, trạng thái sản phẩm và đơn giá đã được ghi trong `POS-TABLES.md`.
+
+Ghi chú còn lại:
+
+- Cần chốt kỹ thuật cụ thể cho index/cột phụ phục vụ tìm kiếm không dấu khi viết migration hoặc Backend search API.
+
+#### 3.2B. Customer/Product/Pricing — Backend API
+
+Source of Truth đã tạo:
+
+- `docs/05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md`
+
+Đã chốt:
+
+- POS lookup/create customer và đọc giá dùng `perm.create_order`.
+- Quản lý sản phẩm, nhóm khách, bảng giá và chi tiết bảng giá dùng `perm.edit_price_book`.
+- Product search trên POS luôn ép `status = active`.
+- `/pricing/resolve` trả giá theo nhóm khách, bảng giá chung hoặc fallback bảng giá chung.
+- Lịch sử giá gần đây chỉ đọc tối đa 5 giá; việc ghi lịch sử thuộc order/checkout khi chứng từ bán được lưu.
+
+---
+
+### P1 — Cần trước Phase 2-4
+
+#### 3.3. Order draft và Order persistence
+
+Source of Truth cần bổ sung:
+
+- Business: mở rộng `POS-ORDER-LIFECYCLE.md`
+- Database: orders, order_items, draft/session tables nếu cần
+- Backend: `POS/ORDER-API.md`
+
+Thiếu hiện tại:
+
+- Ranh giới giữa nháp LocalStorage và dữ liệu lưu server.
+- Khi nào nháp có ID server.
+- Điều kiện khôi phục tab sau reload/khởi động lại.
+- Quy tắc khóa/sửa đơn khi báo giá đã lưu hoặc hóa đơn đã thanh toán.
+- Snapshot giá, tên sản phẩm, khách hàng tại thời điểm báo giá/hóa đơn.
+
+Rủi ro:
+
+- Nếu Phase 2 triển khai cart chỉ ở FE quá lâu, Phase 3-4 sẽ phải đổi mô hình dữ liệu.
+
+#### 3.4. Checkout API, payment, cashbook và debt allocation
+
+Source of Truth cần bổ sung:
+
+- Business: rà `POS-CHECKOUT.md` và `POS-CUSTOMER-DEBT.md`
+- Database: Finance tables
+- Backend: `POS/CHECKOUT-API.md`
+
+Thiếu hiện tại:
+
+- Schema payments, cashbook, debt transactions, debt allocations.
+- Idempotency key và chống bấm thanh toán hai lần.
+- Transaction boundary checkout.
+- Error code khi checkout fail một phần.
+- Cách rollback/đảo giao dịch khi hủy hóa đơn.
+
+Owner cần chốt:
+
+- Có cho khách trả trước/số dư âm ngay trong MVP không.
+- Chính sách sửa/hủy hóa đơn đã phát sinh công nợ.
+
+---
+
+### P2 — Cần trước Phase 4-5
+
+#### 3.5. Inventory domain
+
+Source of Truth cần tạo:
+
+- `docs/03-BUSINESS-NghiepVu/Inventory/README.md`
+- các file rule nhập/xuất/tồn/kho vật tư
+- `docs/04-DATABASE/Inventory/`
+- `docs/05-BACKEND-MayChu/Inventory/`
+
+Thiếu hiện tại:
+
+- Chính sách tồn âm.
+- Quy tắc trừ kho khi bán hàng thường, m2, Combo/BOM.
+- Quy đổi m2 sang mét dài/tấm.
+- Lot/batch, cuộn/tấm đang dùng dở, hao hụt.
+- Domain event nghiệp vụ cho stock movement.
+
+Rủi ro:
+
+- PRD có luồng khui vật tư và BOM khá giàu, nhưng Business Inventory chưa có. Không nên chốt schema hoặc backend sâu trước khi Owner chốt chính sách kho.
+
+Owner cần chốt:
+
+- Bán thiếu tồn thì chặn, cảnh báo rồi cho qua, hay cho âm có quyền.
+- Hao hụt được ghi theo đơn, theo thao tác khui, hay theo kiểm kho riêng.
+
+#### 3.6. BOM/Combo business
+
+Source of Truth cần bổ sung:
+
+- Business Sales hoặc Inventory tùy ranh giới cuối cùng.
+- Database BOM tables.
+- Backend validation chống vòng lặp BOM.
+
+Thiếu hiện tại:
+
+- BOM cấp 1/cấp 2 là cấu trúc bán hàng hay cấu trúc vật tư sản xuất.
+- Quy tắc chỉnh BOM trong đơn có lưu thành combo mới hay chỉ snapshot trong đơn.
+- Cách tính giá bán combo so với tổng chi phí vật tư.
+- Cách deep-scan khi checkout và khi preview.
+
+---
+
+### P3 — Cần trước Phase 6-7
+
+#### 3.7. Workstation queue và Integration máy sản xuất
+
+Source of Truth cần tạo/bổ sung:
+
+- Business Workstation hoặc Sales queue rule
+- Database queue/event/history tables
+- Backend Workstation queue API
+- Integration contract cho máy in/CNC
+
+Thiếu hiện tại:
+
+- Hợp đồng file/event thực tế từ máy sản xuất.
+- Parser filename canonical.
+- Atomic claim khi hai POS cùng xử lý một thông báo.
+- Lưu lịch sử 10 ngày ở DB/Backend.
+- Quy tắc quyền thêm/hủy/khôi phục/sửa kích thước.
+
+Owner/Technical cần chốt:
+
+- Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
+- Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
+
+#### 3.8. Bill, Printer, Zalo/Facebook send support
+
+Source of Truth cần tạo:
+
+- Integration Printer
+- Integration Zalo/Facebook hoặc Messaging
+- Database bill templates/config
+- Backend bill config API nếu cần
+
+Thiếu hiện tại:
+
+- Mẫu bill canonical và biến dữ liệu.
+- Cấu hình máy in theo POS/workstation.
+- Cơ chế render ảnh bill.
+- Ranh giới MVP: chỉ copy/mở nơi gửi, chưa gửi tự động.
+- Lỗi môi trường khi không mở được app/web gửi tin.
+
+---
+
+### P4 — Cần trước Production
+
+#### 3.9. Deployment production, backup, RPO/RTO
+
+Source of Truth cần bổ sung:
+
+- `docs/07-DEPLOYMENT-TrienKhai/PRODUCTION.md`
+- `docs/07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md`
+- monitoring/alerting runbook
+
+Thiếu hiện tại:
+
+- RPO/RTO.
+- Backup schedule và restore drill.
+- Alert cụ thể cho checkout fail, DB error, queue lag, realtime disconnect.
+- Quy trình rollback app + corrective migration.
+
+---
+
+## 4. Thứ tự làm tiếp đề xuất
+
+1. ~~Viết draft Business cho Customer/Product/Pricing.~~ Đã chuyển vào `03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md` và `POS-PRICING.md`.
+2. ~~Chốt schema bảng giá: JSONB hay `price_list_items`.~~ Đã chốt `price_list_items`.
+3. ~~Viết Database Sales Phase 1: customers/products/price lists chuẩn hóa, index tìm kiếm.~~ Đã cập nhật `04-DATABASE/Sales/POS-TABLES.md`.
+4. ~~Viết Backend APIs Phase 1: product search, customer CRUD/search, price resolution.~~ Đã tạo `05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md`.
+5. ~~Viết draft Order persistence: nháp, báo giá, hóa đơn, snapshot dòng hàng.~~ Đã cập nhật `POS-ORDER-LIFECYCLE.md`, `POS-TABLES.md` và tạo `ORDER-API.md`.
+6. Viết Finance/Checkout spec: payment, cashbook, debt allocation, idempotency. Đã tạo `03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`; còn cần Database/API cho Finance và Checkout idempotency.
+7. Viết Inventory policy draft trước khi động đến BOM/khui vật tư sâu.
+8. Viết Workstation queue + Integration contract cho Phase 6.
+9. Viết Bill/Printer/Messaging spec cho Phase 7.
+10. Viết Production/Backup/Monitoring trước Phase 8.
+
+Khuyến nghị cho luồng hiện tại:
+
+- Nếu luồng implementation đang ở Phase 1A, không cần đụng các file SoT POS hiện tại.
+- Luồng spec nên đi trước bằng draft ở `docs/superpowers/specs/` cho các quyết định còn thiếu, sau đó mới chuyển từng phần đã chốt vào đúng tầng.
+
+---
+
+## 5. Quyết định Owner còn mở
+
+Đã chốt và gom vào draft `2026-06-30-customer-product-pricing-design.md`:
+
+- SĐT khách hàng không được trùng trong cùng organization nếu có nhập.
+- Khách được phép không có SĐT.
+- Khách bắt buộc có mã khách và tên khách; mã khách có thể tự sinh dạng `KH000001`.
+- Khách có nhóm dùng bảng giá nhóm; khách không nhóm dùng bảng giá chung.
+- Phase 1 không có chiết khấu riêng ngoài bảng giá.
+- Giá sửa tay không cập nhật ngược vào bảng giá; được lưu lịch sử theo khách hàng + sản phẩm.
+- POS chỉ bán sản phẩm đang bán; sản phẩm ngưng bán chỉ xem ở trang Hàng hóa qua bộ lọc trạng thái.
+- Không bán trực tiếp theo cuộn; tấm chủ yếu bán theo mét tới và giá theo `1 m tới`.
+
+Còn cần Owner quyết định ở các phase sau:
+
+- Nháp hóa đơn lưu server từ Phase 2 hay chỉ LocalStorage cho tới khi báo giá/thanh toán.
+- Chính sách bán âm kho trong MVP.
+- Khách trả trước hoặc số dư âm có nằm trong MVP.
+- Cơ chế máy sản xuất gửi event trong pilot: file watcher, API, webhook hoặc simulator.
+- Bill gửi khách ở MVP chỉ mở app/copy ảnh hay cần gửi tự động qua API chính thức.
+
+---
+
+## 6. Definition of Ready cho từng spec tiếp theo
+
+Một spec được xem là sẵn sàng chuyển từ draft sang SoT khi:
+
+- Đã xác định đúng tầng sở hữu.
+- Không có business rule mơ hồ cần Owner chốt.
+- Có danh sách file liên tầng cần cập nhật.
+- Có acceptance criteria đủ để implementation/test dùng.
+- Không sao chép lại nội dung đã thuộc tầng khác; chỉ tham chiếu bằng link tương đối.

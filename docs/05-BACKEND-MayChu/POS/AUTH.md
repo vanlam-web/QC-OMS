@@ -21,7 +21,7 @@ Trang Quản lý tài khoản (back-office, ngoài POS)
     ↓
 Admin click [Tạo tài khoản mới] hoặc [Sửa tài khoản]
     ↓
-Hiển thị form: Tên / Mã máy trạm / Mật khẩu / ...
+Hiển thị form: Tên / Email / Mật khẩu / ...
     ↓
 Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
     ☑ perm.view_shift_report

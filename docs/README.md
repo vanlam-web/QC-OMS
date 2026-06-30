@@ -92,8 +92,14 @@
 |---|---|---|
 | [03-BUSINESS-NghiepVu/_RULES.md](./03-BUSINESS-NghiepVu/_RULES.md) | Quy tắc layer 03 | ✅ |
 | [03-BUSINESS-NghiepVu/Sales/README.md](./03-BUSINESS-NghiepVu/Sales/README.md) | Mục lục nghiệp vụ Sales | 🔨 |
+| [03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md](./03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md) | Nghiệp vụ khách hàng POS | 🔨 |
+| [03-BUSINESS-NghiepVu/Sales/POS-PRICING.md](./03-BUSINESS-NghiepVu/Sales/POS-PRICING.md) | Nghiệp vụ giá bán POS | 🔨 |
 | [03-BUSINESS-NghiepVu/Sales/POS-ORDER-CALC.md](./03-BUSINESS-NghiepVu/Sales/POS-ORDER-CALC.md) | Nghiệp vụ tính tiền đơn POS | 🔨 |
+| [03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md](./03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md) | Nghiệp vụ vòng đời đơn POS | 🔨 |
 | [03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md](./03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md) | Nghiệp vụ chốt đơn POS | 🔨 |
+| [03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md](./03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) | Nghiệp vụ công nợ khách hàng | 🔨 |
+| [03-BUSINESS-NghiepVu/Finance/README.md](./03-BUSINESS-NghiepVu/Finance/README.md) | Mục lục nghiệp vụ Finance | 🔨 |
+| [03-BUSINESS-NghiepVu/Finance/CASHBOOK.md](./03-BUSINESS-NghiepVu/Finance/CASHBOOK.md) | Nghiệp vụ sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
 
 ---
 
@@ -104,7 +110,7 @@
 | [04-DATABASE/README.md](./04-DATABASE/README.md) | Mục lục Database | ✅ |
 | [04-DATABASE/_RULES.md](./04-DATABASE/_RULES.md) | Quy tắc layer 04 | ✅ |
 | [04-DATABASE/Sales/README.md](./04-DATABASE/Sales/README.md) | Mục lục Schema Sales | 🔨 |
-| [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema bảng POS | 🔨 |
+| [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema POS: khách hàng, bảng giá, sản phẩm, báo giá và snapshot dòng hàng | 🔨 |
 
 ---
 
@@ -117,7 +123,9 @@
 | [05-BACKEND-MayChu/BACKEND_CONVENTIONS.md](./05-BACKEND-MayChu/BACKEND_CONVENTIONS.md) | Quy ước phát triển Backend | ✅ |
 | [05-BACKEND-MayChu/POS/README.md](./05-BACKEND-MayChu/POS/README.md) | Mục lục Backend POS | 🔨 |
 | [05-BACKEND-MayChu/POS/ARCHITECTURE.md](./05-BACKEND-MayChu/POS/ARCHITECTURE.md) | Kiến trúc Backend POS | 🔨 |
-| [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | API xác thực POS | 🔨 |
+| [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | Phân quyền POS | ✅ |
+| [05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md](./05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md) | API Customer, Product và Pricing POS | 🔨 |
+| [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá và vòng đời đơn POS | 🔨 |
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
 
 ---

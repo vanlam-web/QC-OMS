@@ -437,10 +437,10 @@ git commit -m "feat: add foundation API health route"
 Use an in-memory fake implementing the repository interface. Cover:
 
 ```ts
-Deno.test('GET /api/v1/me returns profile, organization, permissions and optional workstation')
+Deno.test('GET /api/v1/me returns profile, organization and permissions')
 Deno.test('GET /api/v1/me rejects a missing bearer token with AUTH_REQUIRED')
 Deno.test('GET /api/v1/me rejects an inactive profile with ACCOUNT_INACTIVE')
-Deno.test('GET /api/v1/me rejects a cross-organization workstation with WORKSTATION_INVALID')
+Deno.test('GET /api/v1/me returns no workstation requirement for account dashboard flow')
 ```
 
 Assert exact status, code, safe message, and the incoming `X-Request-Id` echoed as `trace_id`.
@@ -639,7 +639,7 @@ git commit -m "feat: add user and permission administration API"
 
 - [ ] **Step 1: Write failing API client tests**
 
-Test a fetch spy to prove the client sends bearer token, `X-Workstation-Id`, and `X-Request-Id`; parses the success envelope; and throws a typed `ApiError` preserving `status`, `code`, `message`, `traceId`, and optional field details.
+Test a fetch spy to prove the client sends bearer token and `X-Request-Id`, does not send workstation headers in Phase 0, parses the success envelope, and throws a typed `ApiError` preserving `status`, `code`, `message`, `traceId`, and optional field details.
 
 - [ ] **Step 2: Verify RED**
 

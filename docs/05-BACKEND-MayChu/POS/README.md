@@ -10,6 +10,8 @@
 |---|---|---|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | State Manager, LocalStorage, Concurrency Lock, Tab Overflow | Di chuyển từ PRD-UX 2026-06-26 |
 | [AUTH.md](./AUTH.md) | Permission-based Access Control — mã quyền, seed, audit log | Di chuyển từ PRD-UX 2026-06-26 |
+| [CUSTOMER-PRODUCT-PRICING-API.md](./CUSTOMER-PRODUCT-PRICING-API.md) | API Customer, Product và Pricing cho POS Phase 1 | Chốt từ Business/Database 2026-06-30 |
+| [ORDER-API.md](./ORDER-API.md) | API validate giỏ hàng, báo giá và vòng đời đơn POS | Bổ sung 2026-06-30 |
 | [TOAST-API.md](./TOAST-API.md) | API check/save phone — K03-B Toast | Di chuyển từ PRD-UX 2026-06-26 |
 
 ---
