@@ -9,7 +9,7 @@
 ```
 02-PRD-UX/
 ├── README.md                     ← (file này)
-└── POS/                         ← Trang Bán hàng
+├── POS/                         ← Trang Bán hàng
     ├── [01-POS-LAYOUT.md](./POS/01-POS-LAYOUT.md)                   ← Bản đồ tổng thể
     ├── [POS/README.md](./POS/README.md)                              ← Chỉ mục POS
     │
@@ -27,6 +27,12 @@
         ├── [02-K03B-TOAST.md](./POS/K03/02-K03B-TOAST.md)            ← Bong bóng Toast SĐT (K03-B)
         ├── [03-K03C-LUOI-SP.md](./POS/K03/03-K03C-LUOI-SP.md)      ← Lưới sản phẩm nhanh (K03-C)
         └── [04-K03D-THANH-TOAN.md](./POS/K03/04-K03D-THANH-TOAN.md) ← Nút chốt đơn (K03-D)
+└── Inventory/                   ← Kho hàng & Hàng hóa
+    ├── [Inventory/README.md](./Inventory/README.md)
+    ├── [Inventory/01-INVENTORY-LAYOUT.md](./Inventory/01-INVENTORY-LAYOUT.md)
+    ├── [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md)
+    ├── [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md)
+    └── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
 ```
 
 > Mỗi trang mới (Kho hàng, Nhân viên, Báo cáo...) sẽ có thư mục riêng cùng cấp với `POS/`.
@@ -47,6 +53,10 @@
 | K03-B: Toast SĐT | [POS/K03/02-K03B-TOAST.md](./POS/K03/02-K03B-TOAST.md) | 🔨 |
 | K03-C: Lưới sản phẩm | [POS/K03/03-K03C-LUOI-SP.md](./POS/K03/03-K03C-LUOI-SP.md) | 🔨 |
 | K03-D: Thanh toán | [POS/K03/04-K03D-THANH-TOAN.md](./POS/K03/04-K03D-THANH-TOAN.md) | 🔨 |
+| Inventory Layout | [Inventory/01-INVENTORY-LAYOUT.md](./Inventory/01-INVENTORY-LAYOUT.md) | 🔨 |
+| Product Stock List | [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md) | 🔨 |
+| Roll/Sheet Objects | [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md) | 🔨 |
+| Stocktake UX | [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md) | 🔨 |
 
 ---
 

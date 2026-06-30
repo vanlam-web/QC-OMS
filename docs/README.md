@@ -56,6 +56,11 @@
 |---|---|---|
 | [02-PRD-UX-PhongCanh/POS/README.md](./02-PRD-UX-PhongCanh/POS/README.md) | Mục lục POS | ✅ |
 | [02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md](./02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md) | Bản đồ tổng thể màn hình POS | ✅ |
+| [02-PRD-UX-PhongCanh/Inventory/README.md](./02-PRD-UX-PhongCanh/Inventory/README.md) | Mục lục Kho hàng & Hàng hóa | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md](./02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md) | Bố cục tổng thể module Kho/Hàng hóa | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md](./02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md) | Danh sách hàng hóa, tồn kho, bộ lọc và thao tác chính | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
 
 #### K01 — Thanh đỉnh (Top Bar)
 
