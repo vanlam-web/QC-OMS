@@ -4,11 +4,11 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 
 ## Trạng thái branch/worktree
 
-- Main working branch: `tai_lieu_v1`
-- Phase 0 branch đã merge vào `tai_lieu_v1`: `codex/phase-0`
-- Phase 1A branch đang làm tiếp: `codex/phase-1a`
-- Phase 1A worktree:
-  `/Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1a`
+- Main working branch: `main`
+- Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
+- Phase 1B branch đang làm tiếp: `codex/phase-1b-customer-pricing`
+- Phase 1B worktree:
+  `/Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1b-customer-pricing`
 
 ## Phase 0 — Foundation
 
@@ -93,9 +93,9 @@ Status: ✅ Hoàn thành và đã merge vào `tai_lieu_v1`
   - Password: `postgres`
   - Database: `postgres`
 
-## Phase 1A — Real frontend app flow
+## Phase 1A — Foundation UI + Catalog/Pricing
 
-Status: 🟡 Đang làm trên branch `codex/phase-1a`
+Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
 ### Đã hoàn thành
 
@@ -120,57 +120,94 @@ Status: 🟡 Đang làm trên branch `codex/phase-1a`
   - [x] có `perm.create_order`
 - [x] `/workstation` load `GET /api/v1/workstations`.
 - [x] Chọn workstation lưu `qc_oms.workstation_id` và refresh `/me`.
+- [x] Admin foundation UI:
+  - [x] user list/search/filter
+  - [x] create user
+  - [x] active/inactive
+  - [x] replace permissions
+  - [x] permission catalog display
+- [x] Product catalog admin page `/products`.
+- [x] Sales catalog/pricing schema:
+  - [x] `products`
+  - [x] `price_lists`
+  - [x] `price_list_items`
+- [x] Catalog/pricing API:
+  - [x] `GET/POST/PATCH /api/v1/products`
+  - [x] `GET/POST/PATCH /api/v1/price-lists`
+  - [x] `PUT/DELETE /api/v1/price-lists/{id}/items/{product_id}`
+  - [x] `POST /api/v1/pricing/resolve`
+- [x] POS product grid chỉ hiển thị hàng active.
 
-### Verification đã pass trên `codex/phase-1a`
+### Verification đã pass
 
-- [x] `npm test`
-- [x] `npm run typecheck`
-- [x] `npm run lint`
-- [x] `npm run build`
+- [x] GitHub CI: 2 checks passed trước merge.
+- [x] Server `npm.cmd ci`
+- [x] Server `npm.cmd run lint`
+- [x] Server `npm.cmd run typecheck`
+- [x] Server `npm.cmd test`
+- [x] Server `npm.cmd run build`
+- [x] Server `npm.cmd run test:functions`
+- [x] Server `npm.cmd run supabase:reset`
+- [x] Server `npm.cmd run test:db`
+- [x] Server API smoke:
+  - [x] `/api/v1/health`
+  - [x] `/api/v1/me`
+  - [x] `/api/v1/products`
+  - [x] `/api/v1/pricing/resolve`
 
-### Còn lại đề xuất cho Phase 1A
+## Phase 1B — Customer selection and customer pricing
 
-- [ ] Tạo E2E user local bằng Admin API/script.
-- [ ] Kiểm thử thủ công flow thật:
-  - [ ] login
-  - [ ] gọi `/me`
-  - [ ] chọn workstation
-  - [ ] vào POS
-  - [ ] logout
-- [ ] Nối `AccessSync` vào `AuthProvider`/app shell thực tế.
-- [ ] Xử lý route khi `/me` trả:
-  - [ ] `ACCOUNT_INACTIVE`
-  - [ ] `WORKSTATION_INVALID`
-  - [ ] `PERMISSION_DENIED`
-- [ ] Thêm UI loading/error state cho bootstrap session.
-- [ ] Bỏ warning fast-refresh bằng cách tách hooks/context khỏi component file.
-- [ ] Merge `codex/phase-1a` về `tai_lieu_v1` sau khi manual flow ổn.
+Status: 🟡 Đang làm trên branch `codex/phase-1b-customer-pricing`
 
-## Phase 1B — Admin foundation UI
+### Đã hoàn thành trong branch
 
-Status: ⬜ Chưa bắt đầu
+- [x] Tạo implementation plan `docs/superpowers/plans/2026-06-30-phase-1b-customer-pricing.md`.
+- [x] Tạo migration customer/customer group:
+  - [x] `customer_groups`
+  - [x] `customers`
+  - [x] `normalize_customer_phone(text)`
+  - [x] `next_customer_code(uuid)`
+- [x] Thêm pgTAP test `005_sales_customers.test.sql`.
+- [x] Thêm customer/customer-group API route:
+  - [x] `GET/POST/PATCH /api/v1/customers`
+  - [x] `GET/POST/PATCH /api/v1/customer-groups`
+- [x] Cập nhật `/api/v1/pricing/resolve` nhận `customer_id`.
+- [x] Thêm POS customer panel:
+  - [x] tìm khách
+  - [x] tạo nhanh khách không bắt buộc SĐT
+  - [x] chọn/bỏ chọn khách
+  - [x] reload giá theo khách đã chọn
 
-- [ ] Workstation admin UI:
-  - [ ] list
-  - [ ] create
-  - [ ] edit code/name/status
-- [ ] User admin UI:
-  - [ ] list/search/filter
-  - [ ] detail
-  - [ ] create user
-  - [ ] active/inactive
-  - [ ] replace permissions
-- [ ] Permission catalog UI.
-- [ ] Error mapping UI cho validation/conflict/rate limit.
+### Cần verify trước khi merge Phase 1B
+
+- [x] Local `npm run lint`
+- [x] Local `npm run typecheck`
+- [x] Local `npm test`
+- [x] Local `npm run build`
+- [x] Local `npm run test:functions`
+- [x] Local `npm run test:e2e`
+- [ ] Server `npm.cmd run supabase:reset`
+- [ ] Server `npm.cmd run test:db`
+- [ ] Server API smoke:
+  - [ ] `/api/v1/customers`
+  - [ ] `POST /api/v1/customers` tự sinh mã `KH...`
+  - [ ] duplicate phone trả conflict
+  - [ ] `/api/v1/pricing/resolve` với `customer_id`
+
+### Ghi chú
+
+- Local dev hiện không kết nối được Postgres Supabase (`LegacyDbConnectError`), nên DB verification phải chạy trên server/shared Supabase.
+- Inventory Source of Truth đã có, nhưng chưa implement ở Phase 1B. Không thêm stock editing vào Product admin trong phase này.
 
 ## Phase 2 — POS business UI
 
 Status: ⬜ Chưa bắt đầu
 
-- [ ] Product search.
+- [x] Product quick grid cơ bản.
 - [ ] Cart lines.
 - [ ] Quantity/price/discount handling.
-- [ ] Customer/debt display.
+- [x] Customer search/create/select cơ bản trong branch Phase 1B.
+- [ ] Customer debt display.
 - [ ] Checkout/payment flow.
 - [ ] Receipt/bill preview.
 
@@ -180,8 +217,8 @@ Status: ⬜ Chưa bắt đầu
 # Main branch
 cd /Users/vanlam/Documents/project/QC-OMS
 
-# Phase 1A worktree
-cd /Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1a
+# Phase 1B worktree
+cd /Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1b-customer-pricing
 
 # Local Supabase
 npm run supabase:start
