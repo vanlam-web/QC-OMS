@@ -125,6 +125,7 @@
 | [04-DATABASE/Inventory/INVENTORY-TABLES.md](./04-DATABASE/Inventory/INVENTORY-TABLES.md) | Schema Inventory: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 |
 | [04-DATABASE/Finance/README.md](./04-DATABASE/Finance/README.md) | Mục lục Schema Finance | 🔨 |
 | [04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md](./04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md) | Schema Finance: thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 |
+| [04-DATABASE/Finance/CASHBOOK-TABLES.md](./04-DATABASE/Finance/CASHBOOK-TABLES.md) | Schema Finance: sổ quỹ, phiếu thu/chi thủ công và đối soát cuối ngày | 🔨 |
 
 ---
 

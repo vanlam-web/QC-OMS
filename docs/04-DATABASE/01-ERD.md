@@ -74,7 +74,7 @@ erDiagram
 
 ## 4. FINANCE
 
-Hiện có đặc tả một phần tại [Finance/PAYMENT-DEBT-TABLES.md](./Finance/PAYMENT-DEBT-TABLES.md), gồm quỹ/tài khoản, phiếu thu, phương thức thu, công nợ theo hóa đơn và phân bổ tiền trả nợ.
+Hiện có đặc tả một phần tại [Finance/PAYMENT-DEBT-TABLES.md](./Finance/PAYMENT-DEBT-TABLES.md) và [Finance/CASHBOOK-TABLES.md](./Finance/CASHBOOK-TABLES.md), gồm quỹ/tài khoản, phiếu thu, phương thức thu, công nợ theo hóa đơn, phân bổ tiền trả nợ, sổ quỹ và đối soát.
 
 ```mermaid
 erDiagram
@@ -88,6 +88,12 @@ erDiagram
     PAYMENT_RECEIPTS ||--o{ CUSTOMER_DEBT_ALLOCATIONS : allocates
     CUSTOMER_DEBT_ALLOCATIONS ||--o{ CUSTOMER_DEBT_ENTRIES : creates
     ORDERS ||--o{ CUSTOMER_DEBT_ALLOCATIONS : receives_payment
+    FINANCE_ACCOUNTS ||--o{ CASHBOOK_VOUCHERS : account
+    FINANCE_ACCOUNTS ||--o{ CASHBOOK_ENTRIES : ledger
+    PAYMENT_RECEIPT_METHODS ||--o| CASHBOOK_ENTRIES : posts
+    CASHBOOK_VOUCHERS ||--o| CASHBOOK_ENTRIES : posts
+    CASH_RECONCILIATIONS ||--o{ CASH_RECONCILIATION_ITEMS : contains
+    FINANCE_ACCOUNTS ||--o{ CASH_RECONCILIATION_ITEMS : reconciled
 ```
 
 ---

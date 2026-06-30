@@ -10,6 +10,7 @@
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
 | [PAYMENT-DEBT-TABLES.md](./PAYMENT-DEBT-TABLES.md) | Bảng thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | Business Sales/Finance |
+| [CASHBOOK-TABLES.md](./CASHBOOK-TABLES.md) | Bảng sổ quỹ, phiếu thu/chi thủ công và đối soát cuối ngày | Business Finance |
 
 ---
 
