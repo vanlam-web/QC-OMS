@@ -4,6 +4,25 @@
 
 ---
 
+## 0. Ghi nhận từ KiotViet
+
+Quan sát hóa đơn `HD010985` ngày `01/07/2026`:
+
+- Chi tiết nằm ngay dưới dòng hóa đơn trong danh sách.
+- Tab `Thông tin` hiển thị khách hàng, mã hóa đơn, trạng thái, người tạo, người bán, ngày bán, kênh bán, bảng giá và chi nhánh.
+- Dòng hàng có mã hàng, tên hàng, số lượng, đơn giá, giá bán và thành tiền.
+- Một số dòng in/kích thước thể hiện ngay trong dòng hàng, ví dụ `2.5m x 3.3m x 1`, số lượng tính thành `8.25`.
+- Tổng cuối chứng từ gồm tổng tiền hàng, giảm giá hóa đơn, khách cần trả, khách đã trả.
+- Hóa đơn có thể `Hoàn thành` nhưng `Khách đã trả = 0`, nghĩa là chi tiết chứng từ phải thể hiện công nợ theo hóa đơn.
+
+Áp dụng cho QC-OMS:
+
+- Chi tiết chứng từ ưu tiên đọc nhanh ngay trong trang danh sách hoặc trang detail riêng đều được, miễn giữ đủ snapshot.
+- Kích thước/m2/mét tới phải là dữ liệu có cấu trúc trong dòng hàng, không chỉ là text trang trí.
+- `Bảng giá` và người bán phải lưu snapshot theo chứng từ.
+
+---
+
 ## 1. Mục tiêu
 
 Trang chi tiết giúp kiểm tra toàn bộ nội dung chứng từ đã lưu, gồm dữ liệu snapshot, thanh toán, công nợ, trừ kho và lịch sử sửa/hủy.
@@ -33,6 +52,7 @@ Hiển thị:
 - Khách hàng snapshot tại thời điểm lưu.
 - Người bán/người tạo.
 - Bảng giá đã áp dụng.
+- Chi nhánh nếu sau này có nhiều chi nhánh/kho.
 - Ghi chú đơn.
 - Tổng tiền hàng, giảm giá, khách cần trả, khách đã trả, còn nợ hoặc tiền thừa đã trả lại.
 
@@ -57,6 +77,7 @@ Mỗi dòng hiển thị dữ liệu snapshot tại thời điểm lưu:
 - Đơn vị bán.
 - Số lượng.
 - Kích thước, mét tới hoặc m2 nếu có.
+- Số lượng quy đổi tính tiền nếu dòng hàng phát sinh từ kích thước, ví dụ `2.5m x 3.3m x 1 = 8.25m2`.
 - Đơn giá đã áp dụng.
 - Nguồn giá: bảng giá chung, bảng giá nhóm, fallback hoặc giá sửa tay.
 - Thành tiền.
@@ -144,4 +165,3 @@ Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú
 
 - Mở Bill Preview với dữ liệu snapshot của chứng từ.
 - Không làm thay đổi doanh thu, kho, sổ quỹ hoặc công nợ.
-

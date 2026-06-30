@@ -5,6 +5,23 @@
 
 ---
 
+## 0. Ghi nhận từ KiotViet
+
+Quan sát ngày `01/07/2026`:
+
+- Màn `Hóa đơn` mặc định lọc `Tháng này` có thể không hiện kết quả dù Dashboard có hoạt động bán gần đây.
+- Tìm trực tiếp mã `HD010985` mở được hóa đơn ngày `30/06/2026 17:08`.
+- Khi tìm theo mã, KiotViet tự đưa thời gian về `Toàn thời gian` và bỏ chọn các filter trạng thái/loại hóa đơn.
+- Danh sách có dòng tổng phía trên và các cột chính: mã hóa đơn, thời gian, mã trả hàng, mã khách hàng, khách hàng, tổng tiền hàng, giảm giá, tổng sau giảm giá, khách đã trả.
+
+Áp dụng cho QC-OMS:
+
+- Tìm theo mã chứng từ phải ưu tiên trả đúng chứng từ, không bị filter thời gian/trạng thái mặc định che mất.
+- Empty state cần phân biệt `không có dữ liệu` với `đang bị lọc`.
+- Giữ cột `khách đã trả` và `còn nợ` vì liên quan công nợ theo hóa đơn.
+
+---
+
 ## 1. Mục tiêu
 
 Trang danh sách giúp nhân viên tìm lại chứng từ bán hàng nhanh, gồm:
@@ -51,6 +68,8 @@ Trang này không phải màn hình bán hàng. Nếu cần tạo đơn mới, n
 | Bảng giá | Bảng giá chung hoặc bảng giá theo nhóm khách |
 
 Không có bộ lọc giao hàng, COD, đối tác giao hàng, HĐĐT trong MVP.
+
+Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên toàn bộ lịch sử hoặc tự bỏ các filter thời gian/trạng thái đang che kết quả.
 
 ---
 
@@ -99,6 +118,7 @@ Khi không có kết quả:
 
 - Hiển thị `Không tìm thấy chứng từ phù hợp`.
 - Có nút bỏ lọc nhanh.
+- Nếu người dùng đang lọc theo thời gian/trạng thái, gợi ý mở rộng thời gian hoặc bỏ lọc.
 - Không tự tạo dữ liệu mẫu.
 
 ---
@@ -110,4 +130,3 @@ Khi không có kết quả:
 - Không có HĐĐT trong MVP.
 - Không có gộp đơn.
 - Không import hóa đơn từ file trong MVP.
-

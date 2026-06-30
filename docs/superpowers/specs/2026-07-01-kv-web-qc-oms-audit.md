@@ -112,12 +112,17 @@ KiotViet có:
 - Cột chính: mã hóa đơn, thời gian, mã trả hàng, mã khách hàng, khách hàng, tổng tiền hàng, giảm giá, tổng sau giảm giá, khách đã trả.
 - Cột mở rộng nhiều: email, điện thoại, địa chỉ, người bán, người tạo, kênh bán, đối tác giao hàng, phí/COD, trạng thái giao hàng, HĐĐT.
 - Thao tác: tạo mới, import/export, in, sửa thông tin giao hàng, hủy hóa đơn, phát hành/chuyển HĐĐT.
+- Màn lọc `Tháng này` có thể trống; tìm trực tiếp `HD010985` mở được hóa đơn `30/06/2026 17:08`.
+- Chi tiết hóa đơn có khách, trạng thái, người tạo/người bán, ngày bán, kênh bán, bảng giá, chi nhánh, dòng hàng, tổng tiền hàng, giảm giá, khách cần trả, khách đã trả.
+- Dòng hàng có kích thước ngay trên chi tiết, ví dụ `2.5m x 3.3m x 1` và số lượng tính tiền `8.25`.
 
 Đề xuất QC-OMS:
 
 - Làm trang Sales Documents tối giản hơn: báo giá, hóa đơn, đã hủy.
 - Không làm trả hàng, giao hàng, COD, HĐĐT trong MVP.
 - Có thao tác mở lại báo giá, in lại bill, sửa hóa đơn theo quy tắc `MaCu.01`, hủy hóa đơn.
+- Tìm theo mã chứng từ phải bỏ qua/mở rộng filter thời gian nếu filter hiện tại che mất kết quả.
+- Dòng hàng kích thước phải lưu có cấu trúc để phục vụ in lại, công nợ, trừ kho và đối soát sản xuất.
 
 ### 4.3. Đặt hàng
 
