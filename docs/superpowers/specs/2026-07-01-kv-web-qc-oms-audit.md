@@ -199,12 +199,24 @@ KiotViet có:
 - Bảng giá chung và nhiều bảng giá khác.
 - Cột dạng ngang: mã hàng, tên hàng, tồn kho, giá vốn, giá nhập cuối, bảng giá chung, BG1, BG2...
 - Có công thức cập nhật giá hàng loạt.
+- Màn `Hàng hóa > Thiết lập giá` mở được tại `#/PriceBook`.
+- Bộ lọc bên trái gồm bảng giá, nhóm hàng, tồn kho và điều kiện giá bán.
+- Bảng đang thấy `Bảng giá chung` với cột mã hàng, tên hàng, giá vốn, giá nhập cuối, giá bán của bảng đang chọn; ô giá cho nhập trực tiếp.
+- Màn đang hiển thị khoảng `496 hàng hóa`, có phân trang, import/export và ẩn hiện cột.
 
 Quyết định QC-OMS hiện tại:
 
 - Bảng giá theo nhóm khách, không trải 5 giá lịch sử ra thành 5 cột.
 - Giá mặc định luôn lấy theo bảng giá hiện hành.
 - Giá sửa tay lưu lịch sử theo khách + sản phẩm; POS có nút xem 5 giá gần đây.
+- Mỗi màn chi tiết chỉ sửa một bảng giá đang chọn để tránh lưới quá rộng.
+- Giá `0` là một giá hợp lệ nếu được khai báo; fallback về bảng giá chung chỉ xảy ra khi dòng giá không tồn tại/để trống.
+
+QC-OMS đã đặc tả tương ứng tại:
+
+- `docs/02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md`
+- `docs/02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md`
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-PRICING.md`
 
 ### 4.7. Kiểm kho
 
