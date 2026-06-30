@@ -411,8 +411,8 @@ De xuat rule tu dong cho MVP:
 - He thong uu tien chon tam lo phu hop nho nhat truoc; neu khong co tam lo phu hop thi dung tam nguyen.
 - Sau khi tru phan tieu hao, he thong tu dong sinh tam lo moi tu phan con lai neu phan con lai dat nguong giu lai.
 - Nguong giu lai mac dinh:
-  - duoi `0.1m2` thi bo, khong tao tam lo
-  - vat tu dat tien hoac hay tan dung co the cau hinh xuong `0.05m2`
+  - duoi `0.3m2` thi bo, khong tao tam lo
+  - neu thuc te manh nho van tan dung duoc, nhan vien co the sua/tao tam lo thu cong de giu lai
 - De tranh rac du lieu, MVP chi luu toi da 1-2 manh thua lon nhat sau mot lan cat.
 - Moi tam lo can luu:
   - san pham/vat tu
