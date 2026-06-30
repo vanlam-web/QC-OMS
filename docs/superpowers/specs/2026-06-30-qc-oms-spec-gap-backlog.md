@@ -391,20 +391,25 @@ Owner/Technical cần chốt:
 
 #### 3.11. Bill, Printer, Zalo/Facebook send support
 
-Source of Truth cần tạo:
+Draft tham khảo đã tạo:
 
-- Integration Printer
-- Integration Zalo/Facebook hoặc Messaging
-- Database bill templates/config
-- Backend bill config API nếu cần
+- `docs/superpowers/specs/2026-07-01-bill-printer-messaging-draft.md`
 
-Thiếu hiện tại:
+Source of Truth cần tạo sau khi phase này bắt đầu:
 
-- Mẫu bill canonical và biến dữ liệu.
-- Cấu hình máy in theo POS/workstation.
-- Cơ chế render ảnh bill.
-- Ranh giới MVP: chỉ copy/mở nơi gửi, chưa gửi tự động.
-- Lỗi môi trường khi không mở được app/web gửi tin.
+- PRD-UX quản lý mẫu bill nếu cần.
+- Integration Printer.
+- Integration Zalo/Facebook hoặc Messaging.
+- Database bill templates/config nếu cần lưu cấu hình.
+- Backend bill config/render API nếu cần.
+
+Đã định hướng:
+
+- Bill lấy dữ liệu từ snapshot chứng từ, không lấy lại bảng giá/tên hàng/khách hiện tại.
+- MVP chỉ hỗ trợ in browser, sinh ảnh bill và mở đúng nơi gửi.
+- Nhân viên tự kiểm tra, dán ảnh và bấm gửi.
+- Không tự động gửi Zalo/Facebook, không lưu lịch sử gửi bill và không rollback chứng từ nếu gửi lỗi.
+- Lỗi môi trường như chưa đăng nhập, link sai hoặc clipboard bị chặn phải có fallback thủ công.
 
 ---
 
