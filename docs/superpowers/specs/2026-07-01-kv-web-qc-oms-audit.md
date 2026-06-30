@@ -15,6 +15,8 @@ Nguyên tắc:
 - KiotViet là nguồn tham khảo thao tác và cách tổ chức dữ liệu, không copy 100%.
 - Quyết định cuối cùng của QC-OMS nằm trong Source of Truth đúng tầng: PRD-UX, Business, Database, Backend.
 - Mục nào chưa chắc thì để ở draft/backlog, không đẩy thẳng vào spec chính.
+- Nếu một màn KiotViet không có dữ liệu, rất ít dữ liệu, hoặc chỉ là chức năng retail chung mà xưởng không dùng, mặc định xếp vào nhóm bỏ khỏi MVP hoặc để sau.
+- Chỉ giữ màn ít dữ liệu nếu Owner đã chốt đó là nghiệp vụ lõi của QC-OMS, ví dụ Kiểm kho.
 
 ---
 
@@ -62,6 +64,21 @@ Các nhóm menu chính:
 | Báo cáo phân tích | Làm sau khi dữ liệu lõi ổn định |
 | Bán online/Zalo shop/Website bán hàng | Không thuộc MVP QC-OMS |
 | Thuế & Kế toán/HĐĐT | Chưa làm MVP; chỉ giữ thông tin xuất hóa đơn ở hồ sơ khách |
+
+### Ứng viên bỏ khỏi QC-OMS nếu không có dữ liệu thực tế
+
+| KiotViet | Dấu hiệu quan sát | Đề xuất |
+|---|---|---|
+| Trả hàng bán | Màn mặc định không có giao dịch phù hợp; Owner đã chốt POS MVP không có trả hàng | Bỏ khỏi MVP |
+| Trả hàng nhập | Màn mặc định không có giao dịch phù hợp; phụ thuộc Purchase/NCC chưa chốt | Bỏ khỏi MVP, chỉ xét lại sau Purchase |
+| Xuất dùng nội bộ | Màn mặc định không có giao dịch phù hợp; nghiệp vụ xưởng chưa cần module riêng | Không làm riêng; nếu cần thì là lý do điều chỉnh giảm tồn |
+| Mua dịch vụ | Màn mặc định không có kết quả phù hợp; có thể xử lý bằng phiếu chi Sổ quỹ | Không làm module riêng trong MVP |
+| Đối tác giao hàng/Vận đơn | Không phù hợp luồng xưởng hiện tại, có nhiều trường COD/giao hàng | Bỏ khỏi MVP |
+| Kênh bán/Bán online/Zalo shop/Website | Không thuộc luồng QC-OMS nội bộ | Bỏ |
+| VAT/HĐĐT/Thuế kế toán | Xưởng chưa làm nghiệp vụ này trong QC-OMS MVP | Bỏ, chỉ giữ thông tin xuất hóa đơn trong hồ sơ khách |
+| Thương hiệu/thuộc tính retail | Có thể ghi trong tên hàng hoặc nhóm hàng | Không tạo field/module riêng |
+
+Ghi chú: "không có dữ liệu" ở đây là dấu hiệu từ giao diện KiotViet đang xem, không phải kết luận kỹ thuật từ database. Dùng dấu hiệu này để giảm phạm vi, sau đó Owner chốt lại nếu thật sự cần.
 
 ---
 
@@ -218,6 +235,17 @@ KiotViet có:
 - Trả hàng nhập để sau Purchase/Supplier.
 - Trả hàng bán tiếp tục không thuộc MVP; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
 - Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-inventory-adjustments-returns-draft.md`.
+
+### 4.11. Nguyên tắc lược bỏ theo dữ liệu KiotViet
+
+Khi KiotViet có một màn nhưng tài khoản thực tế không có dữ liệu đáng kể, QC-OMS không mặc định làm theo.
+
+Áp dụng hiện tại:
+
+- Giữ chắc: sản phẩm, khách hàng, bảng giá, POS, hóa đơn/chứng từ, sổ quỹ, công nợ, tồn kho/cuộn/tấm, báo cáo quản trị.
+- Giữ tối giản hoặc hỏi Owner: kiểm kho, hủy vật tư/điều chỉnh giảm tồn, báo cáo cuối ngày.
+- Bỏ khỏi MVP: trả hàng bán, trả hàng nhập, vận đơn/COD, VAT/HĐĐT, kênh bán online, thương hiệu retail, mua dịch vụ riêng.
+- Để sau: nhà cung cấp/nhập hàng/công nợ NCC, nếu sau này cần quản lý nhập kho và giá vốn chặt hơn.
 
 ---
 
