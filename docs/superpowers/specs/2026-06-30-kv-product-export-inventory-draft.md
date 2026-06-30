@@ -248,6 +248,24 @@ Khi POS ban hang ma ton khong du:
 
 ### Q2. Don vi va quy doi
 
+Owner da chot:
+
+```text
+QC-OMS quan ly ton kho theo mot don vi ton chinh.
+Don vi ban phu chi dung de ban, tinh gia va quy doi ve don vi ton chinh khi tru kho.
+Hang dong goi dac biet co the tao SKU rieng khi that su la mat hang doc lap, khong phai rule mac dinh.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- Moi san pham co mot `stock_unit_id` lam don vi ton chinh.
+- POS co the ban bang `sale_unit_id` khac neu co cau hinh quy doi.
+- Khi ban bang don vi phu, stock movement luu ca so luong ban theo don vi hien thi va so luong da quy doi theo don vi ton chinh.
+- Khong tao nhieu ton kho doc lap cho cung mot vat tu chi vi khac DVT.
+- Neu hang dong goi la mat hang doc lap that su, tao SKU rieng va co lien ket quy doi/BOM rieng.
+
+Lua chon da chot: ket hop theo huong mot ton goc cho vat tu chinh, SKU rieng chi khi can.
+
 Voi san pham co don vi co ban va don vi phu, QC-OMS nen:
 
 1. Quan ly ton theo mot don vi co ban, cac don vi phu chi de ban/quy doi.
