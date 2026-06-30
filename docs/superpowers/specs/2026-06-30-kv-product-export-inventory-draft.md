@@ -417,12 +417,44 @@ Combo trong QC-OMS nen dung cho:
 2. Chi de tinh gia/dinh muc tham khao, chua tu dong tru kho MVP.
 3. Tach thanh module san xuat/BOM rieng sau Inventory.
 
+### Q6. Du lieu may san xuat va tru kho
+
+Owner da chot tam thoi:
+
+```text
+Chua dung du lieu may san xuat de tu dong tru kho chinh thuc.
+Giai doan dau chi dung du lieu may san xuat de so sanh giua OMS/bill va thuc te may chay, xem lech nhu the nao.
+```
+
+Ly do:
+
+- Tao don/bill chua chac da san xuat.
+- File tren may san xuat co the dat ten bat ky.
+- Mot file san xuat co the chua nhieu chi tiet, khong tuong ung 1-1 voi mot dong bill.
+- Chua co cach match file may san xuat voi bill/dong bill du chac de tu dong tru kho.
+
+Ghi chu dua vao Source of Truth sau:
+
+- Giai doan dau, production data chi phuc vu:
+  - giam sat may san xuat
+  - doi soat OMS/bill voi thuc te may chay
+  - phat hien file chay nhung chua thay bill
+  - phat hien bill co hang san xuat nhung chua thay file chay
+  - so sanh kich thuoc, so luong, tong `m2`
+  - dem so lan chay lai/in lai
+  - tinh hao hut thuc de tham khao
+- Production data khong tu sinh `stock_movement` chinh thuc neu chua co lien ket duoc xac nhan.
+- Tru kho chinh thuc cua hang san xuat/cuon/tam se di theo nghiep vu kho/san xuat da chot sau, khong dua vao match file tu dong trong MVP.
+- Khi sau nay co rule match chac hon, se mo spec rieng de nang cap tu doi soat sang gan file/bill va tru kho tu dong.
+
 ## 6. De xuat thu tu dac ta tiep theo
 
-1. Owner chot Q1-Q4 de viet Inventory Business.
+1. Owner chot Q1-Q4 va Q6 de viet Inventory Business/Production reconciliation draft.
 2. Cap nhat Source of Truth Inventory:
    - `docs/03-BUSINESS-NghiepVu/Inventory/README.md`
    - `docs/03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md`
    - `docs/03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md`
-3. Sau do moi chot Q5 va viet BOM/Combo draft.
-4. Sau khi Business chot, moi viet Database/API Inventory.
+3. Viet them draft doi soat san xuat neu can:
+   - `docs/superpowers/specs/YYYY-MM-DD-production-reconciliation-draft.md`
+4. Sau do moi chot Q5 va viet BOM/Combo draft.
+5. Sau khi Business chot, moi viet Database/API Inventory.
