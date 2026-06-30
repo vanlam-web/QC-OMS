@@ -209,7 +209,7 @@ Nhan xet:
 - Co cho ton kho am trong MVP khong.
 - Don vi nao la unit that su, don vi nao la quy cach/variant.
 - Co quan ly ton tung DVT rieng hay chi ton theo don vi co ban.
-- Voi vat tu dang cuon, khi xuat kho he thong tu dong chon cuon hay nhan vien chon cuon can cat.
+- Voi vat tu dang cuon, he thong de xuat cuon/khổ mac dinh theo cong thuc toi uu hao hut, nhan vien duoc sua de xuat va chon lai cuon/khổ thuc te.
 - Combo/BOM tru kho khi nao: luc tao don, luc xuat kho, hay luc hoan thanh san xuat.
 - `KH dat` co can MVP khong hay de sau.
 - `Du kien het hang` co can MVP khong hay chi tinh sau.
@@ -300,6 +300,58 @@ Ghi chu dua vao Source of Truth sau:
 - Khi ban/xuat theo `m2`, he thong quy doi ra chieu dai tieu hao theo kho rong cuon de tru vao cuon cu the.
 - Bao cao ton kho vat tu cuon phai xem duoc ca tong ton va chi tiet tung cuon.
 - Cach KV gom cuon thanh tong `m2` chi dung de tham khao, khong copy vao QC-OMS.
+
+### Q3A. De xuat khổ/cuon khi xuat vat tu dang cuon
+
+Owner da chot:
+
+```text
+Khi xuat vat tu dang cuon, nhan vien chon cuon bi tru.
+Phan mem phai co de xuat mac dinh theo cong thuc toi uu hao hut.
+Doi voi mat hang bat/in cuon, he thong suy luan khổ in phu hop dua tren kich thuoc file in, bien chua va cac cuon dang co.
+Nhan vien co the sua de xuat, sua bien chua va chon khổ/cuon khac neu thuc te can.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- Dau vao toi thieu de de xuat:
+  - san pham/vat tu dang cuon
+  - kich thuoc file in thanh pham
+  - bien chua mac dinh
+  - danh sach cuon dang con ton, gom khổ rong va chieu dai con lai
+- Kich thuoc tieu hao mac dinh:
+  - `chieu_rong_tieu_hao = chieu_rong_file + bien_chua_rong`
+  - `chieu_dai_tieu_hao = chieu_dai_file + bien_chua_dai`
+  - Neu nghiep vu cho phep xoay file, he thong co the so sanh ca hai chieu de chon phuong an it hao hut hon.
+- De xuat mac dinh uu tien:
+  1. Cuon co khổ du de in kich thuoc tieu hao.
+  2. Trong cac cuon du khổ, chon phuong an hao hut ngang it nhat.
+  3. Neu co nhieu cuon cung hao hut, uu tien cuon dang dung do/da khui truoc.
+  4. Neu van bang nhau, uu tien cuon co chieu dai con lai phu hop de giam manh le.
+- Nhan vien duoc override:
+  - chon khổ/cuon khac
+  - giam hoac tang bien chua
+  - chon phuong an khong toi uu neu thuc te san xuat can
+- Khi nhan vien override, don/xuat kho phai luu snapshot:
+  - khổ/cuon he thong de xuat
+  - khổ/cuon thuc te nhan vien chon
+  - bien chua mac dinh va bien chua da sua
+  - ly do/ghi chu neu co
+
+Vi du:
+
+```text
+File in 2m x 3m.
+Bien chua mac dinh 0.1m moi chieu.
+Kich thuoc tieu hao 2.1m x 3.1m.
+He thong tim cac cuon co khổ phu hop va de xuat khổ hao hut it nhat.
+```
+
+```text
+File in 2.5m x 2.05m.
+He thong co the de xuat khổ 2.6m theo bien chua mac dinh.
+Nhan vien co the doi sang khổ 2.1m neu don nay chi can chua bien 0.05m va thuc te san xuat chap nhan.
+```
 
 Cac DVT nhu `Kho 91`, `Kho 127`, `500 To`, `1000 To`, `5 kg`, `10 kg` nen:
 
