@@ -29,6 +29,7 @@ Read these files before implementing any task in this plan:
 - `docs/02-PRD-UX-PhongCanh/PriceBook/README.md`
 - `docs/02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md`
 - `docs/02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md`
+- `docs/02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md`
 - `docs/02-PRD-UX-PhongCanh/Finance/01-FINANCE-LAYOUT.md`
 - `docs/02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md`
 - `docs/02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md`
@@ -60,7 +61,10 @@ If any older plan says checkout only saves an order, or inventory can be edited 
 - Inventory is deducted when an official invoice is created or saved. Production/machine data is reconciliation-only in MVP and must not create stock movements.
 - Insufficient stock produces warnings but does not block checkout; stock can go negative.
 - `roll` and `sheet` products are managed by physical inventory objects. Only `normal` products can use total quantity adjustment.
-- Editing stock for a `normal` product from Product admin must create an automatic balanced stocktake.
+- Stocktake is a core MVP inventory workflow, not an optional/backlog KiotViet feature.
+- Editing stock for a `normal` product from Product admin must create an automatic balanced stocktake with note `Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa: <Tên hàng> (<Mã hàng>)`.
+- Stocktake list UI/API must support widening the date range when the default filter is empty, because real KiotViet data only appeared after checking `01/07/2016 - 01/07/2026`.
+- Roll/sheet total stock adjustment is forbidden; roll/sheet stocktake must reference the physical roll/sheet object.
 - Debt is invoice-level. Old debt collection allocates to oldest unpaid invoices first. MVP has no customer prepayment or negative debt balance.
 - Cashbook is split by cash and bank account. A POS payment can use cash, one bank account, or mixed cash plus one bank account.
 - POS customer phone is optional. Customer code and name are required for a saved profile; customer code can be auto-generated when omitted.
@@ -89,13 +93,15 @@ Included:
 - Add transaction RPC functions for checkout and debt allocation where atomicity matters.
 - Add backend APIs for cart validation, quotes, checkout, and read-only order retrieval.
 - Add backend APIs needed by checkout: finance accounts list, customer debt lookup, and inventory warnings.
+- Add inventory API support for normal-product stock adjustment that creates a balanced stocktake voucher, plus stocktake list lookup with configurable date range.
 - Add minimal POS checkout UI: cart quantities, manual price preservation marker, recent price affordance, payment input, one bank account selector, return-change/apply-old-debt choice, retail debt note, checkout submit, receipt summary.
 - Add navigation/module placeholders for Sales Documents, Customers, PriceBook, Inventory, and Finance with permission gates matching existing app patterns; only deep screens needed by checkout are implemented in this phase.
 - Add tests and seeds proving `perm.manage_finance`, default cash account, one bank account, invoice/debt/cashbook writes, and stock movements.
 
 Deferred:
 
-- Full Inventory admin UI for rolls/sheets/stocktakes.
+- Full Inventory object editing UI for roll/sheet physical objects.
+- Advanced stocktake UI polish such as column customization; core stocktake list/history and normal-product auto-balanced stocktake stay in MVP.
 - Full Finance admin UI for vouchers/reconciliation.
 - Full Sales Documents list/detail beyond checkout smoke read/reprint/revise entry points.
 - Full Customers admin screens beyond existing customer selection/creation needs.
@@ -118,8 +124,8 @@ Create:
 - `supabase/tests/database/007_checkout_transaction.test.sql` - pgTAP integration for checkout RPC rollback/success, stock deduction, debt allocation, and cashbook split.
 - `supabase/functions/api/use-cases/orders.ts` - cart validation, quote, checkout, order read, invoice revision orchestration.
 - `supabase/functions/api/routes/orders.ts` - `/pos/cart/validate`, `/orders/quotes`, `/orders/checkout`, `/orders/{id}`, `/orders/{id}/revise`.
-- `supabase/functions/api/use-cases/inventory.ts` - inventory summary and stock warning helpers used by checkout.
-- `supabase/functions/api/routes/inventory.ts` - minimal read routes required by POS and smoke tests.
+- `supabase/functions/api/use-cases/inventory.ts` - inventory summary, stock warnings, stocktake history, and normal-product adjustment helpers used by checkout/admin.
+- `supabase/functions/api/routes/inventory.ts` - minimal read routes required by POS, stock adjustment, stocktake history, and smoke tests.
 - `supabase/functions/api/use-cases/finance.ts` - finance accounts and customer debt lookups used by POS checkout.
 - `supabase/functions/api/routes/finance.ts` - minimal finance read/debt collection routes.
 - `supabase/tests/functions/orders_test.ts` - Edge Function tests for cart validation, quotes, checkout, and invoice revision guards.
@@ -499,6 +505,7 @@ Deno.test("debt collection rejects overpayment", async () => {});
 Deno.test("source-linked cashbook vouchers cannot be edited independently", async () => {});
 Deno.test("inventory products hide inactive rows for create_order-only actor", async () => {});
 Deno.test("normal product stock adjustment creates balanced stocktake", async () => {});
+Deno.test("stocktake list accepts long date ranges when default period is empty", async () => {});
 Deno.test("roll and sheet products reject total stock adjustment", async () => {});
 ```
 
@@ -527,10 +534,11 @@ Mount:
 GET  /api/v1/inventory/products
 GET  /api/v1/inventory/products/{product_id}
 GET  /api/v1/inventory/stock-movements
+GET  /api/v1/inventory/stocktakes
 POST /api/v1/inventory/products/{product_id}/adjust-stock
 ```
 
-Keep roll/sheet object editing routes deferred unless checkout tests need them. The adjust-stock route must only accept `inventory_shape = normal`.
+Keep roll/sheet object editing routes deferred unless checkout tests need them. The adjust-stock route must only accept `inventory_shape = normal` and must create a `stocktakes.status = balanced` voucher plus `stock_movements.movement_type = stocktake_adjustment`. Stocktake listing must accept explicit `created_from` and `created_to` filters so operators can search long history when the default period has no rows.
 
 - [ ] **Step 4: Verify**
 
