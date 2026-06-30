@@ -96,6 +96,9 @@ KiotViet có:
 - Bộ lọc công nợ đối tác: tính vào công nợ, không tính vào công nợ, không có công nợ.
 - Tổng quan: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ.
 - Bảng: mã phiếu, thời gian, loại thu chi, người nộp/nhận, giá trị.
+- Ngày `01/07/2026`, filter `Tháng này` trống do đầu tháng mới; chọn `Toàn thời gian` trên quỹ tiền mặt có `4,161 phiếu thu chi`.
+- Phiếu thu tự động `TTHD010973` gắn hóa đơn `HD010973`, có người tạo/người thu, chi nhánh, phương thức `Tiền mặt`, khách nộp, và bảng phân bổ vào hóa đơn.
+- Phiếu chi thủ công `CTM001170` có cờ `Có hạch toán`, người tạo/người chi, đối tượng nhận `Khác`, người nhận kèm SĐT và ghi chú `Xăng xe`.
 
 Quyết định QC-OMS hiện tại:
 
@@ -103,6 +106,9 @@ Quyết định QC-OMS hiện tại:
 - Chuyển khoản phải chọn đúng tài khoản nhận.
 - Sổ quỹ có phiếu thu/chi thủ công và phiếu phát sinh từ POS/thu nợ.
 - Đối soát cuối ngày theo tiền mặt và từng tài khoản ngân hàng.
+- Tìm theo mã phiếu phải mở rộng/bỏ filter thời gian nếu filter hiện tại che kết quả.
+- Phiếu thu tự động phải truy vết chứng từ gốc và phân bổ hóa đơn.
+- Phiếu thu/chi thủ công cần lưu có/không hạch toán kết quả kinh doanh.
 
 ### 4.2. Hóa đơn
 

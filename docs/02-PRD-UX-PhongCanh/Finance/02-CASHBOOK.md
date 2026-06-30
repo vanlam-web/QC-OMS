@@ -5,6 +5,40 @@
 
 ---
 
+## 0. Ghi nhận từ KiotViet
+
+Quan sát ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tháng này` trống vì đầu tháng mới, không dùng làm căn cứ đánh giá dữ liệu.
+- Chọn `Toàn thời gian` trên quỹ `Tiền mặt` có `4,161 phiếu thu chi`.
+- Summary toàn thời gian tiền mặt hiển thị `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ`.
+- Ví dụ phiếu thu tự động `TTHD010973`:
+  - trạng thái `Đã thanh toán`
+  - `Không hạch toán`
+  - người tạo/người thu
+  - chi nhánh
+  - phương thức thanh toán `Tiền mặt`
+  - người nộp là khách hàng
+  - ghi rõ phiếu thu tự động gắn với hóa đơn `HD010973`
+  - có bảng phân bổ: mã hóa đơn, giá trị phiếu, đã thu trước, giá trị thu, trạng thái
+- Ví dụ phiếu chi thủ công `CTM001170`:
+  - trạng thái `Đã thanh toán`
+  - `Có hạch toán`
+  - người tạo/người chi
+  - phương thức thanh toán `Tiền mặt`
+  - đối tượng nhận `Khác`
+  - người nhận có tên và SĐT
+  - có ghi chú chi, ví dụ `Xăng xe`
+
+Áp dụng cho QC-OMS:
+
+- Tìm theo mã phiếu phải mở rộng/bỏ filter thời gian nếu filter hiện tại che kết quả.
+- Phiếu thu từ hóa đơn/thu nợ phải hiển thị liên kết chứng từ gốc và phân bổ vào hóa đơn.
+- Phiếu chi thủ công cần lưu cờ có tính vào báo cáo kinh doanh hay không.
+- Người nộp/nhận có thể là khách hàng, nhà cung cấp, nhân viên hoặc đối tượng tự do.
+
+---
+
 ## 1. Mục đích
 
 Màn Sổ quỹ cho phép xem dòng tiền vào/ra và tạo phiếu thu/chi thủ công.
@@ -47,6 +81,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 | Loại chứng từ | Phiếu thu, phiếu chi |
 | Loại thu chi | Thu bán hàng, thu nợ, thu khác, chi mua vật tư, chi hoàn tiền, chi phí vận hành, chi khác |
 | Trạng thái | Đã ghi sổ, đã hủy |
+| Hạch toán KQKD | Tất cả, có hạch toán, không hạch toán |
 | Người tạo | Nhân viên |
 | Người nộp/nhận | Khách/nhà cung cấp/người nhận nếu có |
 
@@ -74,6 +109,7 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 | Người nộp/nhận | Khách, nhân viên hoặc ghi chú |
 | Quỹ/tài khoản | Tiền mặt hoặc tên ngân hàng |
 | Giá trị | Thu dương, chi âm |
+| Hạch toán | Có/không tính vào báo cáo kinh doanh nếu cần |
 | Trạng thái | Đã ghi sổ/đã hủy |
 
 ---
@@ -116,6 +152,7 @@ Các phiếu sinh từ checkout POS hoặc thu nợ khách:
 - mở xem chi tiết được
 - không có nút sửa rời
 - nếu cần sửa phải đi qua nghiệp vụ gốc
+- chi tiết phiếu phải hiển thị chứng từ gốc và các hóa đơn được phân bổ nếu có
 
 ---
 

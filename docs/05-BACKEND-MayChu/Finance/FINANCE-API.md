@@ -217,6 +217,14 @@ Chi tiết phiếu thu, phương thức thu và phân bổ công nợ nếu có.
 
 **Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
 
+Response phải gồm tối thiểu:
+
+- thông tin phiếu thu: mã phiếu, trạng thái, người tạo, người thu, thời gian
+- phương thức thu: tiền mặt/tài khoản ngân hàng, số tiền
+- khách nộp nếu có
+- chứng từ gốc nếu sinh từ hóa đơn/thu nợ
+- danh sách phân bổ vào hóa đơn: mã hóa đơn, giá trị hóa đơn, đã thu trước, giá trị thu, trạng thái sau thu
+
 Phiếu sinh từ hóa đơn/thu nợ không được sửa rời qua API này. Muốn sửa phải đi qua nghiệp vụ gốc tương ứng để Sales, Debt và Cashbook cùng khớp.
 
 ---
@@ -234,12 +242,48 @@ Xem sổ quỹ theo từng quỹ/tài khoản.
 | Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
 | `finance_account_id` | `uuid` | Không | Lọc theo quỹ/tài khoản |
+| `search` | `string` | Không | Tìm theo mã phiếu, người nộp/nhận hoặc ghi chú |
 | `direction` | `string` | Không | `in` hoặc `out` |
 | `source_type` | `string` | Không | `payment_receipt_method` hoặc `cashbook_voucher` |
+| `is_business_accounted` | `boolean` | Không | Có/không hạch toán kết quả kinh doanh |
 | `from` / `to` | `datetime` | Không | Khoảng thời gian |
 | `page` / `page_size` | `number` | Không | Phân trang |
 
 Chỉ tính số dư hiệu lực từ `cashbook_entries.status = posted`.
+
+Khi `search` khớp chính xác mã phiếu, backend phải tìm trên toàn bộ lịch sử hoặc bỏ qua `from/to` nếu client đang dùng filter thời gian mặc định. Không trả rỗng chỉ vì mã phiếu nằm ngoài tháng hiện tại.
+
+Response list phải có summary theo filter:
+
+```json
+{
+  "summary": {
+    "opening_balance": 0,
+    "total_in": 2730447402,
+    "total_out": -2704685832,
+    "ending_balance": 25761570
+  },
+  "items": []
+}
+```
+
+### `GET /finance/cashbook/{entry_id}`
+
+Chi tiết một dòng sổ quỹ.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+Response gồm:
+
+- mã phiếu, trạng thái, hướng thu/chi, số tiền
+- quỹ/tài khoản
+- có/không hạch toán kết quả kinh doanh
+- người tạo và người thu/chi
+- đối tượng nộp/nhận
+- phương thức thanh toán
+- ghi chú
+- chứng từ gốc và phân bổ hóa đơn nếu dòng sinh từ hóa đơn/thu nợ
+- thông tin phiếu thủ công nếu dòng sinh từ phiếu thu/chi thủ công
 
 ### `GET /finance/cashbook/balances`
 
@@ -267,6 +311,10 @@ Tạo phiếu thu/chi thủ công.
   "voucher_type": "operating_expense",
   "finance_account_id": "uuid",
   "amount": 150000,
+  "is_business_accounted": true,
+  "counterparty_type": "other",
+  "counterparty_name": "Tý",
+  "counterparty_phone": "0964917315",
   "related_order_id": null,
   "related_customer_id": null,
   "reason": "Chi phí giao hàng"
@@ -279,6 +327,8 @@ Tạo phiếu thu/chi thủ công.
 - `voucher_type` phải hợp lệ theo hướng thu/chi.
 - `amount > 0`.
 - `finance_account_id` active và cùng organization.
+- `is_business_accounted` mặc định theo `voucher_type` nhưng cho phép client gửi rõ.
+- `counterparty_type IN ('customer', 'supplier', 'employee', 'other', 'none')`.
 - Thu bán hàng và thu nợ khách không được tạo qua endpoint này; phải dùng POS checkout hoặc `/finance/debt-collections`.
 
 **Workflow:**
