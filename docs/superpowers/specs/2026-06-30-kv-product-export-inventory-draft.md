@@ -555,10 +555,19 @@ chenh_lech = so_luong_thuc_te - so_luong_he_thong
 - `Can bang kho` tao stock movement loai `stocktake_adjustment` cho tung dong chenh lech va doi phieu sang `balanced`.
 - `Huy phieu` doi trang thai sang `cancelled`, khong xoa vat ly.
 
-De xuat doi so voi KV:
+De xuat ap dung cho QC-OMS:
 
-- Khong can tu dong tao phieu kiem kho khi sua thong tin hang hoa trong MVP, vi de gay nhieu phieu rac.
-- Neu sua truc tiep so ton trong trang Hang hoa, QC-OMS nen yeu cau di qua mot phieu dieu chinh/kiem kho ngan gon thay vi sua am tham.
+- Cho phep sua ton ngay khi sua mot hang hoa trong trang Hang hoa.
+- Khi nguoi dung sua so ton truc tiep o Hang hoa, he thong tu dong sinh mot phieu kiem kho/stocktake de truy vet thay doi.
+- Phieu tu dong co trang thai `balanced` ngay, vi ton kho da duoc cap nhat tai thoi diem nguoi dung luu hang hoa.
+- Ghi chu phieu tu dong theo mau:
+
+```text
+Phieu kiem kho duoc tao tu dong khi cap nhat Hang hoa: <Ten hang> (<Ma hang>)
+```
+
+- Phieu tu dong van tao stock movement loai `stocktake_adjustment`, giong thao tac `Can bang kho` thu cong.
+- Neu nguoi dung sua thong tin hang hoa nhung khong sua so ton, khong sinh phieu kiem kho.
 - Bang danh sach phieu can co cac cot chinh:
   - ma kiem kho
   - thoi gian tao
@@ -591,7 +600,7 @@ De xuat chot:
 
 ```text
 QC-OMS giu luong Kiem kho giong KV o muc phieu tam -> can bang -> huy.
-MVP khong tu tao phieu kiem kho khi sua hang hoa.
+Khi sua ton truc tiep trong Hang hoa, he thong tu dong tao phieu kiem kho da can bang de truy vet.
 Can bang kho tao stock movement dieu chinh.
 Hang cuon/tam can xu ly can than theo doi tuong vat ly, khong chi sua tong ton neu viec do lam mat chi tiet.
 ```
