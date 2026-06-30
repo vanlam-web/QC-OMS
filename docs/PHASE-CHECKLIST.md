@@ -7,8 +7,9 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 - Main working branch: `main`
 - Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
 - Phase 1B đã merge vào `main`: PR #2
-- Phase 1C plan sync branch: `codex/phase-1c-plan-sync`
-- Phase 1C plan: `docs/superpowers/plans/2026-06-30-phase-1c-order-checkout-inventory-finance.md`
+- Phase 1C đã merge vào `main`: PR #4, merge commit `2b83df7`
+- Phase 2A working branch: `codex/phase-2a-pos-direct-checkout-ui`
+- Phase 2A plan: `docs/superpowers/plans/2026-07-01-phase-2a-pos-direct-checkout-ui.md`
 
 ## Phase 0 — Foundation
 
@@ -206,7 +207,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 1C — Order checkout transaction foundation
 
-Status: 🟢 Implementation branch `codex/phase-1c-order-checkout` đã local/server verify và runtime smoke PASS
+Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -311,9 +312,53 @@ Status: 🟢 Implementation branch `codex/phase-1c-order-checkout` đã local/se
 - Supabase local Windows có thể báo một số dev UI service stopped như Studio/Imgproxy/Pooler; DB/Auth/API/Edge runtime vẫn chạy và smoke PASS.
 - Sau `supabase:reset`, Auth user `admin@qc.local` phải được tạo lại trước khi smoke runtime.
 
+## Phase 2A — POS direct checkout UI
+
+Status: 🔨 Đang làm trên branch `codex/phase-2a-pos-direct-checkout-ui`
+
+### Source of Truth đã sync vào plan
+
+- [x] QC-OMS Sales MVP là bán trực tiếp / `bán đứt`.
+- [x] Không làm KiotViet-style `Đặt hàng`, giao hàng, vận đơn, COD, kênh online/Zalo/website.
+- [x] `BG...` chỉ là báo giá/snapshot giá; không giữ kho, không tạo sản xuất, không tạo tiền/công nợ/doanh thu.
+- [x] Không làm HĐĐT/VAT/thuế kế toán trong scope hiện tại.
+- [x] POS Customer modal không có tab `Thông tin xuất hóa đơn`; thông tin pháp lý nếu cần chỉ là thông tin nội bộ.
+- [x] Price Book: giá khai báo `0` là giá hợp lệ; không fallback vì giá falsy.
+- [x] Reports có End Of Day SoT cho phase sau, nhưng không implement trong Phase 2A.
+- [x] Inventory adjustment SoT mới dành cho future Inventory branch; không đưa vào POS checkout UI.
+
+### Phạm vi Phase 2A
+
+- [x] Product quick grid cơ bản.
+- [x] Customer search/create/select cơ bản.
+- [ ] Sync docs SoT mới vào implementation branch.
+- [ ] Cart lines editable: số lượng, đơn giá, xóa dòng.
+- [ ] Manual price marker và preserve khi đổi khách/bảng giá.
+- [ ] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu.
+- [ ] Customer debt display trong checkout.
+- [ ] Tách tiền trả hóa đơn hiện tại và tiền thu nợ cũ trong UI/payload.
+- [ ] Cash/bank/mixed payment tối đa một tài khoản bank.
+- [ ] Return-change/apply-old-debt surplus choice.
+- [ ] Retail debt note validation khi khách lẻ còn nợ.
+- [ ] Receipt summary rõ hơn: mã hóa đơn, mã phiếu thu, đã trả/còn nợ, cảnh báo tồn.
+- [ ] E2E direct checkout có chỉnh số lượng/thanh toán.
+
+### Verification
+
+- [x] Baseline `npm test`: 17 files / 44 tests trên worktree mới.
+- [ ] Local `git diff --check`
+- [ ] Local `npm run lint`
+- [ ] Local `npm run typecheck`
+- [ ] Local `npm test`
+- [ ] Local `npm run build`
+- [ ] Local `npm run test:functions`
+- [ ] Local `npx deno check supabase/functions/api/index.ts`
+- [ ] Local `npm run test:e2e`
+- [ ] Server shared-dev verification nếu branch đụng runtime/API hoặc trước merge.
+
 ## Phase 2 — POS business UI
 
-Status: ⬜ Chưa bắt đầu
+Status: 🔨 Đang triển khai theo lát cắt Phase 2A
 
 - [x] Product quick grid cơ bản.
 - [ ] Cart lines.

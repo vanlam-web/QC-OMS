@@ -70,6 +70,15 @@ Quy tắc:
 
 ## 6. Khác KiotViet
 
+KiotViet `Hàng hóa > Thiết lập giá` hiển thị bảng giá theo dạng lưới hàng hóa:
+
+- chọn bảng giá ở bộ lọc bên trái, ví dụ `Bảng giá chung`
+- lọc theo nhóm hàng, tồn kho, điều kiện giá bán
+- bảng gồm mã hàng, tên hàng, giá vốn, giá nhập cuối, cột giá của bảng đang chọn
+- ô giá có thể nhập trực tiếp trên lưới
+- có import/export và ẩn hiện cột
+- màn đang thấy `496 hàng hóa`
+
 KiotViet có thể hiển thị nhiều bảng giá ngang như `BG1`, `BG2`, `BG3`. QC-OMS không dùng bố cục trải nhiều bảng giá ngang trong MVP vì dễ rối khi sản phẩm nhiều.
 
 QC-OMS ưu tiên:
@@ -77,4 +86,4 @@ QC-OMS ưu tiên:
 - danh sách bảng giá riêng
 - mở một bảng giá để sửa chi tiết
 - POS tự resolve giá theo khách/nhóm khách
-
+- lịch sử 5 giá gần đây theo khách + sản phẩm là nút gợi ý trong POS, không phải 5 cột trong bảng giá

@@ -11,6 +11,8 @@ Module này dùng để tra cứu, in lại, mở lại báo giá, sửa/hủy h
 
 POS là nơi tạo/chốt đơn. SalesDocuments là nơi quản lý chứng từ đã lưu.
 
+Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản giá trước khi bán, không phải đơn đặt hàng, không giữ hàng, không giao hàng và không tạo công nợ/kho/tiền.
+
 ---
 
 ## 2. File trong module
@@ -35,8 +37,9 @@ POS là nơi tạo/chốt đơn. SalesDocuments là nơi quản lý chứng từ
 ## 4. Ngoài phạm vi MVP
 
 - Trả hàng.
+- Đặt hàng kiểu KiotViet.
 - Đối tác giao hàng, vận đơn, COD.
+- Bán hàng online/kênh bán.
 - Hóa đơn điện tử.
 - Đơn đa điểm, Ahamove/KShip.
 - Gộp đơn nhiều chứng từ.
-
