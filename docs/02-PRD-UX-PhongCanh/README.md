@@ -54,7 +54,11 @@
     └── [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md)
 └── Reports/                     ← Báo cáo và phân tích
     ├── [Reports/README.md](./Reports/README.md)
-    └── [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md)
+    ├── [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md)
+    ├── [Reports/02-SALES-REPORT.md](./Reports/02-SALES-REPORT.md)
+    ├── [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md)
+    ├── [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md)
+    └── [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md)
 ```
 
 > Mỗi trang mới (Kho hàng, Nhân viên, Báo cáo...) sẽ có thư mục riêng cùng cấp với `POS/`.
@@ -92,6 +96,10 @@
 | Reconciliation UX | [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md) | 🔨 |
 | Reports Overview | [Reports/README.md](./Reports/README.md) | 🔨 |
 | End Of Day Report | [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md) | 🔨 |
+| Sales Report | [Reports/02-SALES-REPORT.md](./Reports/02-SALES-REPORT.md) | 🔨 |
+| Debt Report | [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md) | 🔨 |
+| Inventory Report | [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md) | 🔨 |
+| Finance Report | [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md) | 🔨 |
 
 ---
 
