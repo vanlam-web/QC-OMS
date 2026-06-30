@@ -52,16 +52,19 @@
     ├── [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md)
     ├── [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md)
     └── [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md)
-└── Reports/                     ← Báo cáo và phân tích
+├── Reports/                     ← Báo cáo và phân tích
     ├── [Reports/README.md](./Reports/README.md)
     ├── [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md)
     ├── [Reports/02-SALES-REPORT.md](./Reports/02-SALES-REPORT.md)
     ├── [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md)
     ├── [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md)
     └── [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md)
+└── System/                      ← Tài khoản, quyền và máy trạm
+    ├── [System/README.md](./System/README.md)
+    └── [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md)
 ```
 
-> Mỗi trang mới (Kho hàng, Nhân viên, Báo cáo...) sẽ có thư mục riêng cùng cấp với `POS/`.
+> Mỗi trang mới sẽ có thư mục riêng cùng cấp với `POS/`. Phần nhân viên hiện chỉ làm tài khoản/quyền trong `System/`, không làm chấm công/lương/hoa hồng.
 
 ---
 
@@ -100,6 +103,7 @@
 | Debt Report | [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md) | 🔨 |
 | Inventory Report | [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md) | 🔨 |
 | Finance Report | [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md) | 🔨 |
+| System Users/Permissions | [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md) | 🔨 |
 
 ---
 
