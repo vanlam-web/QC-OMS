@@ -353,6 +353,48 @@ He thong co the de xuat khổ 2.6m theo bien chua mac dinh.
 Nhan vien co the doi sang khổ 2.1m neu don nay chi can chua bien 0.05m va thuc te san xuat chap nhan.
 ```
 
+### Q3B. Phan loai hinh dang ton kho va bien chua mac dinh
+
+Owner da chot:
+
+```text
+QC-OMS se co cac loai hang rieng cho hang thuong, hang dang cuon va hang dang tam.
+Hang dang cuon va hang dang tam co bien chua/hao hut mac dinh phu hop voi tung loai.
+Nhan vien van duoc sua bien chua/hao hut tren tung don neu thuc te san xuat can.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- Moi san pham co `inventory_shape`:
+  - `normal`: hang thuong, dung unit conversion don gian neu co
+  - `roll`: vat tu dang cuon, quan ly ton theo tung cuon
+  - `sheet`: vat tu dang tam, quan ly theo kich thuoc tam va quy doi cat/ban
+- `normal` dung cho cac hang nhu giay ram/to, keo, muc, linh kien, dich vu vat tu khong can toi uu cat.
+- `roll` dung cho bat, decal, PP, canvas va vat tu in kho lon dang cuon.
+- `sheet` dung cho alu, fomex, mica, PVC, tam nhua va vat tu dang tam.
+- Cau hinh mac dinh cua `roll` nen co:
+  - khổ cuon
+  - chieu dai ban dau/chieu dai con lai theo tung cuon
+  - bien chua mac dinh
+  - co cho phep xoay file hay khong
+  - co uu tien cuon dang khui hay khong
+  - cong thuc de xuat khổ/cuon it hao hut
+- Cau hinh mac dinh cua `sheet` nen co:
+  - kich thuoc tam goc, vi du `2.44 x 1.22`
+  - dien tich tam
+  - cac don vi duoc ban: nguyen tam, m toi, m2
+  - bien chua/cat hao mac dinh
+  - co cho phep xoay chieu cat hay khong
+  - quy tac tru kho ve don vi ton chinh
+- Goi y bien chua mac dinh ban dau:
+  - in bat thuong: `0.1m` moi chieu
+  - decal/PP in dan: `0.05m` moi chieu
+  - in can gia cong/nep/cang khung: `0.1m` den `0.2m` tuy loai viec
+  - cat tam don gian: `0.01m` den `0.02m`
+  - CNC/cat can chinh xac: `0.02m` den `0.05m`
+- Cac gia tri tren la default de de xuat, khong khoa cung; nhan vien co the sua tren tung dong hang/don hang.
+- Khi nhan vien sua, he thong luu snapshot default va gia tri thuc te da dung de tinh hao hut/tru kho.
+
 Cac DVT nhu `Kho 91`, `Kho 127`, `500 To`, `1000 To`, `5 kg`, `10 kg` nen:
 
 1. Tach thanh quy cach/variant, khong coi la DVT chuan.
