@@ -1,6 +1,6 @@
 begin;
 
-select plan(73);
+select plan(74);
 
 select has_table('public', 'orders', 'orders table exists');
 select has_table('public', 'order_items', 'order_items table exists');
@@ -112,6 +112,13 @@ select results_eq(
   $$ select count(*)::integer from public.finance_accounts where code = 'MB01' and account_type = 'bank' $$,
   array[1],
   'seed bank account is available'
+);
+
+select has_function(
+  'public',
+  'adjust_normal_product_stock_tx',
+  array['uuid', 'uuid', 'uuid', 'numeric', 'text'],
+  'normal product stock adjustment rpc exists'
 );
 
 select * from finish();

@@ -406,7 +406,7 @@ git commit -m "feat: add checkout transaction rpc"
 - Modify: `supabase/functions/api/routes/router.ts`
 - Create: `supabase/tests/functions/orders_test.ts`
 
-- [ ] **Step 1: Write failing function tests**
+- [x] **Step 1: Write failing function tests**
 
 Cover:
 
@@ -509,7 +509,7 @@ Deno.test("stocktake list accepts long date ranges when default period is empty"
 Deno.test("roll and sheet products reject total stock adjustment", async () => {});
 ```
 
-- [ ] **Step 2: Implement finance minimum**
+- [x] **Step 2: Implement finance minimum**
 
 Mount:
 
@@ -526,7 +526,7 @@ GET  /api/v1/finance/reconciliations
 Use `perm.manage_finance` for debt collection and `perm.create_order` or `perm.manage_finance` for customer debt reads.
 Manual cashbook voucher editing belongs to a later Finance admin phase. Source-linked POS/debt vouchers must be read-only through the Finance API.
 
-- [ ] **Step 3: Implement inventory minimum**
+- [x] **Step 3: Implement inventory minimum**
 
 Mount:
 
@@ -540,7 +540,7 @@ POST /api/v1/inventory/products/{product_id}/adjust-stock
 
 Keep roll/sheet object editing routes deferred unless checkout tests need them. The adjust-stock route must only accept `inventory_shape = normal` and must create a `stocktakes.status = balanced` voucher plus `stock_movements.movement_type = stocktake_adjustment`. Stocktake listing must accept explicit `created_from` and `created_to` filters so operators can search long history when the default period has no rows.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run:
 

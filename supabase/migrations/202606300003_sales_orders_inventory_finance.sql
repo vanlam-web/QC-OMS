@@ -1494,6 +1494,153 @@ begin
 end;
 $$;
 
+create or replace function public.adjust_normal_product_stock_tx(
+  p_actor_user_id uuid,
+  p_organization_id uuid,
+  p_product_id uuid,
+  p_actual_qty numeric,
+  p_reason text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  product_record record;
+  settings_record record;
+  stocktake_id_value uuid;
+  stocktake_item_id_value uuid;
+  stocktake_code_value text;
+  stocktake_note_value text;
+  system_qty_value numeric(18,6);
+  difference_qty_value numeric(18,6);
+  created_at_value timestamptz;
+begin
+  if p_actual_qty < 0 or nullif(btrim(coalesce(p_reason, '')), '') is null then
+    raise exception 'actual quantity and reason are required' using errcode = '22023';
+  end if;
+
+  select p.id, p.code, p.name
+    into product_record
+  from public.products p
+  where p.id = p_product_id
+    and p.organization_id = p_organization_id;
+
+  if product_record.id is null then
+    raise exception 'product not found' using errcode = '23503';
+  end if;
+
+  select pis.inventory_shape, pis.stock_unit_id
+    into settings_record
+  from public.product_inventory_settings pis
+  where pis.product_id = p_product_id
+    and pis.organization_id = p_organization_id;
+
+  if settings_record.stock_unit_id is null then
+    raise exception 'inventory settings not found' using errcode = '23503';
+  end if;
+
+  if settings_record.inventory_shape <> 'normal' then
+    raise exception 'roll and sheet products reject total stock adjustment' using errcode = '22023';
+  end if;
+
+  select coalesce(sum(sm.quantity_delta), 0)
+    into system_qty_value
+  from public.stock_movements sm
+  where sm.product_id = p_product_id
+    and sm.organization_id = p_organization_id;
+
+  difference_qty_value := p_actual_qty - system_qty_value;
+  stocktake_code_value := public.next_stocktake_code(p_organization_id);
+  stocktake_note_value := 'Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa: '
+    || product_record.name || ' (' || product_record.code || ')';
+
+  insert into public.stocktakes (
+    organization_id,
+    code,
+    status,
+    source_type,
+    note,
+    balanced_at,
+    created_by
+  )
+  values (
+    p_organization_id,
+    stocktake_code_value,
+    'balanced',
+    'product_edit',
+    stocktake_note_value,
+    now(),
+    p_actor_user_id
+  )
+  returning id, created_at into stocktake_id_value, created_at_value;
+
+  insert into public.stocktake_items (
+    organization_id,
+    stocktake_id,
+    line_no,
+    product_id,
+    stock_unit_id,
+    system_qty,
+    actual_qty,
+    difference_qty,
+    note
+  )
+  values (
+    p_organization_id,
+    stocktake_id_value,
+    1,
+    p_product_id,
+    settings_record.stock_unit_id,
+    system_qty_value,
+    p_actual_qty,
+    difference_qty_value,
+    p_reason
+  )
+  returning id into stocktake_item_id_value;
+
+  if difference_qty_value <> 0 then
+    insert into public.stock_movements (
+      organization_id,
+      product_id,
+      movement_type,
+      quantity_delta,
+      stock_unit_id,
+      display_quantity,
+      display_unit_id,
+      stocktake_id,
+      stocktake_item_id,
+      reason,
+      created_by
+    )
+    values (
+      p_organization_id,
+      p_product_id,
+      'stocktake_adjustment',
+      difference_qty_value,
+      settings_record.stock_unit_id,
+      difference_qty_value,
+      settings_record.stock_unit_id,
+      stocktake_id_value,
+      stocktake_item_id_value,
+      p_reason,
+      p_actor_user_id
+    );
+  end if;
+
+  return jsonb_build_object(
+    'id', stocktake_id_value,
+    'code', stocktake_code_value,
+    'status', 'balanced',
+    'source_type', 'product_edit',
+    'created_at', created_at_value,
+    'balanced_at', created_at_value,
+    'note', stocktake_note_value
+  );
+end;
+$$;
+
 create or replace function public.revise_invoice_tx(
   p_actor_user_id uuid,
   p_organization_id uuid,
@@ -1549,4 +1696,5 @@ grant execute on function public.next_cashbook_voucher_code(uuid, text) to servi
 grant execute on function public.next_cash_reconciliation_code(uuid) to service_role;
 grant execute on function public.checkout_order_tx(uuid, uuid, jsonb) to service_role;
 grant execute on function public.collect_customer_debt_tx(uuid, uuid, jsonb) to service_role;
+grant execute on function public.adjust_normal_product_stock_tx(uuid, uuid, uuid, numeric, text) to service_role;
 grant execute on function public.revise_invoice_tx(uuid, uuid, uuid, jsonb) to service_role;

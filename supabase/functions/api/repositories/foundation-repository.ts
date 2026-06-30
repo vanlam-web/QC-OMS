@@ -1,16 +1,26 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.108.2";
 import type {
+  CashbookBalanceData,
+  CashbookVoucherData,
   CheckoutResultData,
   CustomerData,
+  CustomerDebtDetailData,
+  CustomerDebtSummaryData,
   CustomerGroupData,
   CurrentUserRecord,
+  DebtCollectionResultData,
+  FinanceAccountData,
   FoundationRepository,
   GetCurrentUserInput,
+  InventoryProductData,
   PermissionCode,
   PermissionData,
   PriceListData,
   ProductData,
+  ReconciliationData,
   ResolvedPriceData,
+  StockMovementData,
+  StocktakeData,
   UserListItem,
   WorkstationData,
 } from "../contracts.ts";
@@ -569,6 +579,208 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return isRecord(data) ? data : {};
     },
+    async listFinanceAccounts(input): Promise<FinanceAccountData[]> {
+      let query = client
+        .from("finance_accounts")
+        .select("id, code, name, account_type, is_default_cash, is_active")
+        .eq("organization_id", input.organizationId)
+        .order("account_type", { ascending: true })
+        .order("code", { ascending: true });
+
+      if (input.accountType !== undefined) query = query.eq("account_type", input.accountType);
+      if (input.isActive !== undefined) query = query.eq("is_active", input.isActive);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+      return (data ?? []) as FinanceAccountData[];
+    },
+    async listCustomerDebts(input): Promise<{ items: CustomerDebtSummaryData[]; total: number }> {
+      const summaries = await loadCustomerDebtSummaries(client, input.organizationId);
+      const search = input.search?.toLocaleLowerCase("vi");
+      const filtered = search === undefined
+        ? summaries
+        : summaries.filter((item) =>
+          item.customer_code?.toLocaleLowerCase("vi").includes(search) === true ||
+          item.customer_name.toLocaleLowerCase("vi").includes(search)
+        );
+      return paginate(filtered, input.page, input.pageSize);
+    },
+    async getCustomerDebt(input): Promise<CustomerDebtDetailData | null> {
+      const { data: customer, error: customerError } = await client
+        .from("customers")
+        .select("id")
+        .eq("id", input.customerId)
+        .eq("organization_id", input.organizationId)
+        .maybeSingle();
+      if (customerError !== null) throw customerError;
+      if (customer === null) return null;
+
+      const invoices = await loadOpenDebtInvoices(client, input.organizationId, input.customerId);
+      return {
+        customer_id: input.customerId,
+        total_debt: invoices.reduce((sum, invoice) => sum + invoice.remaining_debt, 0),
+        invoices,
+      };
+    },
+    async collectCustomerDebt(input): Promise<DebtCollectionResultData> {
+      const { data, error } = await client.rpc("collect_customer_debt_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("DEBT_COLLECTION_RESULT_INVALID");
+      return {
+        payment_receipt_id: String(data.payment_receipt_id ?? ""),
+        allocated_amount: Number(data.paid_amount ?? data.allocated_amount ?? 0),
+      };
+    },
+    async listCashbookBalances(input): Promise<CashbookBalanceData[]> {
+      const accounts = await this.listFinanceAccounts({ organizationId: input.organizationId, isActive: true });
+      const { data: entries, error } = await client
+        .from("cashbook_entries")
+        .select("finance_account_id, amount_delta")
+        .eq("organization_id", input.organizationId)
+        .eq("status", "posted");
+      if (error !== null) throw error;
+
+      const balances = new Map<string, number>();
+      for (const entry of entries ?? []) {
+        balances.set(entry.finance_account_id, (balances.get(entry.finance_account_id) ?? 0) + Number(entry.amount_delta));
+      }
+
+      return accounts.map((account) => ({
+        finance_account_id: account.id,
+        code: account.code,
+        name: account.name,
+        account_type: account.account_type,
+        balance: balances.get(account.id) ?? 0,
+      }));
+    },
+    async listCashbookVouchers(input): Promise<{ items: CashbookVoucherData[]; total: number }> {
+      const { data, error, count } = await client
+        .from("cashbook_vouchers")
+        .select("id, code, status, amount", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false })
+        .range(0, 99);
+      if (error !== null) throw error;
+      return {
+        items: (data ?? []).map((row) => ({
+          id: row.id,
+          code: row.code,
+          source_type: "manual_voucher",
+          status: row.status,
+          amount: Number(row.amount),
+        })),
+        total: count ?? 0,
+      };
+    },
+    async listReconciliations(input): Promise<{ items: ReconciliationData[]; total: number }> {
+      const { data, error, count } = await client
+        .from("cash_reconciliations")
+        .select("id, code, status, period_start, period_end", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("period_end", { ascending: false })
+        .range(0, 99);
+      if (error !== null) throw error;
+      return { items: (data ?? []) as ReconciliationData[], total: count ?? 0 };
+    },
+    async listInventoryProducts(input): Promise<{ items: InventoryProductData[]; total: number }> {
+      let query = client
+        .from("products")
+        .select("id, code, name, status", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("code", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+      }
+
+      const { data: products, error, count } = await query;
+      if (error !== null) throw error;
+      const items = await hydrateInventoryProducts(client, input.organizationId, products ?? [], input.inventoryShape);
+      return { items, total: count ?? items.length };
+    },
+    async getInventoryProduct(input): Promise<InventoryProductData | null> {
+      const { data, error } = await client
+        .from("products")
+        .select("id, code, name, status")
+        .eq("id", input.productId)
+        .eq("organization_id", input.organizationId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      if (data === null) return null;
+      const [item] = await hydrateInventoryProducts(client, input.organizationId, [data]);
+      return item ?? null;
+    },
+    async listStockMovements(input): Promise<{ items: StockMovementData[]; total: number }> {
+      let query = client
+        .from("stock_movements")
+        .select("id, product_id, movement_type, quantity_delta, created_at", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.productId !== undefined) query = query.eq("product_id", input.productId);
+      if (input.orderId !== undefined) query = query.eq("order_id", input.orderId);
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return {
+        items: (data ?? []).map((row) => ({
+          id: row.id,
+          product_id: row.product_id,
+          movement_type: row.movement_type,
+          quantity_delta: Number(row.quantity_delta),
+          created_at: row.created_at,
+        })),
+        total: count ?? 0,
+      };
+    },
+    async listStocktakes(input): Promise<{ items: StocktakeData[]; total: number }> {
+      let query = client
+        .from("stocktakes")
+        .select("id, code, status, source_type, created_at, balanced_at, note", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.status !== undefined) query = query.eq("status", input.status);
+      if (input.createdFrom !== undefined) query = query.gte("created_at", input.createdFrom);
+      if (input.createdTo !== undefined) query = query.lte("created_at", input.createdTo);
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        query = query.or(`code.ilike.%${search}%,note.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []) as StocktakeData[], total: count ?? 0 };
+    },
+    async adjustNormalProductStock(input): Promise<StocktakeData> {
+      const { data, error } = await client.rpc("adjust_normal_product_stock_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_product_id: input.productId,
+        p_actual_qty: input.actualQty,
+        p_reason: input.reason,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("STOCKTAKE_RESULT_INVALID");
+      return {
+        id: String(data.id),
+        code: String(data.code),
+        status: "balanced",
+        source_type: "product_edit",
+        created_at: String(data.created_at),
+        balanced_at: String(data.balanced_at),
+        note: data.note === null ? null : String(data.note),
+      };
+    },
   };
 }
 
@@ -634,6 +846,173 @@ function toCheckoutResultData(value: unknown): CheckoutResultData {
       })
       : [],
   };
+}
+
+async function loadCustomerDebtSummaries(
+  client: DatabaseClient,
+  organizationId: string,
+): Promise<CustomerDebtSummaryData[]> {
+  const invoices = await loadOpenDebtInvoices(client, organizationId);
+  const byCustomer = new Map<string, CustomerDebtSummaryData>();
+
+  for (const invoice of invoices) {
+    const key = invoice.customer_id ?? `retail:${invoice.order_id}`;
+    const current = byCustomer.get(key) ?? {
+      customer_id: invoice.customer_id,
+      customer_code: invoice.customer_code,
+      customer_name: invoice.customer_name,
+      total_debt: 0,
+      oldest_order_code: invoice.order_code,
+      open_invoice_count: 0,
+    };
+    current.total_debt += invoice.remaining_debt;
+    current.open_invoice_count += 1;
+    current.oldest_order_code ??= invoice.order_code;
+    byCustomer.set(key, current);
+  }
+
+  return [...byCustomer.values()]
+    .filter((item) => item.total_debt > 0)
+    .sort((left, right) => left.customer_name.localeCompare(right.customer_name, "vi"));
+}
+
+async function loadOpenDebtInvoices(
+  client: DatabaseClient,
+  organizationId: string,
+  customerId?: string,
+): Promise<Array<{
+  order_id: string;
+  order_code: string;
+  customer_id: string | null;
+  customer_code: string | null;
+  customer_name: string;
+  total_amount: number;
+  paid_amount: number;
+  debt_amount: number;
+  remaining_debt: number;
+}>> {
+  let orderQuery = client
+    .from("orders")
+    .select("id, code, customer_id, customer_snapshot, total_amount, paid_amount, debt_amount, created_at")
+    .eq("organization_id", organizationId)
+    .eq("order_type", "invoice")
+    .eq("status", "completed")
+    .gt("debt_amount", 0)
+    .order("created_at", { ascending: true })
+    .limit(1000);
+
+  if (customerId !== undefined) orderQuery = orderQuery.eq("customer_id", customerId);
+
+  const { data: orders, error: ordersError } = await orderQuery;
+  if (ordersError !== null) throw ordersError;
+  if ((orders ?? []).length === 0) return [];
+
+  const orderIds = (orders ?? []).map((order) => order.id);
+  const { data: allocations, error: allocationsError } = await client
+    .from("customer_debt_allocations")
+    .select("order_id, allocated_amount")
+    .eq("organization_id", organizationId)
+    .in("order_id", orderIds);
+  if (allocationsError !== null) throw allocationsError;
+
+  const allocatedByOrder = new Map<string, number>();
+  for (const allocation of allocations ?? []) {
+    allocatedByOrder.set(
+      allocation.order_id,
+      (allocatedByOrder.get(allocation.order_id) ?? 0) + Number(allocation.allocated_amount),
+    );
+  }
+
+  return (orders ?? [])
+    .map((order) => {
+      const snapshot = isRecord(order.customer_snapshot) ? order.customer_snapshot : {};
+      const debtAmount = Number(order.debt_amount);
+      const remainingDebt = debtAmount - (allocatedByOrder.get(order.id) ?? 0);
+      return {
+        order_id: order.id,
+        order_code: order.code,
+        customer_id: order.customer_id,
+        customer_code: typeof snapshot.code === "string" ? snapshot.code : null,
+        customer_name: typeof snapshot.name === "string" ? snapshot.name : "Khách lẻ",
+        total_amount: Number(order.total_amount),
+        paid_amount: Number(order.paid_amount),
+        debt_amount: debtAmount,
+        remaining_debt: remainingDebt,
+      };
+    })
+    .filter((invoice) => invoice.remaining_debt > 0);
+}
+
+function paginate<T>(items: T[], page: number, pageSize: number): { items: T[]; total: number } {
+  const start = (page - 1) * pageSize;
+  return { items: items.slice(start, start + pageSize), total: items.length };
+}
+
+async function hydrateInventoryProducts(
+  client: DatabaseClient,
+  organizationId: string,
+  products: Array<{ id: string; code: string; name: string; status: "active" | "inactive" }>,
+  inventoryShape?: "normal" | "roll" | "sheet",
+): Promise<InventoryProductData[]> {
+  const productIds = products.map((product) => product.id);
+  if (productIds.length === 0) return [];
+
+  const { data: settingsRows, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("product_id, inventory_shape, stock_unit_id")
+    .eq("organization_id", organizationId)
+    .in("product_id", productIds);
+  if (settingsError !== null) throw settingsError;
+
+  const settingsByProduct = new Map((settingsRows ?? []).map((row) => [row.product_id, row]));
+  const filteredProducts = inventoryShape === undefined
+    ? products
+    : products.filter((product) => settingsByProduct.get(product.id)?.inventory_shape === inventoryShape);
+  const filteredProductIds = filteredProducts.map((product) => product.id);
+  if (filteredProductIds.length === 0) return [];
+
+  const stockUnitIds = [...new Set((settingsRows ?? []).map((row) => row.stock_unit_id).filter(isString))];
+  const unitsById = new Map<string, string>();
+  if (stockUnitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, name")
+      .eq("organization_id", organizationId)
+      .in("id", stockUnitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, unit.name);
+  }
+
+  const { data: movements, error: movementsError } = await client
+    .from("stock_movements")
+    .select("product_id, quantity_delta")
+    .eq("organization_id", organizationId)
+    .in("product_id", filteredProductIds);
+  if (movementsError !== null) throw movementsError;
+
+  const qtyByProduct = new Map<string, number>();
+  for (const movement of movements ?? []) {
+    qtyByProduct.set(movement.product_id, (qtyByProduct.get(movement.product_id) ?? 0) + Number(movement.quantity_delta));
+  }
+
+  return filteredProducts.map((product) => {
+    const settings = settingsByProduct.get(product.id);
+    const availableQty = qtyByProduct.get(product.id) ?? 0;
+    return {
+      product_id: product.id,
+      code: product.code,
+      name: product.name,
+      status: product.status,
+      inventory_shape: settings?.inventory_shape ?? "normal",
+      stock_unit: unitsById.get(settings?.stock_unit_id ?? "") ?? "đơn vị",
+      available_qty: availableQty,
+      is_negative: availableQty < 0,
+    };
+  });
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
