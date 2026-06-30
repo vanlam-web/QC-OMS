@@ -154,12 +154,16 @@ KiotViet có:
 
 - Bộ lọc nhóm hàng, tồn kho, kho hàng, dự kiến hết hàng, thời gian tạo, thuộc tính, nhà cung cấp, thương hiệu, vị trí, loại hàng, bán trực tiếp, liên kết kênh bán, trạng thái hàng hóa.
 - Cột: mã hàng, tên hàng, nhóm hàng, loại hàng, kích thước, giá bán, giá vốn, tồn kho, khách đặt, thời gian tạo, dự kiến hết hàng, trạng thái.
+- Ngày `01/07/2026`, bộ lọc `Hàng đang kinh doanh` có `381 hàng hóa (495 mã hàng)`.
+- Có dòng tổng hợp phía trên danh sách và cột `Dự kiến hết hàng`.
 
 Quyết định QC-OMS hiện tại:
 
 - Sản phẩm ngưng bán không xuất hiện trong POS, chỉ thấy trong trang Hàng hóa qua bộ lọc trạng thái.
 - Vật tư cuộn/tấm cần quản lý tồn vật lý theo cuộn/tấm, không chỉ tổng m2 như KiotViet.
 - Tấm lỡ dưới `0.3m2` mặc định bỏ, có thể tạo/sửa thủ công nếu tận dụng.
+- Không tạo field/module riêng cho thương hiệu hoặc kênh bán; nếu cần nhận diện thì ghi trong tên/mã/nhóm hàng.
+- Nhà cung cấp/vị trí để sau khi Purchase/Warehouse location được chốt.
 
 ### 4.6. Thiết lập giá
 

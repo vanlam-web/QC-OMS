@@ -5,6 +5,25 @@
 
 ---
 
+## 0. Ghi nhận từ KiotViet
+
+Quan sát ngày `01/07/2026` trên trang `Hàng hóa`:
+
+- Bộ lọc trạng thái mặc định là `Hàng đang kinh doanh`.
+- Danh sách có `381 hàng hóa (495 mã hàng)`.
+- Có dòng tổng phía trên danh sách để tổng hợp tồn kho/khách đặt.
+- Các bộ lọc KiotViet gồm: nhóm hàng, tồn kho, dự kiến hết hàng, thời gian tạo, nhà cung cấp, thương hiệu, vị trí, loại hàng, bán trực tiếp, liên kết kênh bán, trạng thái hàng hóa.
+- Cột mặc định gồm: mã hàng, tên hàng, giá bán, giá vốn, tồn kho, khách đặt, thời gian tạo, dự kiến hết hàng.
+
+Áp dụng cho QC-OMS:
+
+- Giữ bộ lọc trạng thái để xem được hàng ngưng bán trong module Hàng hóa.
+- Giữ `dự kiến hết hàng` ở mức cột cảnh báo tồn thấp nếu công thức đơn giản; có thể để sau nếu chưa có tốc độ bán ổn định.
+- Không tạo field/module riêng cho thương hiệu hoặc kênh bán trong MVP.
+- Nhà cung cấp/vị trí chỉ đưa vào sau khi Purchase/Warehouse location được chốt.
+
+---
+
 ## 1. Mục đích
 
 Màn danh sách hàng hóa là nơi nhân viên quản lý hàng hóa và xem tồn kho tổng quan.
@@ -42,8 +61,9 @@ Màn này không thay thế POS bán hàng. Sản phẩm ngưng bán vẫn xem v
 | Loại tồn | Tất cả, hàng thường, cuộn, tấm |
 | Trạng thái hàng hóa | Đang kinh doanh, ngưng bán, tất cả |
 | Thời gian tạo | Toàn thời gian hoặc tùy chỉnh |
+| Dự kiến hết hàng | Sau MVP hoặc chỉ hiển thị cảnh báo nếu tính được đơn giản |
 
-Sau MVP có thể bổ sung nhà cung cấp, thương hiệu, vị trí.
+Sau MVP có thể bổ sung nhà cung cấp và vị trí. Không tạo bộ lọc thương hiệu/kênh bán riêng trong MVP; nếu cần nhận diện thương hiệu thì ghi trong tên/mã/nhóm hàng.
 
 ---
 
@@ -58,6 +78,7 @@ Sau MVP có thể bổ sung nhà cung cấp, thương hiệu, vị trí.
 | Giá bán | Giá bán mặc định/bảng giá chung nếu có |
 | Tồn kho | Tổng tồn hiện tại; với cuộn/tấm là tổng hợp |
 | Khách đặt | Nếu chưa có nghiệp vụ đặt hàng thì có thể ẩn trong MVP |
+| Dự kiến hết hàng | Cảnh báo tham khảo; không dùng để khóa bán |
 | Trạng thái | Đang kinh doanh/ngưng bán |
 | Hành động | Sửa, mở tồn chi tiết, kiểm kho |
 
