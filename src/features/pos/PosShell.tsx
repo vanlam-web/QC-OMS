@@ -6,10 +6,14 @@ export function PosShell({
   currentUser,
   connected = true,
   onSignOut,
+  onOpenAdmin,
+  onOpenDashboard,
 }: {
   currentUser: CurrentUserData
   connected?: boolean
   onSignOut: () => void
+  onOpenAdmin: () => void
+  onOpenDashboard: () => void
 }) {
   return (
     <main className="pos-shell">
@@ -19,9 +23,10 @@ export function PosShell({
         <button disabled>Tìm kiếm</button>
         <ProfileMenu
           displayName={currentUser.user.display_name}
-          workstationCode={currentUser.workstation?.code ?? 'Chưa chọn máy'}
           permissions={currentUser.permissions}
           onSignOut={onSignOut}
+          onOpenAdmin={onOpenAdmin}
+          onOpenDashboard={onOpenDashboard}
         />
       </section>
       <section aria-label="K02 giỏ hàng" className="pos-cart">

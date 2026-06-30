@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver authentication, workstation selection, permission-gated POS Shell, Foundation administration APIs, local Supabase setup, automated tests, and CI for QC-OMS Phase 0.
+**Goal:** Deliver authentication, account-based module routing, permission-gated POS Shell, Foundation administration APIs, local Supabase setup, automated tests, and CI for QC-OMS Phase 0.
+
+**Plan correction 2026-06-30:** POS is a sales module inside QC-OMS, not a physical workstation selection step. Frontend login now routes to an account dashboard, and permissions are account-based. Workstation database/API artifacts from earlier Foundation work remain backend-compatible for now, but they are not part of the login flow, POS route guard, or administration UI in this phase.
 
 **Architecture:** Build one vertical slice with React/Vite on the client and one Deno Supabase Edge Function exposing `/api/v1`. PostgreSQL migrations own Foundation schema, transactional permission operations, RLS, and seed data; the client uses Supabase directly only for Auth and Realtime invalidation.
 
@@ -17,8 +19,8 @@ src/
 ├── app/                         # providers, router, protected routes
 ├── components/                  # reusable presentation-only components
 ├── features/auth/               # login, session bootstrap, logout
+├── features/dashboard/          # account-based module landing page
 ├── features/users/              # Foundation API types/services
-├── features/workstations/       # workstation selection
 ├── features/pos/                # Phase 0 POS shell and profile menu
 ├── lib/api/                     # authenticated REST client and API errors
 ├── lib/auth/                    # Supabase browser client
@@ -660,7 +662,7 @@ export class ApiError extends Error {
 }
 ```
 
-The client obtains the current access token from a callback, never LocalStorage directly. Workstation storage is isolated behind `getWorkstationId`, `setWorkstationId`, and `clearWorkstationId` using only `qc_oms.workstation_id`.
+The client obtains the current access token from a callback, never LocalStorage directly. The frontend does not send workstation headers or store workstation IDs in Phase 0 because module access is account-based.
 
 - [ ] **Step 4: Write failing login tests**
 
@@ -689,13 +691,13 @@ git add src/lib src/features/auth src/app/providers.tsx src/main.tsx
 git commit -m "feat: add browser authentication foundation"
 ```
 
-### Task 9: Add workstation selection and permission routing
+### Task 9: Add account dashboard and permission routing
 
 **Files:**
 - Create: `src/features/users/types.ts`
 - Create: `src/features/users/foundation-service.ts`
-- Create: `src/features/workstations/WorkstationPage.tsx`
-- Create: `src/features/workstations/WorkstationPage.test.tsx`
+- Create: `src/features/dashboard/DashboardPage.tsx`
+- Create: `src/features/dashboard/DashboardPage.test.tsx`
 - Create: `src/app/RequireSession.tsx`
 - Create: `src/app/RequirePermission.tsx`
 - Create: `src/app/RequirePermission.test.tsx`
@@ -703,9 +705,9 @@ git commit -m "feat: add browser authentication foundation"
 - Create: `src/app/router.tsx`
 - Modify: `src/app/App.tsx`
 
-- [ ] **Step 1: Write failing workstation-selection tests**
+- [ ] **Step 1: Write failing dashboard module tests**
 
-Assert sorted active workstations render, selecting one stores its ID, `/me` is refetched, and an empty list shows a deterministic support message rather than entering POS.
+Assert authenticated users land on an account dashboard, available modules are enabled by account permissions, unavailable future modules render disabled, and no POS machine/workstation selection is shown.
 
 - [ ] **Step 2: Write failing permission-route tests**
 
@@ -713,35 +715,36 @@ Assert unauthenticated users go to `/login`, authenticated users without `perm.c
 
 - [ ] **Step 3: Verify RED**
 
-Run: `npm test -- src/features/workstations/WorkstationPage.test.tsx src/app/RequirePermission.test.tsx`
+Run: `npm test -- src/features/dashboard/DashboardPage.test.tsx src/app/RequirePermission.test.tsx`
 
-Expected: FAIL because the selector and guards do not exist.
+Expected: FAIL because the dashboard and guards do not exist.
 
-- [ ] **Step 4: Implement service, selector, guards, and router**
+- [ ] **Step 4: Implement service, dashboard, guards, and router**
 
 Use routes:
 
 ```text
 /login        public; authenticated users redirect through bootstrap
-/workstation  authenticated; shown when `/me.workstation` is null
-/pos          authenticated + perm.create_order + valid workstation
+/dashboard    authenticated; account-based module landing page
+/pos          authenticated + perm.create_order
+/admin        authenticated + perm.access_admin_panel
 /forbidden    authenticated; no POS DOM
 *             redirect based on session/bootstrap state
 ```
 
-On `WORKSTATION_INVALID`, clear only the workstation key, refetch `/me` without the header, and route to `/workstation`. On `ACCOUNT_INACTIVE`, sign out and route to `/login`.
+On `ACCOUNT_INACTIVE`, sign out and route to `/login`. The frontend does not route through workstation selection.
 
 - [ ] **Step 5: Verify GREEN**
 
-Run: `npm test -- src/features/workstations/WorkstationPage.test.tsx src/app/RequirePermission.test.tsx && npm run typecheck`
+Run: `npm test -- src/features/dashboard/DashboardPage.test.tsx src/app/RequirePermission.test.tsx && npm run typecheck`
 
 Expected: all focused tests pass.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/features/users src/features/workstations src/app
-git commit -m "feat: guard POS access by workstation and permission"
+git add src/features/users src/features/dashboard src/app
+git commit -m "feat: add account module dashboard"
 ```
 
 ### Task 10: Build the Phase 0 POS Shell and profile menu
@@ -757,7 +760,7 @@ git commit -m "feat: guard POS access by workstation and permission"
 
 - [ ] **Step 1: Write failing shell and menu tests**
 
-Assert the shell renders K01, K02, and K03 landmarks; displays `👤 {display_name} / {workstation.code}`; displays connection state; shows only permission-allowed profile items; closes the menu on outside click and Escape; and signs out from every active account.
+Assert the shell renders K01, K02, and K03 landmarks; displays `👤 {display_name}`; displays connection state; shows only permission-allowed profile items; closes the menu on outside click and Escape; and signs out from every active account.
 
 - [ ] **Step 2: Verify RED**
 
@@ -813,7 +816,7 @@ The event callback must ignore payload authorization data and call `/me`. After 
 
 - inactive account signs out;
 - missing current-route permission redirects to `/forbidden`;
-- invalid workstation clears the local workstation and redirects to `/workstation`.
+- route permission loss redirects to `/forbidden`.
 
 Track connection state as `connecting | connected | disconnected` for `ConnectionStatus`.
 
@@ -863,16 +866,17 @@ Expected: all Deno unit and local integration tests pass.
 - [ ] **Step 4: Write the browser E2E smoke test**
 
 ```ts
-test('login, select workstation, open POS shell, refresh, and logout', async ({ page }) => {
+test('login, open dashboard modules, refresh POS shell, and logout', async ({ page }) => {
   await page.goto('/login')
-  await page.getByLabel('Email').fill(process.env.E2E_ADMIN_EMAIL!)
+  await page.getByLabel('Tài khoản').fill(process.env.E2E_ADMIN_EMAIL!)
   await page.getByLabel('Mật khẩu').fill(process.env.E2E_ADMIN_PASSWORD!)
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
-  await page.getByRole('button', { name: /POS-01/ }).click()
+  await expect(page.getByRole('heading', { name: 'QC-OMS' })).toBeVisible()
+  await page.getByRole('button', { name: 'Bán hàng' }).click()
   await expect(page.getByRole('main', { name: 'Màn hình POS' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('main', { name: 'Màn hình POS' })).toBeVisible()
-  await page.getByRole('button', { name: /Tài khoản/ }).click()
+  await page.getByRole('button', { name: /E2E Admin/ }).click()
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click()
   await expect(page).toHaveURL(/\/login$/)
 })
@@ -884,7 +888,7 @@ Global setup creates the E2E Auth user through local Admin API, attaches profile
 
 Start local Supabase, serve the API, and start Vite in separate terminal sessions, then run: `npm run test:e2e`
 
-Expected: the smoke path plus invalid-login, forbidden-user, inactive-account, and invalid-workstation tests pass.
+Expected: the smoke path plus invalid-login, forbidden-user, inactive-account, and forbidden-module tests pass.
 
 - [ ] **Step 6: Add CI quality gates**
 
@@ -988,7 +992,7 @@ Expected: Vercel returns a preview/staging URL built from the same verified Git 
 
 Set `PLAYWRIGHT_BASE_URL`, `E2E_ADMIN_EMAIL`, and `E2E_ADMIN_PASSWORD` in the shell or CI secret store, then run: `npm run test:e2e`
 
-Expected: login, `/me`, workstation selection, POS Shell, refresh, forbidden-user, inactive-account, invalid-workstation, and logout paths pass against staging.
+Expected: login, `/me`, dashboard module routing, POS Shell, refresh, forbidden-user, inactive-account, forbidden-module, and logout paths pass against staging.
 
 - [ ] **Step 6: Record acceptance evidence**
 

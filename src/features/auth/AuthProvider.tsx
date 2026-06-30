@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -12,33 +10,25 @@ import { supabase } from '../../lib/auth/supabase'
 import { createApiClient, ApiError } from '../../lib/api/client'
 import type { CurrentUserData } from '../../lib/api/types'
 import {
-  clearWorkstationId,
   createFoundationService,
-  getWorkstationId,
-  setWorkstationId,
   type ApiRequester,
 } from '../users/foundation-service'
-import type { Workstation } from '../users/types'
+import { AccessSync } from './AccessSync'
+import type { AccessConnectionState, RealtimeClient } from '../../lib/realtime/access-channel'
+import { AuthContext, type AuthContextValue } from './auth-context'
 
-export interface AuthContextValue extends AuthService {
-  initialized: boolean
-  currentUser: CurrentUserData | null
-  workstations: Workstation[]
-  loadWorkstations(): Promise<void>
-  refreshMe(): Promise<void>
-  selectWorkstation(id: string): Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+const bootstrapTimeoutMs = 8000
 
 export function AuthProvider({
   children,
   service,
   api,
+  realtimeClient,
 }: {
   children: ReactNode
   service?: AuthService
   api?: ApiRequester
+  realtimeClient?: RealtimeClient
 }) {
   const authService = useMemo(() => service ?? createAuthService(supabase), [service])
   const foundation = useMemo(() => {
@@ -47,19 +37,17 @@ export function AuthProvider({
     const client = createApiClient({
       baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
       getAccessToken: authService.getAccessToken,
-      getWorkstationId,
     })
     return createFoundationService(client)
   }, [api, authService])
-  const [initialized, setInitialized] = useState(true)
+  const [initialized, setInitialized] = useState(false)
+  const [accessConnection, setAccessConnection] = useState<AccessConnectionState>('disconnected')
   const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null)
-  const [workstations, setWorkstations] = useState<Workstation[]>([])
 
   const signOut = useCallback(async () => {
     await authService.signOut()
-    clearWorkstationId()
+    setAccessConnection('disconnected')
     setCurrentUser(null)
-    setWorkstations([])
   }, [authService])
 
   const refreshMe = useCallback(async () => {
@@ -67,14 +55,10 @@ export function AuthProvider({
       const me = await foundation.getMe()
       setCurrentUser(me)
     } catch (cause) {
-      if (cause instanceof ApiError && cause.code === 'WORKSTATION_INVALID') {
-        clearWorkstationId()
-        const me = await foundation.getMe()
-        setCurrentUser(me)
-        return
-      }
-
-      if (cause instanceof ApiError && ['AUTH_REQUIRED', 'ACCOUNT_INACTIVE'].includes(cause.code)) {
+      if (
+        cause instanceof ApiError &&
+        ['AUTH_REQUIRED', 'ACCOUNT_INACTIVE', 'PERMISSION_DENIED'].includes(cause.code)
+      ) {
         await signOut()
         return
       }
@@ -88,31 +72,33 @@ export function AuthProvider({
   const signIn = useCallback(
     async (email: string, password: string) => {
       setInitialized(false)
-      await authService.signIn(email, password)
-      await refreshMe()
+      try {
+        await authService.signIn(email, password)
+        await refreshMe()
+      } catch (cause) {
+        setInitialized(true)
+        throw cause
+      }
     },
     [authService, refreshMe],
-  )
-
-  const loadWorkstations = useCallback(async () => {
-    setWorkstations(await foundation.listWorkstations())
-  }, [foundation])
-
-  const selectWorkstation = useCallback(
-    async (id: string) => {
-      setWorkstationId(id)
-      await refreshMe()
-    },
-    [refreshMe],
   )
 
   useEffect(() => {
     let active = true
 
-    void authService.getAccessToken().then(async (token) => {
-      if (!active || !token) return
-      await refreshMe()
-    })
+    void withTimeout(authService.getAccessToken(), bootstrapTimeoutMs)
+      .then(async (token) => {
+        if (!active) return
+        if (!token) {
+          setInitialized(true)
+          return
+        }
+        await withTimeout(refreshMe(), bootstrapTimeoutMs)
+      })
+      .catch(() => {
+        if (!active) return
+        setInitialized(true)
+      })
 
     return () => {
       active = false
@@ -122,37 +108,51 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       initialized,
+      accessConnection,
       currentUser,
-      workstations,
       signIn,
       signOut,
       getAccessToken: authService.getAccessToken,
       refreshMe,
-      loadWorkstations,
-      selectWorkstation,
     }),
     [
+      accessConnection,
       authService.getAccessToken,
       currentUser,
       initialized,
-      loadWorkstations,
       refreshMe,
-      selectWorkstation,
       signIn,
       signOut,
-      workstations,
     ],
   )
 
-  return <AuthContext value={value}>{children}</AuthContext>
+  const realtime = realtimeClient ?? supabase
+
+  return (
+    <AuthContext value={value}>
+      <AccessSync
+        client={realtime}
+        userId={currentUser?.user.id ?? null}
+        refreshMe={refreshMe}
+        onConnectionChange={setAccessConnection}
+      />
+      {children}
+    </AuthContext>
+  )
 }
 
-export function useAuth() {
-  const service = useContext(AuthContext)
-  if (!service) {
-    throw new Error('AuthProvider is required')
-  }
-  return service
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error('Timed out.')), timeoutMs)
+    promise.then(
+      (value) => {
+        window.clearTimeout(timeout)
+        resolve(value)
+      },
+      (cause) => {
+        window.clearTimeout(timeout)
+        reject(cause)
+      },
+    )
+  })
 }
-
-export const useAuthService = useAuth
