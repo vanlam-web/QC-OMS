@@ -523,9 +523,82 @@ Ghi chu dua vao Source of Truth sau:
   - hao hut tham khao
 - Cac chi so doi soat khong tu dong sinh them stock movement trong MVP.
 
+### Q8. Kiem kho theo tham khao KiotViet
+
+Nguon tham khao Owner cung cap:
+
+```text
+Tinh nang Kiem kho KiotViet cho phep tao phieu kiem kho, nhap so luong thuc te, tinh chenh lech va can bang kho.
+Trang thai gom: Phieu tam, Da can bang kho, Da huy.
+Khi can bang kho, ton kho tren he thong duoc cap nhat theo so thuc te.
+```
+
+De xuat giu cho QC-OMS:
+
+- Co module `Kiem kho` de doi soat ton thuc te voi ton tren he thong.
+- Co ma phieu tu sinh dang `KK000001`.
+- Co 3 trang thai chinh:
+  - `draft`: Phieu tam, chua doi ton kho
+  - `balanced`: Da can bang kho, da tao stock movement dieu chinh
+  - `cancelled`: Da huy, khong anh huong ton kho
+- Nguoi dung tao phieu kiem kho thu cong:
+  1. Bam `+ Kiem kho`
+  2. Chon san pham/vat tu can kiem
+  3. Nhap so luong thuc te
+  4. He thong tinh chenh lech:
+
+```text
+chenh_lech = so_luong_thuc_te - so_luong_he_thong
+```
+
+- `Luu tam` chi luu phieu, khong tao stock movement.
+- `Can bang kho` tao stock movement loai `stocktake_adjustment` cho tung dong chenh lech va doi phieu sang `balanced`.
+- `Huy phieu` doi trang thai sang `cancelled`, khong xoa vat ly.
+
+De xuat doi so voi KV:
+
+- Khong can tu dong tao phieu kiem kho khi sua thong tin hang hoa trong MVP, vi de gay nhieu phieu rac.
+- Neu sua truc tiep so ton trong trang Hang hoa, QC-OMS nen yeu cau di qua mot phieu dieu chinh/kiem kho ngan gon thay vi sua am tham.
+- Bang danh sach phieu can co cac cot chinh:
+  - ma kiem kho
+  - thoi gian tao
+  - ngay can bang
+  - tong so luong thuc te
+  - tong gia tri thuc te
+  - tong chenh lech
+  - so luong lech tang
+  - so luong lech giam
+  - ghi chu
+  - trang thai
+  - nguoi tao
+- Bo loc can co:
+  - tim theo ma phieu
+  - khoang thoi gian tao
+  - trang thai
+  - nguoi tao
+- Co xuat Excel va tuy chinh cot hien thi sau MVP neu can; MVP co the lam sau phan nghiep vu can bang kho.
+
+Ghi chu rieng cho hang `roll` va `sheet`:
+
+- Hang `normal`: kiem theo so luong ton chinh.
+- Hang `roll`: kiem theo tung cuon neu can chinh xac; tong ton chi la tong hop tu cac cuon.
+- Hang `sheet`: kiem rieng tam nguyen va tam lo/tam do neu can.
+- Can bang kho hang `roll`/`sheet` khong nen chi sua tong so, vi se mat thong tin cuon/tam. MVP co the:
+  - cho kiem tong voi hang thuong
+  - voi cuon/tam, yeu cau chon cuon/tam cu the hoac dung man hinh chuyen sau sau
+
+De xuat chot:
+
+```text
+QC-OMS giu luong Kiem kho giong KV o muc phieu tam -> can bang -> huy.
+MVP khong tu tao phieu kiem kho khi sua hang hoa.
+Can bang kho tao stock movement dieu chinh.
+Hang cuon/tam can xu ly can than theo doi tuong vat ly, khong chi sua tong ton neu viec do lam mat chi tiet.
+```
+
 ## 6. De xuat thu tu dac ta tiep theo
 
-1. Owner chot Q1-Q4 va Q6 de viet Inventory Business/Production reconciliation draft.
+1. Owner chot Q1-Q4, Q6-Q8 de viet Inventory Business/Production reconciliation draft.
 2. Cap nhat Source of Truth Inventory:
    - `docs/03-BUSINESS-NghiepVu/Inventory/README.md`
    - `docs/03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md`
