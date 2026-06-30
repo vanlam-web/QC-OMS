@@ -173,6 +173,21 @@ Source of Truth đã tạo:
 - Mã khách và tên khách là trọng tâm; SĐT không bắt buộc nhưng nếu có thì unique.
 - Không đưa giới tính, sinh nhật, tích điểm, khuyến mại tự động hoặc người phụ trách khách hàng vào MVP.
 
+#### 3.2E. PriceBook — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/PriceBook/README.md`
+- `docs/02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md`
+- `docs/02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md`
+
+Đã định hướng:
+
+- QC-OMS quản lý bảng giá theo từng bảng riêng, không trải nhiều bảng giá ngang như KiotViet trong MVP.
+- Bảng giá chung là fallback mặc định.
+- Bảng giá nhóm áp dụng qua nhóm khách; khách không gán nhóm dùng bảng giá chung.
+- Không đưa khuyến mại, công thức cập nhật giá hàng loạt hoặc chiết khấu riêng vào MVP.
+
 #### 3.3. Order draft và Order persistence
 
 Source of Truth cần bổ sung:

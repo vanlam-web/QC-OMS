@@ -83,6 +83,14 @@
 | [02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md](./02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md) | Danh sách khách hàng, bộ lọc và thao tác nhanh | 🔨 |
 | [02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md](./02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md) | Chi tiết khách hàng, nhóm giá, lịch sử bán và công nợ | 🔨 |
 
+#### Module Bảng giá
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/PriceBook/README.md](./02-PRD-UX-PhongCanh/PriceBook/README.md) | Mục lục quản lý bảng giá | 🔨 |
+| [02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md](./02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md) | Danh sách bảng giá và nhóm khách sử dụng | 🔨 |
+| [02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md](./02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md) | Chi tiết giá sản phẩm trong một bảng giá | 🔨 |
+
 #### Module Tài chính
 
 | File | Mô tả | Trạng thái |

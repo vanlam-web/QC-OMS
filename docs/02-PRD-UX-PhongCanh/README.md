@@ -41,6 +41,10 @@
     ├── [Customers/README.md](./Customers/README.md)
     ├── [Customers/01-CUSTOMER-LIST.md](./Customers/01-CUSTOMER-LIST.md)
     └── [Customers/02-CUSTOMER-DETAIL.md](./Customers/02-CUSTOMER-DETAIL.md)
+├── PriceBook/                   ← Quản lý bảng giá
+    ├── [PriceBook/README.md](./PriceBook/README.md)
+    ├── [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md)
+    └── [PriceBook/02-PRICE-LIST-DETAIL.md](./PriceBook/02-PRICE-LIST-DETAIL.md)
 └── Finance/                     ← Sổ quỹ, công nợ và đối soát
     ├── [Finance/README.md](./Finance/README.md)
     ├── [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md)
@@ -75,6 +79,8 @@
 | Sales Document Detail | [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | 🔨 |
 | Customer List | [Customers/01-CUSTOMER-LIST.md](./Customers/01-CUSTOMER-LIST.md) | 🔨 |
 | Customer Detail | [Customers/02-CUSTOMER-DETAIL.md](./Customers/02-CUSTOMER-DETAIL.md) | 🔨 |
+| Price List | [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md) | 🔨 |
+| Price List Detail | [PriceBook/02-PRICE-LIST-DETAIL.md](./PriceBook/02-PRICE-LIST-DETAIL.md) | 🔨 |
 | Finance Layout | [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md) | 🔨 |
 | Cashbook UX | [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md) | 🔨 |
 | Customer Debt UX | [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md) | 🔨 |
