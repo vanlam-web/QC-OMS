@@ -181,6 +181,13 @@ KiotViet có:
 
 - Phiếu tạm, đã cân bằng kho, đã hủy.
 - Cột: mã kiểm kho, thời gian, ngày cân bằng, số lượng thực tế, tổng thực tế, tổng chênh lệch, lệch tăng, lệch giảm, ghi chú, trạng thái.
+- Khi mở rộng khoảng `01/07/2016 - 01/07/2026`, có `332 giao dịch`.
+- Nhiều phiếu là phiếu tự động khi cập nhật Hàng hóa, ví dụ ghi chú `Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa:<Mã hàng>`.
+
+Kết luận:
+
+- Đây là màn có dữ liệu thật và trùng nghiệp vụ QC-OMS, nên giữ trong MVP.
+- Không dùng bộ lọc `Tháng này` để đánh giá mức độ sử dụng của Kiểm kho.
 
 QC-OMS đã đặc tả tương ứng tại:
 
