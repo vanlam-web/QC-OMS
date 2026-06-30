@@ -217,3 +217,76 @@ Deno.test("price resolution uses default price list without discount model", asy
   assert(!("discount_rate" in body.items[0]), "price response must not include discount_rate");
   assert(!("discount_items" in body.items[0]), "price response must not include discount_items");
 });
+
+Deno.test("customer routes normalize optional phone and auto code", async () => {
+  const receivedInputs: Array<{
+    code?: string;
+    name: string;
+    phone?: string;
+    customerGroupId?: string | null;
+  }> = [];
+  const repository = repo(["perm.create_order"], {
+    createCustomer: (input: {
+      code?: string;
+      name: string;
+      phone?: string;
+      customerGroupId?: string | null;
+    }) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: "customer-1",
+        code: input.code ?? "KH000002",
+        name: input.name,
+        phone: input.phone ?? null,
+        customer_group_id: input.customerGroupId ?? null,
+        customer_group: null,
+      });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/customers",
+    {
+      method: "POST",
+      body: JSON.stringify({ name: " Cong ty ABC ", phone: " 090 123 4567 " }),
+    },
+    repository,
+  );
+
+  const body = await data(response) as Record<string, unknown>;
+  assertEquals(response.status, 201);
+  assertEquals(receivedInputs[0].code, undefined);
+  assertEquals(receivedInputs[0].name, "Cong ty ABC");
+  assertEquals(receivedInputs[0].phone, "090 123 4567");
+  assertEquals(body.code, "KH000002");
+  assertEquals(body.name, "Cong ty ABC");
+});
+
+Deno.test("price resolution accepts a customer id", async () => {
+  let receivedCustomerId: string | undefined;
+  const repository = repo(["perm.create_order"], {
+    resolvePrices: (input: { productIds: string[]; customerId?: string }) => {
+      receivedCustomerId = input.customerId;
+      return Promise.resolve([
+        {
+          product_id: input.productIds[0],
+          unit_price: input.customerId === "customer-1" ? 100000 : 120000,
+          price_source: "customer_group_price_list",
+          price_list_id: "price-list-2",
+        },
+      ]);
+    },
+  });
+
+  const response = await call(
+    "/api/v1/pricing/resolve",
+    { method: "POST", body: JSON.stringify({ product_ids: ["p-1"], customer_id: "customer-1" }) },
+    repository,
+  );
+
+  const body = await data(response) as { items: Array<Record<string, unknown>> };
+  assertEquals(response.status, 200);
+  assertEquals(receivedCustomerId, "customer-1");
+  assertEquals(body.items[0].unit_price, 100000);
+  assertEquals(body.items[0].price_source, "customer_group_price_list");
+});

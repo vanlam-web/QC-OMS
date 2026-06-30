@@ -3,12 +3,18 @@ import { ApiError, successResponse } from "../http.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
+  createCustomer,
+  createCustomerGroup,
   createPriceList,
   createProduct,
   deletePriceListItem,
+  listCustomerGroups,
+  listCustomers,
   listPriceLists,
   listProducts,
   resolvePrices,
+  updateCustomer,
+  updateCustomerGroup,
   updatePriceList,
   updateProduct,
   upsertPriceListItem,
@@ -51,6 +57,48 @@ export async function handleCatalog(
         { status: 201 },
       );
     }
+  }
+
+  if (url.pathname === "/api/v1/customers") {
+    if (request.method === "GET") {
+      return successResponse(await listCustomers(dependencies.repository, context, url), traceId);
+    }
+    if (request.method === "POST") {
+      return successResponse(
+        await createCustomer(dependencies.repository, context, await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+  }
+
+  const customerMatch = url.pathname.match(/^\/api\/v1\/customers\/([^/]+)$/);
+  if (customerMatch !== null && request.method === "PATCH") {
+    return successResponse(
+      await updateCustomer(dependencies.repository, context, customerMatch[1], await request.json()),
+      traceId,
+    );
+  }
+
+  if (url.pathname === "/api/v1/customer-groups") {
+    if (request.method === "GET") {
+      return successResponse(await listCustomerGroups(dependencies.repository, context, url), traceId);
+    }
+    if (request.method === "POST") {
+      return successResponse(
+        await createCustomerGroup(dependencies.repository, context, await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+  }
+
+  const customerGroupMatch = url.pathname.match(/^\/api\/v1\/customer-groups\/([^/]+)$/);
+  if (customerGroupMatch !== null && request.method === "PATCH") {
+    return successResponse(
+      await updateCustomerGroup(dependencies.repository, context, customerGroupMatch[1], await request.json()),
+      traceId,
+    );
   }
 
   const productMatch = url.pathname.match(/^\/api\/v1\/products\/([^/]+)$/);

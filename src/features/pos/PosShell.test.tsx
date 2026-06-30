@@ -22,6 +22,22 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
     })),
     createProduct: vi.fn(),
     updateProduct: vi.fn(),
+    listCustomers: vi.fn(async () => ({
+      items: [
+        {
+          id: 'customer-1',
+          code: 'KH000001',
+          name: 'Khach le',
+          phone: null,
+          customer_group_id: null,
+          customer_group: null,
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })),
+    createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({
       items: [
         {
@@ -62,4 +78,30 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
   const cart = screen.getByLabelText('K02 giỏ hàng')
   expect(within(cart).getByText('Mica 3mm')).toBeInTheDocument()
   expect(within(cart).getByText('120.000')).toBeInTheDocument()
+})
+
+it('resolves prices again with the selected customer', async () => {
+  const service = makeCatalogService()
+
+  render(
+    <PosShell
+      catalogService={service}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  await userEvent.type(screen.getByLabelText('Tìm khách'), 'khach')
+  await userEvent.click(screen.getByRole('button', { name: 'Tìm khách' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Chọn KH000001 Khach le' }))
+
+  expect(await screen.findByText('Đã chọn KH000001 - Khach le')).toBeInTheDocument()
+  expect(service.resolvePrices).toHaveBeenCalledWith(['p-1'], 'customer-1')
 })

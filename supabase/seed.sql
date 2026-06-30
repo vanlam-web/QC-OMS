@@ -111,3 +111,35 @@ values
 on conflict (price_list_id, product_id) do update
 set organization_id = excluded.organization_id,
     unit_price = excluded.unit_price;
+
+insert into public.customer_groups (id, organization_id, code, name, price_list_id, is_active)
+values (
+  '00000000-0000-4000-8000-000000000401',
+  '00000000-0000-4000-8000-000000000001',
+  'DAILY',
+  'Đại lý',
+  '00000000-0000-4000-8000-000000000201',
+  true
+)
+on conflict (id) do update
+set organization_id = excluded.organization_id,
+    code = excluded.code,
+    name = excluded.name,
+    price_list_id = excluded.price_list_id,
+    is_active = excluded.is_active;
+
+insert into public.customers (id, organization_id, code, name, phone, customer_group_id)
+values (
+  '00000000-0000-4000-8000-000000000501',
+  '00000000-0000-4000-8000-000000000001',
+  'KH000001',
+  'Khách lẻ',
+  null,
+  null
+)
+on conflict (id) do update
+set organization_id = excluded.organization_id,
+    code = excluded.code,
+    name = excluded.name,
+    phone = excluded.phone,
+    customer_group_id = excluded.customer_group_id;

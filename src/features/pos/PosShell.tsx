@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { ConnectionStatus } from '../../components/ConnectionStatus'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
-import type { Product, ResolvedPrice } from '../catalog/types'
+import type { Customer, Product, ResolvedPrice } from '../catalog/types'
+import { CustomerPanel } from './CustomerPanel'
 import { formatApiError } from '../../lib/api/error-message'
 import { ProfileMenu } from './ProfileMenu'
 import { ProductGrid } from './ProductGrid'
@@ -31,6 +32,7 @@ export function PosShell({
   const [products, setProducts] = useState<Product[]>([])
   const [prices, setPrices] = useState<Record<string, ResolvedPrice>>({})
   const [cartLines, setCartLines] = useState<CartLine[]>([])
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,7 +47,10 @@ export function PosShell({
         const visibleProducts = productResult.items.slice(0, 12)
         const priceResult =
           visibleProducts.length > 0
-            ? await catalogService.resolvePrices(visibleProducts.map((product) => product.id))
+            ? await catalogService.resolvePrices(
+                visibleProducts.map((product) => product.id),
+                selectedCustomer?.id,
+              )
             : { items: [] }
         if (!active) return
         setProducts(visibleProducts)
@@ -64,7 +69,7 @@ export function PosShell({
     return () => {
       active = false
     }
-  }, [catalogService])
+  }, [catalogService, selectedCustomer])
 
   function selectProduct(product: Product) {
     const unitPrice = prices[product.id]?.unit_price ?? 0
@@ -93,6 +98,11 @@ export function PosShell({
         />
       </section>
       <section aria-label="K02 giỏ hàng" className="pos-cart">
+        <CustomerPanel
+          service={catalogService}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={setSelectedCustomer}
+        />
         <h2>Giỏ hàng</h2>
         {cartLines.length === 0 ? <p>Chọn sản phẩm từ lưới nhanh để bắt đầu.</p> : null}
         {cartLines.length > 0 ? (

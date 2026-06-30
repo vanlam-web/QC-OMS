@@ -17,10 +17,34 @@ export interface ProductListResponse {
   total: number
 }
 
+export interface CustomerGroup {
+  id: string
+  code: string
+  name: string
+  price_list_id: string
+  is_active: boolean
+}
+
+export interface Customer {
+  id: string
+  code: string
+  name: string
+  phone: string | null
+  customer_group_id: string | null
+  customer_group: { id: string; code: string; name: string } | null
+}
+
+export interface CustomerListResponse {
+  items: Customer[]
+  page: number
+  page_size: number
+  total: number
+}
+
 export interface ResolvedPrice {
   product_id: string
   unit_price: number
-  price_source: 'default_price_list' | 'fallback_default_price_list'
+  price_source: 'default_price_list' | 'customer_group_price_list' | 'fallback_default_price_list'
   price_list_id: string
 }
 

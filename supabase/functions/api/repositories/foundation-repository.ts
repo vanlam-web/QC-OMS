@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.108.2";
 import type {
+  CustomerData,
+  CustomerGroupData,
   CurrentUserRecord,
   FoundationRepository,
   GetCurrentUserInput,
@@ -7,6 +9,7 @@ import type {
   PermissionData,
   PriceListData,
   ProductData,
+  ResolvedPriceData,
   UserListItem,
   WorkstationData,
 } from "../contracts.ts";
@@ -368,6 +371,101 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return (data ?? []).length > 0;
     },
+    async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
+      let query = client
+        .from("customers")
+        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("code", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(toCustomerData), total: count ?? 0 };
+    },
+    async createCustomer(input): Promise<CustomerData> {
+      const code = input.code ?? await nextCustomerCode(client, input.organizationId);
+      const { data, error } = await client
+        .from("customers")
+        .insert({
+          organization_id: input.organizationId,
+          code,
+          name: input.name,
+          phone: input.phone ?? null,
+          customer_group_id: input.customerGroupId ?? null,
+        })
+        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .single();
+      if (error !== null) throw error;
+      return toCustomerData(data);
+    },
+    async updateCustomer(input): Promise<CustomerData | null> {
+      const patch: { code?: string; name?: string; phone?: string | null; customer_group_id?: string | null } = {};
+      if (input.code !== undefined) patch.code = input.code;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.phone !== undefined) patch.phone = input.phone;
+      if (input.customerGroupId !== undefined) patch.customer_group_id = input.customerGroupId;
+
+      const { data, error } = await client
+        .from("customers")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data === null ? null : toCustomerData(data);
+    },
+    async listCustomerGroups(input): Promise<CustomerGroupData[]> {
+      let query = client
+        .from("customer_groups")
+        .select("id, code, name, price_list_id, is_active")
+        .eq("organization_id", input.organizationId)
+        .order("code", { ascending: true });
+
+      if (input.activeOnly) query = query.eq("is_active", true);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+      return (data ?? []) as CustomerGroupData[];
+    },
+    async createCustomerGroup(input): Promise<CustomerGroupData> {
+      const { data, error } = await client
+        .from("customer_groups")
+        .insert({
+          organization_id: input.organizationId,
+          code: input.code,
+          name: input.name,
+          price_list_id: input.priceListId,
+          is_active: true,
+        })
+        .select("id, code, name, price_list_id, is_active")
+        .single();
+      if (error !== null) throw error;
+      return data as CustomerGroupData;
+    },
+    async updateCustomerGroup(input): Promise<CustomerGroupData | null> {
+      const patch: { code?: string; name?: string; price_list_id?: string; is_active?: boolean } = {};
+      if (input.code !== undefined) patch.code = input.code;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.priceListId !== undefined) patch.price_list_id = input.priceListId;
+      if (input.isActive !== undefined) patch.is_active = input.isActive;
+
+      const { data, error } = await client
+        .from("customer_groups")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, price_list_id, is_active")
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data as CustomerGroupData | null;
+    },
     async resolvePrices(input) {
       const { data: defaultPriceList, error: defaultPriceListError } = await client
         .from("price_lists")
@@ -391,35 +489,92 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       const activeProductIds = new Set((products ?? []).map((product) => product.id));
       if (activeProductIds.size !== productIds.length) throw new Error("PRODUCT_NOT_FOUND");
 
+      let customerPriceListId: string | null = null;
+      if (input.customerId !== undefined) {
+        const { data: customer, error: customerError } = await client
+          .from("customers")
+          .select("id, customer_groups!left(price_list_id, is_active)")
+          .eq("id", input.customerId)
+          .eq("organization_id", input.organizationId)
+          .maybeSingle();
+        if (customerError !== null) throw customerError;
+        if (customer === null) throw new Error("CUSTOMER_NOT_FOUND");
+        const group = Array.isArray(customer.customer_groups)
+          ? customer.customer_groups[0]
+          : customer.customer_groups;
+        if (group !== null && group?.is_active === true) {
+          customerPriceListId = group.price_list_id;
+        }
+      }
+
+      const listIds = customerPriceListId === null
+        ? [defaultPriceList.id]
+        : [customerPriceListId, defaultPriceList.id];
+
       const { data: priceRows, error: priceRowsError } = await client
         .from("price_list_items")
         .select("product_id, unit_price, price_list_id")
         .eq("organization_id", input.organizationId)
-        .eq("price_list_id", defaultPriceList.id)
+        .in("price_list_id", listIds)
         .in("product_id", productIds);
       if (priceRowsError !== null) throw priceRowsError;
 
-      const priceByProductId = new Map(
-        (priceRows ?? []).map((row) => [
-          row.product_id,
-          {
-            product_id: row.product_id,
-            unit_price: Number(row.unit_price),
-            price_source: "default_price_list" as const,
-            price_list_id: row.price_list_id,
-          },
-        ]),
-      );
+      const customerPrices = new Map<string, ResolvedPriceData>();
+      const defaultPrices = new Map<string, ResolvedPriceData>();
+
+      for (const row of priceRows ?? []) {
+        const price = {
+          product_id: row.product_id,
+          unit_price: Number(row.unit_price),
+          price_source: row.price_list_id === customerPriceListId
+            ? "customer_group_price_list" as const
+            : customerPriceListId === null
+            ? "default_price_list" as const
+            : "fallback_default_price_list" as const,
+          price_list_id: row.price_list_id,
+        };
+        if (row.price_list_id === customerPriceListId) {
+          customerPrices.set(row.product_id, price);
+        } else {
+          defaultPrices.set(row.product_id, price);
+        }
+      }
 
       return productIds.map((productId) =>
-        priceByProductId.get(productId) ?? {
+        customerPrices.get(productId) ?? defaultPrices.get(productId) ?? {
           product_id: productId,
           unit_price: 0,
-          price_source: "default_price_list",
+          price_source: customerPriceListId === null ? "default_price_list" : "fallback_default_price_list",
           price_list_id: defaultPriceList.id,
         }
       );
     },
+  };
+}
+
+async function nextCustomerCode(client: DatabaseClient, organizationId: string): Promise<string> {
+  const { data, error } = await client.rpc("next_customer_code", { p_organization_id: organizationId });
+  if (error !== null) throw error;
+  if (typeof data !== "string") throw new Error("CUSTOMER_CODE_REQUIRED");
+  return data;
+}
+
+function toCustomerData(row: {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  customer_group_id: string | null;
+  customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
+}): CustomerData {
+  const group = Array.isArray(row.customer_groups) ? row.customer_groups[0] : row.customer_groups;
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    phone: row.phone,
+    customer_group_id: row.customer_group_id,
+    customer_group: group ?? null,
   };
 }
 
