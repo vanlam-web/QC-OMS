@@ -395,6 +395,37 @@ Ghi chu dua vao Source of Truth sau:
 - Cac gia tri tren la default de de xuat, khong khoa cung; nhan vien co the sua tren tung dong hang/don hang.
 - Khi nhan vien sua, he thong luu snapshot default va gia tri thuc te da dung de tinh hao hut/tru kho.
 
+### Q3C. Tam lo va cach tao tu dong
+
+Owner da chot:
+
+```text
+Khong can buoc xac nhan tam lo moi sau moi lan cat vi se lam thao tac ruom ra.
+He thong tu dong tao tam lo theo rule mac dinh.
+Nhan vien co phuong thuc sua hoac xoa tam lo sau do neu thuc te sai.
+```
+
+De xuat rule tu dong cho MVP:
+
+- Khi don hang cat/ban lam ton den hang `inventory_shape = sheet`, he thong tinh phan tieu hao theo kich thuoc va bien cat hao da ap dung.
+- He thong uu tien chon tam lo phu hop nho nhat truoc; neu khong co tam lo phu hop thi dung tam nguyen.
+- Sau khi tru phan tieu hao, he thong tu dong sinh tam lo moi tu phan con lai neu phan con lai dat nguong giu lai.
+- Nguong giu lai mac dinh:
+  - duoi `0.1m2` thi bo, khong tao tam lo
+  - vat tu dat tien hoac hay tan dung co the cau hinh xuong `0.05m2`
+- De tranh rac du lieu, MVP chi luu toi da 1-2 manh thua lon nhat sau mot lan cat.
+- Moi tam lo can luu:
+  - san pham/vat tu
+  - kich thuoc dai/rong
+  - dien tich
+  - nguon goc: tu don/dong hang nao neu co
+  - trang thai: `available`, `used`, `discarded`
+- Nhan vien co the sua tam lo sau khi he thong tao:
+  - sua kich thuoc thuc te
+  - xoa/bo tam lo neu thuc te khong giu lai
+  - danh dau da huy/khong dung duoc
+- Moi thao tac sua/xoa tam lo can ghi log toi thieu: ai sua, luc nao, gia tri cu/moi, ly do neu co.
+
 Cac DVT nhu `Kho 91`, `Kho 127`, `500 To`, `1000 To`, `5 kg`, `10 kg` nen:
 
 1. Tach thanh quy cach/variant, khong coi la DVT chuan.
@@ -411,7 +442,23 @@ San pham ngung ban nhung con ton:
 
 ### Q5. BOM/Combo
 
-Combo trong QC-OMS nen dung cho:
+Owner da chot theo huong don gian MVP:
+
+```text
+Tao don thi tru kho.
+Khong lam phuc tap bang quy trinh tru kho rieng theo may san xuat trong MVP.
+Sau nay neu co phuong thuc tru kho phu hop hon ket hop voi may san xuat thi mo spec rieng.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- Khi tao/lưu don ban co dong hang can tru kho, he thong ghi stock movement theo dinh muc/quy doi tai thoi diem do.
+- Voi combo/BOM, MVP co the tru theo vat tu thanh phan da cau hinh neu dong hang do co BOM ro rang.
+- Neu BOM/dinh muc chua ro, he thong chi tru theo dong hang chinh va de phan vat tu chi tiet cho giai doan sau.
+- Production data khong thay the stock movement trong MVP.
+- Khi sau nay co quy trinh xac nhan san xuat/chon cuon/tam tot hon, se tao spec moi de thay doi thoi diem tru kho.
+
+Lua chon cu duoi day da duoc thay bang quyet dinh MVP moi:
 
 1. Ban hang thanh pham va tu dong tru vat tu theo dinh muc.
 2. Chi de tinh gia/dinh muc tham khao, chua tu dong tru kho MVP.
@@ -424,6 +471,7 @@ Owner da chot tam thoi:
 ```text
 Chua dung du lieu may san xuat de tu dong tru kho chinh thuc.
 Giai doan dau chi dung du lieu may san xuat de so sanh giua OMS/bill va thuc te may chay, xem lech nhu the nao.
+Trong MVP, tao/lưu don van la moc tru kho de giu thao tac don gian.
 ```
 
 Ly do:
@@ -443,9 +491,37 @@ Ghi chu dua vao Source of Truth sau:
   - so sanh kich thuoc, so luong, tong `m2`
   - dem so lan chay lai/in lai
   - tinh hao hut thuc de tham khao
-- Production data khong tu sinh `stock_movement` chinh thuc neu chua co lien ket duoc xac nhan.
-- Tru kho chinh thuc cua hang san xuat/cuon/tam se di theo nghiep vu kho/san xuat da chot sau, khong dua vao match file tu dong trong MVP.
+- Production data khong tu sinh `stock_movement` chinh thuc trong MVP.
+- Stock movement chinh thuc trong MVP di theo don/bill va quy tac kho da chot, khong dua vao match file tu dong.
 - Khi sau nay co rule match chac hon, se mo spec rieng de nang cap tu doi soat sang gan file/bill va tru kho tu dong.
+
+### Q7. Du kien vat tu va thuc te vat tu
+
+Owner da chot theo huong don gian MVP:
+
+```text
+MVP khong tach so kho thanh hai lop du kien va thuc te.
+Tao/lưu don la moc tru kho chinh thuc.
+Du lieu may san xuat chi dung de so sanh/doi soat, khong tao but toan kho rieng.
+```
+
+Giai thich:
+
+- Neu tach `du kien` va `thuc te`, he thong se can them trang thai giu hang, xac nhan san xuat, doi soat tru kho, hoan tra vat tu va dieu chinh chenh lech. Viec nay dung ve dai han nhung lam MVP ruom ra.
+- MVP chi can mot so kho chinh thuc: khi don duoc tao/lưu theo nghiep vu da chot, he thong tru kho.
+- Neu sau do may san xuat chay khac voi bill, phan lech chi hien trong bao cao doi soat, chua tu dong sua so kho.
+- Khi co quy trinh san xuat on dinh hon, se mo spec moi de them lop `planned_materials`/`actual_materials` hoac co che dieu chinh ton theo thuc te.
+
+Ghi chu dua vao Source of Truth sau:
+
+- `stock_movements` MVP la nguon chinh thuc cua ton kho.
+- Production/reconciliation co the tinh cac chi so:
+  - m2 bill
+  - m2 may chay
+  - chenhlech m2
+  - so lan chay lai
+  - hao hut tham khao
+- Cac chi so doi soat khong tu dong sinh them stock movement trong MVP.
 
 ## 6. De xuat thu tu dac ta tiep theo
 
