@@ -134,6 +134,7 @@ Nhan xet:
 - QC-OMS can co mo hinh quy doi don vi.
 - Nhung khong nen copy cach KV dung nhieu dong san pham rieng cho moi DVT neu co the lam model gon hon.
 - Can chot luong ban hang va tru kho cho san pham co nhieu don vi: ban theo DVT phu thi tru ton cua DVT co ban hay ton rieng tung DVT.
+- Rieng vat tu dang cuon khong duoc quan ly nhu tong `m2` gop nhu KV; QC-OMS can quan ly tung cuon nhap vao de biet moi cuon con bao nhieu met dai va dien tich con lai.
 
 ### 3.5. Ton kho
 
@@ -208,6 +209,7 @@ Nhan xet:
 - Co cho ton kho am trong MVP khong.
 - Don vi nao la unit that su, don vi nao la quy cach/variant.
 - Co quan ly ton tung DVT rieng hay chi ton theo don vi co ban.
+- Voi vat tu dang cuon, khi xuat kho he thong tu dong chon cuon hay nhan vien chon cuon can cat.
 - Combo/BOM tru kho khi nao: luc tao don, luc xuat kho, hay luc hoan thanh san xuat.
 - `KH dat` co can MVP khong hay de sau.
 - `Du kien het hang` co can MVP khong hay chi tinh sau.
@@ -273,6 +275,31 @@ Voi san pham co don vi co ban va don vi phu, QC-OMS nen:
 3. Ket hop: vat tu chinh theo don vi co ban, hang dong goi theo ton rieng.
 
 ### Q3. Don vi co kem kich thuoc
+
+Owner da chot mot phan:
+
+```text
+Quy doi don gian nhu 1 ram giay = 500 to thi dung unit conversion binh thuong.
+Vat tu dang cuon khong quan ly ton theo tong m2 nhu KV.
+QC-OMS phai quan ly ton kho theo tung cuon nhap vao, de biet trong kho con bao nhieu cuon va moi cuon con bao nhieu met dai.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- DVT/quy doi don gian van dung he so quy doi, vi du `Ram -> To`.
+- Cuon la doi tuong ton kho vat ly rieng, khong chi la DVT.
+- Moi cuon nhap kho can co ma/so cuon rieng trong pham vi san pham.
+- Moi cuon can luu it nhat:
+  - san pham/vat tu
+  - kho rong cua cuon
+  - chieu dai ban dau
+  - dien tich ban dau neu can tinh nhanh
+  - chieu dai con lai
+  - dien tich con lai
+  - trang thai cuon: con dung, het, huy/loi neu can
+- Khi ban/xuat theo `m2`, he thong quy doi ra chieu dai tieu hao theo kho rong cuon de tru vao cuon cu the.
+- Bao cao ton kho vat tu cuon phai xem duoc ca tong ton va chi tiet tung cuon.
+- Cach KV gom cuon thanh tong `m2` chi dung de tham khao, khong copy vao QC-OMS.
 
 Cac DVT nhu `Kho 91`, `Kho 127`, `500 To`, `1000 To`, `5 kg`, `10 kg` nen:
 
