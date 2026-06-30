@@ -6,9 +6,9 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 
 - Main working branch: `main`
 - Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
-- Phase 1B branch đang làm tiếp: `codex/phase-1b-customer-pricing`
-- Phase 1B worktree:
-  `/Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1b-customer-pricing`
+- Phase 1B đã merge vào `main`: PR #2
+- Phase 1C plan sync branch: `codex/phase-1c-plan-sync`
+- Phase 1C plan: `docs/superpowers/plans/2026-06-30-phase-1c-order-checkout-inventory-finance.md`
 
 ## Phase 0 — Foundation
 
@@ -157,9 +157,9 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 1B — Customer selection and customer pricing
 
-Status: 🟡 Đang làm trên branch `codex/phase-1b-customer-pricing`
+Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
-### Đã hoàn thành trong branch
+### Đã hoàn thành
 
 - [x] Tạo implementation plan `docs/superpowers/plans/2026-06-30-phase-1b-customer-pricing.md`.
 - [x] Tạo migration customer/customer group:
@@ -178,7 +178,7 @@ Status: 🟡 Đang làm trên branch `codex/phase-1b-customer-pricing`
   - [x] chọn/bỏ chọn khách
   - [x] reload giá theo khách đã chọn
 
-### Cần verify trước khi merge Phase 1B
+### Verification đã pass
 
 - [x] Local `npm run lint`
 - [x] Local `npm run typecheck`
@@ -186,18 +186,64 @@ Status: 🟡 Đang làm trên branch `codex/phase-1b-customer-pricing`
 - [x] Local `npm run build`
 - [x] Local `npm run test:functions`
 - [x] Local `npm run test:e2e`
-- [ ] Server `npm.cmd run supabase:reset`
-- [ ] Server `npm.cmd run test:db`
-- [ ] Server API smoke:
-  - [ ] `/api/v1/customers`
-  - [ ] `POST /api/v1/customers` tự sinh mã `KH...`
-  - [ ] duplicate phone trả conflict
-  - [ ] `/api/v1/pricing/resolve` với `customer_id`
+- [x] Server `npm.cmd run supabase:reset`
+- [x] Server `npm.cmd run test:db`
+- [x] Server `npm.cmd run test:functions`
+- [x] Server API smoke:
+  - [x] `/api/v1/health`
+  - [x] login `admin@qc.local / 123456`
+  - [x] `/api/v1/me` đủ 9 permissions
+  - [x] `/api/v1/customers` thấy `KH000001`
+  - [x] `POST /api/v1/customers` tự sinh `KH000002`
+  - [x] duplicate normalized phone trả `409 Conflict`
+  - [x] `/api/v1/customer-groups` thấy `DAILY`
+  - [x] `/api/v1/pricing/resolve` với `customer_id` trả giá seed `120000`
 
 ### Ghi chú
 
 - Local dev hiện không kết nối được Postgres Supabase (`LegacyDbConnectError`), nên DB verification phải chạy trên server/shared Supabase.
 - Inventory Source of Truth đã có, nhưng chưa implement ở Phase 1B. Không thêm stock editing vào Product admin trong phase này.
+
+## Phase 1C — Order checkout transaction foundation
+
+Status: 🟡 Đang cập nhật plan theo Source of Truth Sales/Inventory/Finance mới trên branch `codex/phase-1c-plan-sync`
+
+### Source of Truth đã sync vào plan
+
+- [x] Business Sales checkout/order/debt.
+- [x] Business Inventory stock rules/unit conversion/stocktake/production reconciliation.
+- [x] Business Finance cashbook.
+- [x] Database Sales order tables.
+- [x] Database Inventory tables.
+- [x] Database Finance payment/debt/cashbook tables.
+- [x] Backend POS order/checkout API.
+- [x] Backend Inventory API.
+- [x] Backend Finance API.
+- [x] Implementation sync note.
+
+### Plan corrections bắt buộc
+
+- [x] Checkout là transaction tạo order/items/stock/payment/debt/cashbook, không chỉ lưu order.
+- [x] Sửa hóa đơn đã chốt tạo mã mới dạng `HD000123.01`, không sửa đè.
+- [x] Inventory trừ kho khi tạo/lưu đơn bán chính thức.
+- [x] Dữ liệu máy sản xuất chỉ đối soát, không tự tạo stock movement trong MVP.
+- [x] Bán thiếu tồn cảnh báo nhưng vẫn cho bán, tồn có thể âm.
+- [x] Roll/sheet quản lý theo đối tượng vật lý, không sửa tổng tồn trực tiếp.
+- [x] Sửa tồn hàng `normal` tự sinh phiếu kiểm kho `balanced`.
+- [x] Công nợ theo từng hóa đơn, thu nợ cấn hóa đơn cũ nhất trước.
+- [x] Không dùng trả trước/negative customer balance trong MVP.
+- [x] Cashbook tách tiền mặt và từng tài khoản ngân hàng.
+- [x] Một POS payment tối đa một bank account.
+- [x] Seed quyền mới `perm.manage_finance`.
+
+### Cần làm khi bắt đầu implement Phase 1C
+
+- [ ] Tạo implementation branch từ `main` sau khi plan sync được merge.
+- [ ] Implement schema/RPC theo plan Phase 1C.
+- [ ] Implement Order API checkout/quote/revise.
+- [ ] Implement Inventory/Finance API minimum cho checkout.
+- [ ] Implement POS checkout UI tối thiểu.
+- [ ] Verify local và server shared-dev trước khi PR.
 
 ## Phase 2 — POS business UI
 
@@ -217,8 +263,8 @@ Status: ⬜ Chưa bắt đầu
 # Main branch
 cd /Users/vanlam/Documents/project/QC-OMS
 
-# Phase 1B worktree
-cd /Users/vanlam/Documents/project/QC-OMS/.worktrees/codex-phase-1b-customer-pricing
+# Phase 1C plan sync branch
+git switch codex/phase-1c-plan-sync
 
 # Local Supabase
 npm run supabase:start

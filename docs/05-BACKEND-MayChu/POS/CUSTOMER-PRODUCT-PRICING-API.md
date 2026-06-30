@@ -35,6 +35,7 @@ Mọi endpoint trong file này yêu cầu:
 
 ```http
 Authorization: Bearer <supabase_access_token>
+X-Workstation-Id: <uuid>
 X-Request-Id: <client-generated-id>   # không bắt buộc
 ```
 
@@ -130,7 +131,7 @@ Tạo khách hàng từ POS.
 
 **Workflow:**
 
-1. Xác thực actor và permission theo tài khoản.
+1. Xác thực actor, workstation và permission.
 2. Trim input.
 3. Chuẩn hóa SĐT nếu có.
 4. Tự sinh mã khách nếu thiếu `code`.
@@ -430,7 +431,7 @@ Lấy giá mặc định cho một hoặc nhiều sản phẩm theo khách hàng
 
 **Workflow:**
 
-1. Xác thực actor và permission theo tài khoản.
+1. Xác thực actor, workstation và permission.
 2. Kiểm tra mọi sản phẩm tồn tại, active và cùng organization.
 3. Nếu có `customer_id`, tải khách hàng cùng organization.
 4. Nếu khách có nhóm active, lấy bảng giá của nhóm; nếu không, dùng bảng giá chung.
@@ -497,6 +498,7 @@ API này chỉ đọc lịch sử. Việc ghi lịch sử giá phát sinh từ o
 | 400 | `VALIDATION_ERROR` | Input sai định dạng, thiếu trường bắt buộc hoặc giá trị ngoài enum |
 | 401 | `AUTH_REQUIRED` | Thiếu hoặc sai access token |
 | 403 | `PERMISSION_DENIED` | Thiếu permission yêu cầu |
+| 403 | `WORKSTATION_INVALID` | Workstation không hợp lệ |
 | 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy customer/product/price list trong organization |
 | 409 | `RESOURCE_CONFLICT` | Trùng mã khách, SĐT, mã sản phẩm, mã nhóm hoặc mã bảng giá |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống không công khai chi tiết |
