@@ -27,7 +27,26 @@ Chi tiết cột, constraint và index: [System/AUTH-PERMISSIONS.md](./System/AU
 
 ## 2. SALES
 
-Hiện có đặc tả một phần tại [Sales/POS-TABLES.md](./Sales/POS-TABLES.md), gồm Customer, Product, Pricing, báo giá và snapshot dòng hàng. Checkout, payment, cashbook, debt allocation và stock movement sẽ được chốt trước Giai đoạn 4.
+Hiện có đặc tả một phần tại [Sales/POS-TABLES.md](./Sales/POS-TABLES.md), gồm Customer, Product, Pricing, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng. Payment, cashbook và debt allocation chi tiết sẽ được chốt ở Finance.
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ CUSTOMERS : owns
+    ORGANIZATIONS ||--o{ CUSTOMER_GROUPS : owns
+    CUSTOMER_GROUPS ||--o{ CUSTOMERS : groups
+    PRICE_LISTS ||--o{ CUSTOMER_GROUPS : default_for
+    PRICE_LISTS ||--o{ PRICE_LIST_ITEMS : contains
+    PRODUCTS ||--o{ PRICE_LIST_ITEMS : priced
+    CUSTOMERS ||--o{ CUSTOMER_PRODUCT_PRICE_HISTORY : has
+    PRODUCTS ||--o{ CUSTOMER_PRODUCT_PRICE_HISTORY : has
+    CUSTOMERS ||--o{ ORDERS : buys
+    PRICE_LISTS ||--o{ ORDERS : applied_to
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    PRODUCTS ||--o{ ORDER_ITEMS : snapshot_of
+    ORDERS ||--o{ ORDER_STATUS_HISTORY : changes
+    ORDERS ||--o{ ORDERS : revises
+    ORDERS ||--o{ ORDERS : converts_quote
+```
 
 ---
 

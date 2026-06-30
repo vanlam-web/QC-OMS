@@ -1,22 +1,25 @@
 # POS-TABLES — Bảng phục vụ màn hình POS
 
 > **Trạng thái:** 🔨 Đang xây dựng
-> **Nguồn:** Cập nhật theo Business Sales `POS-CUSTOMER.md` và `POS-PRICING.md`
+> **Nguồn:** Cập nhật theo Business Sales `POS-CUSTOMER.md`, `POS-PRICING.md`, `POS-ORDER-LIFECYCLE.md`, `POS-ORDER-CALC.md`, `POS-CHECKOUT.md`
 
 ---
 
 ## 1. Phạm vi
 
-Tài liệu này là Source of Truth cho cấu trúc dữ liệu Sales phục vụ Customer, Product và Pricing trong POS Phase 1.
+Tài liệu này là Source of Truth cho cấu trúc dữ liệu Sales phục vụ Customer, Product, Pricing, báo giá và hóa đơn POS Phase 1.
 
 Business Rule liên quan:
 
 - [POS-CUSTOMER.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md)
 - [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md)
+- [POS-ORDER-LIFECYCLE.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md)
+- [POS-ORDER-CALC.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-CALC.md)
+- [POS-CHECKOUT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md)
 
 Không chốt trong file này:
 
-- Finance, Inventory, BOM và stock movement
+- Chi tiết Finance, Debt, Cashbook, BOM và stock movement
 - API request/response
 
 ---
@@ -283,12 +286,23 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `order_type` | `text` | ❌ | `quote` hoặc `invoice` |
 | `status` | `text` | ❌ | Trạng thái chứng từ |
 | `source_quote_id` | `uuid` | ✅ | FK → `public.orders.id`; hóa đơn sinh từ báo giá |
+| `base_code` | `text` | ❌ | Mã gốc của chuỗi chứng từ, ví dụ `HD000123` |
+| `revision_no` | `integer` | ❌ | Số lần sửa; bản gốc là `0`, bản sửa đầu là `1` |
+| `revised_from_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ cũ gần nhất nếu đây là bản sửa |
+| `replaced_by_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ mới thay thế nếu bản này bị hủy do sửa |
 | `customer_id` | `uuid` | ✅ | FK → `public.customers.id`; null nếu khách lẻ |
 | `customer_snapshot` | `jsonb` | ❌ | Snapshot khách hàng hoặc khách lẻ tại thời điểm lưu |
 | `price_list_id` | `uuid` | ✅ | FK → `public.price_lists.id`; bảng giá áp dụng nếu có |
-| `subtotal_amount` | `numeric(12,0)` | ❌ | Tổng tiền hàng trước các xử lý thanh toán |
-| `total_amount` | `numeric(12,0)` | ❌ | Tổng tiền chứng từ |
+| `subtotal_amount` | `numeric(12,0)` | ❌ | Tổng tiền hàng trước chiết khấu |
+| `discount_amount` | `numeric(12,0)` | ❌ | Tổng chiết khấu trên chứng từ |
+| `total_amount` | `numeric(12,0)` | ❌ | Khách cần trả sau chiết khấu |
+| `paid_amount` | `numeric(12,0)` | ❌ | Tổng tiền đã áp vào hóa đơn này; không phải tổng tiền khách đưa |
+| `debt_amount` | `numeric(12,0)` | ❌ | Số tiền còn nợ của hóa đơn này |
+| `change_returned_amount` | `numeric(12,0)` | ❌ | Tiền thừa trả lại khách, không ghi thành trả trước trong MVP |
+| `payment_status` | `text` | ❌ | `not_applicable`, `unpaid`, `partial`, `paid` |
 | `note` | `text` | ✅ | Ghi chú đơn |
+| `cancel_reason_type` | `text` | ✅ | `user_cancelled` hoặc `revised`; null nếu chưa hủy |
+| `cancelled_at` | `timestamptz` | ✅ | Thời điểm hủy nếu có |
 | `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
@@ -301,9 +315,28 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Với `order_type = 'invoice'`, `code` dùng prefix `HD`.
 - `status` hợp lệ theo `order_type`.
 - `subtotal_amount >= 0`
+- `discount_amount >= 0`
 - `total_amount >= 0`
+- `paid_amount >= 0`
+- `debt_amount >= 0`
+- `change_returned_amount >= 0`
+- `discount_amount <= subtotal_amount`
+- `total_amount = subtotal_amount - discount_amount`
 - `source_quote_id` nếu có phải trỏ tới `orders` cùng organization và `order_type = 'quote'`.
 - `customer_snapshot` bắt buộc để giữ lịch sử ngay cả khi hồ sơ khách thay đổi.
+- `payment_status IN ('not_applicable', 'unpaid', 'partial', 'paid')`
+- Với `order_type = 'quote'`, `paid_amount = 0`, `debt_amount = 0`, `change_returned_amount = 0`, `payment_status = 'not_applicable'`.
+- Với `order_type = 'invoice'`, `paid_amount <= total_amount` và `debt_amount = total_amount - paid_amount`.
+- Với `order_type = 'invoice'` và `debt_amount = 0`, `payment_status = 'paid'`.
+- Với `order_type = 'invoice'`, nếu `debt_amount > 0` và `paid_amount > 0` thì `payment_status = 'partial'`.
+- Với `order_type = 'invoice'`, nếu `debt_amount > 0` và `paid_amount = 0` thì `payment_status = 'unpaid'`.
+- Nếu `status = 'cancelled'`, `cancel_reason_type` bắt buộc.
+- `cancel_reason_type IN ('user_cancelled', 'revised')` khi không null.
+- `revision_no >= 0`
+- `base_code` không được rỗng sau khi trim.
+- Với bản gốc, `revision_no = 0`, `code = base_code`, `revised_from_order_id` null.
+- Với bản sửa, `revision_no > 0`, `code = base_code || '.' || LPAD(revision_no, 2, '0')`, `revised_from_order_id` bắt buộc.
+- `revised_from_order_id` và `replaced_by_order_id` nếu có phải cùng `organization_id`, cùng `order_type` và cùng `base_code`.
 
 ### Trạng thái khởi điểm
 
@@ -315,12 +348,24 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `invoice` | `completed` | Hóa đơn bán hàng đã checkout thành công |
 | `invoice` | `cancelled` | Hóa đơn đã hủy/đảo theo nghiệp vụ tương ứng |
 
+### Quy tắc sửa chứng từ đã chốt
+
+- Không sửa đè dữ liệu chứng từ đã chốt.
+- Khi sửa hóa đơn đã checkout, hệ thống tạo chứng từ mới với `base_code` giữ nguyên và `revision_no` tăng dần.
+- Ví dụ: bản gốc `HD000123`; sửa lần 1 tạo `HD000123.01`; sửa lần 2 tạo `HD000123.02`.
+- Bản cũ chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và trỏ `replaced_by_order_id` tới bản mới.
+- Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
+- Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
+
 ### Index
 
 - `idx_orders_org_type_status` trên `(organization_id, order_type, status)`
 - `idx_orders_org_customer` trên `(organization_id, customer_id)`
 - `idx_orders_org_created_at` trên `(organization_id, created_at DESC)`
 - `idx_orders_source_quote` trên `(organization_id, source_quote_id)` với điều kiện `source_quote_id IS NOT NULL`
+- `idx_orders_org_base_revision` trên `(organization_id, base_code, revision_no)`
+- `idx_orders_revised_from` trên `(organization_id, revised_from_order_id)` với điều kiện `revised_from_order_id IS NOT NULL`
+- `idx_orders_replaced_by` trên `(organization_id, replaced_by_order_id)` với điều kiện `replaced_by_order_id IS NOT NULL`
 
 ---
 
@@ -346,8 +391,10 @@ Lưu snapshot dòng hàng của báo giá hoặc hóa đơn bán hàng.
 | `height_m` | `numeric(12,3)` | ✅ | Dài/cao theo mét nếu có |
 | `linear_m` | `numeric(12,3)` | ✅ | Mét tới nếu có |
 | `unit_price` | `numeric(12,0)` | ❌ | Đơn giá đã áp dụng |
+| `line_subtotal_amount` | `numeric(12,0)` | ❌ | Thành tiền dòng trước chiết khấu dòng |
+| `discount_amount` | `numeric(12,0)` | ❌ | Chiết khấu riêng của dòng nếu có |
 | `price_source` | `text` | ❌ | `customer_group`, `default_price_list`, `fallback_default_price_list`, `manual` |
-| `line_total` | `numeric(12,0)` | ❌ | Thành tiền dòng |
+| `line_total` | `numeric(12,0)` | ❌ | Thành tiền dòng sau chiết khấu dòng |
 | `note` | `text` | ✅ | Ghi chú dòng |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 
@@ -356,7 +403,11 @@ Lưu snapshot dòng hàng của báo giá hoặc hóa đơn bán hàng.
 - `UNIQUE (order_id, line_no)`
 - `quantity > 0`
 - `unit_price >= 0`
+- `line_subtotal_amount >= 0`
+- `discount_amount >= 0`
 - `line_total >= 0`
+- `discount_amount <= line_subtotal_amount`
+- `line_total = line_subtotal_amount - discount_amount`
 - `sell_method IN ('quantity', 'area_m2', 'linear_m', 'sheet', 'combo')`
 - `price_source IN ('customer_group', 'default_price_list', 'fallback_default_price_list', 'manual')`
 - `order_id` phải cùng `organization_id`.

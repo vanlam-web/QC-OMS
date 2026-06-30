@@ -1,6 +1,6 @@
 # PHẦN 3: KIẾN TRÚC DỮ LIỆU (DATABASE SCHEMA)
 
-> 🔨 Đang xây dựng — Foundation/System đã chốt Giai đoạn 0; Sales mới có một phần
+> 🔨 Đang xây dựng — Foundation/System đã chốt Giai đoạn 0; Sales và Inventory đang có một phần
 
 ---
 
@@ -11,7 +11,7 @@
 | [01-ERD.md](./01-ERD.md) | ERD phát triển theo giai đoạn; Foundation/System đã chốt | 🔨 Một phần |
 | [03-RLS.md](./03-RLS.md) | RLS Foundation/System | ✅ Chốt Giai đoạn 0 |
 | [System/AUTH-PERMISSIONS.md](./System/AUTH-PERMISSIONS.md) | Organization, Profile, Workstation và Permission | ✅ Chốt Giai đoạn 0 |
-| `Sales/POS-TABLES.md` | Bảng phục vụ POS: customer, product, pricing, quote/order snapshot | 🔨 Một phần |
+| `Sales/POS-TABLES.md` | Bảng phục vụ POS: customer, product, pricing, quote/order, sửa chứng từ và snapshot dòng hàng | 🔨 Một phần |
 | `Inventory/INVENTORY-TABLES.md` | Bảng kho vật tư: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 Một phần |
 
 ---
@@ -26,7 +26,7 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 
 | Domain | Tables | Trạng thái |
 |--------|--------|------------|
-| **Sales** | customers, customer_groups, price_lists, price_list_items, products, price history, orders, order_items đã có; checkout/finance chưa đặc tả | 🔨 Một phần |
+| **Sales** | customers, customer_groups, price_lists, price_list_items, products, price history, orders, order_items, order_status_history | 🔨 Một phần |
 | **Finance** | payments, expenses, cashbook | ⬜ Chưa có |
 | **Inventory** | inventory_units, product_inventory_settings, product_unit_conversions, inventory_rolls, inventory_sheets, stock_movements, stocktakes, stocktake_items | 🔨 Một phần |
 | **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |
