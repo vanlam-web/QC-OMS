@@ -144,6 +144,8 @@
 | [05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md](./05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md) | API Customer, Product và Pricing POS | 🔨 |
 | [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá, checkout hóa đơn và sửa hóa đơn POS | 🔨 |
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
+| [05-BACKEND-MayChu/Inventory/README.md](./05-BACKEND-MayChu/Inventory/README.md) | Mục lục Backend Inventory | 🔨 |
+| [05-BACKEND-MayChu/Inventory/INVENTORY-API.md](./05-BACKEND-MayChu/Inventory/INVENTORY-API.md) | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 |
 
 ---
 
