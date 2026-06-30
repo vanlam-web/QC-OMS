@@ -13,6 +13,8 @@
 | `POS/ARCHITECTURE.md` | Kiến trúc State Manager, LocalStorage, Concurrency Lock | 🔨 Một phần |
 | `POS/AUTH.md` | Permission-based Access Control | ✅ Nền tảng Giai đoạn 0 |
 | `POS/TOAST-API.md` | API xử lý Toast SĐT (K03-B) | ✅ Hoàn tất |
+| `Inventory/INVENTORY-API.md` | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 Một phần |
+| `Finance/FINANCE-API.md` | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 Một phần |
 | `BACKEND_CONVENTIONS.md` | Quy ước API, naming, validation, error handling | ✅ Hoàn tất |
 
 ---
@@ -21,9 +23,9 @@
 
 | Module | Mô tả | Trạng thái |
 |--------|--------|------------|
-| **POS** | Customer/Product/Pricing, Order/Quote và Toast API đã có; Checkout chưa đặc tả API riêng | 🔨 Một phần |
-| **Inventory** | Nhập/xuất kho, tồn kho | ⬜ Chưa có |
-| **Finance** | Sổ quỹ, phiếu thu/chi | ⬜ Chưa có |
+| **POS** | Customer/Product/Pricing, Order/Quote/Checkout/Sửa hóa đơn và Toast API đã có một phần | 🔨 Một phần |
+| **Inventory** | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho đã có một phần | 🔨 Một phần |
+| **Finance** | API công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát đã có một phần | 🔨 Một phần |
 | **Workstation** | Máy trạm, queue | ⬜ Chưa có |
 
 ---

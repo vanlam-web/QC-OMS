@@ -27,6 +27,7 @@ Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
     ☑ perm.view_shift_report
     ☑ perm.access_admin_panel
     ☐ perm.manage_inventory
+    ☐ perm.manage_finance
     ☐ perm.edit_price_book
     ...
     ↓
@@ -60,6 +61,7 @@ Bảng danh sách quyền — mỗi tính năng có 1 ô tick chọn:
 | `perm.apply_discount` | Áp dụng chiết khấu / đổi bảng giá | K03-A |
 | `perm.refund_order` | Hoàn tiền / hủy đơn đã thanh toán | K03-D |
 | `perm.manage_inventory` | CRUD kho (nhập / xuất / kiểm kê) | Module Kho |
+| `perm.manage_finance` | Quản lý sổ quỹ, thu nợ, phiếu thu/chi và đối soát | Module Tài chính |
 | `perm.edit_price_book` | Sửa bảng giá sản phẩm | Back-office |
 | `perm.manage_users` | Tạo / sửa / xóa tài khoản | Trang Quản lý tài khoản |
 

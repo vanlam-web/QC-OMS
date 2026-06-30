@@ -102,6 +102,11 @@
 | [03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md](./03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) | Nghiệp vụ công nợ khách hàng | 🔨 |
 | [03-BUSINESS-NghiepVu/Finance/README.md](./03-BUSINESS-NghiepVu/Finance/README.md) | Mục lục nghiệp vụ Finance | 🔨 |
 | [03-BUSINESS-NghiepVu/Finance/CASHBOOK.md](./03-BUSINESS-NghiepVu/Finance/CASHBOOK.md) | Nghiệp vụ sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/README.md](./03-BUSINESS-NghiepVu/Inventory/README.md) | Mục lục nghiệp vụ Inventory | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md](./03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md) | Chính sách tồn kho, trừ kho, tồn âm, cuộn/tấm/tấm lỡ | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md](./03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md) | Đơn vị tồn chính, đơn vị bán phụ và quy đổi | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md](./03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md) | Phiếu kiểm kho, cân bằng kho và phiếu tự động khi sửa tồn | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md](./03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md) | Đối soát OMS/bill với dữ liệu máy sản xuất | 🔨 |
 
 ---
 
@@ -115,7 +120,12 @@
 | [04-DATABASE/03-RLS.md](./04-DATABASE/03-RLS.md) | RLS Foundation/System | ✅ |
 | [04-DATABASE/System/AUTH-PERMISSIONS.md](./04-DATABASE/System/AUTH-PERMISSIONS.md) | Schema Auth, Profile, Workstation và Permission | ✅ |
 | [04-DATABASE/Sales/README.md](./04-DATABASE/Sales/README.md) | Mục lục Schema Sales | 🔨 |
-| [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema POS: khách hàng, bảng giá, sản phẩm, báo giá và snapshot dòng hàng | 🔨 |
+| [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema POS: khách hàng, bảng giá, sản phẩm, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng | 🔨 |
+| [04-DATABASE/Inventory/README.md](./04-DATABASE/Inventory/README.md) | Mục lục Schema Inventory | 🔨 |
+| [04-DATABASE/Inventory/INVENTORY-TABLES.md](./04-DATABASE/Inventory/INVENTORY-TABLES.md) | Schema Inventory: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 |
+| [04-DATABASE/Finance/README.md](./04-DATABASE/Finance/README.md) | Mục lục Schema Finance | 🔨 |
+| [04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md](./04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md) | Schema Finance: thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 |
+| [04-DATABASE/Finance/CASHBOOK-TABLES.md](./04-DATABASE/Finance/CASHBOOK-TABLES.md) | Schema Finance: sổ quỹ, phiếu thu/chi thủ công và đối soát cuối ngày | 🔨 |
 
 ---
 
@@ -132,8 +142,12 @@
 | [05-BACKEND-MayChu/POS/ARCHITECTURE.md](./05-BACKEND-MayChu/POS/ARCHITECTURE.md) | Kiến trúc Backend POS | 🔨 |
 | [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | Phân quyền POS | ✅ |
 | [05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md](./05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md) | API Customer, Product và Pricing POS | 🔨 |
-| [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá và vòng đời đơn POS | 🔨 |
+| [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá, checkout hóa đơn và sửa hóa đơn POS | 🔨 |
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
+| [05-BACKEND-MayChu/Inventory/README.md](./05-BACKEND-MayChu/Inventory/README.md) | Mục lục Backend Inventory | 🔨 |
+| [05-BACKEND-MayChu/Inventory/INVENTORY-API.md](./05-BACKEND-MayChu/Inventory/INVENTORY-API.md) | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 |
+| [05-BACKEND-MayChu/Finance/README.md](./05-BACKEND-MayChu/Finance/README.md) | Mục lục Backend Finance | 🔨 |
+| [05-BACKEND-MayChu/Finance/FINANCE-API.md](./05-BACKEND-MayChu/Finance/FINANCE-API.md) | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
 
 ---
 
@@ -188,4 +202,4 @@ Xem chi tiết: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
 
-*Cập nhật: 2026-06-27 — Theo AUDIT_REPORT.md + AUDIT-V2.md*
+*Cập nhật: 2026-06-28 — Chốt roadmap và thiết kế kỹ thuật Giai đoạn 0*

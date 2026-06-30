@@ -1,0 +1,664 @@
+# Phase 1C Order Checkout Inventory Finance Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build the Phase 1C backend and minimal POS flow for quote/invoice checkout as one business transaction that writes sales orders, inventory movements, payment/debt records, and cashbook entries.
+
+**Architecture:** Keep the current Edge Function route/use-case/repository pattern, but put transaction-critical writes in Postgres RPC functions so checkout cannot create partial data. The Edge API validates permissions, normalizes request payloads, calls typed repository methods, and maps repository errors to the existing standard API envelope. Frontend work stays minimal: POS cart lines, payment input, checkout submit, and receipt summary, while full Inventory and Finance admin screens are deferred after the backend ledger is stable.
+
+**Tech Stack:** Supabase/Postgres migrations, pgTAP, Deno Edge Functions, React/Vite/TypeScript, Vitest, Playwright, shared Windows Supabase server verification.
+
+---
+
+## Source Of Truth
+
+Read these files before implementing any task in this plan:
+
+- `docs/superpowers/specs/2026-06-30-implementation-sync-sales-inventory-finance.md`
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md`
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md`
+- `docs/03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md`
+- `docs/03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`
+- `docs/04-DATABASE/Sales/POS-TABLES.md`
+- `docs/04-DATABASE/Inventory/INVENTORY-TABLES.md`
+- `docs/04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md`
+- `docs/04-DATABASE/Finance/CASHBOOK-TABLES.md`
+- `docs/05-BACKEND-MayChu/POS/ORDER-API.md`
+- `docs/05-BACKEND-MayChu/Inventory/INVENTORY-API.md`
+- `docs/05-BACKEND-MayChu/Finance/FINANCE-API.md`
+
+If any older plan says checkout only saves an order, or inventory can be edited as a single total for every product, that older assumption is wrong. Use the Source of Truth files above.
+
+---
+
+## Plan Corrections From New Specs
+
+- Checkout must be one business transaction: `orders`, `order_items`, `stock_movements`, `payment_receipts`, `payment_receipt_methods`, `customer_debt_entries`, optional `customer_debt_allocations`, and `cashbook_entries`.
+- Final invoice revision never overwrites the old invoice. A revision creates a new code such as `HD000123.01`, cancels the previous document with reason `revised`, and keeps revision links.
+- Inventory is deducted when an official invoice is created or saved. Production/machine data is reconciliation-only in MVP and must not create stock movements.
+- Insufficient stock produces warnings but does not block checkout; stock can go negative.
+- `roll` and `sheet` products are managed by physical inventory objects. Only `normal` products can use total quantity adjustment.
+- Editing stock for a `normal` product from Product admin must create an automatic balanced stocktake.
+- Debt is invoice-level. Old debt collection allocates to oldest unpaid invoices first. MVP has no customer prepayment or negative debt balance.
+- Cashbook is split by cash and bank account. A POS payment can use cash, one bank account, or mixed cash plus one bank account.
+- Seed and expose `perm.manage_finance`.
+
+---
+
+## Phase 1C Scope Lock
+
+Included:
+
+- Sync the new Sales/Inventory/Finance Source of Truth docs into the implementation branch.
+- Add database schema for order lifecycle, inventory ledger, payment/debt, and cashbook MVP.
+- Add transaction RPC functions for checkout and debt allocation where atomicity matters.
+- Add backend APIs for cart validation, quotes, checkout, and read-only order retrieval.
+- Add backend APIs needed by checkout: finance accounts list, customer debt lookup, and inventory warnings.
+- Add minimal POS checkout UI: cart quantities, payment input, one bank account selector, retail debt note, checkout submit, receipt summary.
+- Add tests and seeds proving `perm.manage_finance`, default cash account, one bank account, invoice/debt/cashbook writes, and stock movements.
+
+Deferred:
+
+- Full Inventory admin UI for rolls/sheets/stocktakes.
+- Full Finance admin UI for vouchers/reconciliation.
+- Purchase/inbound inventory.
+- Production machine event ingestion and automatic file-to-bill matching.
+- Multiple bank accounts in one payment.
+- Customer prepayment or negative debt balance.
+
+---
+
+## File Structure
+
+Create:
+
+- `supabase/migrations/202606300003_sales_orders_inventory_finance.sql` - orders, order items, order status history, inventory units/settings/objects/movements/stocktakes, finance accounts/payment/debt/cashbook, code generators, transaction RPCs.
+- `supabase/tests/database/006_order_inventory_finance_schema.test.sql` - pgTAP coverage for the new tables, permissions, constraints, and seed accounts.
+- `supabase/tests/database/007_checkout_transaction.test.sql` - pgTAP integration for checkout RPC rollback/success, stock deduction, debt allocation, and cashbook split.
+- `supabase/functions/api/use-cases/orders.ts` - cart validation, quote, checkout, order read, invoice revision orchestration.
+- `supabase/functions/api/routes/orders.ts` - `/pos/cart/validate`, `/orders/quotes`, `/orders/checkout`, `/orders/{id}`, `/orders/{id}/revise`.
+- `supabase/functions/api/use-cases/inventory.ts` - inventory summary and stock warning helpers used by checkout.
+- `supabase/functions/api/routes/inventory.ts` - minimal read routes required by POS and smoke tests.
+- `supabase/functions/api/use-cases/finance.ts` - finance accounts and customer debt lookups used by POS checkout.
+- `supabase/functions/api/routes/finance.ts` - minimal finance read/debt collection routes.
+- `supabase/tests/functions/orders_test.ts` - Edge Function tests for cart validation, quotes, checkout, and invoice revision guards.
+- `supabase/tests/functions/inventory_finance_test.ts` - Edge Function tests for inventory/finance permissions and validation.
+- `src/features/orders/order-service.ts` - browser service for validate/checkout/order calls.
+- `src/features/orders/types.ts` - frontend order, payment, checkout, warning, and receipt DTOs.
+- `src/features/pos/CheckoutPanel.tsx` - minimal POS checkout form and receipt summary.
+- `src/features/pos/CheckoutPanel.test.tsx` - checkout form tests.
+
+Modify:
+
+- `supabase/functions/api/contracts.ts` - add order, inventory, finance DTOs and repository methods.
+- `supabase/functions/api/repositories/foundation-repository.ts` - add repository reads and RPC calls.
+- `supabase/functions/api/routes/router.ts` - mount order, inventory, and finance routes.
+- `supabase/functions/api/use-cases/catalog.ts` - keep product search active-only for POS; do not mix inventory object editing here.
+- `supabase/seed.sql` - seed `perm.manage_finance`, default cash account, one bank account, inventory units/settings for existing products, and enough stock data for tests.
+- `src/features/catalog/types.ts` - add inventory shape/settings summary if Product admin needs to display stock status.
+- `src/features/pos/PosShell.tsx` - maintain cart line quantities and wire checkout panel.
+- `src/features/pos/PosShell.test.tsx` - cover adding product, payment input, checkout success summary.
+- `src/app/router.tsx` and `src/features/dashboard/DashboardPage.tsx` - expose finance/inventory placeholders only when useful and permission-gated.
+- `docs/PHASE-CHECKLIST.md` - mark Phase 1B merged and track Phase 1C.
+
+---
+
+## Task 1: Sync Specs And Update Phase Checklist
+
+**Files:**
+
+- Modify: `docs/03-BUSINESS-NghiepVu/**`
+- Modify: `docs/04-DATABASE/**`
+- Modify: `docs/05-BACKEND-MayChu/**`
+- Create: `docs/superpowers/specs/2026-06-30-implementation-sync-sales-inventory-finance.md`
+- Modify: `docs/PHASE-CHECKLIST.md`
+
+- [ ] **Step 1: Confirm docs are present**
+
+Run:
+
+```bash
+test -f docs/superpowers/specs/2026-06-30-implementation-sync-sales-inventory-finance.md
+test -f docs/05-BACKEND-MayChu/POS/ORDER-API.md
+test -f docs/05-BACKEND-MayChu/Inventory/INVENTORY-API.md
+test -f docs/05-BACKEND-MayChu/Finance/FINANCE-API.md
+```
+
+Expected: all commands exit `0`.
+
+- [ ] **Step 2: Update checklist status**
+
+Set Phase 1B to merged/PASS and add Phase 1C status with this plan file, the current branch, and server verification requirements.
+
+- [ ] **Step 3: Verify docs formatting**
+
+Run:
+
+```bash
+git diff --check
+rg -n "TBD|TODO|FIXME|discount_items|discount_rate" docs
+```
+
+Expected: `git diff --check` exits `0`; `rg` only reports intentional historical notes that explicitly say not to use legacy discount models.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add docs
+git commit -m "docs: sync sales inventory finance implementation specs"
+```
+
+---
+
+## Task 2: Database Schema And Seeds
+
+**Files:**
+
+- Create: `supabase/migrations/202606300003_sales_orders_inventory_finance.sql`
+- Create: `supabase/tests/database/006_order_inventory_finance_schema.test.sql`
+- Modify: `supabase/seed.sql`
+
+- [ ] **Step 1: Write failing schema tests**
+
+Create `supabase/tests/database/006_order_inventory_finance_schema.test.sql` with checks for:
+
+```sql
+select has_table('public', 'orders');
+select has_table('public', 'order_items');
+select has_table('public', 'order_status_history');
+select has_table('public', 'inventory_units');
+select has_table('public', 'product_inventory_settings');
+select has_table('public', 'product_unit_conversions');
+select has_table('public', 'inventory_rolls');
+select has_table('public', 'inventory_sheets');
+select has_table('public', 'stock_movements');
+select has_table('public', 'stocktakes');
+select has_table('public', 'stocktake_items');
+select has_table('public', 'finance_accounts');
+select has_table('public', 'payment_receipts');
+select has_table('public', 'payment_receipt_methods');
+select has_table('public', 'customer_debt_entries');
+select has_table('public', 'customer_debt_allocations');
+select has_table('public', 'cashbook_vouchers');
+select has_table('public', 'cashbook_entries');
+select has_table('public', 'cash_reconciliations');
+select has_table('public', 'cash_reconciliation_items');
+select results_eq(
+  $$ select count(*)::integer from public.permissions where code = 'perm.manage_finance' $$,
+  array[1],
+  'manage finance permission is seeded'
+);
+```
+
+Also check these constraints by inserts:
+
+```sql
+-- invoice revision code must be base_code || '.01'
+-- bank payment method must point to a bank finance account
+-- normal product can have null inventory_object_type
+-- roll movement requires inventory_roll_id
+-- sheet movement requires inventory_sheet_id
+```
+
+- [ ] **Step 2: Run schema test to verify RED**
+
+Run:
+
+```bash
+npm run supabase:reset
+npm run test:db
+```
+
+Expected: `006_order_inventory_finance_schema.test.sql` fails because tables do not exist.
+
+- [ ] **Step 3: Create migration**
+
+Implement tables exactly from:
+
+- `docs/04-DATABASE/Sales/POS-TABLES.md` sections `orders`, `order_items`, `order_status_history`
+- `docs/04-DATABASE/Inventory/INVENTORY-TABLES.md`
+- `docs/04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md`
+- `docs/04-DATABASE/Finance/CASHBOOK-TABLES.md`
+
+Add code generator functions:
+
+```sql
+public.next_order_code(p_organization_id uuid, p_prefix text)
+public.next_stocktake_code(p_organization_id uuid)
+public.next_payment_receipt_code(p_organization_id uuid)
+public.next_cashbook_voucher_code(p_organization_id uuid, p_direction text)
+public.next_cash_reconciliation_code(p_organization_id uuid)
+```
+
+Add service role grants for every new table and function.
+
+- [ ] **Step 4: Seed finance/inventory basics**
+
+Update `supabase/seed.sql`:
+
+```sql
+-- permissions
+insert into public.permissions (code, module, description, status)
+values ('perm.manage_finance', 'finance', 'Manage finance accounts, debts, cashbook and reconciliation', 'active')
+on conflict (code) do update
+set module = excluded.module,
+    description = excluded.description,
+    status = excluded.status;
+
+-- finance accounts
+insert into public.finance_accounts (... code, name, account_type, is_default_cash, is_active ...)
+values (... 'CASH', 'Quỹ tiền mặt', 'cash', true, true ...),
+       (... 'MB01', 'MB Bank', 'bank', false, true ...);
+```
+
+Seed inventory units `M2`, `M`, `CAI`, `TAM`, product inventory settings for existing seed products, and enough stock movement/object rows for checkout tests.
+
+- [ ] **Step 5: Verify GREEN**
+
+Run:
+
+```bash
+npm run supabase:reset
+npm run test:db
+```
+
+Expected: all database tests pass.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add supabase/migrations/202606300003_sales_orders_inventory_finance.sql supabase/tests/database/006_order_inventory_finance_schema.test.sql supabase/seed.sql
+git commit -m "feat: add order inventory finance schema"
+```
+
+---
+
+## Task 3: Transaction RPCs For Checkout And Debt
+
+**Files:**
+
+- Modify: `supabase/migrations/202606300003_sales_orders_inventory_finance.sql`
+- Create: `supabase/tests/database/007_checkout_transaction.test.sql`
+
+- [ ] **Step 1: Write failing transaction tests**
+
+Create tests for:
+
+```sql
+-- checkout full paid cash creates one order, one order item, one sale_deduction stock movement,
+-- one payment receipt, one payment method, and one cashbook entry.
+
+-- checkout partial paid creates invoice_debt customer_debt_entries with invoice-level balance.
+
+-- mixed cash + bank creates two payment_receipt_methods and two cashbook_entries.
+
+-- old debt payment allocates to oldest unpaid invoice first.
+
+-- invalid bank account rolls back; no order remains.
+```
+
+- [ ] **Step 2: Implement RPCs**
+
+Add RPC functions with `security definer`, `set search_path = ''`, organization checks, and explicit row locks where needed:
+
+```sql
+public.checkout_order_tx(p_actor_user_id uuid, p_organization_id uuid, p_payload jsonb)
+public.collect_customer_debt_tx(p_actor_user_id uuid, p_organization_id uuid, p_payload jsonb)
+public.revise_invoice_tx(p_actor_user_id uuid, p_organization_id uuid, p_order_id uuid, p_payload jsonb)
+```
+
+The checkout RPC must perform all mandatory workflow steps from `ORDER-API.md` section 6 in one database transaction. Do not implement checkout as many independent Supabase client writes in Edge code.
+
+- [ ] **Step 3: Verify transaction behavior**
+
+Run:
+
+```bash
+npm run supabase:reset
+npm run test:db
+```
+
+Expected: `007_checkout_transaction.test.sql` passes and rollback test proves no partial `orders` row remains after a payment validation failure.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add supabase/migrations/202606300003_sales_orders_inventory_finance.sql supabase/tests/database/007_checkout_transaction.test.sql
+git commit -m "feat: add checkout transaction rpc"
+```
+
+---
+
+## Task 4: Order API
+
+**Files:**
+
+- Modify: `supabase/functions/api/contracts.ts`
+- Modify: `supabase/functions/api/repositories/foundation-repository.ts`
+- Create: `supabase/functions/api/use-cases/orders.ts`
+- Create: `supabase/functions/api/routes/orders.ts`
+- Modify: `supabase/functions/api/routes/router.ts`
+- Create: `supabase/tests/functions/orders_test.ts`
+
+- [ ] **Step 1: Write failing function tests**
+
+Cover:
+
+```ts
+Deno.test("cart validation rejects inactive products", async () => {});
+Deno.test("checkout requires create_order and validates bank account", async () => {});
+Deno.test("checkout returns inventory warnings but does not block negative stock", async () => {});
+Deno.test("invoice revise requires edit_order_locked and revision_reason", async () => {});
+```
+
+- [ ] **Step 2: Add contracts**
+
+Add DTOs for:
+
+```ts
+export interface CartValidationRequest {}
+export interface CartValidationResponse {}
+export interface CheckoutRequest {}
+export interface CheckoutResponse {}
+export interface OrderData {}
+export interface OrderItemData {}
+export interface InventoryWarningData {}
+```
+
+Use snake_case JSON field names at API boundaries and camelCase repository input names.
+
+- [ ] **Step 3: Implement use cases**
+
+`orders.ts` must:
+
+- require `perm.create_order` for validate/quote/checkout/read
+- require `perm.edit_order_locked` for revise
+- validate item quantity, dimensions, unit price, price source, customer snapshot, retail debt note, and payment split
+- reject bank payment without `bank_account_id`
+- allow negative stock warning from repository without blocking checkout
+- call repository RPC methods for writes
+
+- [ ] **Step 4: Mount routes**
+
+Mount:
+
+```text
+POST /api/v1/pos/cart/validate
+POST /api/v1/orders/quotes
+GET  /api/v1/orders/quotes
+GET  /api/v1/orders/{id}
+PUT  /api/v1/orders/quotes/{id}
+POST /api/v1/orders/quotes/{id}/cancel
+POST /api/v1/orders/checkout
+POST /api/v1/orders/{id}/revise
+```
+
+- [ ] **Step 5: Verify**
+
+Run:
+
+```bash
+npm run test:functions
+npm run typecheck
+npm run lint
+```
+
+Expected: all pass.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add supabase/functions/api supabase/tests/functions/orders_test.ts
+git commit -m "feat: add order checkout api"
+```
+
+---
+
+## Task 5: Inventory And Finance API Minimum For Checkout
+
+**Files:**
+
+- Modify: `supabase/functions/api/contracts.ts`
+- Modify: `supabase/functions/api/repositories/foundation-repository.ts`
+- Create: `supabase/functions/api/use-cases/inventory.ts`
+- Create: `supabase/functions/api/routes/inventory.ts`
+- Create: `supabase/functions/api/use-cases/finance.ts`
+- Create: `supabase/functions/api/routes/finance.ts`
+- Modify: `supabase/functions/api/routes/router.ts`
+- Create: `supabase/tests/functions/inventory_finance_test.ts`
+
+- [ ] **Step 1: Write failing function tests**
+
+Cover:
+
+```ts
+Deno.test("finance accounts require view_shift_report or manage_finance", async () => {});
+Deno.test("debt collection rejects overpayment", async () => {});
+Deno.test("inventory products hide inactive rows for create_order-only actor", async () => {});
+Deno.test("normal product stock adjustment creates balanced stocktake", async () => {});
+Deno.test("roll and sheet products reject total stock adjustment", async () => {});
+```
+
+- [ ] **Step 2: Implement finance minimum**
+
+Mount:
+
+```text
+GET  /api/v1/finance/accounts
+GET  /api/v1/finance/customer-debts
+GET  /api/v1/finance/customers/{customer_id}/debt
+POST /api/v1/finance/debt-collections
+GET  /api/v1/finance/cashbook/balances
+```
+
+Use `perm.manage_finance` for debt collection and `perm.create_order` or `perm.manage_finance` for customer debt reads.
+
+- [ ] **Step 3: Implement inventory minimum**
+
+Mount:
+
+```text
+GET  /api/v1/inventory/products
+GET  /api/v1/inventory/products/{product_id}
+GET  /api/v1/inventory/stock-movements
+POST /api/v1/inventory/products/{product_id}/adjust-stock
+```
+
+Keep roll/sheet object editing routes deferred unless checkout tests need them. The adjust-stock route must only accept `inventory_shape = normal`.
+
+- [ ] **Step 4: Verify**
+
+Run:
+
+```bash
+npm run test:functions
+npm run typecheck
+npm run lint
+```
+
+Expected: all pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add supabase/functions/api supabase/tests/functions/inventory_finance_test.ts
+git commit -m "feat: add inventory finance api minimum"
+```
+
+---
+
+## Task 6: Minimal POS Checkout UI
+
+**Files:**
+
+- Create: `src/features/orders/types.ts`
+- Create: `src/features/orders/order-service.ts`
+- Create: `src/features/pos/CheckoutPanel.tsx`
+- Create: `src/features/pos/CheckoutPanel.test.tsx`
+- Modify: `src/features/pos/PosShell.tsx`
+- Modify: `src/features/pos/PosShell.test.tsx`
+- Modify: `src/styles/index.css`
+
+- [ ] **Step 1: Write failing UI tests**
+
+Cover:
+
+```ts
+it("calculates cart total and submits cash checkout", async () => {});
+it("requires a bank account when bank amount is entered", async () => {});
+it("shows checkout inventory warnings without blocking success", async () => {});
+it("requires retail debt note when no customer is selected and invoice has debt", async () => {});
+```
+
+- [ ] **Step 2: Add order service**
+
+Expose:
+
+```ts
+validateCart(input)
+checkout(input)
+listFinanceAccounts()
+getCustomerDebt(customerId)
+```
+
+- [ ] **Step 3: Extend POS cart lines**
+
+Each cart line must hold:
+
+```ts
+{
+  id: string
+  product: Product
+  quantity: number
+  width_m?: number
+  height_m?: number
+  linear_m?: number
+  unitPrice: number
+  priceSource: string
+  note?: string
+}
+```
+
+- [ ] **Step 4: Add checkout panel**
+
+The panel must collect:
+
+- cash amount
+- bank amount
+- one bank account if bank amount is greater than zero
+- old debt payment amount when a customer is selected
+- retail debt note if no customer is selected and debt remains
+
+On success it displays invoice code, paid amount, debt amount, change returned, and inventory warnings.
+
+- [ ] **Step 5: Verify frontend**
+
+Run:
+
+```bash
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Expected: all pass.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/features/orders src/features/pos src/styles/index.css
+git commit -m "feat: add pos checkout flow"
+```
+
+---
+
+## Task 7: End-To-End Verification And Server Smoke
+
+**Files:**
+
+- Modify: `tests/e2e/auth-pos.spec.ts`
+- Modify: `docs/PHASE-CHECKLIST.md`
+
+- [ ] **Step 1: Add e2e happy path**
+
+Extend the existing POS e2e to:
+
+- login as admin
+- open POS
+- select customer
+- add MICA seed product
+- enter cash payment
+- submit checkout
+- assert invoice code starts with `HD`
+
+- [ ] **Step 2: Run local verification**
+
+Run:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:functions
+```
+
+Expected: all pass locally.
+
+- [ ] **Step 3: Run server verification**
+
+On the Windows shared server:
+
+```powershell
+cd D:\AI\QC-OMS
+git fetch origin
+git checkout codex/phase-1c-order-checkout
+git pull origin codex/phase-1c-order-checkout
+npm.cmd ci
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
+npm.cmd run test:functions
+npm.cmd run supabase:reset
+npm.cmd run test:db
+npm.cmd run test:functions
+```
+
+Expected: all pass. If the Edge Runtime uses `C:\QC-OMS-runtime`, sync from `D:\AI\QC-OMS` to the mirror and restart Supabase with `--workdir C:\QC-OMS-runtime`.
+
+- [ ] **Step 4: Smoke API**
+
+Smoke through `100.123.122.45`:
+
+```text
+/api/v1/health -> 200
+login admin@qc.local / 123456 -> OK
+/api/v1/me -> 200 and includes perm.manage_finance
+GET /api/v1/finance/accounts -> 200 and includes CASH + MB01
+POST /api/v1/orders/checkout cash full-paid -> 200/201 and returns HD...
+GET /api/v1/orders/{id} -> 200
+GET /api/v1/inventory/stock-movements?order_id=... -> 200 and includes sale_deduction
+GET /api/v1/finance/cashbook/balances -> 200
+```
+
+- [ ] **Step 5: Update checklist and create PR**
+
+Update `docs/PHASE-CHECKLIST.md` with the exact PASS/FAIL output, push the branch, and create a PR to `main`.
+
+---
+
+## Risk Notes
+
+- Do not perform checkout writes as separate Edge/Supabase calls. Use Postgres RPCs for atomicity.
+- Do not create stock movements from production/machine data.
+- Do not block checkout because stock is insufficient; return warning data and allow negative stock.
+- Do not edit finalized invoice, payment, debt, stock, or cashbook history in place. Create reversal/version rows.
+- Do not bring back `discount_items jsonb` or `discount_rate`; current pricing remains normalized.
+- Do not put `SUPABASE_SERVICE_ROLE_KEY` in frontend `.env.local`.
+

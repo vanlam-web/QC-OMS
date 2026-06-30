@@ -8,7 +8,7 @@
 
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
-| [POS-TABLES.md](./POS-TABLES.md) | Định nghĩa bảng phục vụ POS: khách hàng, bảng giá, sản phẩm, báo giá và snapshot dòng hàng | Cập nhật theo Business 2026-06-30 |
+| [POS-TABLES.md](./POS-TABLES.md) | Định nghĩa bảng phục vụ POS: khách hàng, bảng giá, sản phẩm, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng | Cập nhật theo Business 2026-06-30 |
 
 ---
 
