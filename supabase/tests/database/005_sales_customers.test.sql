@@ -40,32 +40,31 @@ select is(
   'phone normalization keeps digits'
 );
 
-select like(
-  public.next_customer_code('00000000-0000-4000-8000-000000000001'),
-  'KH______',
+select ok(
+  public.next_customer_code('00000000-0000-4000-8000-000000000001') ~ '^KH[0-9]{6}$',
   'next customer code uses KH000001 format'
 );
 
 insert into public.customer_groups (id, organization_id, code, name, price_list_id)
 values (
-  '00000000-0000-4000-8000-000000000401',
+  '00000000-0000-4000-8000-000000000402',
   '00000000-0000-4000-8000-000000000001',
-  'DAILY',
-  'Dai ly',
+  'TEST',
+  'Nhom test',
   '00000000-0000-4000-8000-000000000201'
 );
 
 insert into public.customers (organization_id, code, name, phone, customer_group_id)
 values (
   '00000000-0000-4000-8000-000000000001',
-  'KH000001',
+  'KH900001',
   'Cong ty ABC',
   '090 123 4567',
-  '00000000-0000-4000-8000-000000000401'
+  '00000000-0000-4000-8000-000000000402'
 );
 
 select is(
-  (select phone_normalized from public.customers where code = 'KH000001'),
+  (select phone_normalized from public.customers where code = 'KH900001'),
   '0901234567',
   'customer phone_normalized is generated'
 );
