@@ -225,6 +225,21 @@ Nhan xet:
 
 ### Q1. Chinh sach ton am
 
+Owner da chot:
+
+```text
+Khi POS ban hang ma ton khong du, he thong canh bao nhung van cho ban tiep.
+```
+
+Ghi chu dua vao Source of Truth sau:
+
+- POS phai hien canh bao ton khong du truoc khi thanh toan/luu hoa don.
+- Nhan vien van co the tiep tuc ban sau khi thay canh bao.
+- Stock movement co the lam ton kho am.
+- Bao cao ton kho phai hien ro cac mat hang ton am de xu ly sau.
+
+Lua chon da chot: 2.
+
 Khi POS ban hang ma ton khong du:
 
 1. Chan ban.
