@@ -52,13 +52,15 @@ function DashboardRoute() {
 }
 
 function PosRoute() {
-  const { currentUser, initialized, accessConnection, signOut } = useAuth()
+  const { currentUser, initialized, accessConnection, signOut, getAccessToken } = useAuth()
   const navigate = useNavigate()
+  const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
   if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to="/forbidden" replace />
   return (
     <PosShell
+      catalogService={catalogService}
       currentUser={currentUser}
       connected={accessConnection === 'connected'}
       onSignOut={() => void signOut()}
