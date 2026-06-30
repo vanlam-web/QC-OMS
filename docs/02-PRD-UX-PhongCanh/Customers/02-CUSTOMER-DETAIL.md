@@ -17,9 +17,11 @@ Trang chi tiết khách hàng gom toàn bộ thông tin cần để bán hàng, 
 │ KH000123 - Công ty A                    Dư nợ: ...    Tổng bán: ...         │
 │ [Lưu] [Ngừng hoạt động]                                                     │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ [Thông tin] [Xuất hóa đơn] [Cấu hình gửi bill] [Lịch sử bán] [Dư nợ]        │
+│ [Thông tin] [Địa chỉ nhận hàng] [Lịch sử bán] [Nợ cần thu]                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+Gợi ý từ KiotViet: chi tiết khách nên mở được trực tiếp từ danh sách hoặc bằng mã khách. Header luôn cho thấy mã, tên, trạng thái, tổng nợ và tổng bán để nhân viên biết nhanh khách đang ở tình trạng nào.
 
 ---
 
@@ -50,7 +52,21 @@ Quy tắc:
 
 ---
 
-## 4. Tab Xuất hóa đơn
+## 4. Tab Địa chỉ nhận hàng
+
+MVP chỉ cần danh sách địa chỉ nhận hàng tối giản nếu xưởng có giao hàng nội bộ:
+
+- tên người nhận
+- SĐT người nhận
+- địa chỉ
+- ghi chú
+- đánh dấu địa chỉ mặc định
+
+Nếu chưa làm module giao hàng, tab này có thể để sau. Không đưa COD, khu vực giao hàng, đối tác giao hàng vào MVP.
+
+---
+
+## 5. Tab Xuất hóa đơn
 
 Thông tin gồm:
 
@@ -64,9 +80,11 @@ Thông tin gồm:
 
 MVP chưa phát hành hóa đơn điện tử. Tab này chỉ lưu thông tin để chuẩn bị dữ liệu.
 
+Nếu QC-OMS chưa dùng VAT/HĐĐT ở phase hiện tại, tab này có thể gộp vào `Thông tin` hoặc ẩn khỏi menu chính để màn chi tiết gọn hơn.
+
 ---
 
-## 5. Tab Cấu hình gửi bill
+## 6. Tab Cấu hình gửi bill
 
 Cho phép bật/tắt hỗ trợ gửi bill và chọn kênh:
 
@@ -82,7 +100,7 @@ Quy tắc:
 
 ---
 
-## 6. Tab Lịch sử bán
+## 7. Tab Lịch sử bán
 
 Hiển thị danh sách chứng từ của khách:
 
@@ -97,20 +115,22 @@ Hiển thị danh sách chứng từ của khách:
 
 Bấm mã chứng từ mở chi tiết tại module SalesDocuments.
 
-Không hiển thị nghiệp vụ trả hàng trong MVP.
+KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP chỉ hiển thị báo giá/hóa đơn vì chưa làm nghiệp vụ trả hàng bán.
 
 ---
 
-## 7. Tab Dư nợ
+## 8. Tab Nợ cần thu
 
-Hiển thị công nợ theo hóa đơn:
+Hiển thị công nợ theo hóa đơn hoặc phát sinh công nợ:
 
 - Mã hóa đơn.
 - Ngày phát sinh.
+- Loại phát sinh: bán hàng, thu tiền, hủy/sửa chứng từ.
 - Tổng cần trả.
 - Đã trả.
 - Còn nợ.
-- Ngày thu gần nhất.
+- Dư nợ khách hàng sau phát sinh.
+- Ngày thu gần nhất, nếu có.
 - Trạng thái nợ.
 
 Thao tác:
@@ -119,9 +139,22 @@ Thao tác:
 - Tiền thu nợ mặc định phân bổ vào hóa đơn cũ nhất trước.
 - Không tạo công nợ âm/khách trả trước trong MVP.
 
+Tab này là lối xem nhanh công nợ theo khách. Nguồn dữ liệu vẫn phải khớp với module Finance/Customer Debt và phiếu thu trong Sổ quỹ.
+
 ---
 
-## 8. Trạng thái khách hàng
+## 9. Các tab chưa làm MVP
+
+KiotViet có thêm nhiều tab như lịch sử đặt hàng, công nợ, lịch sử mua dịch vụ, lịch sử tích điểm. QC-OMS MVP không làm riêng nếu chưa có nghiệp vụ tương ứng:
+
+- lịch sử đặt hàng: dùng Sales Documents/Báo giá nếu cần
+- lịch sử mua dịch vụ: bỏ
+- lịch sử tích điểm: bỏ
+- công nợ tổng: đã được bao phủ bởi `Nợ cần thu` và module Finance
+
+---
+
+## 10. Trạng thái khách hàng
 
 | Trạng thái | Hành vi |
 |---|---|
@@ -129,4 +162,3 @@ Thao tác:
 | Ngừng hoạt động | Không hiện trong tìm kiếm POS mặc định; vẫn xem được trong danh sách khách bằng bộ lọc |
 
 Ngừng hoạt động không xóa lịch sử bán hàng, công nợ hoặc chứng từ cũ.
-
