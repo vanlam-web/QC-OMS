@@ -41,7 +41,7 @@ Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tư
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
 | `DEPLOYMENT_CONVENTIONS.md` | Quy ước chung: Docker, CI/CD, Backup, Monitoring, DR | ✅ Hoàn tất |
-| `PHASE-0-RUNBOOK.md` | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
+| [PHASE-0-RUNBOOK.md](./PHASE-0-RUNBOOK.md) | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
 | [ENVIRONMENTS-CI.md](./ENVIRONMENTS-CI.md) | Local, staging, production baseline và CI/CD | ✅ Chốt Giai đoạn 0 |
 
 ---

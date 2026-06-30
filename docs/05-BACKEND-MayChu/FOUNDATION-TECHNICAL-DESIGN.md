@@ -227,4 +227,3 @@ Các quyết định sau được chốt just-in-time tại giai đoạn tương
 - render và gửi bill.
 
 Không được suy ra thiết kế của các domain trên chỉ từ tài liệu nền tảng này.
-

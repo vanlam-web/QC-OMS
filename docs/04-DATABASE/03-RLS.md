@@ -61,4 +61,3 @@ Trang quản trị tài khoản không đọc/ghi trực tiếp các bảng trê
 4. Client không thể tự INSERT/UPDATE/DELETE permission.
 5. Profile inactive không được helper function trả organization active.
 6. Service Role path chỉ được gọi sau permission guard trong integration test Backend.
-

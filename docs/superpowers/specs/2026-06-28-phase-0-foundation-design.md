@@ -66,18 +66,17 @@ React component
 
 - Login form nhận email và password, hiển thị lỗi xác thực an toàn.
 - Session do Supabase Auth quản lý; ứng dụng không tự lưu token vào LocalStorage.
-- Logout gọi Supabase Auth sign-out, xóa cache hồ sơ và workstation state trong bộ nhớ, rồi điều hướng về login.
+- Logout gọi Supabase Auth sign-out, xóa cache hồ sơ trong bộ nhớ, rồi điều hướng về login.
 
-### 4.3. Workstation selection
+### 4.3. Account dashboard
 
-- Nếu `/me` trả `workstation: null`, Frontend gọi `GET /api/v1/workstations`.
-- User chọn một workstation active; ID được lưu tại `qc_oms.workstation_id`.
-- API client gửi ID trong `X-Workstation-Id` cho các request tiếp theo.
-- `WORKSTATION_INVALID` xóa lựa chọn cũ và mở lại bước chọn máy.
+- Sau khi `/me` trả profile và permission hợp lệ, Frontend mở dashboard tài khoản.
+- Dashboard hiển thị các module theo permission của tài khoản.
+- Frontend không lưu POS machine/workstation ID và không gửi workstation header trong luồng đăng nhập.
 
 ### 4.4. POS Shell
 
-- Hiển thị tên tài khoản, mã workstation và trạng thái kết nối.
+- Hiển thị tên tài khoản và trạng thái kết nối.
 - Khung K01/K02/K03 tuân theo POS master blueprint nhưng các chức năng ngoài Giai đoạn 0 ở trạng thái chưa khả dụng.
 - Profile menu cung cấp thao tác đăng xuất.
 
@@ -146,7 +145,6 @@ Mọi API response có `trace_id` và dùng error code trong Foundation API.
 |---|---|
 | `AUTH_REQUIRED` | Xóa state phiên ứng dụng và về login |
 | `ACCOUNT_INACTIVE` | Sign-out, thông báo tài khoản bị vô hiệu hóa và về login |
-| `WORKSTATION_INVALID` | Xóa workstation cục bộ và yêu cầu chọn lại |
 | `PERMISSION_DENIED` | Điều hướng tới trang không có quyền |
 | `VALIDATION_ERROR` | Hiển thị lỗi trường hoặc thông báo an toàn từ Backend |
 | Mất kết nối | Giữ session, hiển thị trạng thái disconnected và cung cấp thử lại |

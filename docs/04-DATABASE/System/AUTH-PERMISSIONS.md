@@ -175,4 +175,3 @@ Migration/seed Giai đoạn 0 phải tạo:
 4. Tài khoản bootstrap Owner được tạo bằng quy trình quản trị Supabase, sau đó gắn profile và toàn bộ permission cần thiết bằng script có kiểm soát.
 
 Không ghi password bootstrap vào repository.
-

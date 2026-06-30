@@ -16,7 +16,6 @@ export class ApiError extends Error {
 export interface ApiClientOptions {
   baseUrl: string
   getAccessToken: () => Promise<string | null>
-  getWorkstationId?: () => string | null
   fetch?: typeof fetch
 }
 
@@ -33,11 +32,6 @@ export function createApiClient(options: ApiClientOptions) {
 
       if (accessToken) {
         headers.set('authorization', `Bearer ${accessToken}`)
-      }
-
-      const workstationId = options.getWorkstationId?.()
-      if (workstationId) {
-        headers.set('x-workstation-id', workstationId)
       }
 
       const response = await fetcher(`${options.baseUrl}${path}`, { ...init, headers })

@@ -68,6 +68,14 @@ Nếu có nhập tiền thanh toán nợ cũ, hệ thống ghi nhận thêm mộ
 
 Công nợ được quản lý theo từng hóa đơn còn nợ. Khi khách trả bớt công nợ một số tiền nhất định, hệ thống mặc định phân bổ tiền trả vào các hóa đơn còn nợ cũ nhất trước.
 
+Tiền thanh toán hóa đơn mới và tiền thanh toán nợ cũ là hai khoản riêng. Hệ thống không tự lấy tiền dư của hóa đơn mới để cấn nợ cũ nếu nhân viên không chọn hoặc không nhập khoản thanh toán nợ cũ.
+
+Nếu khách trả dư so với hóa đơn mới và còn nợ cũ, nhân viên có thể dùng phần dư để cấn nợ tổng. Phần cấn nợ vẫn phân bổ vào các hóa đơn còn nợ cũ nhất trước.
+
+Nếu sau khi cấn hết nợ cũ vẫn còn dư, phần còn lại là tiền thừa trả lại khách.
+
+MVP không lưu phần dư thành khách trả trước.
+
 ### BR-CHK-02C: Phương thức thanh toán
 
 POS hỗ trợ ba phương thức thanh toán:
@@ -75,12 +83,14 @@ POS hỗ trợ ba phương thức thanh toán:
 | Phương thức | Cách nhập | Ghi nhận |
 |---|---|---|
 | Tiền mặt | Nhập số tiền mặt | Ghi vào quỹ tiền mặt |
-| Chuyển khoản | Nhập số tiền chuyển khoản, có thể kèm mã giao dịch/ghi chú | Ghi vào quỹ ngân hàng |
-| Kết hợp | Nhập cả tiền mặt và chuyển khoản | Tách ghi theo từng quỹ tương ứng |
+| Chuyển khoản | Nhập số tiền chuyển khoản, chọn tài khoản ngân hàng nhận tiền, có thể kèm mã giao dịch/ghi chú | Ghi vào đúng tài khoản ngân hàng |
+| Kết hợp | Nhập tiền mặt và chuyển khoản vào một tài khoản ngân hàng | Tách ghi tiền mặt và tài khoản ngân hàng tương ứng |
 
 Tổng thực thu = tiền mặt + chuyển khoản.
 
 Tiền trả nợ cũ dùng cùng phương thức thanh toán đang chọn trong dialog. Nếu chọn kết hợp, hệ thống ghi tổng tiền mặt vào quỹ tiền mặt và tổng tiền chuyển khoản vào quỹ ngân hàng.
+
+Trong MVP, một lần thanh toán chỉ có tối đa một tài khoản ngân hàng cho phần chuyển khoản.
 
 ### BR-CHK-03: Điều kiện thanh toán thành công
 
@@ -120,7 +130,7 @@ Nếu còn nợ nhưng chưa chọn khách, phần còn nợ được lưu theo 
 
 Nếu khách vừa thanh toán hóa đơn hiện tại vừa trả bớt nợ cũ, tổng tiền thực thu được ghi vào Sổ Quỹ theo từng phương thức; phần trả nợ cũ đồng thời tạo giao dịch **Thu tiền khách** để giảm công nợ cũ.
 
-> Sổ Quỹ là bảng ghi nhận luồng tiền vào/ra — thuộc module Tài chính.
+> Sổ Quỹ là bảng ghi nhận luồng tiền vào/ra — xem [CASHBOOK.md](../Finance/CASHBOOK.md).
 
 ---
 

@@ -160,4 +160,3 @@ Dashboard, retention và alert nâng cao hoàn thiện ở Giai đoạn 8.
 - Không có production secret trong source hoặc Preview.
 - CI chặn merge khi lint, typecheck, test hoặc build thất bại.
 - Smoke test đăng nhập chạy thành công sau deploy staging.
-

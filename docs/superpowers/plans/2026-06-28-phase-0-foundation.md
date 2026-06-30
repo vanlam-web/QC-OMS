@@ -2,7 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver authentication, workstation selection, permission-gated POS Shell, Foundation administration APIs, local Supabase setup, automated tests, and CI for QC-OMS Phase 0.
+**Goal:** Deliver authentication, account-based module routing, permission-gated POS Shell, Foundation administration APIs, local Supabase setup, automated tests, and CI for QC-OMS Phase 0.
+
+**Plan correction 2026-06-30:** POS is a sales module inside QC-OMS, not a physical workstation selection step. Frontend login now routes to an account dashboard, and permissions are account-based. Workstation database/API artifacts from earlier Foundation work remain backend-compatible for now, but they are not part of the login flow, POS route guard, or administration UI in this phase.
+
+**Infrastructure correction 2026-06-30:** Supabase and Docker run on the shared server for multiple developer machines. Developer laptops run the frontend and connect to the shared Supabase server through Tailscale. Default GitHub CI must not depend on that private server until an approved CI-to-Tailscale path exists; database and shared-server E2E checks are operator/server gates for now.
 
 **Architecture:** Build one vertical slice with React/Vite on the client and one Deno Supabase Edge Function exposing `/api/v1`. PostgreSQL migrations own Foundation schema, transactional permission operations, RLS, and seed data; the client uses Supabase directly only for Auth and Realtime invalidation.
 
@@ -17,8 +21,8 @@ src/
 ├── app/                         # providers, router, protected routes
 ├── components/                  # reusable presentation-only components
 ├── features/auth/               # login, session bootstrap, logout
+├── features/dashboard/          # account-based module landing page
 ├── features/users/              # Foundation API types/services
-├── features/workstations/       # workstation selection
 ├── features/pos/                # Phase 0 POS shell and profile menu
 ├── lib/api/                     # authenticated REST client and API errors
 ├── lib/auth/                    # Supabase browser client
@@ -433,10 +437,10 @@ git commit -m "feat: add foundation API health route"
 Use an in-memory fake implementing the repository interface. Cover:
 
 ```ts
-Deno.test('GET /api/v1/me returns profile, organization, permissions and optional workstation')
+Deno.test('GET /api/v1/me returns profile, organization and permissions')
 Deno.test('GET /api/v1/me rejects a missing bearer token with AUTH_REQUIRED')
 Deno.test('GET /api/v1/me rejects an inactive profile with ACCOUNT_INACTIVE')
-Deno.test('GET /api/v1/me rejects a cross-organization workstation with WORKSTATION_INVALID')
+Deno.test('GET /api/v1/me returns no workstation requirement for account dashboard flow')
 ```
 
 Assert exact status, code, safe message, and the incoming `X-Request-Id` echoed as `trace_id`.
@@ -635,7 +639,7 @@ git commit -m "feat: add user and permission administration API"
 
 - [ ] **Step 1: Write failing API client tests**
 
-Test a fetch spy to prove the client sends bearer token, `X-Workstation-Id`, and `X-Request-Id`; parses the success envelope; and throws a typed `ApiError` preserving `status`, `code`, `message`, `traceId`, and optional field details.
+Test a fetch spy to prove the client sends bearer token and `X-Request-Id`, does not send workstation headers in Phase 0, parses the success envelope, and throws a typed `ApiError` preserving `status`, `code`, `message`, `traceId`, and optional field details.
 
 - [ ] **Step 2: Verify RED**
 
@@ -660,7 +664,7 @@ export class ApiError extends Error {
 }
 ```
 
-The client obtains the current access token from a callback, never LocalStorage directly. Workstation storage is isolated behind `getWorkstationId`, `setWorkstationId`, and `clearWorkstationId` using only `qc_oms.workstation_id`.
+The client obtains the current access token from a callback, never LocalStorage directly. The frontend does not send workstation headers or store workstation IDs in Phase 0 because module access is account-based.
 
 - [ ] **Step 4: Write failing login tests**
 
@@ -689,13 +693,13 @@ git add src/lib src/features/auth src/app/providers.tsx src/main.tsx
 git commit -m "feat: add browser authentication foundation"
 ```
 
-### Task 9: Add workstation selection and permission routing
+### Task 9: Add account dashboard and permission routing
 
 **Files:**
 - Create: `src/features/users/types.ts`
 - Create: `src/features/users/foundation-service.ts`
-- Create: `src/features/workstations/WorkstationPage.tsx`
-- Create: `src/features/workstations/WorkstationPage.test.tsx`
+- Create: `src/features/dashboard/DashboardPage.tsx`
+- Create: `src/features/dashboard/DashboardPage.test.tsx`
 - Create: `src/app/RequireSession.tsx`
 - Create: `src/app/RequirePermission.tsx`
 - Create: `src/app/RequirePermission.test.tsx`
@@ -703,9 +707,9 @@ git commit -m "feat: add browser authentication foundation"
 - Create: `src/app/router.tsx`
 - Modify: `src/app/App.tsx`
 
-- [ ] **Step 1: Write failing workstation-selection tests**
+- [ ] **Step 1: Write failing dashboard module tests**
 
-Assert sorted active workstations render, selecting one stores its ID, `/me` is refetched, and an empty list shows a deterministic support message rather than entering POS.
+Assert authenticated users land on an account dashboard, available modules are enabled by account permissions, unavailable future modules render disabled, and no POS machine/workstation selection is shown.
 
 - [ ] **Step 2: Write failing permission-route tests**
 
@@ -713,35 +717,36 @@ Assert unauthenticated users go to `/login`, authenticated users without `perm.c
 
 - [ ] **Step 3: Verify RED**
 
-Run: `npm test -- src/features/workstations/WorkstationPage.test.tsx src/app/RequirePermission.test.tsx`
+Run: `npm test -- src/features/dashboard/DashboardPage.test.tsx src/app/RequirePermission.test.tsx`
 
-Expected: FAIL because the selector and guards do not exist.
+Expected: FAIL because the dashboard and guards do not exist.
 
-- [ ] **Step 4: Implement service, selector, guards, and router**
+- [ ] **Step 4: Implement service, dashboard, guards, and router**
 
 Use routes:
 
 ```text
 /login        public; authenticated users redirect through bootstrap
-/workstation  authenticated; shown when `/me.workstation` is null
-/pos          authenticated + perm.create_order + valid workstation
+/dashboard    authenticated; account-based module landing page
+/pos          authenticated + perm.create_order
+/admin        authenticated + perm.access_admin_panel
 /forbidden    authenticated; no POS DOM
 *             redirect based on session/bootstrap state
 ```
 
-On `WORKSTATION_INVALID`, clear only the workstation key, refetch `/me` without the header, and route to `/workstation`. On `ACCOUNT_INACTIVE`, sign out and route to `/login`.
+On `ACCOUNT_INACTIVE`, sign out and route to `/login`. The frontend does not route through workstation selection.
 
 - [ ] **Step 5: Verify GREEN**
 
-Run: `npm test -- src/features/workstations/WorkstationPage.test.tsx src/app/RequirePermission.test.tsx && npm run typecheck`
+Run: `npm test -- src/features/dashboard/DashboardPage.test.tsx src/app/RequirePermission.test.tsx && npm run typecheck`
 
 Expected: all focused tests pass.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/features/users src/features/workstations src/app
-git commit -m "feat: guard POS access by workstation and permission"
+git add src/features/users src/features/dashboard src/app
+git commit -m "feat: add account module dashboard"
 ```
 
 ### Task 10: Build the Phase 0 POS Shell and profile menu
@@ -757,7 +762,7 @@ git commit -m "feat: guard POS access by workstation and permission"
 
 - [ ] **Step 1: Write failing shell and menu tests**
 
-Assert the shell renders K01, K02, and K03 landmarks; displays `👤 {display_name} / {workstation.code}`; displays connection state; shows only permission-allowed profile items; closes the menu on outside click and Escape; and signs out from every active account.
+Assert the shell renders K01, K02, and K03 landmarks; displays `👤 {display_name}`; displays connection state; shows only permission-allowed profile items; closes the menu on outside click and Escape; and signs out from every active account.
 
 - [ ] **Step 2: Verify RED**
 
@@ -813,7 +818,7 @@ The event callback must ignore payload authorization data and call `/me`. After 
 
 - inactive account signs out;
 - missing current-route permission redirects to `/forbidden`;
-- invalid workstation clears the local workstation and redirects to `/workstation`.
+- route permission loss redirects to `/forbidden`.
 
 Track connection state as `connecting | connected | disconnected` for `ConnectionStatus`.
 
@@ -842,73 +847,71 @@ git commit -m "feat: refresh access state from realtime signals"
 - Modify: `package.json`
 - Modify: `docs/07-DEPLOYMENT-TrienKhai/README.md`
 
-- [ ] **Step 1: Write failing API integration tests against local Supabase**
+- [x] **Step 1: Write API integration tests against Supabase environment**
 
 Use unique UUID/email values per run and Admin API cleanup. Verify active `/me`, inactive account rejection, wrong-organization workstation rejection, missing manage permission, cross-tenant user lookup, permission audit row, and final-admin protection through the real handler/repository.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `npm run supabase:reset && npm run test:functions`
 
 Expected: the new integration suite fails until local test environment loading and repository wiring are complete.
 
-- [ ] **Step 3: Complete local environment wiring and verify integration GREEN**
+- [x] **Step 3: Complete environment wiring and verify integration GREEN where server env is available**
 
-Load local URL, anon key, and service-role key from environment, never committed files. Use an externally supplied `E2E_ADMIN_PASSWORD`; do not place a password in seed SQL, tests, workflow YAML, or documentation.
+Load Supabase URL, anon key, and service-role key from server/operator environment, never committed files. Use an externally supplied `E2E_ADMIN_PASSWORD`; do not place a password in seed SQL, tests, workflow YAML, or documentation.
 
-Run: `npm run supabase:reset && npm run test:functions`
+Run on the shared server or trusted operator shell: `npm run supabase:reset && npm run test:db && npm run test:functions`
 
-Expected: all Deno unit and local integration tests pass.
+Expected: all Deno unit, pgTAP, and integration tests pass when server-side Supabase credentials are available. On ordinary dev machines without service-role access, the integration test reports a skip and unit tests still run.
 
-- [ ] **Step 4: Write the browser E2E smoke test**
+- [x] **Step 4: Write the browser E2E smoke test**
 
 ```ts
-test('login, select workstation, open POS shell, refresh, and logout', async ({ page }) => {
+test('login, open dashboard modules, refresh POS shell, and logout', async ({ page }) => {
   await page.goto('/login')
-  await page.getByLabel('Email').fill(process.env.E2E_ADMIN_EMAIL!)
+  await page.getByLabel('Tài khoản').fill(process.env.E2E_ADMIN_EMAIL!)
   await page.getByLabel('Mật khẩu').fill(process.env.E2E_ADMIN_PASSWORD!)
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
-  await page.getByRole('button', { name: /POS-01/ }).click()
+  await expect(page.getByRole('heading', { name: 'QC-OMS' })).toBeVisible()
+  await page.getByRole('button', { name: 'Bán hàng' }).click()
   await expect(page.getByRole('main', { name: 'Màn hình POS' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('main', { name: 'Màn hình POS' })).toBeVisible()
-  await page.getByRole('button', { name: /Tài khoản/ }).click()
+  await page.getByRole('button', { name: /E2E Admin/ }).click()
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click()
   await expect(page).toHaveURL(/\/login$/)
 })
 ```
 
-Global setup creates the E2E Auth user through local Admin API, attaches profile and permissions through the real Foundation transaction, and cleanup removes it.
+Global setup creates the E2E Auth user when service-role access is available. On shared-server dev machines without service-role access, it uses the existing server admin user.
 
-- [ ] **Step 5: Run E2E and verify GREEN**
+- [x] **Step 5: Run E2E and verify GREEN against shared server**
 
-Start local Supabase, serve the API, and start Vite in separate terminal sessions, then run: `npm run test:e2e`
+Connect Tailscale, point `.env.local` to the shared server, and run: `npm run test:e2e`
 
-Expected: the smoke path plus invalid-login, forbidden-user, inactive-account, and invalid-workstation tests pass.
+Expected: the smoke path passes against the shared Supabase server. Broader account-state E2E remains a server/operator gate where test users can be created safely.
 
-- [ ] **Step 6: Add CI quality gates**
+- [x] **Step 6: Add CI quality gates**
 
 The GitHub Actions workflow must:
 
 1. check out the repository;
 2. set up Node 22 and `npm ci`;
-3. set up Deno and Supabase CLI;
+3. set up Deno;
 4. run lint, typecheck, unit/component tests, and build;
-5. start Supabase and reset the database;
-6. run pgTAP and Edge Function tests;
-7. install Chromium and run E2E against local services;
-8. upload Playwright artifacts only on failure;
-9. run `npm audit --audit-level=high` and a repository secret scan.
+5. run Edge Function unit tests;
+6. run `npm audit --audit-level=high` and a repository secret scan.
 
-Use GitHub encrypted secrets for E2E credentials and deployment tokens. No production secret is available to pull-request jobs.
+Default pull-request CI does not connect to the private Tailscale Supabase server. Database pgTAP and browser E2E are server/operator gates until an approved CI-to-Tailscale path exists.
 
-- [ ] **Step 7: Add the Phase 0 runbook**
+- [x] **Step 7: Add the Phase 0 runbook**
 
-Document prerequisites, `npm ci`, `supabase start`, reset/seed, function serve, Vite start, all verification commands, bootstrap Owner procedure without a committed password, staging environment variables, deploy order, smoke test, rollback, and known external prerequisites.
+Document developer prerequisites, shared-server Supabase connection, server-side reset/test procedure, Vite start, all verification commands, bootstrap Owner procedure without a committed password, staging environment variables, deploy order, smoke test, rollback, and known external prerequisites.
 
 Update the Deployment README with one relative link to the runbook; do not duplicate its contents.
 
-- [ ] **Step 8: Run the complete fresh verification suite**
+- [x] **Step 8: Run the complete verification suite**
 
 Run:
 
@@ -917,27 +920,29 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
-npx supabase db reset
-npm run test:db
 npm run test:functions
 npm run test:e2e
 git diff --check
 ```
 
-Expected: every command exits 0; no test is skipped; `git diff --check` prints nothing.
+Expected on a dev machine connected to the shared server: frontend checks, function unit tests, and E2E smoke pass; `git diff --check` prints nothing. Server-side `npm run supabase:reset`, `npm run test:db`, and integration function checks are recorded separately by the operator/server.
 
-- [ ] **Step 9: Review scope and secrets before commit**
+Verified 2026-06-30 on dev machine: `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:functions`, `npm run test:e2e`, `git diff --check`, and secret scan passed. Function integration requiring service-role access was skipped on the dev machine by design.
+
+- [x] **Step 9: Review scope and secrets before commit**
 
 Run: `git status --short && git diff --stat && git grep -nE '(service_role|E2E_ADMIN_PASSWORD)=.+' -- ':!package-lock.json'`
 
 Expected: only Phase 0 implementation/documentation paths are changed and the secret search returns no assigned value.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add supabase/tests/functions/foundation_integration_test.ts tests/e2e playwright.config.ts .github/workflows/ci.yml docs/07-DEPLOYMENT-TrienKhai/PHASE-0-RUNBOOK.md docs/07-DEPLOYMENT-TrienKhai/README.md package.json package-lock.json
 git commit -m "ci: verify phase 0 foundation end to end"
 ```
+
+Committed as `61245a7 docs: align phase 0 verification with shared supabase`.
 
 ### Task 13: Deploy and verify the staging vertical slice
 
@@ -951,6 +956,8 @@ git commit -m "ci: verify phase 0 foundation end to end"
 Run: `npx supabase projects list && npx vercel whoami`
 
 Expected: the authorized staging Supabase project is listed and Vercel returns the authenticated account. If either command lacks access, stop only this task and report staging as an open acceptance item; do not weaken local/CI gates.
+
+Attempted 2026-06-30 on dev machine: `npx supabase projects list` failed because no Supabase access token is configured. `npx vercel whoami` could not complete because the local npm cache blocked installing the Vercel CLI. Staging deployment remains an open acceptance item until the operator provides Supabase/Vercel access or performs these steps on the server/deployment machine.
 
 - [ ] **Step 2: Link and migrate the staging database**
 
@@ -988,7 +995,7 @@ Expected: Vercel returns a preview/staging URL built from the same verified Git 
 
 Set `PLAYWRIGHT_BASE_URL`, `E2E_ADMIN_EMAIL`, and `E2E_ADMIN_PASSWORD` in the shell or CI secret store, then run: `npm run test:e2e`
 
-Expected: login, `/me`, workstation selection, POS Shell, refresh, forbidden-user, inactive-account, invalid-workstation, and logout paths pass against staging.
+Expected: login, `/me`, dashboard module routing, POS Shell, refresh, forbidden-user, inactive-account, forbidden-module, and logout paths pass against staging.
 
 - [ ] **Step 6: Record acceptance evidence**
 

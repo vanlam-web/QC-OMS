@@ -3,6 +3,7 @@ import { handleMe } from "./me.ts";
 import { handleWorkstations } from "./workstations.ts";
 import { handlePermissions } from "./permissions.ts";
 import { handleUsers } from "./users.ts";
+import { handleCatalog } from "./catalog.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import type { FoundationRepository } from "../contracts.ts";
 import type { RateLimiter } from "../middleware/rate-limit.ts";
@@ -91,6 +92,27 @@ export function routeRequest(
       auth: options.auth,
       repository: options.repository,
       rateLimiter: options.rateLimiter,
+    });
+  }
+
+  if (
+    url.pathname === "/api/v1/products" ||
+    url.pathname.startsWith("/api/v1/products/") ||
+    url.pathname === "/api/v1/price-lists" ||
+    url.pathname.startsWith("/api/v1/price-lists/") ||
+    url.pathname === "/api/v1/pricing/resolve"
+  ) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleCatalog(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
     });
   }
 
