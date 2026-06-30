@@ -26,7 +26,8 @@ Nguyên tắc áp dụng:
 - Nếu chưa chắc business rule, ưu tiên tạo draft riêng trước, rồi Owner chốt trước khi cập nhật SoT.
 - Tránh sửa trực tiếp các file đang có khả năng được luồng implementation sử dụng cho Phase 1A.
 - Quy trình lưu draft, commit nhỏ và handoff cho implementation được ghi tại `docs/superpowers/specs/2026-06-30-spec-implementation-handoff-workflow.md`.
-- Khi tham khảo KiotViet, màn nào không có dữ liệu thực tế, rất ít dùng, hoặc chỉ là nghiệp vụ retail chung thì mặc định đề xuất bỏ khỏi MVP/để sau, trừ khi Owner chốt giữ.
+- Khi tham khảo KiotViet, không kết luận từ bộ lọc mặc định `Tháng này`; cần kiểm tra khoảng thời gian dài hơn nếu màn có vẻ trống.
+- Màn nào vẫn không có dữ liệu thực tế sau kiểm tra dài hạn, rất ít dùng, hoặc chỉ là nghiệp vụ retail chung thì mặc định đề xuất bỏ khỏi MVP/để sau, trừ khi Owner chốt giữ.
 
 ---
 
@@ -341,7 +342,7 @@ Draft tham khảo KiotViet đã tạo:
 - Xuất dùng nội bộ chưa cần module riêng; có thể là một lý do của điều chỉnh giảm tồn.
 - Trả hàng nhập để sau Purchase/Supplier.
 - Trả hàng bán tiếp tục không thuộc MVP; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
-- Các màn KiotViet không có dữ liệu thực tế càng nên xếp vào bỏ/để sau.
+- Các màn Xuất dùng nội bộ, Xuất hủy, Trả hàng nhập và Trả hàng bán đã được kiểm tra dài hạn `01/07/2016 - 01/07/2026` và vẫn không có giao dịch phù hợp; vì vậy càng nên xếp vào bỏ/để sau.
 
 Owner cần chốt:
 

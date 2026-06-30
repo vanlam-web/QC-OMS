@@ -15,7 +15,9 @@ Nguyên tắc:
 - KiotViet là nguồn tham khảo thao tác và cách tổ chức dữ liệu, không copy 100%.
 - Quyết định cuối cùng của QC-OMS nằm trong Source of Truth đúng tầng: PRD-UX, Business, Database, Backend.
 - Mục nào chưa chắc thì để ở draft/backlog, không đẩy thẳng vào spec chính.
-- Nếu một màn KiotViet không có dữ liệu, rất ít dữ liệu, hoặc chỉ là chức năng retail chung mà xưởng không dùng, mặc định xếp vào nhóm bỏ khỏi MVP hoặc để sau.
+- Nếu một màn KiotViet không có dữ liệu, rất ít dữ liệu, hoặc chỉ là chức năng retail chung mà xưởng không dùng, phải kiểm tra khoảng thời gian dài hơn trước khi dùng làm căn cứ lược bỏ.
+- Không kết luận chỉ từ bộ lọc mặc định `Tháng này`.
+- Nếu đã mở rộng thời gian dài mà vẫn không có dữ liệu, mặc định xếp vào nhóm bỏ khỏi MVP hoặc để sau.
 - Chỉ giữ màn ít dữ liệu nếu Owner đã chốt đó là nghiệp vụ lõi của QC-OMS, ví dụ Kiểm kho.
 
 ---
@@ -69,16 +71,17 @@ Các nhóm menu chính:
 
 | KiotViet | Dấu hiệu quan sát | Đề xuất |
 |---|---|---|
-| Trả hàng bán | Màn mặc định không có giao dịch phù hợp; Owner đã chốt POS MVP không có trả hàng | Bỏ khỏi MVP |
-| Trả hàng nhập | Màn mặc định không có giao dịch phù hợp; phụ thuộc Purchase/NCC chưa chốt | Bỏ khỏi MVP, chỉ xét lại sau Purchase |
-| Xuất dùng nội bộ | Màn mặc định không có giao dịch phù hợp; nghiệp vụ xưởng chưa cần module riêng | Không làm riêng; nếu cần thì là lý do điều chỉnh giảm tồn |
-| Mua dịch vụ | Màn mặc định không có kết quả phù hợp; có thể xử lý bằng phiếu chi Sổ quỹ | Không làm module riêng trong MVP |
+| Trả hàng bán | Đã mở rộng `01/07/2016 - 01/07/2026` vẫn không có giao dịch phù hợp; Owner đã chốt POS MVP không có trả hàng | Bỏ khỏi MVP |
+| Trả hàng nhập | Đã mở rộng `01/07/2016 - 01/07/2026` vẫn không có giao dịch phù hợp; phụ thuộc Purchase/NCC chưa chốt | Bỏ khỏi MVP, chỉ xét lại sau Purchase |
+| Xuất dùng nội bộ | Đã mở rộng `01/07/2016 - 01/07/2026` vẫn không có giao dịch phù hợp; nghiệp vụ xưởng chưa cần module riêng | Không làm riêng; nếu cần thì là lý do điều chỉnh giảm tồn |
+| Xuất hủy | Đã mở rộng `01/07/2016 - 01/07/2026` vẫn không có giao dịch phù hợp | Không làm module riêng; chỉ cân nhắc lịch sử hủy vật tư/tấm lỡ nếu Owner cần |
+| Mua dịch vụ | Màn tháng hiện tại không có kết quả phù hợp; có thể xử lý bằng phiếu chi Sổ quỹ | Không làm module riêng trong MVP |
 | Đối tác giao hàng/Vận đơn | Không phù hợp luồng xưởng hiện tại, có nhiều trường COD/giao hàng | Bỏ khỏi MVP |
 | Kênh bán/Bán online/Zalo shop/Website | Không thuộc luồng QC-OMS nội bộ | Bỏ |
 | VAT/HĐĐT/Thuế kế toán | Xưởng chưa làm nghiệp vụ này trong QC-OMS MVP | Bỏ, chỉ giữ thông tin xuất hóa đơn trong hồ sơ khách |
 | Thương hiệu/thuộc tính retail | Có thể ghi trong tên hàng hoặc nhóm hàng | Không tạo field/module riêng |
 
-Ghi chú: "không có dữ liệu" ở đây là dấu hiệu từ giao diện KiotViet đang xem, không phải kết luận kỹ thuật từ database. Dùng dấu hiệu này để giảm phạm vi, sau đó Owner chốt lại nếu thật sự cần.
+Ghi chú: "không có dữ liệu" ở đây là dấu hiệu từ giao diện KiotViet đang xem, không phải kết luận kỹ thuật từ database. Các màn có nút `vào đây để tiếp tục tìm kiếm` đã được kiểm tra bằng khoảng dài `01/07/2016 - 01/07/2026` trước khi xếp vào nhóm bỏ/để sau.
 
 ---
 
@@ -227,6 +230,7 @@ KiotViet có:
 - Xuất hủy: phiếu tạm, hoàn thành, đã hủy; tổng giá trị hủy, người xuất hủy, ghi chú.
 - Trả hàng nhập: mã trả hàng nhập, mã nhập hàng, nhà cung cấp, NCC cần trả/NCC đã trả.
 - Trả hàng bán: trả theo hóa đơn/trả nhanh/chuyển hoàn, cần trả khách/đã trả khách.
+- Các màn Xuất dùng nội bộ, Xuất hủy, Trả hàng nhập, Trả hàng bán đều đã kiểm tra dài hạn `01/07/2016 - 01/07/2026`; kết quả vẫn không có giao dịch phù hợp.
 
 Đề xuất QC-OMS:
 
@@ -238,7 +242,7 @@ KiotViet có:
 
 ### 4.11. Nguyên tắc lược bỏ theo dữ liệu KiotViet
 
-Khi KiotViet có một màn nhưng tài khoản thực tế không có dữ liệu đáng kể, QC-OMS không mặc định làm theo.
+Khi KiotViet có một màn nhưng tài khoản thực tế không có dữ liệu đáng kể sau khi đã kiểm tra thời gian dài, QC-OMS không mặc định làm theo.
 
 Áp dụng hiện tại:
 
