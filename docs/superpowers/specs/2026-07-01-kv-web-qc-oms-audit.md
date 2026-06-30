@@ -193,7 +193,11 @@ KiotViet có:
 
 Đề xuất QC-OMS:
 
+- Báo cáo/phân tích vẫn cần đầy đủ để quản trị xưởng, nhưng bỏ các chiều không có trong QC-OMS.
 - Làm báo cáo cuối ngày trước, gắn với đối soát tiền mặt/tài khoản ngân hàng.
+- Giữ các nhóm phân tích: bán hàng, khách hàng, công nợ, hàng hóa/tồn kho, tài chính.
+- Bỏ kênh bán, VAT/HĐĐT và thương hiệu/thuộc tính retail.
+- Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Báo cáo hàng hóa phải ưu tiên tồn vật lý cuộn/tấm, không chỉ tổng m2.
 - Chưa gọi là báo cáo lợi nhuận đầy đủ nếu chưa chốt giá vốn/nhập hàng/chi phí sản xuất.
 - Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-reporting-draft.md`.

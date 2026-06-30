@@ -322,8 +322,10 @@ Draft tham khảo KiotViet đã tạo:
 Định hướng:
 
 - Báo cáo cuối ngày là báo cáo nên ưu tiên đầu tiên sau Finance/đối soát.
-- Báo cáo bán hàng, hàng hóa và tài chính làm sau khi dữ liệu lõi ổn định.
+- Báo cáo/phân tích vẫn cần đầy đủ cho quản trị xưởng: bán hàng, khách hàng, công nợ, hàng hóa/tồn kho và tài chính.
 - Báo cáo hàng hóa của QC-OMS phải nhìn được tồn vật lý cuộn/tấm.
+- Bỏ kênh bán, VAT/HĐĐT và thương hiệu/thuộc tính retail khỏi báo cáo QC-OMS.
+- Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 
 #### 3.9. Workstation queue và Integration máy sản xuất
