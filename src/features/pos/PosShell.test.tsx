@@ -58,7 +58,7 @@ function makeOrderService(): OrderService {
     validateCart: vi.fn(),
     checkout: vi.fn(),
     listFinanceAccounts: vi.fn(async () => ({ items: [] })),
-    getCustomerDebt: vi.fn(),
+    getCustomerDebt: vi.fn(async () => ({ customer_id: 'customer-1', total_debt: 0, invoices: [] })),
     listRecentCustomerProductPrices: vi.fn(async () => ({ items: [] })),
   }
 }
