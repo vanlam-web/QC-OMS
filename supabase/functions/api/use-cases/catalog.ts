@@ -1,4 +1,6 @@
 import type {
+  CustomerData,
+  CustomerGroupData,
   FoundationRepository,
   PermissionCode,
   PriceListData,
@@ -23,6 +25,17 @@ export interface ProductListResponse {
 
 export interface PriceListResponse {
   items: PriceListData[];
+}
+
+export interface CustomerListResponse {
+  items: CustomerData[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface CustomerGroupListResponse {
+  items: CustomerGroupData[];
 }
 
 export interface ResolvePricesResponse {
@@ -180,10 +193,100 @@ export async function resolvePrices(
   body: unknown,
 ): Promise<ResolvePricesResponse> {
   requireAnyPermission(context, ["perm.create_order"]);
-  const productIds = parseResolvePrices(body);
+  const { productIds, customerId } = parseResolvePrices(body);
   try {
-    return { items: await repository.resolvePrices({ organizationId: context.organizationId, productIds }) };
+    return { items: await repository.resolvePrices({ organizationId: context.organizationId, productIds, customerId }) };
   } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function listCustomers(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  url: URL,
+): Promise<CustomerListResponse> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const { search, page, pageSize } = parseCustomerList(url);
+  const result = await repository.listCustomers({
+    organizationId: context.organizationId,
+    search,
+    page,
+    pageSize,
+  });
+  return { items: result.items, page, page_size: pageSize, total: result.total };
+}
+
+export async function createCustomer(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<CustomerData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const input = parseCustomerCreate(body);
+  try {
+    return await repository.createCustomer({ organizationId: context.organizationId, ...input });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function updateCustomer(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  id: string,
+  body: unknown,
+): Promise<CustomerData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const input = parseCustomerUpdate(body);
+  try {
+    const row = await repository.updateCustomer({ organizationId: context.organizationId, id, ...input });
+    if (row === null) throw notFound();
+    return row;
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function listCustomerGroups(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  url: URL,
+): Promise<CustomerGroupListResponse> {
+  requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book"]);
+  const activeOnly = url.searchParams.get("active_only") !== "false";
+  return { items: await repository.listCustomerGroups({ organizationId: context.organizationId, activeOnly }) };
+}
+
+export async function createCustomerGroup(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<CustomerGroupData> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  const input = parseCustomerGroupCreate(body);
+  try {
+    return await repository.createCustomerGroup({ organizationId: context.organizationId, ...input });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function updateCustomerGroup(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  id: string,
+  body: unknown,
+): Promise<CustomerGroupData> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  const input = parseCustomerGroupUpdate(body);
+  try {
+    const row = await repository.updateCustomerGroup({ organizationId: context.organizationId, id, ...input });
+    if (row === null) throw notFound();
+    return row;
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
     throw mapRepositoryError(cause);
   }
 }
@@ -289,7 +392,7 @@ function parseUnitPrice(body: unknown): number {
   return value;
 }
 
-function parseResolvePrices(body: unknown): string[] {
+function parseResolvePrices(body: unknown): { productIds: string[]; customerId?: string } {
   if (!isRecord(body) || !Array.isArray(body.product_ids)) throw validationError();
   const productIds = [...new Set(body.product_ids)];
   if (
@@ -299,7 +402,94 @@ function parseResolvePrices(body: unknown): string[] {
   ) {
     throw validationError();
   }
-  return productIds.map((id) => id.trim());
+  let customerId: string | undefined;
+  if ("customer_id" in body && body.customer_id !== null && body.customer_id !== undefined) {
+    if (typeof body.customer_id !== "string" || body.customer_id.trim().length === 0) throw validationError();
+    customerId = body.customer_id.trim();
+  }
+  return { productIds: productIds.map((id) => id.trim()), customerId };
+}
+
+function parseCustomerList(url: URL): { search?: string; page: number; pageSize: number } {
+  const search = url.searchParams.get("search")?.trim();
+  const page = Number(url.searchParams.get("page") ?? "1");
+  const pageSize = Number(url.searchParams.get("page_size") ?? "20");
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    throw validationError();
+  }
+  if (search !== undefined && search.length > 100) throw validationError();
+  return { search: search || undefined, page, pageSize };
+}
+
+function parseCustomerCreate(body: unknown): {
+  code?: string;
+  name: string;
+  phone?: string;
+  customerGroupId?: string | null;
+} {
+  if (!isRecord(body)) throw validationError();
+  const input: {
+    code?: string;
+    name: string;
+    phone?: string;
+    customerGroupId?: string | null;
+  } = { name: normalizeText(body.name, 200) };
+  if ("code" in body && body.code !== null && body.code !== undefined && String(body.code).trim() !== "") {
+    input.code = normalizeCustomerCode(body.code);
+  }
+  if ("phone" in body && body.phone !== null && body.phone !== undefined && String(body.phone).trim() !== "") {
+    input.phone = normalizeText(body.phone, 30);
+  }
+  if ("customer_group_id" in body) {
+    input.customerGroupId = parseOptionalId(body.customer_group_id);
+  }
+  return input;
+}
+
+function parseCustomerUpdate(body: unknown): {
+  code?: string;
+  name?: string;
+  phone?: string | null;
+  customerGroupId?: string | null;
+} {
+  if (!isRecord(body)) throw validationError();
+  const input: {
+    code?: string;
+    name?: string;
+    phone?: string | null;
+    customerGroupId?: string | null;
+  } = {};
+  if ("code" in body) input.code = normalizeCustomerCode(body.code);
+  if ("name" in body) input.name = normalizeText(body.name, 200);
+  if ("phone" in body) input.phone = body.phone === null ? null : normalizeText(body.phone, 30);
+  if ("customer_group_id" in body) input.customerGroupId = parseOptionalId(body.customer_group_id);
+  if (Object.keys(input).length === 0) throw validationError();
+  return input;
+}
+
+function parseCustomerGroupCreate(body: unknown): { code: string; name: string; priceListId: string } {
+  if (!isRecord(body)) throw validationError();
+  return {
+    code: normalizeCode(body.code),
+    name: normalizeText(body.name, 120),
+    priceListId: parseRequiredId(body.price_list_id),
+  };
+}
+
+function parseCustomerGroupUpdate(body: unknown): {
+  code?: string;
+  name?: string;
+  priceListId?: string;
+  isActive?: boolean;
+} {
+  if (!isRecord(body)) throw validationError();
+  const input: { code?: string; name?: string; priceListId?: string; isActive?: boolean } = {};
+  if ("code" in body) input.code = normalizeCode(body.code);
+  if ("name" in body) input.name = normalizeText(body.name, 120);
+  if ("price_list_id" in body) input.priceListId = parseRequiredId(body.price_list_id);
+  if ("is_active" in body) input.isActive = parseBoolean(body.is_active);
+  if (Object.keys(input).length === 0) throw validationError();
+  return input;
 }
 
 function normalizeCode(value: unknown): string {
@@ -307,6 +497,10 @@ function normalizeCode(value: unknown): string {
   const code = value.trim().toUpperCase();
   if (code.length < 1 || code.length > 50) throw validationError();
   return code;
+}
+
+function normalizeCustomerCode(value: unknown): string {
+  return normalizeCode(value);
 }
 
 function normalizeText(value: unknown, maxLength: number): string {
@@ -329,6 +523,16 @@ function parseSellMethod(value: unknown): SellMethod {
 function parseBoolean(value: unknown): boolean {
   if (typeof value !== "boolean") throw validationError();
   return value;
+}
+
+function parseRequiredId(value: unknown): string {
+  if (typeof value !== "string" || value.trim().length === 0) throw validationError();
+  return value.trim();
+}
+
+function parseOptionalId(value: unknown): string | null {
+  if (value === null) return null;
+  return parseRequiredId(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -355,6 +559,9 @@ function mapRepositoryError(cause: unknown): ApiError {
     return notFound();
   }
   if (isRecord(cause) && cause.message === "PRODUCT_NOT_FOUND") {
+    return notFound();
+  }
+  if (isRecord(cause) && cause.message === "CUSTOMER_NOT_FOUND") {
     return notFound();
   }
   if (isRecord(cause) && cause.message === "DEFAULT_PRICE_LIST_REQUIRED") {

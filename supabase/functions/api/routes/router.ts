@@ -98,6 +98,10 @@ export function routeRequest(
   if (
     url.pathname === "/api/v1/products" ||
     url.pathname.startsWith("/api/v1/products/") ||
+    url.pathname === "/api/v1/customers" ||
+    url.pathname.startsWith("/api/v1/customers/") ||
+    url.pathname === "/api/v1/customer-groups" ||
+    url.pathname.startsWith("/api/v1/customer-groups/") ||
     url.pathname === "/api/v1/price-lists" ||
     url.pathname.startsWith("/api/v1/price-lists/") ||
     url.pathname === "/api/v1/pricing/resolve"

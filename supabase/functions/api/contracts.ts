@@ -1,7 +1,7 @@
 export type PermissionCode = `perm.${string}`;
 export type ProductStatus = "active" | "inactive";
 export type SellMethod = "quantity" | "area_m2" | "linear_m" | "sheet" | "combo";
-export type PriceSource = "default_price_list" | "fallback_default_price_list";
+export type PriceSource = "default_price_list" | "customer_group_price_list" | "fallback_default_price_list";
 
 export interface RequestContext {
   traceId: string;
@@ -48,6 +48,23 @@ export interface PriceListData {
   name: string;
   is_default: boolean;
   is_active: boolean;
+}
+
+export interface CustomerGroupData {
+  id: string;
+  code: string;
+  name: string;
+  price_list_id: string;
+  is_active: boolean;
+}
+
+export interface CustomerData {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  customer_group_id: string | null;
+  customer_group: { id: string; code: string; name: string } | null;
 }
 
 export interface ResolvedPriceData {
@@ -175,8 +192,45 @@ export interface FoundationRepository {
     priceListId: string;
     productId: string;
   }): Promise<boolean>;
+  listCustomers(input: {
+    organizationId: string;
+    search?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: CustomerData[]; total: number }>;
+  createCustomer(input: {
+    organizationId: string;
+    code?: string;
+    name: string;
+    phone?: string;
+    customerGroupId?: string | null;
+  }): Promise<CustomerData>;
+  updateCustomer(input: {
+    organizationId: string;
+    id: string;
+    code?: string;
+    name?: string;
+    phone?: string | null;
+    customerGroupId?: string | null;
+  }): Promise<CustomerData | null>;
+  listCustomerGroups(input: { organizationId: string; activeOnly: boolean }): Promise<CustomerGroupData[]>;
+  createCustomerGroup(input: {
+    organizationId: string;
+    code: string;
+    name: string;
+    priceListId: string;
+  }): Promise<CustomerGroupData>;
+  updateCustomerGroup(input: {
+    organizationId: string;
+    id: string;
+    code?: string;
+    name?: string;
+    priceListId?: string;
+    isActive?: boolean;
+  }): Promise<CustomerGroupData | null>;
   resolvePrices(input: {
     organizationId: string;
     productIds: string[];
+    customerId?: string;
   }): Promise<ResolvedPriceData[]>;
 }
