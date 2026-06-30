@@ -376,25 +376,31 @@ Owner cần chốt:
 
 #### 3.10. Hàng đợi máy sản xuất và Integration máy sản xuất
 
-Source of Truth cần tạo/bổ sung:
+Draft tham khảo đã tạo:
 
-- Business Workstation hoặc Sales queue rule
+- `docs/superpowers/specs/2026-07-01-production-queue-contract-draft.md`
+
+Source of Truth cần tạo/bổ sung khi phase này bắt đầu:
+
+- Business Production Queue hoặc Sales queue rule
 - Database queue/event/history tables
 - Backend production queue API
 - Integration contract cho máy in/CNC
 
-Thiếu hiện tại:
+Đã định hướng:
 
-- Hợp đồng file/event thực tế từ máy sản xuất.
-- Parser filename canonical.
-- Atomic claim khi hai POS cùng xử lý một thông báo.
-- Lưu lịch sử 10 ngày ở DB/Backend.
-- Quy tắc quyền thêm/hủy/khôi phục/sửa kích thước.
+- Hàng đợi máy sản xuất tạo hoặc bổ sung hóa đơn nháp trong POS.
+- Nháp từ queue chưa trừ kho/ghi tiền/doanh thu/công nợ.
+- Queue phải có atomic claim để hai POS không xử lý trùng một thông báo.
+- Channel realtime dự kiến là `production_queue`, không dùng thuật ngữ `workstation_queue`.
+- Parser filename dự kiến theo PRD K02-D: `KH_[HH_]daixrong(_xSL)?(_ghichu)?`.
 
 Owner/Technical cần chốt:
 
 - Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
 - Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
+- Queue item lỗi khách/hàng có hiện cho thu ngân hay chỉ hiện cho quản lý.
+- Khi add-to-draft claim thành công nhưng frontend local draft fail, restore thủ công có đủ cho MVP không.
 
 #### 3.11. Bill, Printer, Zalo/Facebook send support
 

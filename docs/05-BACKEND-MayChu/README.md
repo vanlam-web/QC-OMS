@@ -26,7 +26,7 @@
 | **POS** | Customer/Product/Pricing, Order/Quote/Checkout/Sửa hóa đơn và Toast API đã có một phần | 🔨 Một phần |
 | **Inventory** | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho đã có một phần | 🔨 Một phần |
 | **Finance** | API công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát đã có một phần | 🔨 Một phần |
-| **Workstation** | Máy trạm, queue | ⬜ Chưa có |
+| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore | ⬜ Chưa có |
 
 ---
 
