@@ -192,47 +192,52 @@ Source of Truth đã tạo:
 
 #### 3.3. Order draft và Order persistence
 
-Source of Truth cần bổ sung:
+Source of Truth đã tạo/cập nhật:
 
-- Business: mở rộng `POS-ORDER-LIFECYCLE.md`
-- Database: orders, order_items, draft/session tables nếu cần
-- Backend: `POS/ORDER-API.md`
+- Business: `docs/03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md`
+- Database: `docs/04-DATABASE/Sales/POS-TABLES.md`
+- Backend: `docs/05-BACKEND-MayChu/POS/ORDER-API.md`
 
-Thiếu hiện tại:
+Đã định hướng:
 
-- Ranh giới giữa nháp LocalStorage và dữ liệu lưu server.
-- Khi nào nháp có ID server.
-- Điều kiện khôi phục tab sau reload/khởi động lại.
-- Quy tắc khóa/sửa đơn khi báo giá đã lưu hoặc hóa đơn đã thanh toán.
-- Snapshot giá, tên sản phẩm, khách hàng tại thời điểm báo giá/hóa đơn.
+- Nháp POS Phase 2 vẫn lưu local theo máy; backend chưa tạo `orders` cho nháp.
+- Báo giá `BG...` và hóa đơn `HD...` mới là chứng từ lưu server.
+- Báo giá không giữ hàng, không trừ kho, không tạo tiền/công nợ/doanh thu.
+- Snapshot giá, tên sản phẩm, khách hàng và dòng kích thước phải lưu theo chứng từ.
+- Sửa hóa đơn đã chốt dùng bản mới `MaCu.01`, chứng từ cũ chuyển đã hủy để truy vết.
 
-Rủi ro:
+Còn cần chi tiết khi làm phase sửa/chứng từ nâng cao:
 
-- Nếu Phase 2 triển khai cart chỉ ở FE quá lâu, Phase 3-4 sẽ phải đổi mô hình dữ liệu.
+- Quy tắc khóa hóa đơn cũ khi đang mở để sửa bởi nhiều máy POS.
+- UX xử lý xung đột nếu hai người cùng mở/sửa một chứng từ.
+- Chính sách đảo kho/đảo tiền/công nợ khi hủy hoặc sửa hóa đơn đã có phát sinh.
 
 #### 3.4. Checkout API, payment, cashbook và debt allocation
 
-Source of Truth cần bổ sung:
+Source of Truth đã tạo/cập nhật:
 
-- Business: rà `POS-CHECKOUT.md` và `POS-CUSTOMER-DEBT.md`
-- Database: Finance tables
-- Backend: `POS/CHECKOUT-API.md`
+- Business: `docs/03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md`
+- Business: `docs/03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md`
+- Business: `docs/03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`
+- Database: `docs/04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md`
+- Database: `docs/04-DATABASE/Finance/CASHBOOK-TABLES.md`
+- Backend checkout: `docs/05-BACKEND-MayChu/POS/ORDER-API.md`
+- Backend Finance: `docs/05-BACKEND-MayChu/Finance/FINANCE-API.md`
 
-Thiếu hiện tại:
+Đã định hướng:
 
-- Schema payments, cashbook, debt transactions, debt allocations.
-- Idempotency key và chống bấm thanh toán hai lần.
-- Transaction boundary checkout.
-- Error code khi checkout fail một phần.
-- Cách rollback/đảo giao dịch khi hủy hóa đơn.
-
-Đã chốt:
-
+- Checkout tạo hóa đơn, trừ kho, ghi phiếu thu, dòng sổ quỹ và công nợ trong cùng transaction nghiệp vụ.
+- Thu nợ cũ phân bổ vào hóa đơn còn nợ cũ nhất trước.
+- Một lần thanh toán MVP dùng tối đa một tài khoản ngân hàng cho phần chuyển khoản, có thể kết hợp tiền mặt + chuyển khoản.
+- Sổ quỹ quản lý tiền mặt và từng tài khoản ngân hàng riêng.
+- Mã phiếu/entry exact lookup phải bỏ qua/mở rộng filter thời gian mặc định khi cần.
 - MVP không tạo khách trả trước/công nợ âm. Nếu khách trả dư khi còn nợ, nhân viên chọn trả lại khách hoặc cấn vào nợ cũ.
 
-Còn cần chi tiết:
+Còn cần chi tiết khi làm phase sửa/hủy nâng cao:
 
-- Chính sách sửa/hủy hóa đơn đã phát sinh công nợ.
+- Chính sách đảo hoặc tạo bút toán bù khi hủy hóa đơn đã phát sinh công nợ/phiếu thu.
+- UX cho sửa phiếu thu thủ công đã đối soát.
+- Error code chi tiết cho các tình huống checkout fail một phần nếu transaction backend không hoàn tất.
 
 ---
 
@@ -252,10 +257,10 @@ Source of Truth Business đã tạo:
 - `docs/03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md`
 - `docs/03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md`
 
-Source of Truth kỹ thuật còn cần tạo sau Business:
+Source of Truth kỹ thuật đã tạo:
 
-- `docs/04-DATABASE/Inventory/`
-- `docs/05-BACKEND-MayChu/Inventory/`
+- `docs/04-DATABASE/Inventory/INVENTORY-TABLES.md`
+- `docs/05-BACKEND-MayChu/Inventory/INVENTORY-API.md`
 
 Đã chốt trong Business:
 
@@ -273,10 +278,11 @@ Rủi ro:
 
 - PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên chốt schema hoặc backend sâu cho BOM/máy sản xuất trước khi Owner chốt chính sách sản xuất chi tiết.
 
-Owner cần chốt:
+Còn cần chốt/chi tiết sau MVP:
 
 - BOM/Combo MVP trừ vật tư con tới mức nào khi định mức chưa rõ.
-- Database/API Inventory cần làm ở phase nào và có gửi implement ngay không.
+- Production queue và dữ liệu máy sản xuất được lưu/claim qua API nào.
+- Khi nào chuyển từ đối soát máy sản xuất sang cơ chế tự đề xuất/trừ kho nâng cao.
 
 #### 3.6. BOM/Combo business
 
