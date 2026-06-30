@@ -188,6 +188,10 @@ Owner cần chốt:
 
 #### 3.5. Inventory domain
 
+Draft tham khảo từ export KiotViet:
+
+- `docs/superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md`
+
 Source of Truth cần tạo:
 
 - `docs/03-BUSINESS-NghiepVu/Inventory/README.md`
