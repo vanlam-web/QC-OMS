@@ -26,7 +26,16 @@ KiotViet có:
 - Cột: mã NCC, tên NCC, điện thoại, email, địa chỉ, mã số thuế, nợ cần trả hiện tại, tổng mua, trạng thái.
 - Chi tiết có thông tin địa chỉ, nhóm NCC, ghi chú, thông tin xuất hóa đơn.
 
-Dữ liệu thực tế trong tài khoản có khoảng vài chục NCC và có nợ cần trả.
+Dữ liệu thực tế trong tài khoản có `43 nhà cung cấp`.
+
+Tổng danh sách đang thấy:
+
+- `Nợ cần trả hiện tại`: khoảng `57,483,058`
+- `Tổng mua`: khoảng `1,968,034,063`
+
+Ví dụ cột danh sách: mã NCC, tên NCC, điện thoại, email, nợ cần trả hiện tại, tổng mua.
+
+Kết luận: nhà cung cấp là dữ liệu thật, không nên bỏ hẳn khỏi sản phẩm dài hạn.
 
 ### 2.2. Nhập hàng
 
@@ -36,6 +45,14 @@ KiotViet có:
 - Bộ lọc thời gian, người tạo, số hóa đơn đầu vào, người nhập.
 - Cột: mã nhập hàng, thời gian, mã NCC, nhà cung cấp, tổng số lượng, số lượng mặt hàng, tổng tiền hàng, giảm giá, cần trả NCC, tiền đã trả NCC, ghi chú, trạng thái.
 - Có liên hệ tới kho hàng và công nợ nhà cung cấp.
+
+Quan sát thêm ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tháng này` không có phiếu nhập.
+- Sau khi bấm `vào đây`, KiotViet đổi khoảng thời gian sang `01/07/2016 - 01/07/2026`.
+- Màn vẫn không tìm thấy phiếu nhập hàng phù hợp.
+
+Kết luận: không dùng màn `Nhập hàng` KiotViet làm căn cứ làm MVP ngay. Nếu QC-OMS làm Purchase sau này, phải thiết kế theo tồn vật lý cuộn/tấm của xưởng, không copy dữ liệu nhập hàng KiotViet.
 
 ### 2.3. Mua dịch vụ
 
@@ -57,6 +74,7 @@ MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
 - Xưởng cần chốt trước cách nhập tồn cuộn/tấm theo vật lý.
 - Nhập hàng có thể làm thay đổi tồn, giá vốn, công nợ NCC và sổ quỹ cùng lúc.
 - Nếu làm vội theo KiotViet, dễ quay về quản lý tổng m2 thay vì quản lý từng cuộn/tấm đúng mục tiêu QC-OMS.
+- KiotViet có hồ sơ NCC và tổng mua/nợ, nhưng màn nhập hàng không có giao dịch dài hạn để copy luồng thao tác thực tế.
 
 ### 3.2. Khi làm, nên tách thành 3 phần
 
@@ -94,6 +112,8 @@ Thông tin tối thiểu:
 - Trạng thái.
 
 Không cần nhóm NCC trong MVP nếu chưa có nghiệp vụ phân nhóm rõ.
+
+Nếu cần nguồn nhập trên tồn kho trước khi làm Purchase đầy đủ, có thể cho chọn/lưu nhà cung cấp trên từng cuộn/tấm vật lý như metadata, chưa phát sinh công nợ NCC.
 
 ### Purchase Receipts
 
@@ -133,4 +153,3 @@ Công nợ NCC tối thiểu:
 - Kênh bán/đối tác giao hàng trong nhập hàng.
 - Nhóm nhà cung cấp phức tạp.
 - Mua dịch vụ thành module riêng nếu phiếu chi đã đủ dùng.
-

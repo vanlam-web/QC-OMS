@@ -244,12 +244,16 @@ KiotViet có:
 - Nhà cung cấp: mã NCC, tên, SĐT, email, địa chỉ, nhóm NCC, mã số thuế, nợ cần trả hiện tại, tổng mua.
 - Nhập hàng: phiếu tạm, đã nhập hàng, đã hủy; mã nhập hàng, mã NCC, nhà cung cấp, tổng số lượng, tổng tiền hàng, cần trả NCC, tiền đã trả NCC.
 - Mua dịch vụ: mã phiếu, loại chi, người nhận, cần thanh toán, đã thanh toán, còn phải trả.
+- Màn Nhà cung cấp có `43 nhà cung cấp`, tổng nợ cần trả khoảng `57,483,058`, tổng mua khoảng `1,968,034,063`.
+- Màn Nhập hàng mặc định `Tháng này` trống; sau khi bấm mở rộng tìm kiếm sang `01/07/2016 - 01/07/2026` vẫn không tìm thấy phiếu nhập hàng phù hợp.
 
 Đề xuất QC-OMS:
 
 - Chưa đưa Purchase vào MVP nếu chưa chốt nhập kho vật lý theo cuộn/tấm.
 - Khi làm sau này, tách `Suppliers`, `Purchase Receipts` và `Supplier Payables`.
 - Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
+- Nhà cung cấp là dữ liệu thật nên không bỏ dài hạn, nhưng chưa copy luồng nhập hàng KiotViet do không có giao dịch nhập hàng dài hạn trên màn này.
+- Nếu cần trước khi làm Purchase đầy đủ, chỉ lưu NCC như metadata nguồn nhập trên từng cuộn/tấm vật lý.
 - Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-purchase-supplier-draft.md`.
 
 ### 4.9. Báo cáo
