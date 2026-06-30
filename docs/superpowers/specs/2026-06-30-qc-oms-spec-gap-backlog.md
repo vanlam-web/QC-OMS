@@ -192,29 +192,38 @@ Draft tham khảo từ export KiotViet:
 
 - `docs/superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md`
 
-Source of Truth cần tạo:
+Source of Truth Business đã tạo:
 
 - `docs/03-BUSINESS-NghiepVu/Inventory/README.md`
-- các file rule nhập/xuất/tồn/kho vật tư
+- `docs/03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md`
+- `docs/03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md`
+
+Source of Truth kỹ thuật còn cần tạo sau Business:
+
 - `docs/04-DATABASE/Inventory/`
 - `docs/05-BACKEND-MayChu/Inventory/`
 
-Thiếu hiện tại:
+Đã chốt trong Business:
 
-- Chính sách tồn âm.
-- Quy tắc trừ kho khi bán hàng thường, m2, Combo/BOM.
-- Quy đổi m2 sang mét dài/tấm.
-- Lot/batch, cuộn/tấm đang dùng dở, hao hụt.
-- Domain event nghiệp vụ cho stock movement.
+- Bán thiếu tồn: cảnh báo nhưng vẫn cho bán tiếp, tồn có thể âm.
+- MVP tạo/lưu đơn bán chính thức là mốc trừ kho.
+- Dữ liệu máy sản xuất dùng để đối soát, không tự trừ kho trong MVP.
+- Mỗi sản phẩm có một đơn vị tồn chính; đơn vị bán phụ phải quy đổi.
+- Hàng cuộn quản lý theo từng cuộn vật lý, không sửa tổng tồn trực tiếp.
+- Hàng tấm quản lý theo tấm nguyên/tấm dở/tấm lỡ, không sửa tổng tồn trực tiếp.
+- Tấm lỡ dưới `0.3m2` mặc định bỏ; nhân viên có thể tạo/sửa thủ công nếu muốn giữ.
+- Kiểm kho có phiếu tạm/cân bằng/hủy; sửa tồn hàng thường ở Hàng hóa tự sinh phiếu kiểm kho đã cân bằng.
 
 Rủi ro:
 
-- PRD có luồng khui vật tư và BOM khá giàu, nhưng Business Inventory chưa có. Không nên chốt schema hoặc backend sâu trước khi Owner chốt chính sách kho.
+- PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên chốt schema hoặc backend sâu cho BOM/máy sản xuất trước khi Owner chốt chính sách sản xuất chi tiết.
 
 Owner cần chốt:
 
-- Bán thiếu tồn thì chặn, cảnh báo rồi cho qua, hay cho âm có quyền.
-- Hao hụt được ghi theo đơn, theo thao tác khui, hay theo kiểm kho riêng.
+- BOM/Combo MVP trừ vật tư con tới mức nào khi định mức chưa rõ.
+- Database/API Inventory cần làm ở phase nào và có gửi implement ngay không.
 
 #### 3.6. BOM/Combo business
 

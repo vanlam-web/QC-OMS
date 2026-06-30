@@ -102,6 +102,11 @@
 | [03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md](./03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) | Nghiệp vụ công nợ khách hàng | 🔨 |
 | [03-BUSINESS-NghiepVu/Finance/README.md](./03-BUSINESS-NghiepVu/Finance/README.md) | Mục lục nghiệp vụ Finance | 🔨 |
 | [03-BUSINESS-NghiepVu/Finance/CASHBOOK.md](./03-BUSINESS-NghiepVu/Finance/CASHBOOK.md) | Nghiệp vụ sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/README.md](./03-BUSINESS-NghiepVu/Inventory/README.md) | Mục lục nghiệp vụ Inventory | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md](./03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md) | Chính sách tồn kho, trừ kho, tồn âm, cuộn/tấm/tấm lỡ | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md](./03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md) | Đơn vị tồn chính, đơn vị bán phụ và quy đổi | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md](./03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md) | Phiếu kiểm kho, cân bằng kho và phiếu tự động khi sửa tồn | 🔨 |
+| [03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md](./03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md) | Đối soát OMS/bill với dữ liệu máy sản xuất | 🔨 |
 
 ---
 
