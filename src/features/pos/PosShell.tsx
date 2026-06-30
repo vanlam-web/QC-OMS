@@ -3,19 +3,16 @@ import { ConnectionStatus } from '../../components/ConnectionStatus'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { Customer, Product, ResolvedPrice } from '../catalog/types'
+import type { CheckoutCartLine, OrderService } from '../orders/order-service'
+import { CheckoutPanel } from './CheckoutPanel'
 import { CustomerPanel } from './CustomerPanel'
 import { formatApiError } from '../../lib/api/error-message'
 import { ProfileMenu } from './ProfileMenu'
 import { ProductGrid } from './ProductGrid'
 
-interface CartLine {
-  id: string
-  product: Product
-  unitPrice: number
-}
-
 export function PosShell({
   catalogService,
+  orderService,
   currentUser,
   connected = true,
   onSignOut,
@@ -23,6 +20,7 @@ export function PosShell({
   onOpenDashboard,
 }: {
   catalogService: CatalogService
+  orderService: OrderService
   currentUser: CurrentUserData
   connected?: boolean
   onSignOut: () => void
@@ -31,7 +29,7 @@ export function PosShell({
 }) {
   const [products, setProducts] = useState<Product[]>([])
   const [prices, setPrices] = useState<Record<string, ResolvedPrice>>({})
-  const [cartLines, setCartLines] = useState<CartLine[]>([])
+  const [cartLines, setCartLines] = useState<CheckoutCartLine[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,12 +71,16 @@ export function PosShell({
 
   function selectProduct(product: Product) {
     const unitPrice = prices[product.id]?.unit_price ?? 0
+    const priceSource = prices[product.id]?.price_source ?? 'default_price_list'
     setCartLines((current) => [
       ...current,
       {
         id: `${product.id}-${current.length + 1}`,
         product,
+        quantity: 1,
         unitPrice,
+        priceSource,
+        isManualPrice: false,
       },
     ])
   }
@@ -111,6 +113,7 @@ export function PosShell({
               <tr>
                 <th>Sản phẩm</th>
                 <th>Đơn vị</th>
+                <th>SL</th>
                 <th>Giá</th>
               </tr>
             </thead>
@@ -119,6 +122,7 @@ export function PosShell({
                 <tr key={line.id}>
                   <td>{line.product.name}</td>
                   <td>{line.product.unit_name}</td>
+                  <td>{line.quantity.toLocaleString('vi-VN')}</td>
                   <td>{line.unitPrice.toLocaleString('vi-VN')}</td>
                 </tr>
               ))}
@@ -133,6 +137,11 @@ export function PosShell({
           prices={prices}
           loading={loadingProducts}
           onSelectProduct={selectProduct}
+        />
+        <CheckoutPanel
+          cartLines={cartLines}
+          selectedCustomer={selectedCustomer}
+          orderService={orderService}
         />
       </section>
     </main>

@@ -169,8 +169,8 @@ select results_eq(
 );
 select results_eq(
   $$ select count(*)::integer from public.permissions where status = 'active' $$,
-  $$ values (9::integer) $$,
-  'seed creates exactly 9 active permissions'
+  $$ values (10::integer) $$,
+  'seed creates exactly 10 active permissions'
 );
 select results_eq(
   $$

@@ -15,14 +15,14 @@ const webServerEnv = {
   VITE_SUPABASE_ANON_KEY: supabase.SUPABASE_ANON_KEY,
   VITE_API_BASE_URL: apiBaseUrl,
   VITE_APP_ENV: "e2e",
-  QC_OMS_ALLOWED_ORIGINS: "http://127.0.0.1:5173",
+  QC_OMS_ALLOWED_ORIGINS: "http://127.0.0.1:5174",
 };
 
 export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: "http://127.0.0.1:5174",
     trace: "retain-on-failure",
   },
   webServer: [
@@ -33,10 +33,10 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: "npm run dev -- --host 127.0.0.1",
-      url: "http://127.0.0.1:5173",
+      command: "npm run dev -- --host 127.0.0.1 --port 5174",
+      url: "http://127.0.0.1:5174",
       env: webServerEnv,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
   ],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

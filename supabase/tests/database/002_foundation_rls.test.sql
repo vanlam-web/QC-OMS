@@ -58,7 +58,7 @@ select results_eq(
 );
 select results_eq(
   $$ select count(*)::integer from public.permissions where status = 'active' $$,
-  $$ values (9::integer) $$,
+  $$ values (10::integer) $$,
   'authenticated active user can read active permission catalog'
 );
 select results_eq(

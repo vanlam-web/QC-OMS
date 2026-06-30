@@ -9,6 +9,7 @@ import { createBrowserFoundationService } from '../features/users/foundation-ser
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { CatalogPage } from '../features/catalog/CatalogPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
+import { createBrowserOrderService } from '../features/orders/order-service'
 
 export function AppRoutes() {
   return (
@@ -55,12 +56,14 @@ function PosRoute() {
   const { currentUser, initialized, accessConnection, signOut, getAccessToken } = useAuth()
   const navigate = useNavigate()
   const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
+  const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
   if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to="/forbidden" replace />
   return (
     <PosShell
       catalogService={catalogService}
+      orderService={orderService}
       currentUser={currentUser}
       connected={accessConnection === 'connected'}
       onSignOut={() => void signOut()}

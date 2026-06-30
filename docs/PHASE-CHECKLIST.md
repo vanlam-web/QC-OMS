@@ -206,7 +206,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 1C — Order checkout transaction foundation
 
-Status: 🟡 Đang cập nhật plan theo Source of Truth Sales/Inventory/Finance mới trên branch `codex/phase-1c-plan-sync`
+Status: 🟢 Implementation branch `codex/phase-1c-order-checkout` đã local/server verify và runtime smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -236,14 +236,80 @@ Status: 🟡 Đang cập nhật plan theo Source of Truth Sales/Inventory/Financ
 - [x] Một POS payment tối đa một bank account.
 - [x] Seed quyền mới `perm.manage_finance`.
 
-### Cần làm khi bắt đầu implement Phase 1C
+### Đã hoàn thành
 
-- [ ] Tạo implementation branch từ `main` sau khi plan sync được merge.
-- [ ] Implement schema/RPC theo plan Phase 1C.
-- [ ] Implement Order API checkout/quote/revise.
-- [ ] Implement Inventory/Finance API minimum cho checkout.
-- [ ] Implement POS checkout UI tối thiểu.
-- [ ] Verify local và server shared-dev trước khi PR.
+- [x] Tạo implementation branch `codex/phase-1c-order-checkout`.
+- [x] Sync stocktake Source of Truth bổ sung từ KiotViet audit.
+- [x] Implement schema/RPC foundation:
+  - [x] `orders`, `order_items`, `order_status_history`
+  - [x] inventory units/settings/objects/stock movements/stocktakes
+  - [x] finance accounts/payment receipts/debt/cashbook/reconciliations
+  - [x] `checkout_order_tx`
+  - [x] `collect_customer_debt_tx`
+  - [x] `adjust_normal_product_stock_tx`
+  - [x] `revise_invoice_tx`
+- [x] Implement Order API:
+  - [x] `POST /api/v1/orders/checkout`
+  - [x] `POST /api/v1/orders/{id}/revise`
+- [x] Implement Inventory API minimum:
+  - [x] `GET /api/v1/inventory/products`
+  - [x] `GET /api/v1/inventory/products/{product_id}`
+  - [x] `GET /api/v1/inventory/stock-movements`
+  - [x] `GET /api/v1/inventory/stocktakes`
+  - [x] `POST /api/v1/inventory/products/{product_id}/adjust-stock`
+- [x] Implement Finance API minimum and cashbook follow-up:
+  - [x] `GET /api/v1/finance/accounts`
+  - [x] `GET /api/v1/finance/customer-debts`
+  - [x] `GET /api/v1/finance/customers/{customer_id}/debt`
+  - [x] `POST /api/v1/finance/debt-collections`
+  - [x] `GET /api/v1/finance/cashbook`
+  - [x] `GET /api/v1/finance/cashbook/{entry_id}`
+  - [x] `GET /api/v1/finance/payment-receipts/{id}`
+  - [x] `GET /api/v1/finance/cashbook/balances`
+  - [x] `GET /api/v1/finance/cashbook/vouchers`
+  - [x] `GET /api/v1/finance/reconciliations`
+- [x] Implement POS checkout UI tối thiểu:
+  - [x] cart line quantity/price source
+  - [x] selected customer
+  - [x] cash/bank payment fields
+  - [x] one bank account selector
+  - [x] return-change/apply-old-debt choice
+  - [x] retail debt note validation
+  - [x] receipt summary and inventory warnings
+- [x] Add Phase 1 module boundaries for POS, Sales Documents, Customers, PriceBook, Inventory, Finance.
+- [x] Add E2E happy path: login, open POS, select customer, add product, cash checkout, assert `HD...` receipt summary.
+
+### Verification đã pass
+
+- [x] Local `git diff --check`
+- [x] Local `npm run lint`
+- [x] Local `npm run typecheck`
+- [x] Local `npm test`: 17 files / 44 tests
+- [x] Local `npm run build`
+- [x] Local `npm run test:functions`: 34 passed
+- [x] Local `npx deno check supabase/functions/api/index.ts`
+- [x] Local `npm run test:e2e`: 2 passed
+- [x] Server `npm.cmd run supabase:reset`
+- [x] Server `npm.cmd run test:db`: 7 files / 233 tests
+- [x] Server `npm.cmd run test:functions`: 34 passed
+- [x] Server runtime mirror `C:\QC-OMS-runtime` sync/start smoke PASS.
+- [x] Server API smoke:
+  - [x] `/functions/v1/api/v1/health` -> 200
+  - [x] login `admin@qc.local / 123456` -> OK
+  - [x] `/functions/v1/api/v1/me` -> 200, admin đủ 10 active permissions
+  - [x] `GET /functions/v1/api/v1/finance/accounts` -> 200, includes `CASH` + `MB01`
+  - [x] `GET /functions/v1/api/v1/inventory/products` -> 200, includes `DECAL-PP`, `MICA-3MM`, `STANDEE`
+  - [x] `POST /functions/v1/api/v1/orders/checkout` cash full-paid -> created `HD000001`
+  - [x] receipt `PT000001` created
+  - [x] `GET /functions/v1/api/v1/finance/cashbook` -> `total_in = 180000`, `ending_balance = 180000`
+  - [x] cashbook exact receipt search with date filter still returns `PT000001`
+  - [x] `GET /functions/v1/api/v1/finance/cashbook/{entry_id}` -> source `PT000001` / `HD000001`
+  - [x] `GET /functions/v1/api/v1/finance/payment-receipts/{id}` -> cash method `180000`, source order `HD000001`
+
+### Ghi chú
+
+- Supabase local Windows có thể báo một số dev UI service stopped như Studio/Imgproxy/Pooler; DB/Auth/API/Edge runtime vẫn chạy và smoke PASS.
+- Sau `supabase:reset`, Auth user `admin@qc.local` phải được tạo lại trước khi smoke runtime.
 
 ## Phase 2 — POS business UI
 

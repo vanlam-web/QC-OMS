@@ -23,7 +23,7 @@
 | Thành phần | Mô tả | Phím tắt |
 |---|---|---|
 | **Tìm/Chọn KH** | Tìm kiếm và chọn khách hàng đã có trong hệ thống theo SĐT, tên khách hàng hoặc mã khách hàng. Hỗ trợ tìm không dấu. | `F4` |
-| **[+] Thêm nhanh KH** | Mở form thêm nhanh khách mới ngay trong POS. Thông tin tối thiểu: Tên khách + SĐT; địa chỉ là tùy chọn. Sau khi tạo xong, tự gán khách vào tab hóa đơn đang active. | — |
+| **[+] Thêm nhanh KH** | Mở form thêm nhanh khách mới ngay trong POS. Thông tin tối thiểu: mã khách hàng và tên khách hàng; SĐT không bắt buộc. Sau khi tạo xong, tự gán khách vào tab hóa đơn đang active. | — |
 | **Bảng giá** | Dropdown chọn bảng giá theo tên cho khách hàng đã chọn. Nếu khách không được gán bảng giá thì dùng Bảng giá chung. Tự động tính lại Thành tiền trong K02-A khi đổi bảng giá. | — |
 | **Chiết khấu** | Hiển thị riêng phần trăm chiết khấu nếu chính sách giá đang áp dụng có chiết khấu. | — |
 | **Công nợ và doanh thu** | Hiển thị tóm tắt dư nợ hiện tại và tổng doanh thu của khách đã chọn. | — |
@@ -61,8 +61,8 @@
 - Nút `[+]` cạnh ô tìm khách dùng để thêm nhanh khách mới trong POS.
 - Form thêm khách sử dụng cùng modal, bố cục, các tab và trường dữ liệu với bảng chi tiết khách hàng. Chế độ thêm mới để trống dữ liệu; chế độ chỉnh sửa nạp dữ liệu của khách đã chọn.
 - Thông tin bắt buộc:
+  - Mã khách hàng.
   - Tên khách hàng.
-  - SĐT.
 - Mã khách hàng:
   - Cho phép nhập thủ công hoặc tự sinh nếu để trống.
   - Phải duy nhất, viết hoa, không chứa khoảng trắng hoặc ký tự `_` vì `_` được dùng làm dấu phân tách trong tên file máy sản xuất.
@@ -75,6 +75,7 @@
   - Ghi chú.
 - Không sử dụng ảnh khách hàng, chi nhánh, ngày sinh hoặc giới tính trong hồ sơ khách hàng QC-OMS.
 - Các trường tùy chọn được đặt trong phần **Thông tin thêm** để thao tác thêm nhanh vẫn gọn.
+- SĐT là thông tin tùy chọn. Nếu có nhập thì phải hợp lệ sau chuẩn hóa và không được trùng với khách khác.
 - Nút cấu hình gửi tin nhắn dùng để bật/tắt hỗ trợ gửi bill và chọn một trong ba phương thức gửi:
   - Zalo cá nhân.
   - Nhóm Zalo.
@@ -88,6 +89,7 @@
 - Chỉ hỗ trợ sinh ảnh bill và mở nơi gửi khi hồ sơ khách đã bật hỗ trợ gửi bill và cấu hình phương thức gửi hợp lệ.
 - Nếu chưa bật hỗ trợ gửi bill hoặc cấu hình phương thức gửi chưa hợp lệ, hệ thống không tự mở nơi gửi cho khách.
 - Trước khi kiểm tra trùng, SĐT được chuẩn hóa bằng cách loại bỏ khoảng trắng và các ký tự trình bày không cần thiết.
+- Nếu SĐT để trống, hệ thống cho phép lưu khách hàng.
 - Nếu SĐT đã tồn tại, hệ thống hiển thị khách hàng tương ứng để người dùng chọn lại và không cho tạo hồ sơ trùng.
 - Nút `[Lưu]` tạo hồ sơ khách hàng. Nút `[Bỏ qua]` hoặc `[X]` đóng modal; nếu đã nhập dữ liệu thì phải xác nhận trước khi bỏ thay đổi.
 - Thông tin xuất hóa đơn không bắt buộc nhập khi thêm khách tại POS và có thể bổ sung sau trong bảng chi tiết khách hàng.
@@ -189,7 +191,7 @@
   - Nhấp mã phiếu thu để chuyển đến chi tiết tương ứng tại trang Sổ quỹ.
   - Giao diện và hành vi tại trang đích được quy định trong đặc tả của trang đó.
 - Cột Dư nợ sau giao dịch hiển thị số dư lũy kế theo quy tắc Business.
-- Số dư âm được hiển thị là **Khách trả trước**.
+- Không hiển thị số dư âm/khách trả trước trong MVP. Nếu khách trả dư khi còn nợ, phần dư được xử lý theo lựa chọn trả lại khách hoặc cấn vào nợ cũ; hệ thống không tạo công nợ âm.
 - Mỗi trang hiển thị 20 giao dịch, có điều hướng phân trang và tổng số giao dịch.
 - Hỗ trợ lọc theo mã chứng từ, thời gian và loại giao dịch.
 - Có chức năng `[Xuất Excel]` để lập bảng đối chiếu công nợ.

@@ -45,9 +45,10 @@ Nhấp vào cảnh báo mở pop-over ngay cạnh cảnh báo:
 
 ## II. THỨ TỰ ƯU TIÊN
 
-Khi chọn khách hàng đã tồn tại, hệ thống chỉ kiểm tra thiếu SĐT.
+Khi chọn khách hàng đã tồn tại, hệ thống chỉ kiểm tra thiếu SĐT như một nhắc nhở mềm.
 
-- Khách hàng mới không dùng cảnh báo thiếu SĐT vì SĐT là trường bắt buộc khi tạo.
+- Khách hàng mới vẫn được phép tạo khi chưa có SĐT; nếu cần nhắc bổ sung, hệ thống chỉ nhắc sau khi hồ sơ khách đã tồn tại và được chọn lại.
+- Thiếu SĐT không chặn bán hàng, không chặn lưu khách và không chặn thanh toán.
 - Không dùng Toast này để nhắc ID Zalo, nhóm Zalo, Facebook hoặc cấu hình gửi tin nhắn.
 
 ---

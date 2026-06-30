@@ -1,0 +1,410 @@
+begin;
+
+select plan(24);
+
+insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+values (
+  '20000000-0000-4000-8000-000000000701',
+  'authenticated',
+  'authenticated',
+  'checkout-test@qc.local',
+  crypt('password', gen_salt('bf')),
+  now(),
+  now(),
+  now()
+);
+
+insert into public.profiles (user_id, organization_id, display_name)
+values (
+  '20000000-0000-4000-8000-000000000701',
+  '00000000-0000-4000-8000-000000000001',
+  'Checkout Test User'
+);
+
+select has_function(
+  'public',
+  'checkout_order_tx',
+  array['uuid', 'uuid', 'jsonb'],
+  'checkout transaction rpc exists'
+);
+
+select has_function(
+  'public',
+  'collect_customer_debt_tx',
+  array['uuid', 'uuid', 'jsonb'],
+  'debt collection transaction rpc exists'
+);
+
+select has_function(
+  'public',
+  'revise_invoice_tx',
+  array['uuid', 'uuid', 'uuid', 'jsonb'],
+  'invoice revision transaction rpc exists'
+);
+
+create temporary table checkout_results (
+  name text primary key,
+  result jsonb not null
+) on commit drop;
+
+insert into checkout_results (name, result)
+values (
+  'cash_full_paid',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 180000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (select count(*)::integer from public.orders where code = (select result->>'order_code' from checkout_results where name = 'cash_full_paid')),
+  1,
+  'cash checkout creates one order'
+);
+
+select is(
+  (select count(*)::integer from public.order_items where order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid)),
+  1,
+  'cash checkout creates one order item'
+);
+
+select is(
+  (select count(*)::integer from public.stock_movements where order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid) and movement_type = 'sale_deduction'),
+  1,
+  'cash checkout creates one sale deduction stock movement'
+);
+
+select is(
+  (select count(*)::integer from public.payment_receipts where order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid)),
+  1,
+  'cash checkout creates one payment receipt'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.payment_receipt_methods prm
+    join public.payment_receipts pr on pr.id = prm.payment_receipt_id
+    where pr.order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid)
+  ),
+  1,
+  'cash checkout creates one payment method'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.cashbook_entries ce
+    join public.payment_receipt_methods prm on prm.id = ce.payment_receipt_method_id
+    join public.payment_receipts pr on pr.id = prm.payment_receipt_id
+    where pr.order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid)
+  ),
+  1,
+  'cash checkout creates one cashbook entry'
+);
+
+insert into checkout_results (name, result)
+values (
+  'partial_paid',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 80000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (select debt_amount from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'partial_paid')::uuid)),
+  100000::numeric,
+  'partial checkout stores invoice-level debt'
+);
+
+select is(
+  (select count(*)::integer from public.customer_debt_entries where order_id = ((select result->>'order_id' from checkout_results where name = 'partial_paid')::uuid) and entry_type = 'invoice_debt'),
+  1,
+  'partial checkout creates invoice debt entry'
+);
+
+insert into checkout_results (name, result)
+values (
+  'mixed_payment',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 100000,
+        'bank_amount', 80000,
+        'bank_account_id', '00000000-0000-4000-8000-000000000902',
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.payment_receipt_methods prm
+    join public.payment_receipts pr on pr.id = prm.payment_receipt_id
+    where pr.order_id = ((select result->>'order_id' from checkout_results where name = 'mixed_payment')::uuid)
+  ),
+  2,
+  'mixed checkout creates two payment methods'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.cashbook_entries ce
+    join public.payment_receipt_methods prm on prm.id = ce.payment_receipt_method_id
+    join public.payment_receipts pr on pr.id = prm.payment_receipt_id
+    where pr.order_id = ((select result->>'order_id' from checkout_results where name = 'mixed_payment')::uuid)
+  ),
+  2,
+  'mixed checkout creates two cashbook entries'
+);
+
+insert into checkout_results (name, result)
+values (
+  'old_debt_payment',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 230000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 50000
+      )
+    )
+  )
+);
+
+select is(
+  (select count(*)::integer from public.customer_debt_allocations where payment_receipt_id = ((select result->>'payment_receipt_id' from checkout_results where name = 'old_debt_payment')::uuid)),
+  1,
+  'old debt payment creates one allocation'
+);
+
+select is(
+  (
+    select allocated_amount
+    from public.customer_debt_allocations
+    where payment_receipt_id = ((select result->>'payment_receipt_id' from checkout_results where name = 'old_debt_payment')::uuid)
+  ),
+  50000::numeric,
+  'old debt payment allocates requested amount'
+);
+
+select is(
+  (
+    select order_id
+    from public.customer_debt_allocations
+    where payment_receipt_id = ((select result->>'payment_receipt_id' from checkout_results where name = 'old_debt_payment')::uuid)
+  ),
+  ((select result->>'order_id' from checkout_results where name = 'partial_paid')::uuid),
+  'old debt payment allocates to oldest unpaid invoice first'
+);
+
+insert into checkout_results (name, result)
+values (
+  'return_change',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 180000,
+        'bank_amount', 0,
+        'change_returned_amount', 20000,
+        'old_debt_payment_amount', 0,
+        'overpayment_handling', 'return_change'
+      )
+    )
+  )
+);
+
+select is(
+  (select change_returned_amount from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'return_change')::uuid)),
+  20000::numeric,
+  'return change checkout stores change_returned'
+);
+
+select is(
+  (
+    select coalesce(min(balance_after_customer), 0)
+    from public.customer_debt_entries
+    where customer_id = '00000000-0000-4000-8000-000000000501'
+  ) >= 0,
+  true,
+  'return change checkout does not create negative customer debt'
+);
+
+insert into checkout_results (name, result)
+values (
+  'apply_old_debt',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 230000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 50000,
+        'overpayment_handling', 'apply_old_debt'
+      )
+    )
+  )
+);
+
+select is(
+  (
+    select allocated_amount
+    from public.customer_debt_allocations
+    where payment_receipt_id = ((select result->>'payment_receipt_id' from checkout_results where name = 'apply_old_debt')::uuid)
+  ),
+  50000::numeric,
+  'apply old debt checkout allocates surplus to old debt'
+);
+
+select throws_ok(
+  $$
+    select public.checkout_order_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      jsonb_build_object(
+        'customer_id', '00000000-0000-4000-8000-000000000501',
+        'items', jsonb_build_array(
+          jsonb_build_object(
+            'product_id', '00000000-0000-4000-8000-000000000303',
+            'quantity', 1,
+            'unit_price', 180000,
+            'price_source', 'default_price_list'
+          )
+        ),
+        'payment', jsonb_build_object(
+          'cash_amount', 0,
+          'bank_amount', 180000,
+          'bank_account_id', '00000000-0000-4000-8000-000000000901',
+          'old_debt_payment_amount', 0
+        )
+      )
+    )
+  $$,
+  '22023',
+  'bank_account_id must reference an active bank account',
+  'invalid bank account is rejected'
+);
+
+select is(
+  (select count(*)::integer from public.orders where code = 'HD999999'),
+  0,
+  'invalid payment does not leave a sentinel order'
+);
+
+select throws_ok(
+  $$
+    select public.collect_customer_debt_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      jsonb_build_object(
+        'customer_id', '00000000-0000-4000-8000-000000000501',
+        'cash_amount', 10000
+      )
+    )
+  $$,
+  '22023',
+  'debt collection cannot exceed outstanding debt',
+  'debt collection rejects overpayment'
+);
+
+select throws_ok(
+  $$
+    select public.revise_invoice_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      (select (result->>'order_id')::uuid from checkout_results where name = 'cash_full_paid'),
+      jsonb_build_object()
+    )
+  $$,
+  '22023',
+  'revision_reason is required',
+  'invoice revision requires a reason'
+);
+
+select is(
+  (select count(*)::integer from public.orders where order_type = 'invoice' and status = 'completed'),
+  6,
+  'successful checkout attempts leave six completed invoices'
+);
+
+select * from finish();
+rollback;

@@ -4,6 +4,9 @@ import { handleWorkstations } from "./workstations.ts";
 import { handlePermissions } from "./permissions.ts";
 import { handleUsers } from "./users.ts";
 import { handleCatalog } from "./catalog.ts";
+import { handleOrders } from "./orders.ts";
+import { handleFinance } from "./finance.ts";
+import { handleInventory } from "./inventory.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import type { FoundationRepository } from "../contracts.ts";
 import type { RateLimiter } from "../middleware/rate-limit.ts";
@@ -115,6 +118,51 @@ export function routeRequest(
     }
 
     return handleCatalog(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/orders/checkout" || url.pathname.startsWith("/api/v1/orders/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleOrders(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/finance" || url.pathname.startsWith("/api/v1/finance/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleFinance(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/inventory" || url.pathname.startsWith("/api/v1/inventory/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleInventory(request, traceId, {
       auth: options.auth,
       repository: options.repository,
     });

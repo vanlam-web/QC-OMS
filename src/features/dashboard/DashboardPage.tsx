@@ -1,4 +1,5 @@
 import type { CurrentUserData } from '../../lib/api/types'
+import { canOpenModule, phaseOneModules } from '../navigation/module-boundaries'
 
 export function DashboardPage({
   currentUser,
@@ -13,9 +14,12 @@ export function DashboardPage({
   onOpenCatalog: () => void
   onSignOut: () => void
 }) {
-  const canSell = currentUser.permissions.includes('perm.create_order')
   const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
-  const canCatalog = currentUser.permissions.includes('perm.edit_price_book')
+
+  function openModule(moduleId: string) {
+    if (moduleId === 'pos') onOpenPos()
+    if (moduleId === 'price-book') onOpenCatalog()
+  }
 
   return (
     <main className="dashboard-shell">
@@ -30,23 +34,22 @@ export function DashboardPage({
       </header>
 
       <section aria-label="Module hệ thống" className="module-grid">
-        <button disabled={!canSell} type="button" onClick={onOpenPos}>
-          Bán hàng
-        </button>
+        {phaseOneModules.map((module) => {
+          const enabled = canOpenModule(currentUser, module)
+          const implemented = module.id === 'pos' || module.id === 'price-book'
+          return (
+            <button
+              disabled={!enabled || !implemented}
+              key={module.id}
+              type="button"
+              onClick={() => openModule(module.id)}
+            >
+              {module.label}
+            </button>
+          )
+        })}
         <button disabled={!canAdmin} type="button" onClick={onOpenAdmin}>
           Quản trị
-        </button>
-        <button disabled={!canCatalog} type="button" onClick={onOpenCatalog}>
-          Hàng hóa
-        </button>
-        <button disabled type="button">
-          Khách hàng
-        </button>
-        <button disabled type="button">
-          Nhà cung cấp
-        </button>
-        <button disabled type="button">
-          Kế toán
         </button>
       </section>
     </main>
