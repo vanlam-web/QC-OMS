@@ -32,7 +32,8 @@
     ├── [Inventory/01-INVENTORY-LAYOUT.md](./Inventory/01-INVENTORY-LAYOUT.md)
     ├── [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md)
     ├── [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md)
-    └── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
+    ├── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
+    └── [Inventory/05-INVENTORY-ADJUSTMENTS.md](./Inventory/05-INVENTORY-ADJUSTMENTS.md)
 ├── SalesDocuments/              ← Chứng từ bán hàng
     ├── [SalesDocuments/README.md](./SalesDocuments/README.md)
     ├── [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md)
@@ -78,6 +79,7 @@
 | Product Stock List | [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md) | 🔨 |
 | Roll/Sheet Objects | [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md) | 🔨 |
 | Stocktake UX | [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md) | 🔨 |
+| Inventory Adjustments UX | [Inventory/05-INVENTORY-ADJUSTMENTS.md](./Inventory/05-INVENTORY-ADJUSTMENTS.md) | 🔨 |
 | Sales Documents List | [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md) | 🔨 |
 | Sales Document Detail | [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | 🔨 |
 | Customer List | [Customers/01-CUSTOMER-LIST.md](./Customers/01-CUSTOMER-LIST.md) | 🔨 |

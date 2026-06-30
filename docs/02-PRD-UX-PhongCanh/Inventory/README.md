@@ -13,6 +13,7 @@
 | [02-PRODUCT-STOCK-LIST.md](./02-PRODUCT-STOCK-LIST.md) | Danh sách hàng hóa, tồn kho, bộ lọc và thao tác chính | 🔨 |
 | [03-ROLL-SHEET-OBJECTS.md](./03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [04-STOCKTAKE.md](./04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
+| [05-INVENTORY-ADJUSTMENTS.md](./05-INVENTORY-ADJUSTMENTS.md) | Hủy/điều chỉnh vật tư tối giản, tấm lỡ bỏ/giữ lại | 🔨 |
 
 ---
 
