@@ -1411,6 +1411,25 @@ begin
     'order_id', order_id_value,
     'order_code', order_code_value,
     'payment_receipt_id', payment_receipt_id_value,
+    'order', jsonb_build_object(
+      'id', order_id_value,
+      'code', order_code_value,
+      'order_type', 'invoice',
+      'status', 'completed',
+      'total_amount', total_amount_value,
+      'paid_amount', sale_payment_value,
+      'debt_amount', debt_amount_value,
+      'payment_status', payment_status_value
+    ),
+    'payment_receipt', case
+      when payment_receipt_id_value is null then null
+      else jsonb_build_object(
+        'id', payment_receipt_id_value,
+        'code', receipt_code_value,
+        'total_received_amount', total_received_value
+      )
+    end,
+    'inventory_warnings', '[]'::jsonb,
     'total_amount', total_amount_value,
     'paid_amount', sale_payment_value,
     'debt_amount', debt_amount_value,

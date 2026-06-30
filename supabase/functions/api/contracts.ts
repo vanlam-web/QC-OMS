@@ -74,6 +74,35 @@ export interface ResolvedPriceData {
   price_list_id: string;
 }
 
+export interface CheckoutOrderSummaryData {
+  id: string;
+  code: string;
+  order_type: "invoice";
+  status: "completed";
+  total_amount: number;
+  paid_amount: number;
+  debt_amount: number;
+  payment_status: "unpaid" | "partial" | "paid";
+}
+
+export interface CheckoutPaymentReceiptData {
+  id: string;
+  code: string;
+  total_received_amount: number;
+}
+
+export interface InventoryWarningData {
+  product_id: string;
+  code: string;
+  message: string;
+}
+
+export interface CheckoutResultData {
+  order: CheckoutOrderSummaryData;
+  payment_receipt: CheckoutPaymentReceiptData | null;
+  inventory_warnings: InventoryWarningData[];
+}
+
 export interface CurrentUserData {
   user: { id: string; email: string; display_name: string };
   organization: { id: string; code: string; name: string };
@@ -233,4 +262,15 @@ export interface FoundationRepository {
     productIds: string[];
     customerId?: string;
   }): Promise<ResolvedPriceData[]>;
+  checkoutOrder(input: {
+    organizationId: string;
+    actorUserId: string;
+    payload: Record<string, unknown>;
+  }): Promise<CheckoutResultData>;
+  reviseInvoice(input: {
+    organizationId: string;
+    actorUserId: string;
+    orderId: string;
+    payload: Record<string, unknown>;
+  }): Promise<Record<string, unknown>>;
 }

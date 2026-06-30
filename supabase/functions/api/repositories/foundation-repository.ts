@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.108.2";
 import type {
+  CheckoutResultData,
   CustomerData,
   CustomerGroupData,
   CurrentUserRecord,
@@ -549,6 +550,25 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         }
       );
     },
+    async checkoutOrder(input): Promise<CheckoutResultData> {
+      const { data, error } = await client.rpc("checkout_order_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      return toCheckoutResultData(data);
+    },
+    async reviseInvoice(input): Promise<Record<string, unknown>> {
+      const { data, error } = await client.rpc("revise_invoice_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_order_id: input.orderId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      return isRecord(data) ? data : {};
+    },
   };
 }
 
@@ -576,6 +596,48 @@ function toCustomerData(row: {
     customer_group_id: row.customer_group_id,
     customer_group: group ?? null,
   };
+}
+
+function toCheckoutResultData(value: unknown): CheckoutResultData {
+  if (!isRecord(value) || !isRecord(value.order)) {
+    throw new Error("CHECKOUT_RESULT_INVALID");
+  }
+
+  const paymentReceipt = isRecord(value.payment_receipt)
+    ? {
+      id: String(value.payment_receipt.id),
+      code: String(value.payment_receipt.code),
+      total_received_amount: Number(value.payment_receipt.total_received_amount),
+    }
+    : null;
+
+  return {
+    order: {
+      id: String(value.order.id),
+      code: String(value.order.code),
+      order_type: "invoice",
+      status: "completed",
+      total_amount: Number(value.order.total_amount),
+      paid_amount: Number(value.order.paid_amount),
+      debt_amount: Number(value.order.debt_amount),
+      payment_status: String(value.order.payment_status) as "unpaid" | "partial" | "paid",
+    },
+    payment_receipt: paymentReceipt,
+    inventory_warnings: Array.isArray(value.inventory_warnings)
+      ? value.inventory_warnings.map((warning) => {
+        if (!isRecord(warning)) throw new Error("CHECKOUT_RESULT_INVALID");
+        return {
+          product_id: String(warning.product_id),
+          code: String(warning.code),
+          message: String(warning.message),
+        };
+      })
+      : [],
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function hydrateUser(
