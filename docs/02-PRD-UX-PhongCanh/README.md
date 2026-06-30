@@ -45,12 +45,15 @@
     ├── [PriceBook/README.md](./PriceBook/README.md)
     ├── [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md)
     └── [PriceBook/02-PRICE-LIST-DETAIL.md](./PriceBook/02-PRICE-LIST-DETAIL.md)
-└── Finance/                     ← Sổ quỹ, công nợ và đối soát
+├── Finance/                     ← Sổ quỹ, công nợ và đối soát
     ├── [Finance/README.md](./Finance/README.md)
     ├── [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md)
     ├── [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md)
     ├── [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md)
     └── [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md)
+└── Reports/                     ← Báo cáo và phân tích
+    ├── [Reports/README.md](./Reports/README.md)
+    └── [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md)
 ```
 
 > Mỗi trang mới (Kho hàng, Nhân viên, Báo cáo...) sẽ có thư mục riêng cùng cấp với `POS/`.
@@ -85,6 +88,8 @@
 | Cashbook UX | [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md) | 🔨 |
 | Customer Debt UX | [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md) | 🔨 |
 | Reconciliation UX | [Finance/04-RECONCILIATION.md](./Finance/04-RECONCILIATION.md) | 🔨 |
+| Reports Overview | [Reports/README.md](./Reports/README.md) | 🔨 |
+| End Of Day Report | [Reports/01-END-OF-DAY.md](./Reports/01-END-OF-DAY.md) | 🔨 |
 
 ---
 

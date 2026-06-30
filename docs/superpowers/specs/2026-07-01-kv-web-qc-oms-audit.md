@@ -260,6 +260,9 @@ KiotViet có:
 - Báo cáo bán hàng: doanh thu theo thời gian, bảng giá, nhân viên, kênh bán.
 - Báo cáo tài chính: tổng hợp theo tháng/năm.
 - Báo cáo hàng hóa: top sản phẩm doanh thu cao, top sản phẩm bán chạy, lọc theo nhóm hàng/tồn kho.
+- Màn `Báo cáo > Cuối ngày` có kiểu hiển thị báo cáo dọc, mối quan tâm `Bán hàng`, lọc thời gian, khách hàng, nhân viên, người tạo, phương thức thanh toán và phương thức bán hàng.
+- Báo cáo cuối ngày có các cột/chỉ số như doanh thu, thực thu, số lượng, mã giao dịch, thu khác, làm tròn, phí trả hàng và VAT.
+- Ngày `01/07/2026` báo cáo cuối ngày không có dữ liệu do đầu ngày/tháng mới, không dùng làm căn cứ lược bỏ.
 
 Đề xuất QC-OMS:
 
@@ -271,6 +274,11 @@ KiotViet có:
 - Báo cáo hàng hóa phải ưu tiên tồn vật lý cuộn/tấm, không chỉ tổng m2.
 - Chưa gọi là báo cáo lợi nhuận đầy đủ nếu chưa chốt giá vốn/nhập hàng/chi phí sản xuất.
 - Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-reporting-draft.md`.
+
+QC-OMS đã đặc tả một phần tại:
+
+- `docs/02-PRD-UX-PhongCanh/Reports/README.md`
+- `docs/02-PRD-UX-PhongCanh/Reports/01-END-OF-DAY.md`
 
 ### 4.10. Xuất dùng nội bộ / Xuất hủy / Trả hàng
 
