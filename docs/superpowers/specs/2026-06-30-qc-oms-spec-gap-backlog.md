@@ -159,6 +159,20 @@ Nguồn tham khảo:
 - Không đưa trả hàng, giao hàng, vận đơn, COD hoặc hóa đơn điện tử vào MVP.
 - Báo giá mở lại tại POS; hóa đơn hoàn thành sửa bằng cách tạo chứng từ mới và hủy chứng từ cũ để truy vết.
 
+#### 3.2D. Customers — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/Customers/README.md`
+- `docs/02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md`
+- `docs/02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md`
+
+Đã định hướng:
+
+- Trang Customers giữ các thông tin phục vụ bán hàng, bảng giá, gửi bill và công nợ.
+- Mã khách và tên khách là trọng tâm; SĐT không bắt buộc nhưng nếu có thì unique.
+- Không đưa giới tính, sinh nhật, tích điểm, khuyến mại tự động hoặc người phụ trách khách hàng vào MVP.
+
 #### 3.3. Order draft và Order persistence
 
 Source of Truth cần bổ sung:
@@ -195,9 +209,12 @@ Thiếu hiện tại:
 - Error code khi checkout fail một phần.
 - Cách rollback/đảo giao dịch khi hủy hóa đơn.
 
-Owner cần chốt:
+Đã chốt:
 
-- Có cho khách trả trước/số dư âm ngay trong MVP không.
+- MVP không tạo khách trả trước/công nợ âm. Nếu khách trả dư khi còn nợ, nhân viên chọn trả lại khách hoặc cấn vào nợ cũ.
+
+Còn cần chi tiết:
+
 - Chính sách sửa/hủy hóa đơn đã phát sinh công nợ.
 
 ---

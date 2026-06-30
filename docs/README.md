@@ -75,6 +75,14 @@
 | [02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md](./02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc và thao tác nhanh | 🔨 |
 | [02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ, sửa/hủy/in lại và lịch sử | 🔨 |
 
+#### Module Khách hàng
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Customers/README.md](./02-PRD-UX-PhongCanh/Customers/README.md) | Mục lục quản lý khách hàng | 🔨 |
+| [02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md](./02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md) | Danh sách khách hàng, bộ lọc và thao tác nhanh | 🔨 |
+| [02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md](./02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md) | Chi tiết khách hàng, nhóm giá, lịch sử bán và công nợ | 🔨 |
+
 #### Module Tài chính
 
 | File | Mô tả | Trạng thái |
