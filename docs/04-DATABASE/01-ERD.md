@@ -74,7 +74,21 @@ erDiagram
 
 ## 4. FINANCE
 
-Chưa chốt. Chỉ bổ sung vào ERD sau khi Business Rule tương ứng hoàn thiện và trước Giai đoạn 4.
+Hiện có đặc tả một phần tại [Finance/PAYMENT-DEBT-TABLES.md](./Finance/PAYMENT-DEBT-TABLES.md), gồm quỹ/tài khoản, phiếu thu, phương thức thu, công nợ theo hóa đơn và phân bổ tiền trả nợ.
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ FINANCE_ACCOUNTS : owns
+    FINANCE_ACCOUNTS ||--o{ PAYMENT_RECEIPT_METHODS : receives
+    PAYMENT_RECEIPTS ||--o{ PAYMENT_RECEIPT_METHODS : splits
+    CUSTOMERS ||--o{ PAYMENT_RECEIPTS : pays
+    ORDERS ||--o{ PAYMENT_RECEIPTS : paid_by
+    CUSTOMERS ||--o{ CUSTOMER_DEBT_ENTRIES : has
+    ORDERS ||--o{ CUSTOMER_DEBT_ENTRIES : debt_for
+    PAYMENT_RECEIPTS ||--o{ CUSTOMER_DEBT_ALLOCATIONS : allocates
+    CUSTOMER_DEBT_ALLOCATIONS ||--o{ CUSTOMER_DEBT_ENTRIES : creates
+    ORDERS ||--o{ CUSTOMER_DEBT_ALLOCATIONS : receives_payment
+```
 
 ---
 

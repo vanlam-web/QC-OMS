@@ -123,6 +123,8 @@
 | [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema POS: khách hàng, bảng giá, sản phẩm, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng | 🔨 |
 | [04-DATABASE/Inventory/README.md](./04-DATABASE/Inventory/README.md) | Mục lục Schema Inventory | 🔨 |
 | [04-DATABASE/Inventory/INVENTORY-TABLES.md](./04-DATABASE/Inventory/INVENTORY-TABLES.md) | Schema Inventory: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 |
+| [04-DATABASE/Finance/README.md](./04-DATABASE/Finance/README.md) | Mục lục Schema Finance | 🔨 |
+| [04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md](./04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md) | Schema Finance: thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 |
 
 ---
 

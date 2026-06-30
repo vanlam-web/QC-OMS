@@ -13,6 +13,7 @@
 | [System/AUTH-PERMISSIONS.md](./System/AUTH-PERMISSIONS.md) | Organization, Profile, Workstation và Permission | ✅ Chốt Giai đoạn 0 |
 | `Sales/POS-TABLES.md` | Bảng phục vụ POS: customer, product, pricing, quote/order, sửa chứng từ và snapshot dòng hàng | 🔨 Một phần |
 | `Inventory/INVENTORY-TABLES.md` | Bảng kho vật tư: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 Một phần |
+| `Finance/PAYMENT-DEBT-TABLES.md` | Bảng thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 Một phần |
 
 ---
 
@@ -27,7 +28,7 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 | Domain | Tables | Trạng thái |
 |--------|--------|------------|
 | **Sales** | customers, customer_groups, price_lists, price_list_items, products, price history, orders, order_items, order_status_history | 🔨 Một phần |
-| **Finance** | payments, expenses, cashbook | ⬜ Chưa có |
+| **Finance** | finance_accounts, payment_receipts, payment_receipt_methods, customer_debt_entries, customer_debt_allocations | 🔨 Một phần |
 | **Inventory** | inventory_units, product_inventory_settings, product_unit_conversions, inventory_rolls, inventory_sheets, stock_movements, stocktakes, stocktake_items | 🔨 Một phần |
 | **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |
 
