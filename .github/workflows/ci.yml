@@ -8,6 +8,7 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -18,18 +19,17 @@ jobs:
         with:
           deno-version: v2.x
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npx deno test supabase/tests/functions --allow-env --allow-net
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-        env:
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
+      - run: npm run test:functions
+      - name: Secret scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nE '(service_role|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY|E2E_ADMIN_PASSWORD)=.+' -- ':!package-lock.json'; then
+            echo "Potential committed secret assignment found."
+            exit 1
+          fi

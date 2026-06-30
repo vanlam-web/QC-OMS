@@ -6,6 +6,8 @@
 
 **Plan correction 2026-06-30:** POS is a sales module inside QC-OMS, not a physical workstation selection step. Frontend login now routes to an account dashboard, and permissions are account-based. Workstation database/API artifacts from earlier Foundation work remain backend-compatible for now, but they are not part of the login flow, POS route guard, or administration UI in this phase.
 
+**Infrastructure correction 2026-06-30:** Supabase and Docker run on the shared server for multiple developer machines. Developer laptops run the frontend and connect to the shared Supabase server through Tailscale. Default GitHub CI must not depend on that private server until an approved CI-to-Tailscale path exists; database and shared-server E2E checks are operator/server gates for now.
+
 **Architecture:** Build one vertical slice with React/Vite on the client and one Deno Supabase Edge Function exposing `/api/v1`. PostgreSQL migrations own Foundation schema, transactional permission operations, RLS, and seed data; the client uses Supabase directly only for Auth and Realtime invalidation.
 
 **Tech Stack:** Node.js 22 LTS, npm, React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 7, TanStack Query 5, Supabase JS 2, Supabase CLI 2, Deno, Vitest 4, Testing Library, pgTAP, Playwright 1.61, GitHub Actions.
@@ -845,25 +847,25 @@ git commit -m "feat: refresh access state from realtime signals"
 - Modify: `package.json`
 - Modify: `docs/07-DEPLOYMENT-TrienKhai/README.md`
 
-- [ ] **Step 1: Write failing API integration tests against local Supabase**
+- [x] **Step 1: Write API integration tests against Supabase environment**
 
 Use unique UUID/email values per run and Admin API cleanup. Verify active `/me`, inactive account rejection, wrong-organization workstation rejection, missing manage permission, cross-tenant user lookup, permission audit row, and final-admin protection through the real handler/repository.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `npm run supabase:reset && npm run test:functions`
 
 Expected: the new integration suite fails until local test environment loading and repository wiring are complete.
 
-- [ ] **Step 3: Complete local environment wiring and verify integration GREEN**
+- [x] **Step 3: Complete environment wiring and verify integration GREEN where server env is available**
 
-Load local URL, anon key, and service-role key from environment, never committed files. Use an externally supplied `E2E_ADMIN_PASSWORD`; do not place a password in seed SQL, tests, workflow YAML, or documentation.
+Load Supabase URL, anon key, and service-role key from server/operator environment, never committed files. Use an externally supplied `E2E_ADMIN_PASSWORD`; do not place a password in seed SQL, tests, workflow YAML, or documentation.
 
-Run: `npm run supabase:reset && npm run test:functions`
+Run on the shared server or trusted operator shell: `npm run supabase:reset && npm run test:db && npm run test:functions`
 
-Expected: all Deno unit and local integration tests pass.
+Expected: all Deno unit, pgTAP, and integration tests pass when server-side Supabase credentials are available. On ordinary dev machines without service-role access, the integration test reports a skip and unit tests still run.
 
-- [ ] **Step 4: Write the browser E2E smoke test**
+- [x] **Step 4: Write the browser E2E smoke test**
 
 ```ts
 test('login, open dashboard modules, refresh POS shell, and logout', async ({ page }) => {
@@ -882,37 +884,34 @@ test('login, open dashboard modules, refresh POS shell, and logout', async ({ pa
 })
 ```
 
-Global setup creates the E2E Auth user through local Admin API, attaches profile and permissions through the real Foundation transaction, and cleanup removes it.
+Global setup creates the E2E Auth user when service-role access is available. On shared-server dev machines without service-role access, it uses the existing server admin user.
 
-- [ ] **Step 5: Run E2E and verify GREEN**
+- [x] **Step 5: Run E2E and verify GREEN against shared server**
 
-Start local Supabase, serve the API, and start Vite in separate terminal sessions, then run: `npm run test:e2e`
+Connect Tailscale, point `.env.local` to the shared server, and run: `npm run test:e2e`
 
-Expected: the smoke path plus invalid-login, forbidden-user, inactive-account, and forbidden-module tests pass.
+Expected: the smoke path passes against the shared Supabase server. Broader account-state E2E remains a server/operator gate where test users can be created safely.
 
-- [ ] **Step 6: Add CI quality gates**
+- [x] **Step 6: Add CI quality gates**
 
 The GitHub Actions workflow must:
 
 1. check out the repository;
 2. set up Node 22 and `npm ci`;
-3. set up Deno and Supabase CLI;
+3. set up Deno;
 4. run lint, typecheck, unit/component tests, and build;
-5. start Supabase and reset the database;
-6. run pgTAP and Edge Function tests;
-7. install Chromium and run E2E against local services;
-8. upload Playwright artifacts only on failure;
-9. run `npm audit --audit-level=high` and a repository secret scan.
+5. run Edge Function unit tests;
+6. run `npm audit --audit-level=high` and a repository secret scan.
 
-Use GitHub encrypted secrets for E2E credentials and deployment tokens. No production secret is available to pull-request jobs.
+Default pull-request CI does not connect to the private Tailscale Supabase server. Database pgTAP and browser E2E are server/operator gates until an approved CI-to-Tailscale path exists.
 
-- [ ] **Step 7: Add the Phase 0 runbook**
+- [x] **Step 7: Add the Phase 0 runbook**
 
-Document prerequisites, `npm ci`, `supabase start`, reset/seed, function serve, Vite start, all verification commands, bootstrap Owner procedure without a committed password, staging environment variables, deploy order, smoke test, rollback, and known external prerequisites.
+Document developer prerequisites, shared-server Supabase connection, server-side reset/test procedure, Vite start, all verification commands, bootstrap Owner procedure without a committed password, staging environment variables, deploy order, smoke test, rollback, and known external prerequisites.
 
 Update the Deployment README with one relative link to the runbook; do not duplicate its contents.
 
-- [ ] **Step 8: Run the complete fresh verification suite**
+- [ ] **Step 8: Run the complete verification suite**
 
 Run:
 
@@ -921,14 +920,12 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
-npx supabase db reset
-npm run test:db
 npm run test:functions
 npm run test:e2e
 git diff --check
 ```
 
-Expected: every command exits 0; no test is skipped; `git diff --check` prints nothing.
+Expected on a dev machine connected to the shared server: frontend checks, function unit tests, and E2E smoke pass; `git diff --check` prints nothing. Server-side `npm run supabase:reset`, `npm run test:db`, and integration function checks are recorded separately by the operator/server.
 
 - [ ] **Step 9: Review scope and secrets before commit**
 
