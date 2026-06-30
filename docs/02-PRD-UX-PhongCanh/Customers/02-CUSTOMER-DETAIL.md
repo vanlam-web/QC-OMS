@@ -17,7 +17,7 @@ Trang chi tiết khách hàng gom toàn bộ thông tin cần để bán hàng, 
 │ KH000123 - Công ty A                    Dư nợ: ...    Tổng bán: ...         │
 │ [Lưu] [Ngừng hoạt động]                                                     │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ [Thông tin] [Địa chỉ nhận hàng] [Lịch sử bán] [Nợ cần thu]                  │
+│ [Thông tin] [Lịch sử bán] [Nợ cần thu]                                      │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -52,21 +52,7 @@ Quy tắc:
 
 ---
 
-## 4. Tab Địa chỉ nhận hàng
-
-MVP chỉ cần danh sách địa chỉ nhận hàng tối giản nếu xưởng có giao hàng nội bộ:
-
-- tên người nhận
-- SĐT người nhận
-- địa chỉ
-- ghi chú
-- đánh dấu địa chỉ mặc định
-
-Nếu chưa làm module giao hàng, tab này có thể để sau. Không đưa COD, khu vực giao hàng, đối tác giao hàng vào MVP.
-
----
-
-## 5. Tab Xuất hóa đơn
+## 4. Tab Xuất hóa đơn
 
 Thông tin gồm:
 
@@ -84,7 +70,7 @@ Nếu QC-OMS chưa dùng VAT/HĐĐT ở phase hiện tại, tab này có thể g
 
 ---
 
-## 6. Tab Cấu hình gửi bill
+## 5. Tab Cấu hình gửi bill
 
 Cho phép bật/tắt hỗ trợ gửi bill và chọn kênh:
 
@@ -100,7 +86,7 @@ Quy tắc:
 
 ---
 
-## 7. Tab Lịch sử bán
+## 6. Tab Lịch sử bán
 
 Hiển thị danh sách chứng từ của khách:
 
@@ -119,7 +105,7 @@ KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP chỉ hiể
 
 ---
 
-## 8. Tab Nợ cần thu
+## 7. Tab Nợ cần thu
 
 Hiển thị công nợ theo hóa đơn hoặc phát sinh công nợ:
 
@@ -143,18 +129,19 @@ Tab này là lối xem nhanh công nợ theo khách. Nguồn dữ liệu vẫn p
 
 ---
 
-## 9. Các tab chưa làm MVP
+## 8. Các tab chưa làm MVP
 
 KiotViet có thêm nhiều tab như lịch sử đặt hàng, công nợ, lịch sử mua dịch vụ, lịch sử tích điểm. QC-OMS MVP không làm riêng nếu chưa có nghiệp vụ tương ứng:
 
-- lịch sử đặt hàng: dùng Sales Documents/Báo giá nếu cần
+- địa chỉ nhận hàng/giao hàng: bỏ khỏi MVP vì QC-OMS không làm vận đơn, COD hoặc bán giao hàng
+- lịch sử đặt hàng: bỏ theo mô hình KiotViet; nếu cần gửi giá trước thì dùng Báo giá, không phải đơn đặt hàng
 - lịch sử mua dịch vụ: bỏ
 - lịch sử tích điểm: bỏ
 - công nợ tổng: đã được bao phủ bởi `Nợ cần thu` và module Finance
 
 ---
 
-## 10. Trạng thái khách hàng
+## 9. Trạng thái khách hàng
 
 | Trạng thái | Hành vi |
 |---|---|
