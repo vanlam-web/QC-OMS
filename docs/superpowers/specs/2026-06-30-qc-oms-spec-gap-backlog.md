@@ -141,6 +141,24 @@ Source of Truth đã tạo:
 
 ### P1 — Cần trước Phase 2-4
 
+#### 3.2C. Sales Documents — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/SalesDocuments/README.md`
+- `docs/02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md`
+- `docs/02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md`
+
+Nguồn tham khảo:
+
+- `docs/superpowers/specs/2026-07-01-kv-web-qc-oms-audit.md`
+
+Đã định hướng:
+
+- Trang chứng từ bán hàng quản lý báo giá `BG...`, hóa đơn `HD...`, hóa đơn sửa dạng `MaCu.01` và chứng từ đã hủy.
+- Không đưa trả hàng, giao hàng, vận đơn, COD hoặc hóa đơn điện tử vào MVP.
+- Báo giá mở lại tại POS; hóa đơn hoàn thành sửa bằng cách tạo chứng từ mới và hủy chứng từ cũ để truy vết.
+
 #### 3.3. Order draft và Order persistence
 
 Source of Truth cần bổ sung:

@@ -33,6 +33,10 @@
     ├── [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md)
     ├── [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md)
     └── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
+├── SalesDocuments/              ← Chứng từ bán hàng
+    ├── [SalesDocuments/README.md](./SalesDocuments/README.md)
+    ├── [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md)
+    └── [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md)
 └── Finance/                     ← Sổ quỹ, công nợ và đối soát
     ├── [Finance/README.md](./Finance/README.md)
     ├── [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md)
@@ -63,6 +67,8 @@
 | Product Stock List | [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md) | 🔨 |
 | Roll/Sheet Objects | [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md) | 🔨 |
 | Stocktake UX | [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md) | 🔨 |
+| Sales Documents List | [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md) | 🔨 |
+| Sales Document Detail | [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | 🔨 |
 | Finance Layout | [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md) | 🔨 |
 | Cashbook UX | [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md) | 🔨 |
 | Customer Debt UX | [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md) | 🔨 |

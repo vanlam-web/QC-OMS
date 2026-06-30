@@ -67,6 +67,14 @@
 | [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
 
+#### Module Chứng từ bán hàng
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/SalesDocuments/README.md](./02-PRD-UX-PhongCanh/SalesDocuments/README.md) | Mục lục chứng từ bán hàng | 🔨 |
+| [02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md](./02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc và thao tác nhanh | 🔨 |
+| [02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ, sửa/hủy/in lại và lịch sử | 🔨 |
+
 #### Module Tài chính
 
 | File | Mô tả | Trạng thái |
