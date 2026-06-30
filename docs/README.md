@@ -146,6 +146,8 @@
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
 | [05-BACKEND-MayChu/Inventory/README.md](./05-BACKEND-MayChu/Inventory/README.md) | Mục lục Backend Inventory | 🔨 |
 | [05-BACKEND-MayChu/Inventory/INVENTORY-API.md](./05-BACKEND-MayChu/Inventory/INVENTORY-API.md) | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 |
+| [05-BACKEND-MayChu/Finance/README.md](./05-BACKEND-MayChu/Finance/README.md) | Mục lục Backend Finance | 🔨 |
+| [05-BACKEND-MayChu/Finance/FINANCE-API.md](./05-BACKEND-MayChu/Finance/FINANCE-API.md) | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
 
 ---
 

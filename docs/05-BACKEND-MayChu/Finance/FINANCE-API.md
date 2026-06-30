@@ -1,0 +1,425 @@
+# FINANCE-API — API công nợ, sổ quỹ và đối soát
+
+> **Trạng thái:** 🔨 Đang xây dựng
+> **Base path:** `/api/v1`
+> **Business:** [CASHBOOK.md](../../03-BUSINESS-NghiepVu/Finance/CASHBOOK.md), [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
+> **Database:** [PAYMENT-DEBT-TABLES.md](../../04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md), [CASHBOOK-TABLES.md](../../04-DATABASE/Finance/CASHBOOK-TABLES.md)
+
+---
+
+## 1. Phạm vi
+
+Tài liệu này là Source of Truth cho Backend API Finance MVP:
+
+- quản lý quỹ tiền mặt và tài khoản ngân hàng
+- xem công nợ khách hàng theo từng hóa đơn
+- thu nợ khách ngoài checkout POS
+- xem phiếu thu từ POS/thu nợ
+- xem sổ quỹ theo tiền mặt/từng tài khoản ngân hàng
+- tạo/sửa/hủy phiếu thu/chi thủ công
+- tạo/lưu/chốt/hủy đối soát cuối ngày
+
+Không bao gồm:
+
+- checkout POS; xem [ORDER-API.md](../POS/ORDER-API.md)
+- kế toán tổng hợp nâng cao
+- khách trả trước/số dư âm
+- tự động đối soát qua API ngân hàng
+
+---
+
+## 2. Auth, response và permission
+
+Mọi endpoint yêu cầu:
+
+```http
+Authorization: Bearer <supabase_access_token>
+X-Workstation-Id: <uuid>
+X-Request-Id: <client-generated-id>   # không bắt buộc
+```
+
+Áp dụng response chuẩn tại [FOUNDATION-API.md](../FOUNDATION-API.md#2-response-chuẩn).
+
+| Nhóm API | Permission |
+|---|---|
+| Xem sổ quỹ/báo cáo ca | `perm.view_shift_report` hoặc `perm.manage_finance` |
+| Xem công nợ khách | `perm.create_order` hoặc `perm.manage_finance` |
+| Thu nợ khách ngoài checkout | `perm.manage_finance` |
+| Quản lý quỹ/tài khoản | `perm.manage_finance` |
+| Tạo/sửa/hủy phiếu thu/chi thủ công | `perm.manage_finance` |
+| Tạo/lưu/chốt/hủy đối soát | `perm.manage_finance` |
+
+Backend phải scope mọi dữ liệu theo organization của actor.
+
+---
+
+## 3. Finance accounts
+
+### `GET /finance/accounts`
+
+Danh sách quỹ tiền mặt và tài khoản ngân hàng.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+**Query:** `account_type`, `is_active`.
+
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "code": "CASH",
+      "name": "Quỹ tiền mặt",
+      "account_type": "cash",
+      "is_default_cash": true,
+      "is_active": true
+    }
+  ]
+}
+```
+
+### `POST /finance/accounts`
+
+Tạo quỹ/tài khoản.
+
+**Permission:** `perm.manage_finance`
+
+**Input:**
+
+```json
+{
+  "code": "MB01",
+  "name": "MB Bank",
+  "account_type": "bank",
+  "bank_name": "MB Bank",
+  "bank_account_no": "123456789",
+  "is_default_cash": false
+}
+```
+
+**Validation:**
+
+- `code` không trùng trong organization.
+- `account_type IN ('cash', 'bank')`.
+- Nếu `cash`, không nhận `bank_name`/`bank_account_no`.
+- Nếu `bank`, `bank_name` bắt buộc.
+- Mỗi organization có tối đa một quỹ tiền mặt mặc định active.
+
+### `PATCH /finance/accounts/{id}`
+
+Cập nhật tên/trạng thái quỹ hoặc tài khoản.
+
+**Permission:** `perm.manage_finance`
+
+Không cho đổi `account_type` nếu tài khoản đã có `cashbook_entries`.
+
+---
+
+## 4. Customer debt
+
+### `GET /finance/customer-debts`
+
+Danh sách khách hàng đang có nợ.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_finance`
+
+**Query:** `search`, `include_retail_debt`, `page`, `page_size`.
+
+Response tổng hợp từ `customer_debt_entries`, không dùng một số tổng không truy vết được.
+
+### `GET /finance/customers/{customer_id}/debt`
+
+Chi tiết công nợ một khách.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_finance`
+
+Response phải gồm:
+
+- tổng nợ hiện tại
+- danh sách hóa đơn còn nợ, sắp xếp cũ nhất trước
+- lịch sử `customer_debt_entries`
+- các lần phân bổ `customer_debt_allocations`
+
+### `GET /finance/retail-debts`
+
+Danh sách khách lẻ nợ chưa gán hồ sơ khách.
+
+**Permission:** `perm.manage_finance`
+
+Mỗi dòng phải có `retail_debt_note` để nhận diện lại giao dịch.
+
+---
+
+## 5. Debt collection
+
+### `POST /finance/debt-collections`
+
+Thu nợ khách ngoài checkout POS.
+
+**Permission:** `perm.manage_finance`
+
+**Input:**
+
+```json
+{
+  "customer_id": "uuid",
+  "amount": 500000,
+  "payment_method": {
+    "cash_amount": 200000,
+    "bank_amount": 300000,
+    "bank_account_id": "uuid",
+    "bank_transaction_ref": "MB-123"
+  },
+  "note": "Khách trả nợ"
+}
+```
+
+**Validation:**
+
+- `customer_id` bắt buộc và cùng organization.
+- `amount > 0`.
+- `cash_amount >= 0`, `bank_amount >= 0`.
+- `amount = cash_amount + bank_amount`.
+- Nếu `bank_amount > 0`, `bank_account_id` bắt buộc, active, cùng organization và là tài khoản `bank`.
+- Một lần thu nợ chỉ có tối đa một tài khoản bank trong MVP.
+- Không cho thu vượt tổng nợ hiện tại để tạo trả trước.
+
+**Workflow bắt buộc trong một transaction nghiệp vụ:**
+
+1. Xác thực actor, workstation và permission.
+2. Lấy danh sách hóa đơn còn nợ của khách, cũ nhất trước.
+3. Tạo `payment_receipts` loại `debt_collection`.
+4. Tạo `payment_receipt_methods` theo tiền mặt/chuyển khoản.
+5. Tạo `cashbook_entries` từ từng phương thức thu.
+6. Phân bổ tiền vào hóa đơn còn nợ cũ nhất trước bằng `customer_debt_allocations`.
+7. Tạo `customer_debt_entries` loại `debt_payment`.
+8. Trả phiếu thu và danh sách phân bổ.
+
+Nếu bất kỳ bước ghi dữ liệu chính nào lỗi, transaction phải rollback.
+
+---
+
+## 6. Payment receipts
+
+### `GET /finance/payment-receipts`
+
+Tra cứu phiếu thu từ POS hoặc thu nợ.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+**Query:** `search`, `receipt_type`, `customer_id`, `order_id`, `status`, `from`, `to`, `page`, `page_size`.
+
+### `GET /finance/payment-receipts/{id}`
+
+Chi tiết phiếu thu, phương thức thu và phân bổ công nợ nếu có.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+Phiếu sinh từ hóa đơn/thu nợ không được sửa rời qua API này. Muốn sửa phải đi qua nghiệp vụ gốc tương ứng để Sales, Debt và Cashbook cùng khớp.
+
+---
+
+## 7. Cashbook
+
+### `GET /finance/cashbook`
+
+Xem sổ quỹ theo từng quỹ/tài khoản.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+**Query:**
+
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `finance_account_id` | `uuid` | Không | Lọc theo quỹ/tài khoản |
+| `direction` | `string` | Không | `in` hoặc `out` |
+| `source_type` | `string` | Không | `payment_receipt_method` hoặc `cashbook_voucher` |
+| `from` / `to` | `datetime` | Không | Khoảng thời gian |
+| `page` / `page_size` | `number` | Không | Phân trang |
+
+Chỉ tính số dư hiệu lực từ `cashbook_entries.status = posted`.
+
+### `GET /finance/cashbook/balances`
+
+Lấy số dư hiện tại theo từng quỹ/tài khoản.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+Response phải tách tiền mặt và từng tài khoản ngân hàng, không gộp chuyển khoản thành một tổng chung.
+
+---
+
+## 8. Manual cashbook vouchers
+
+### `POST /finance/cashbook-vouchers`
+
+Tạo phiếu thu/chi thủ công.
+
+**Permission:** `perm.manage_finance`
+
+**Input:**
+
+```json
+{
+  "voucher_direction": "out",
+  "voucher_type": "operating_expense",
+  "finance_account_id": "uuid",
+  "amount": 150000,
+  "related_order_id": null,
+  "related_customer_id": null,
+  "reason": "Chi phí giao hàng"
+}
+```
+
+**Validation:**
+
+- `voucher_direction IN ('in', 'out')`.
+- `voucher_type` phải hợp lệ theo hướng thu/chi.
+- `amount > 0`.
+- `finance_account_id` active và cùng organization.
+- Thu bán hàng và thu nợ khách không được tạo qua endpoint này; phải dùng POS checkout hoặc `/finance/debt-collections`.
+
+**Workflow:**
+
+1. Sinh mã `PT...` nếu thu, `PC...` nếu chi.
+2. Tạo `cashbook_vouchers` trạng thái `posted`.
+3. Tạo một dòng `cashbook_entries`.
+4. Trả phiếu và dòng sổ quỹ.
+
+### `POST /finance/cashbook-vouchers/{id}/revise`
+
+Sửa phiếu thu/chi thủ công bằng bản mới `MaCu.01`.
+
+**Permission:** `perm.manage_finance`
+
+**Validation:**
+
+- Chỉ sửa phiếu thủ công.
+- Phiếu cũ phải là bản hiệu lực gần nhất.
+- `reason` sửa bắt buộc.
+
+**Workflow:**
+
+1. Chuyển phiếu cũ sang `cancelled`.
+2. Chuyển dòng `cashbook_entries` cũ sang `cancelled`.
+3. Tạo phiếu mới với cùng `base_code`, `revision_no + 1`.
+4. Tạo dòng `cashbook_entries` mới.
+5. Trả phiếu cũ và phiếu mới.
+
+### `POST /finance/cashbook-vouchers/{id}/cancel`
+
+Hủy phiếu thu/chi thủ công.
+
+**Permission:** `perm.manage_finance`
+
+Chỉ cho hủy phiếu thủ công đang `posted`. Khi hủy, dòng `cashbook_entries` tương ứng chuyển `cancelled`, không xóa vật lý.
+
+---
+
+## 9. Reconciliation
+
+### `POST /finance/reconciliations`
+
+Tạo phiên đối soát.
+
+**Permission:** `perm.manage_finance`
+
+**Input:**
+
+```json
+{
+  "period_start": "2026-06-30T00:00:00+07:00",
+  "period_end": "2026-06-30T23:59:59+07:00",
+  "note": "Đối soát cuối ngày"
+}
+```
+
+**Workflow:**
+
+1. Sinh mã `DS...`.
+2. Tạo `cash_reconciliations` trạng thái `draft`.
+3. Tạo `cash_reconciliation_items` cho từng `finance_accounts.is_active = true`.
+4. Tính `system_balance` từ `cashbook_entries.status = posted`.
+
+### `PUT /finance/reconciliations/{id}`
+
+Cập nhật số thực tế trên phiên đối soát `draft`.
+
+**Permission:** `perm.manage_finance`
+
+Input gồm danh sách `finance_account_id`, `actual_balance`, `note`. Backend tính lại `difference_amount`.
+
+### `POST /finance/reconciliations/{id}/balance`
+
+Chốt đối soát.
+
+**Permission:** `perm.manage_finance`
+
+Workflow:
+
+1. Kiểm tra phiên còn `draft`.
+2. Tính lại `difference_amount`.
+3. Đổi trạng thái sang `balanced`, set `balanced_at`.
+4. Không tự tạo phiếu điều chỉnh tiền trong MVP. Nếu lệch, nhân viên xử lý bằng phiếu thu/chi thủ công có lý do.
+
+### `POST /finance/reconciliations/{id}/cancel`
+
+Hủy phiên đối soát.
+
+**Permission:** `perm.manage_finance`
+
+Chỉ cho hủy phiên `draft`. Phiên đã `balanced` không hủy bằng endpoint này; nếu cần đảo sau này phải có spec riêng.
+
+### `GET /finance/reconciliations`
+
+Danh sách phiên đối soát.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+Query: `search`, `status`, `from`, `to`, `page`, `page_size`.
+
+### `GET /finance/reconciliations/{id}`
+
+Chi tiết phiên đối soát và các dòng.
+
+**Permission:** `perm.view_shift_report` hoặc `perm.manage_finance`
+
+---
+
+## 10. Error Handling
+
+| HTTP | Code | Khi dùng |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Input sai, số tiền không khớp, thiếu tài khoản |
+| 401 | `AUTH_REQUIRED` | Thiếu hoặc sai access token |
+| 403 | `PERMISSION_DENIED` | Thiếu permission |
+| 403 | `WORKSTATION_INVALID` | Workstation không hợp lệ |
+| 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy tài khoản/khách/phiếu trong organization |
+| 409 | `RESOURCE_CONFLICT` | Phiếu không còn hiệu lực, phiên đối soát không còn draft, mã trùng |
+| 422 | `FINANCE_OPERATION_FAILED` | Không thể hoàn tất nghiệp vụ tài chính có thể giải thích |
+| 500 | `INTERNAL_ERROR` | Lỗi hệ thống không công khai chi tiết |
+
+---
+
+## 11. Logging và metric
+
+Backend nên log:
+
+- tạo/sửa/hủy phiếu thu chi thủ công
+- thu nợ khách
+- tạo/chốt/hủy đối soát
+- thay đổi quỹ/tài khoản
+
+Metric gợi ý:
+
+- tổng thu/chi theo ngày
+- số phiếu thu/chi thủ công
+- số lần thu nợ khách
+- số phiên đối soát chốt có chênh lệch
+- latency API sổ quỹ
+
+---
+
+← [Quay về Finance README](./README.md)
