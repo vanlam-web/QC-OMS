@@ -5,6 +5,8 @@ import type {
   GetCurrentUserInput,
   PermissionCode,
   PermissionData,
+  PriceListData,
+  ProductData,
   UserListItem,
   WorkstationData,
 } from "../contracts.ts";
@@ -228,6 +230,195 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .order("code", { ascending: true });
       if (error !== null) throw error;
       return (data ?? []) as PermissionData[];
+    },
+    async listProducts(input): Promise<{ items: ProductData[]; total: number }> {
+      let query = client
+        .from("products")
+        .select("id, code, name, status, unit_name, sell_method", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("code", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []) as ProductData[], total: count ?? 0 };
+    },
+    async createProduct(input): Promise<ProductData> {
+      const { data, error } = await client
+        .from("products")
+        .insert({
+          organization_id: input.organizationId,
+          code: input.code,
+          name: input.name,
+          status: input.status,
+          unit_name: input.unitName,
+          sell_method: input.sellMethod,
+        })
+        .select("id, code, name, status, unit_name, sell_method")
+        .single();
+      if (error !== null) throw error;
+      return data as ProductData;
+    },
+    async updateProduct(input): Promise<ProductData | null> {
+      const patch: {
+        code?: string;
+        name?: string;
+        status?: "active" | "inactive";
+        unit_name?: string;
+        sell_method?: string;
+      } = {};
+      if (input.code !== undefined) patch.code = input.code;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.status !== undefined) patch.status = input.status;
+      if (input.unitName !== undefined) patch.unit_name = input.unitName;
+      if (input.sellMethod !== undefined) patch.sell_method = input.sellMethod;
+
+      const { data, error } = await client
+        .from("products")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, status, unit_name, sell_method")
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data as ProductData | null;
+    },
+    async listPriceLists(input): Promise<PriceListData[]> {
+      let query = client
+        .from("price_lists")
+        .select("id, code, name, is_default, is_active")
+        .eq("organization_id", input.organizationId)
+        .order("is_default", { ascending: false })
+        .order("code", { ascending: true });
+
+      if (input.activeOnly) query = query.eq("is_active", true);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+      return (data ?? []) as PriceListData[];
+    },
+    async createPriceList(input): Promise<PriceListData> {
+      const { data, error } = await client
+        .from("price_lists")
+        .insert({
+          organization_id: input.organizationId,
+          code: input.code,
+          name: input.name,
+          is_default: input.isDefault,
+          is_active: true,
+        })
+        .select("id, code, name, is_default, is_active")
+        .single();
+      if (error !== null) throw error;
+      return data as PriceListData;
+    },
+    async updatePriceList(input): Promise<PriceListData | null> {
+      const patch: { code?: string; name?: string; is_default?: boolean; is_active?: boolean } = {};
+      if (input.code !== undefined) patch.code = input.code;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.isDefault !== undefined) patch.is_default = input.isDefault;
+      if (input.isActive !== undefined) patch.is_active = input.isActive;
+
+      const { data, error } = await client
+        .from("price_lists")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, is_default, is_active")
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data as PriceListData | null;
+    },
+    async upsertPriceListItem(input) {
+      const { data, error } = await client
+        .from("price_list_items")
+        .upsert(
+          {
+            organization_id: input.organizationId,
+            price_list_id: input.priceListId,
+            product_id: input.productId,
+            unit_price: input.unitPrice,
+          },
+          { onConflict: "price_list_id,product_id" },
+        )
+        .select("product_id, unit_price, price_list_id")
+        .single();
+      if (error !== null) throw error;
+      return {
+        product_id: data.product_id,
+        unit_price: Number(data.unit_price),
+        price_source: "default_price_list",
+        price_list_id: data.price_list_id,
+      };
+    },
+    async deletePriceListItem(input): Promise<boolean> {
+      const { data, error } = await client
+        .from("price_list_items")
+        .delete()
+        .eq("organization_id", input.organizationId)
+        .eq("price_list_id", input.priceListId)
+        .eq("product_id", input.productId)
+        .select("id");
+      if (error !== null) throw error;
+      return (data ?? []).length > 0;
+    },
+    async resolvePrices(input) {
+      const { data: defaultPriceList, error: defaultPriceListError } = await client
+        .from("price_lists")
+        .select("id")
+        .eq("organization_id", input.organizationId)
+        .eq("is_default", true)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (defaultPriceListError !== null) throw defaultPriceListError;
+      if (defaultPriceList === null) throw new Error("DEFAULT_PRICE_LIST_REQUIRED");
+
+      const productIds = [...new Set(input.productIds)];
+      const { data: products, error: productsError } = await client
+        .from("products")
+        .select("id")
+        .eq("organization_id", input.organizationId)
+        .eq("status", "active")
+        .in("id", productIds);
+      if (productsError !== null) throw productsError;
+
+      const activeProductIds = new Set((products ?? []).map((product) => product.id));
+      if (activeProductIds.size !== productIds.length) throw new Error("PRODUCT_NOT_FOUND");
+
+      const { data: priceRows, error: priceRowsError } = await client
+        .from("price_list_items")
+        .select("product_id, unit_price, price_list_id")
+        .eq("organization_id", input.organizationId)
+        .eq("price_list_id", defaultPriceList.id)
+        .in("product_id", productIds);
+      if (priceRowsError !== null) throw priceRowsError;
+
+      const priceByProductId = new Map(
+        (priceRows ?? []).map((row) => [
+          row.product_id,
+          {
+            product_id: row.product_id,
+            unit_price: Number(row.unit_price),
+            price_source: "default_price_list" as const,
+            price_list_id: row.price_list_id,
+          },
+        ]),
+      );
+
+      return productIds.map((productId) =>
+        priceByProductId.get(productId) ?? {
+          product_id: productId,
+          unit_price: 0,
+          price_source: "default_price_list",
+          price_list_id: defaultPriceList.id,
+        }
+      );
     },
   };
 }

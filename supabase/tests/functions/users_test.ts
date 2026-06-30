@@ -48,8 +48,9 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
     },
     updateWorkstation: () => Promise.resolve(null),
     listUsers: () => Promise.resolve({ items: [user], total: 1 }),
-    getUser: ({ userId }) => Promise.resolve(userId === "u-1" ? user : null),
-    createUser: (input) =>
+    getUser: ({ userId }: Parameters<FoundationRepository["getUser"]>[0]) =>
+      Promise.resolve(userId === "u-1" ? user : null),
+    createUser: (input: Parameters<FoundationRepository["createUser"]>[0]) =>
       Promise.resolve({
         id: "u-new",
         email: input.email,
@@ -57,16 +58,16 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
         status: "active",
         permissions: input.permissions,
       }),
-    updateUser: (input) =>
+    updateUser: (input: Parameters<FoundationRepository["updateUser"]>[0]) =>
       Promise.resolve(input.userId === "u-1" ? { ...user, display_name: input.displayName ?? user.display_name } : null),
-    replaceUserPermissions: (input) =>
+    replaceUserPermissions: (input: Parameters<FoundationRepository["replaceUserPermissions"]>[0]) =>
       Promise.resolve(input.userId === "u-1" ? { ...user, permissions: input.permissions } : null),
     listPermissions: () =>
       Promise.resolve([
         { code: "perm.create_order", module: "sales", description: "Create sales orders" },
       ]),
     ...overrides,
-  };
+  } as unknown as FoundationRepository;
 }
 
 async function call(path: string, init: RequestInit, repository = repo()): Promise<Response> {

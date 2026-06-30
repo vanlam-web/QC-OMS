@@ -39,9 +39,9 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
         { id: "w-1", code: "POS-01", name: "Quầy 1", status: "active" },
         { id: "w-2", code: "POS-02", name: "Quầy 2", status: "active" },
       ]),
-    createWorkstation: (input) =>
+    createWorkstation: (input: Parameters<FoundationRepository["createWorkstation"]>[0]) =>
       Promise.resolve({ id: "w-new", code: input.code, name: input.name, status: "active" }),
-    updateWorkstation: (input) =>
+    updateWorkstation: (input: Parameters<FoundationRepository["updateWorkstation"]>[0]) =>
       input.id === "other-org"
         ? Promise.resolve(null)
         : Promise.resolve({
@@ -59,7 +59,7 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
     replaceUserPermissions: () => Promise.resolve(null),
     listPermissions: () => Promise.resolve([]),
     ...overrides,
-  };
+  } as unknown as FoundationRepository;
 }
 
 async function json(response: Response): Promise<unknown> {
