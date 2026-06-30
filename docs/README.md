@@ -121,6 +121,8 @@
 | [04-DATABASE/System/AUTH-PERMISSIONS.md](./04-DATABASE/System/AUTH-PERMISSIONS.md) | Schema Auth, Profile, Workstation và Permission | ✅ |
 | [04-DATABASE/Sales/README.md](./04-DATABASE/Sales/README.md) | Mục lục Schema Sales | 🔨 |
 | [04-DATABASE/Sales/POS-TABLES.md](./04-DATABASE/Sales/POS-TABLES.md) | Schema POS: khách hàng, bảng giá, sản phẩm, báo giá và snapshot dòng hàng | 🔨 |
+| [04-DATABASE/Inventory/README.md](./04-DATABASE/Inventory/README.md) | Mục lục Schema Inventory | 🔨 |
+| [04-DATABASE/Inventory/INVENTORY-TABLES.md](./04-DATABASE/Inventory/INVENTORY-TABLES.md) | Schema Inventory: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 |
 
 ---
 
