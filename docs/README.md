@@ -142,7 +142,7 @@
 | [05-BACKEND-MayChu/POS/ARCHITECTURE.md](./05-BACKEND-MayChu/POS/ARCHITECTURE.md) | Kiến trúc Backend POS | 🔨 |
 | [05-BACKEND-MayChu/POS/AUTH.md](./05-BACKEND-MayChu/POS/AUTH.md) | Phân quyền POS | ✅ |
 | [05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md](./05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md) | API Customer, Product và Pricing POS | 🔨 |
-| [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá và vòng đời đơn POS | 🔨 |
+| [05-BACKEND-MayChu/POS/ORDER-API.md](./05-BACKEND-MayChu/POS/ORDER-API.md) | API báo giá, checkout hóa đơn và sửa hóa đơn POS | 🔨 |
 | [05-BACKEND-MayChu/POS/TOAST-API.md](./05-BACKEND-MayChu/POS/TOAST-API.md) | API Toast POS | 🔨 |
 
 ---

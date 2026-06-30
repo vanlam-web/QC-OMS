@@ -21,9 +21,9 @@
 
 | Module | Mô tả | Trạng thái |
 |--------|--------|------------|
-| **POS** | Customer/Product/Pricing, Order/Quote và Toast API đã có; Checkout chưa đặc tả API riêng | 🔨 Một phần |
-| **Inventory** | Nhập/xuất kho, tồn kho | ⬜ Chưa có |
-| **Finance** | Sổ quỹ, phiếu thu/chi | ⬜ Chưa có |
+| **POS** | Customer/Product/Pricing, Order/Quote/Checkout/Sửa hóa đơn và Toast API đã có một phần | 🔨 Một phần |
+| **Inventory** | Stock movement được gọi từ checkout; API quản trị kho/kiểm kho chưa có | ⬜ Chưa có |
+| **Finance** | Payment/Debt/Cashbook được gọi từ checkout; API quản trị tài chính/đối soát chưa có | ⬜ Chưa có |
 | **Workstation** | Máy trạm, queue | ⬜ Chưa có |
 
 ---
