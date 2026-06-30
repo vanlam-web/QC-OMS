@@ -35,6 +35,6 @@ POS chỉ cần thêm nhanh/chọn khách để bán hàng. Trang Customers dùn
 
 - Giới tính, ngày sinh, tích điểm khách hàng.
 - Chăm sóc khách hàng/khuyến mại tự động.
+- Hóa đơn điện tử/VAT.
 - Zalo shop/website bán hàng.
 - Phân công người phụ trách khách hàng.
-

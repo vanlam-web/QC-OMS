@@ -45,7 +45,7 @@ Từng tài khoản ngân hàng = số thực tế trên app ngân hàng
 | Người tạo | Lọc người tạo chứng từ |
 | Phương thức thanh toán | Tiền mặt, từng tài khoản ngân hàng |
 
-Không có bộ lọc kênh bán, VAT/HĐĐT hoặc phương thức bán hàng retail trong MVP.
+Không có bộ lọc kênh bán, VAT/HĐĐT hoặc phương thức bán hàng retail.
 
 ---
 
@@ -110,7 +110,7 @@ QC-OMS MVP:
 - giữ `thu khác` nếu đi qua phiếu thu thủ công
 - giữ làm tròn nếu POS có làm tròn tiền
 - bỏ phí trả hàng vì không làm trả hàng bán trong MVP
-- bỏ VAT/HĐĐT
+- bỏ VAT/HĐĐT/thuế kế toán
 - bỏ kênh bán/phương thức bán hàng retail
 
 ---
@@ -123,4 +123,3 @@ QC-OMS MVP:
 4. Công nợ mới và thu nợ cũ khớp với công nợ theo hóa đơn.
 5. Chứng từ sửa/hủy trong ngày được hiển thị để kiểm tra.
 6. Người dùng mở được hóa đơn hoặc phiếu thu/chi từ dòng báo cáo.
-

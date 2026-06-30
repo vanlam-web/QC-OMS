@@ -74,7 +74,7 @@ QC-OMS chỉ làm luồng **bán đứt**:
 | Thanh toán | Đã trả đủ, Còn nợ, Không thu tiền |
 | Bảng giá | Bảng giá chung hoặc bảng giá theo nhóm khách |
 
-Không có bộ lọc giao hàng, COD, đối tác giao hàng, HĐĐT trong MVP.
+Không có bộ lọc giao hàng, COD, đối tác giao hàng, HĐĐT.
 
 Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên toàn bộ lịch sử hoặc tự bỏ các filter thời gian/trạng thái đang che kết quả.
 
@@ -136,6 +136,6 @@ Khi không có kết quả:
 - Không có giao hàng/vận đơn/COD trong MVP.
 - Không có `Đặt hàng` kiểu KiotViet trong MVP.
 - Không có bán hàng online/kênh bán trong MVP.
-- Không có HĐĐT trong MVP.
+- Không có HĐĐT/thuế kế toán.
 - Không có gộp đơn.
 - Không import hóa đơn từ file trong MVP.

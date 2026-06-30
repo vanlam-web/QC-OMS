@@ -39,6 +39,7 @@ Trường tùy chọn:
 - Địa chỉ.
 - Tỉnh/Thành phố, Phường/Xã.
 - Nhóm khách hàng.
+- Thông tin pháp lý nội bộ nếu cần: tên đơn vị, mã số thuế, địa chỉ pháp lý.
 - Ghi chú.
 
 Quy tắc:
@@ -52,25 +53,7 @@ Quy tắc:
 
 ---
 
-## 4. Tab Xuất hóa đơn
-
-Thông tin gồm:
-
-- Loại khách: cá nhân hoặc tổ chức/hộ kinh doanh.
-- Tên người mua.
-- Tên đơn vị, nếu có.
-- Mã số thuế.
-- Địa chỉ xuất hóa đơn.
-- Email/SĐT nhận hóa đơn nếu có.
-- Tên ngân hàng và số tài khoản để đối chiếu thanh toán.
-
-MVP chưa phát hành hóa đơn điện tử. Tab này chỉ lưu thông tin để chuẩn bị dữ liệu.
-
-Nếu QC-OMS chưa dùng VAT/HĐĐT ở phase hiện tại, tab này có thể gộp vào `Thông tin` hoặc ẩn khỏi menu chính để màn chi tiết gọn hơn.
-
----
-
-## 5. Tab Cấu hình gửi bill
+## 4. Tab Cấu hình gửi bill
 
 Cho phép bật/tắt hỗ trợ gửi bill và chọn kênh:
 
@@ -86,7 +69,7 @@ Quy tắc:
 
 ---
 
-## 6. Tab Lịch sử bán
+## 5. Tab Lịch sử bán
 
 Hiển thị danh sách chứng từ của khách:
 
@@ -105,7 +88,7 @@ KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP chỉ hiể
 
 ---
 
-## 7. Tab Nợ cần thu
+## 6. Tab Nợ cần thu
 
 Hiển thị công nợ theo hóa đơn hoặc phát sinh công nợ:
 
@@ -129,10 +112,11 @@ Tab này là lối xem nhanh công nợ theo khách. Nguồn dữ liệu vẫn p
 
 ---
 
-## 8. Các tab chưa làm MVP
+## 7. Các tab chưa làm MVP
 
 KiotViet có thêm nhiều tab như lịch sử đặt hàng, công nợ, lịch sử mua dịch vụ, lịch sử tích điểm. QC-OMS MVP không làm riêng nếu chưa có nghiệp vụ tương ứng:
 
+- xuất hóa đơn/HĐĐT/VAT: bỏ khỏi scope hiện tại; không tạo tab hoặc luồng phát hành hóa đơn điện tử
 - địa chỉ nhận hàng/giao hàng: bỏ khỏi MVP vì QC-OMS không làm vận đơn, COD hoặc bán giao hàng
 - lịch sử đặt hàng: bỏ theo mô hình KiotViet; nếu cần gửi giá trước thì dùng Báo giá, không phải đơn đặt hàng
 - lịch sử mua dịch vụ: bỏ
@@ -141,7 +125,7 @@ KiotViet có thêm nhiều tab như lịch sử đặt hàng, công nợ, lịch
 
 ---
 
-## 9. Trạng thái khách hàng
+## 8. Trạng thái khách hàng
 
 | Trạng thái | Hành vi |
 |---|---|
