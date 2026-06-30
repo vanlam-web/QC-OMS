@@ -36,6 +36,8 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       unit_name: 'm',
       sell_method: 'linear_m' as const,
     })),
+    listCustomers: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
+    createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({ items: [] })),
     ...overrides,
   }

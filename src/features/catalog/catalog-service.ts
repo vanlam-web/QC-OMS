@@ -1,5 +1,7 @@
 import { createApiClient } from '../../lib/api/client'
 import type {
+  Customer,
+  CustomerListResponse,
   Product,
   ProductListResponse,
   ProductStatus,
@@ -45,10 +47,26 @@ export function createCatalogService(api: CatalogApiRequester) {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
-    resolvePrices: (productIds: string[]) =>
+    listCustomers: (input: { search?: string } = {}) => {
+      const params = new URLSearchParams()
+      if (input.search) params.set('search', input.search)
+      const query = params.toString()
+      return api.request<CustomerListResponse>(`/api/v1/customers${query ? `?${query}` : ''}`)
+    },
+    createCustomer: (input: {
+      code?: string
+      name: string
+      phone?: string
+      customer_group_id?: string | null
+    }) =>
+      api.request<Customer>('/api/v1/customers', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    resolvePrices: (productIds: string[], customerId?: string) =>
       api.request<ResolvePricesResponse>('/api/v1/pricing/resolve', {
         method: 'POST',
-        body: JSON.stringify({ product_ids: productIds }),
+        body: JSON.stringify({ product_ids: productIds, customer_id: customerId }),
       }),
   }
 }
