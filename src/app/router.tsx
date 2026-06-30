@@ -7,6 +7,8 @@ import { useMemo } from 'react'
 import { FoundationAdminPage } from '../features/admin/FoundationAdminPage'
 import { createBrowserFoundationService } from '../features/users/foundation-service'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
+import { CatalogPage } from '../features/catalog/CatalogPage'
+import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 
 export function AppRoutes() {
   return (
@@ -16,6 +18,7 @@ export function AppRoutes() {
         <Route path="/dashboard" element={<DashboardRoute />} />
         <Route path="/pos" element={<PosRoute />} />
         <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/products" element={<CatalogRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
@@ -42,6 +45,7 @@ function DashboardRoute() {
       currentUser={currentUser}
       onOpenPos={() => navigate('/pos')}
       onOpenAdmin={() => navigate('/admin')}
+      onOpenCatalog={() => navigate('/products')}
       onSignOut={() => void signOut()}
     />
   )
@@ -76,6 +80,20 @@ function AdminRoute() {
   }
 
   return <FoundationAdminPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+}
+
+function CatalogRoute() {
+  const { currentUser, initialized, getAccessToken } = useAuth()
+  const navigate = useNavigate()
+  const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.edit_price_book')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
 }
 
 function ForbiddenRoute() {

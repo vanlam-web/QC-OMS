@@ -13,6 +13,7 @@ const currentUser: CurrentUserData = {
 it('shows account-based modules without requiring a POS machine', async () => {
   const onOpenPos = vi.fn()
   const onOpenAdmin = vi.fn()
+  const onOpenCatalog = vi.fn()
   const onSignOut = vi.fn()
 
   render(
@@ -20,6 +21,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
       currentUser={currentUser}
       onOpenPos={onOpenPos}
       onOpenAdmin={onOpenAdmin}
+      onOpenCatalog={onOpenCatalog}
       onSignOut={onSignOut}
     />,
   )
@@ -34,6 +36,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
 
   expect(onOpenPos).toHaveBeenCalled()
   expect(onOpenAdmin).toHaveBeenCalled()
+  expect(onOpenCatalog).not.toHaveBeenCalled()
   expect(onSignOut).toHaveBeenCalled()
 })
 
@@ -43,10 +46,28 @@ it('disables modules when the account lacks the matching permission', () => {
       currentUser={{ ...currentUser, permissions: [] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
+      onOpenCatalog={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
 
   expect(screen.getByRole('button', { name: 'Bán hàng' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Quản trị' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Hàng hóa' })).toBeDisabled()
+})
+
+it('enables product catalog for accounts with edit price book permission', async () => {
+  const onOpenCatalog = vi.fn()
+  render(
+    <DashboardPage
+      currentUser={{ ...currentUser, permissions: ['perm.edit_price_book'] }}
+      onOpenPos={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenCatalog={onOpenCatalog}
+      onSignOut={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Hàng hóa' }))
+  expect(onOpenCatalog).toHaveBeenCalled()
 })

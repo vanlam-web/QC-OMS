@@ -4,15 +4,18 @@ export function DashboardPage({
   currentUser,
   onOpenPos,
   onOpenAdmin,
+  onOpenCatalog,
   onSignOut,
 }: {
   currentUser: CurrentUserData
   onOpenPos: () => void
   onOpenAdmin: () => void
+  onOpenCatalog: () => void
   onSignOut: () => void
 }) {
   const canSell = currentUser.permissions.includes('perm.create_order')
   const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
+  const canCatalog = currentUser.permissions.includes('perm.edit_price_book')
 
   return (
     <main className="dashboard-shell">
@@ -33,7 +36,7 @@ export function DashboardPage({
         <button disabled={!canAdmin} type="button" onClick={onOpenAdmin}>
           Quản trị
         </button>
-        <button disabled type="button">
+        <button disabled={!canCatalog} type="button" onClick={onOpenCatalog}>
           Hàng hóa
         </button>
         <button disabled type="button">
