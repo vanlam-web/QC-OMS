@@ -4,8 +4,14 @@ import { loadE2eSupabaseEnv } from "./supabase-env";
 const organizationId = "00000000-0000-4000-8000-000000000001";
 const permissions = [
   "perm.access_admin_panel",
+  "perm.apply_discount",
   "perm.create_order",
+  "perm.edit_order_locked",
+  "perm.edit_price_book",
+  "perm.manage_finance",
+  "perm.manage_inventory",
   "perm.manage_users",
+  "perm.refund_order",
   "perm.view_shift_report",
 ];
 

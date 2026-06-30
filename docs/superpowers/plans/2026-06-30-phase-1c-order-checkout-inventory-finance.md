@@ -746,7 +746,7 @@ npm run build
 
 Expected: all pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/features/orders src/features/navigation src/features/pos src/features/dashboard/DashboardPage.tsx src/app/router.tsx src/styles/index.css
@@ -762,7 +762,7 @@ git commit -m "feat: add pos checkout flow"
 - Modify: `tests/e2e/auth-pos.spec.ts`
 - Modify: `docs/PHASE-CHECKLIST.md`
 
-- [ ] **Step 1: Add e2e happy path**
+- [x] **Step 1: Add e2e happy path**
 
 Extend the existing POS e2e to:
 
@@ -774,7 +774,7 @@ Extend the existing POS e2e to:
 - submit checkout
 - assert invoice code starts with `HD`
 
-- [ ] **Step 2: Run local verification**
+- [x] **Step 2: Run local verification**
 
 Run:
 
@@ -788,7 +788,7 @@ npm run test:functions
 
 Expected: all pass locally.
 
-- [ ] **Step 3: Run server verification**
+- [x] **Step 3: Run server verification**
 
 On the Windows shared server:
 
@@ -810,7 +810,7 @@ npm.cmd run test:functions
 
 Expected: all pass. If the Edge Runtime uses `C:\QC-OMS-runtime`, sync from `D:\AI\QC-OMS` to the mirror and restart Supabase with `--workdir C:\QC-OMS-runtime`.
 
-- [ ] **Step 4: Smoke API**
+- [x] **Step 4: Smoke API**
 
 Smoke through `100.123.122.45`:
 
