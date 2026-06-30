@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(33);
 
 select has_table('public', 'customer_groups', 'customer_groups table exists');
 select has_column('public', 'customer_groups', 'organization_id', 'customer_groups.organization_id exists');
