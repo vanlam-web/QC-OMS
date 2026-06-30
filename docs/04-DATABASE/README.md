@@ -11,7 +11,7 @@
 | [01-ERD.md](./01-ERD.md) | ERD phát triển theo giai đoạn; Foundation/System đã chốt | 🔨 Một phần |
 | [03-RLS.md](./03-RLS.md) | RLS Foundation/System | ✅ Chốt Giai đoạn 0 |
 | [System/AUTH-PERMISSIONS.md](./System/AUTH-PERMISSIONS.md) | Organization, Profile, Workstation và Permission | ✅ Chốt Giai đoạn 0 |
-| `Sales/POS-TABLES.md` | Bảng phục vụ POS (customers, price_lists, products, auth.users, realtime) | 🔨 Một phần |
+| `Sales/POS-TABLES.md` | Bảng phục vụ POS: customer, product, pricing, quote/order snapshot | 🔨 Một phần |
 
 ---
 
@@ -25,7 +25,7 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 
 | Domain | Tables | Trạng thái |
 |--------|--------|------------|
-| **Sales** | customers, price_lists, products đã có; orders, order_items chưa đặc tả | 🔨 Một phần |
+| **Sales** | customers, customer_groups, price_lists, price_list_items, products, price history, orders, order_items đã có; checkout/finance chưa đặc tả | 🔨 Một phần |
 | **Finance** | payments, expenses, cashbook | ⬜ Chưa có |
 | **Inventory** | inventory, inventory_logs | ⬜ Chưa có |
 | **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |

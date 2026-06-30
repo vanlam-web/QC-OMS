@@ -8,7 +8,7 @@
 
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
-| [POS-TABLES.md](./POS-TABLES.md) | Định nghĩa bảng phục vụ POS | Di chuyển từ PRD-UX 2026-06-26 |
+| [POS-TABLES.md](./POS-TABLES.md) | Định nghĩa bảng phục vụ POS: khách hàng, bảng giá, sản phẩm, báo giá và snapshot dòng hàng | Cập nhật theo Business 2026-06-30 |
 
 ---
 

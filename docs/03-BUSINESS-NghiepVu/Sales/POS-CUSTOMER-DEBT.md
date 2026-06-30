@@ -55,9 +55,17 @@ Mỗi giao dịch công nợ có số dư sau giao dịch.
 
 Số dư sau giao dịch là số dư lũy kế ngay sau khi ghi nhận giao dịch đó.
 
-### BR-DEBT-06: Số dư âm
+### BR-DEBT-06: Không dùng trả trước trong MVP
 
-Số dư âm được hiểu là **Khách trả trước**.
+MVP không quản lý số dư âm hoặc khách trả trước.
+
+Nếu khách trả dư khi thanh toán đơn mới:
+
+- mặc định phần dư là tiền thừa trả lại khách
+- nếu khách còn nợ cũ và nhân viên chọn cấn nợ, phần dư được cấn vào các hóa đơn còn nợ cũ nhất trước
+- nếu sau khi cấn hết nợ cũ vẫn còn dư, phần còn lại trả lại khách
+
+Không lưu phần dư thành khoản trả trước trong MVP.
 
 ---
 

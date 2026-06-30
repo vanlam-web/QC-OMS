@@ -41,8 +41,13 @@ Theo nguyên tắc top-down, **03-BUSINESS chỉ được thiết kế khi**:
 
 | Domain | File | Mô tả | Trạng thái |
 |--------|------|--------|------------|
+| **Sales** | `Sales/POS-CUSTOMER.md` | Quy tắc khách hàng POS: SĐT, mã khách, tên khách và nhóm khách | 🔨 Đang xây dựng |
+| **Sales** | `Sales/POS-PRICING.md` | Quy tắc giá bán POS: bảng giá, giá sửa tay, lịch sử giá và đơn vị bán | 🔨 Đang xây dựng |
 | **Sales** | `Sales/POS-ORDER-CALC.md` | Quy tắc tính giỏ hàng (ĐVT m² / Cái / Combo) | ✅ Hoàn tất |
+| **Sales** | `Sales/POS-ORDER-LIFECYCLE.md` | Vòng đời đơn hàng POS: nháp, báo giá, hóa đơn bán hàng | 🔨 Đang xây dựng |
 | **Sales** | `Sales/POS-CHECKOUT.md` | Nghiệp vụ thanh toán (trừ kho, sổ quỹ, tiền thừa/nợ) | ✅ Hoàn tất |
+| **Sales** | `Sales/POS-CUSTOMER-DEBT.md` | Nghiệp vụ công nợ khách hàng | 🔨 Đang xây dựng |
+| **Finance** | `Finance/CASHBOOK.md` | Nghiệp vụ sổ quỹ, phiếu thu, phiếu chi và đối soát | 🔨 Đang xây dựng |
 
 ---
 
@@ -51,7 +56,6 @@ Theo nguyên tắc top-down, **03-BUSINESS chỉ được thiết kế khi**:
 | Domain | Mô tả | Trạng thái |
 |--------|--------|------------|
 | **Inventory** | Nhập/xuất kho vật tư, tồn kho | ⬜ Chưa có |
-| **Finance** | Sổ quỹ, phiếu thu, phiếu chi | ⬜ Chưa có |
 | **Workstation** | Máy trạm, queue xưởng, điều phối | ⬜ Chưa có |
 
 ---

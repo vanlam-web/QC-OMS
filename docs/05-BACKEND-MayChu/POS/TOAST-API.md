@@ -60,7 +60,7 @@
 ### 2.2. Validation
 
 1. `phone` phải hợp lệ (đủ số, đúng định dạng Việt Nam).
-2. `phone` chưa tồn tại cho khách hàng khác (nếu muốn unique).
+2. `phone` sau chuẩn hóa chưa tồn tại cho khách hàng khác trong cùng organization.
 3. Customer phải tồn tại.
 
 ### 2.3. Workflow

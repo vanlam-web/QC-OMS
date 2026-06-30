@@ -44,7 +44,7 @@ Nhân viên bấm [BÁO GIÁ]
 - Báo giá không làm mất hóa đơn nháp hiện tại trừ khi người dùng chủ động đóng/xóa nháp.
 - Khi mở lại báo giá để sửa, hệ thống đưa báo giá trở lại POS như một hóa đơn nháp bình thường.
 - Khi khách đồng ý, nhân viên mở báo giá thành nháp, sửa nếu cần rồi bấm `[THANH TOÁN]`.
-- Quy tắc vòng đời báo giá xem tại [POS-ORDER-LIFECYCLE.md](../../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md#3-quy-tắc-báo-giá).
+- Quy tắc vòng đời báo giá xem tại [POS-ORDER-LIFECYCLE.md](../../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md#4-quy-tắc-báo-giá).
 
 ---
 
