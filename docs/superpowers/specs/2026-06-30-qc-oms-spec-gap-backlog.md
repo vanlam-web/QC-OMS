@@ -25,6 +25,7 @@ Nguyên tắc áp dụng:
 - Khi một mục được làm thật, phải viết vào Source of Truth đúng tầng.
 - Nếu chưa chắc business rule, ưu tiên tạo draft riêng trước, rồi Owner chốt trước khi cập nhật SoT.
 - Tránh sửa trực tiếp các file đang có khả năng được luồng implementation sử dụng cho Phase 1A.
+- Quy trình lưu draft, commit nhỏ và handoff cho implementation được ghi tại `docs/superpowers/specs/2026-06-30-spec-implementation-handoff-workflow.md`.
 
 ---
 
