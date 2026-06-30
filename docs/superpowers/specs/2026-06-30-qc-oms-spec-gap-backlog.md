@@ -328,7 +328,26 @@ Draft tham khảo KiotViet đã tạo:
 - Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 
-#### 3.9. Workstation queue và Integration máy sản xuất
+#### 3.9. Inventory adjustments & returns draft
+
+Draft tham khảo KiotViet đã tạo:
+
+- `docs/superpowers/specs/2026-07-01-kv-inventory-adjustments-returns-draft.md`
+
+Định hướng:
+
+- Xuất hủy nên giữ ở mức tối giản như điều chỉnh giảm tồn/hủy vật tư.
+- Xuất dùng nội bộ chưa cần module riêng; có thể là một lý do của điều chỉnh giảm tồn.
+- Trả hàng nhập để sau Purchase/Supplier.
+- Trả hàng bán tiếp tục không thuộc MVP; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
+
+Owner cần chốt:
+
+- Có cần phiếu hủy vật tư riêng trong MVP không.
+- Tấm lỡ dưới `0.3m2` mặc định bỏ có cần sinh lịch sử hủy không.
+- Dùng nội bộ có cần theo dõi ngay không.
+
+#### 3.10. Workstation queue và Integration máy sản xuất
 
 Source of Truth cần tạo/bổ sung:
 
@@ -350,7 +369,7 @@ Owner/Technical cần chốt:
 - Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
 - Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
 
-#### 3.10. Bill, Printer, Zalo/Facebook send support
+#### 3.11. Bill, Printer, Zalo/Facebook send support
 
 Source of Truth cần tạo:
 
@@ -371,7 +390,7 @@ Thiếu hiện tại:
 
 ### P4 — Cần trước Production
 
-#### 3.11. Deployment production, backup, RPO/RTO
+#### 3.12. Deployment production, backup, RPO/RTO
 
 Source of Truth cần bổ sung:
 

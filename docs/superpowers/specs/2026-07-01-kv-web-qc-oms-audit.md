@@ -202,6 +202,23 @@ KiotViet có:
 - Chưa gọi là báo cáo lợi nhuận đầy đủ nếu chưa chốt giá vốn/nhập hàng/chi phí sản xuất.
 - Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-reporting-draft.md`.
 
+### 4.10. Xuất dùng nội bộ / Xuất hủy / Trả hàng
+
+KiotViet có:
+
+- Xuất dùng nội bộ: phiếu tạm, hoàn thành, đã hủy; loại xuất, người nhận, tổng giá trị.
+- Xuất hủy: phiếu tạm, hoàn thành, đã hủy; tổng giá trị hủy, người xuất hủy, ghi chú.
+- Trả hàng nhập: mã trả hàng nhập, mã nhập hàng, nhà cung cấp, NCC cần trả/NCC đã trả.
+- Trả hàng bán: trả theo hóa đơn/trả nhanh/chuyển hoàn, cần trả khách/đã trả khách.
+
+Đề xuất QC-OMS:
+
+- Xuất hủy nên giữ ở mức tối giản dưới dạng điều chỉnh giảm tồn/hủy vật tư.
+- Xuất dùng nội bộ chưa cần module riêng; nếu cần thì dùng lý do `Dùng nội bộ` trong điều chỉnh giảm tồn.
+- Trả hàng nhập để sau Purchase/Supplier.
+- Trả hàng bán tiếp tục không thuộc MVP; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
+- Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-inventory-adjustments-returns-draft.md`.
+
 ---
 
 ## 5. Thứ tự spec nên làm tiếp
@@ -211,3 +228,4 @@ KiotViet có:
 3. Price Book PRD-UX: bảng giá chung, bảng giá theo nhóm, thao tác cập nhật giá.
 4. Purchase/Supplier: đã có draft, chưa làm MVP nếu Owner chưa chốt.
 5. Reports: đã có draft, ưu tiên báo cáo cuối ngày sau khi Finance/đối soát ổn định.
+6. Inventory adjustments/returns: đã có draft, cần Owner chốt giữ tối giản tới đâu.
