@@ -14,6 +14,8 @@
 
 This plan supersedes any older implementation plan that assumed `discount_items jsonb`, `discount_rate`, POS workstation login, or workstation headers from the frontend.
 
+Supabase/Docker verification runs on the shared server environment. If `npm run test:db`, `npm run supabase:reset`, or local function integration checks fail on a dev laptop because local Postgres/Supabase is not running, treat that as an environment limitation rather than a product failure, continue code reviewable changes, and request the same command output from the server Codex before marking the task complete.
+
 Phase 1A includes:
 
 - `products`
@@ -162,7 +164,9 @@ rollback;
 
 Run: `npm run test:db`
 
-Expected: FAIL in `004_sales_catalog_pricing.test.sql` because the Sales catalog/pricing tables do not exist.
+Expected on a machine with local Supabase running: FAIL in `004_sales_catalog_pricing.test.sql` because the Sales catalog/pricing tables do not exist.
+
+Expected on this shared-server setup if local Supabase is not running: FAIL with a connection error such as `LegacyDbConnectError`. In that case, continue with the migration and run DB verification on the server after implementation.
 
 - [ ] **Step 3: Add Sales catalog/pricing migration**
 
@@ -281,6 +285,7 @@ Expected:
 
 - `npm run supabase:reset` exits 0.
 - `npm run test:db` exits 0 and includes `004_sales_catalog_pricing.test.sql`.
+- If these commands cannot connect on the dev laptop, send the exact same commands to server Codex and require the output before closing Task 1.
 
 - [ ] **Step 6: Commit**
 
@@ -871,6 +876,7 @@ Expected:
 
 - All commands exit 0.
 - `test:functions` may skip integration checks if `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are absent.
+- `supabase:reset` and `test:db` may need to run on the shared server rather than the dev laptop.
 
 - [ ] **Step 2: Run browser smoke test**
 
