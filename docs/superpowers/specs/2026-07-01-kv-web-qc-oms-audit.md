@@ -167,6 +167,37 @@ QC-OMS đã đặc tả tương ứng tại:
 - `docs/02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md`
 - `docs/03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md`
 
+### 4.8. Nhà cung cấp / Nhập hàng / Mua dịch vụ
+
+KiotViet có:
+
+- Nhà cung cấp: mã NCC, tên, SĐT, email, địa chỉ, nhóm NCC, mã số thuế, nợ cần trả hiện tại, tổng mua.
+- Nhập hàng: phiếu tạm, đã nhập hàng, đã hủy; mã nhập hàng, mã NCC, nhà cung cấp, tổng số lượng, tổng tiền hàng, cần trả NCC, tiền đã trả NCC.
+- Mua dịch vụ: mã phiếu, loại chi, người nhận, cần thanh toán, đã thanh toán, còn phải trả.
+
+Đề xuất QC-OMS:
+
+- Chưa đưa Purchase vào MVP nếu chưa chốt nhập kho vật lý theo cuộn/tấm.
+- Khi làm sau này, tách `Suppliers`, `Purchase Receipts` và `Supplier Payables`.
+- Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
+- Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-purchase-supplier-draft.md`.
+
+### 4.9. Báo cáo
+
+KiotViet có:
+
+- Báo cáo cuối ngày: doanh thu, thực thu, số lượng giao dịch, thu khác, phương thức thanh toán.
+- Báo cáo bán hàng: doanh thu theo thời gian, bảng giá, nhân viên, kênh bán.
+- Báo cáo tài chính: tổng hợp theo tháng/năm.
+- Báo cáo hàng hóa: top sản phẩm doanh thu cao, top sản phẩm bán chạy, lọc theo nhóm hàng/tồn kho.
+
+Đề xuất QC-OMS:
+
+- Làm báo cáo cuối ngày trước, gắn với đối soát tiền mặt/tài khoản ngân hàng.
+- Báo cáo hàng hóa phải ưu tiên tồn vật lý cuộn/tấm, không chỉ tổng m2.
+- Chưa gọi là báo cáo lợi nhuận đầy đủ nếu chưa chốt giá vốn/nhập hàng/chi phí sản xuất.
+- Draft chi tiết: `docs/superpowers/specs/2026-07-01-kv-reporting-draft.md`.
+
 ---
 
 ## 5. Thứ tự spec nên làm tiếp
@@ -174,6 +205,5 @@ QC-OMS đã đặc tả tương ứng tại:
 1. Sales Documents PRD-UX: danh sách hóa đơn/báo giá, chi tiết chứng từ, sửa/hủy/in lại.
 2. Customer Management PRD-UX: danh sách khách, chi tiết khách, nhóm khách, lịch sử bán, công nợ.
 3. Price Book PRD-UX: bảng giá chung, bảng giá theo nhóm, thao tác cập nhật giá.
-4. Purchase/Supplier draft: chỉ tạo backlog, chưa làm MVP nếu Owner chưa chốt.
-5. Reports draft: chỉ ghi nhu cầu báo cáo cuối ngày, công nợ, tồn kho, doanh thu; chưa làm sâu.
-
+4. Purchase/Supplier: đã có draft, chưa làm MVP nếu Owner chưa chốt.
+5. Reports: đã có draft, ưu tiên báo cáo cuối ngày sau khi Finance/đối soát ổn định.

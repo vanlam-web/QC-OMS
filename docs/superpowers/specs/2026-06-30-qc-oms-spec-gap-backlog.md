@@ -294,7 +294,39 @@ Thiếu hiện tại:
 
 ### P3 — Cần trước Phase 6-7
 
-#### 3.7. Workstation queue và Integration máy sản xuất
+#### 3.7. Purchase/Supplier draft
+
+Draft tham khảo KiotViet đã tạo:
+
+- `docs/superpowers/specs/2026-07-01-kv-purchase-supplier-draft.md`
+
+Định hướng:
+
+- Chưa đưa Purchase vào MVP nếu chưa chốt nhập kho vật lý theo cuộn/tấm.
+- Khi làm sau này nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
+- Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
+
+Owner cần chốt:
+
+- Có cần quản lý nhà cung cấp ngay phase đầu không.
+- Nhập cuộn/tấm có tạo object tồn vật lý ngay lúc nhập hàng không.
+- Có cần công nợ nhà cung cấp trong MVP không.
+- Giá vốn dùng phương pháp nào.
+
+#### 3.8. Reporting draft
+
+Draft tham khảo KiotViet đã tạo:
+
+- `docs/superpowers/specs/2026-07-01-kv-reporting-draft.md`
+
+Định hướng:
+
+- Báo cáo cuối ngày là báo cáo nên ưu tiên đầu tiên sau Finance/đối soát.
+- Báo cáo bán hàng, hàng hóa và tài chính làm sau khi dữ liệu lõi ổn định.
+- Báo cáo hàng hóa của QC-OMS phải nhìn được tồn vật lý cuộn/tấm.
+- Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
+
+#### 3.9. Workstation queue và Integration máy sản xuất
 
 Source of Truth cần tạo/bổ sung:
 
@@ -316,7 +348,7 @@ Owner/Technical cần chốt:
 - Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
 - Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
 
-#### 3.8. Bill, Printer, Zalo/Facebook send support
+#### 3.10. Bill, Printer, Zalo/Facebook send support
 
 Source of Truth cần tạo:
 
@@ -337,7 +369,7 @@ Thiếu hiện tại:
 
 ### P4 — Cần trước Production
 
-#### 3.9. Deployment production, backup, RPO/RTO
+#### 3.11. Deployment production, backup, RPO/RTO
 
 Source of Truth cần bổ sung:
 
@@ -390,10 +422,15 @@ Khuyến nghị cho luồng hiện tại:
 Còn cần Owner quyết định ở các phase sau:
 
 - Nháp hóa đơn lưu server từ Phase 2 hay chỉ LocalStorage cho tới khi báo giá/thanh toán.
-- Chính sách bán âm kho trong MVP.
-- Khách trả trước hoặc số dư âm có nằm trong MVP.
 - Cơ chế máy sản xuất gửi event trong pilot: file watcher, API, webhook hoặc simulator.
-- Bill gửi khách ở MVP chỉ mở app/copy ảnh hay cần gửi tự động qua API chính thức.
+- Nhập hàng/NCC có nằm trong MVP không, hay để sau khi Inventory vật lý ổn định.
+- Báo cáo cuối ngày có cần chốt/khóa lịch sử hay chỉ là báo cáo động.
+
+Đã chốt và cần giữ:
+
+- Bán thiếu tồn: cảnh báo nhưng vẫn cho bán tiếp, tồn có thể âm.
+- MVP không tạo khách trả trước/công nợ âm.
+- Bill gửi khách trong MVP chỉ mở đúng nơi gửi và chuẩn bị ảnh/copy; nhân viên tự kiểm tra rồi bấm gửi.
 
 ---
 
