@@ -359,3 +359,67 @@ set organization_id = excluded.organization_id,
     bank_account_no = excluded.bank_account_no,
     is_default_cash = excluded.is_default_cash,
     is_active = excluded.is_active;
+
+insert into public.production_machines (id, organization_id, code, name, status, default_product_id)
+values
+  (
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000000001',
+    'IN-BAT',
+    'In bạt',
+    'active',
+    '00000000-0000-4000-8000-000000000302'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001102',
+    '00000000-0000-4000-8000-000000000001',
+    'IN-DECAL',
+    'In decal',
+    'active',
+    '00000000-0000-4000-8000-000000000302'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001103',
+    '00000000-0000-4000-8000-000000000001',
+    'CNC',
+    'Cắt CNC',
+    'active',
+    '00000000-0000-4000-8000-000000000301'
+  )
+on conflict (id) do update
+set organization_id = excluded.organization_id,
+    code = excluded.code,
+    name = excluded.name,
+    status = excluded.status,
+    default_product_id = excluded.default_product_id;
+
+insert into public.production_queue_items (
+  id,
+  organization_id,
+  production_machine_id,
+  source,
+  raw_file_name,
+  status,
+  parse_status,
+  parsed_payload
+)
+values (
+  '00000000-0000-4000-8000-000000001201',
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000001102',
+  'manual_simulator',
+  'KH000001_DECAL-PP_120x50_x2',
+  'queued',
+  'ok',
+  '{"customer_code":"KH000001","product_code":"DECAL-PP","width_cm":120,"height_cm":50,"quantity":2}'::jsonb
+)
+on conflict (id) do update
+set production_machine_id = excluded.production_machine_id,
+    source = excluded.source,
+    raw_file_name = excluded.raw_file_name,
+    status = excluded.status,
+    parse_status = excluded.parse_status,
+    parsed_payload = excluded.parsed_payload,
+    claimed_by = null,
+    claimed_at = null,
+    handled_at = null;

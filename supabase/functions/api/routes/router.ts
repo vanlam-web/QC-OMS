@@ -7,6 +7,7 @@ import { handleCatalog } from "./catalog.ts";
 import { handleOrders } from "./orders.ts";
 import { handleFinance } from "./finance.ts";
 import { handleInventory } from "./inventory.ts";
+import { handleProductionQueue } from "./production-queue.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import type { FoundationRepository } from "../contracts.ts";
 import type { RateLimiter } from "../middleware/rate-limit.ts";
@@ -163,6 +164,21 @@ export function routeRequest(
     }
 
     return handleInventory(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/production-queue" || url.pathname.startsWith("/api/v1/production-queue/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleProductionQueue(request, traceId, {
       auth: options.auth,
       repository: options.repository,
     });

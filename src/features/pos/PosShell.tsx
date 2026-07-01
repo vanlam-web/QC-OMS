@@ -4,15 +4,19 @@ import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { Customer, Product, ResolvedPrice } from '../catalog/types'
 import type { CheckoutCartLine, OrderService } from '../orders/order-service'
+import type { ProductionQueueService } from '../production-queue/production-queue-service'
+import type { ProductionQueueDraftPayload } from '../production-queue/types'
 import { CheckoutPanel } from './CheckoutPanel'
 import { CustomerPanel } from './CustomerPanel'
 import { formatApiError } from '../../lib/api/error-message'
 import { ProfileMenu } from './ProfileMenu'
 import { ProductGrid } from './ProductGrid'
+import { ProductionQueuePanel } from './ProductionQueuePanel'
 
 export function PosShell({
   catalogService,
   orderService,
+  productionQueueService,
   currentUser,
   connected = true,
   onSignOut,
@@ -21,6 +25,7 @@ export function PosShell({
 }: {
   catalogService: CatalogService
   orderService: OrderService
+  productionQueueService: ProductionQueueService
   currentUser: CurrentUserData
   connected?: boolean
   onSignOut: () => void
@@ -124,6 +129,49 @@ export function PosShell({
     setCartLines((current) => current.filter((line) => line.id !== lineId))
   }
 
+  async function handleProductionQueueDraft(payload: ProductionQueueDraftPayload) {
+    const queueCustomer =
+      payload.customer === null
+        ? null
+        : {
+            id: payload.customer.id,
+            code: payload.customer.code,
+            name: payload.customer.name,
+            phone: null,
+            customer_group_id: null,
+            customer_group: null,
+          }
+    const customerForPricing = queueCustomer ?? selectedCustomer
+    const priceResult = await catalogService.resolvePrices(
+      [payload.draft_line.product_id],
+      customerForPricing?.id,
+    )
+    const resolvedPrice = priceResult.items[0]
+    if (queueCustomer !== null) setSelectedCustomer(queueCustomer)
+    setCartLines((current) => [
+      ...current,
+      {
+        id: `${payload.queue_item_id}-${current.length + 1}`,
+        product: {
+          id: payload.draft_line.product_id,
+          code: payload.draft_line.product_code,
+          name: payload.draft_line.product_name,
+          status: 'active',
+          unit_name: payload.draft_line.unit_name,
+          sell_method: payload.draft_line.sell_method,
+        },
+        quantity: payload.draft_line.quantity,
+        width_m: payload.draft_line.width_m ?? undefined,
+        height_m: payload.draft_line.height_m ?? undefined,
+        linear_m: payload.draft_line.linear_m ?? undefined,
+        unitPrice: resolvedPrice?.unit_price ?? 0,
+        priceSource: resolvedPrice?.price_source ?? 'default_price_list',
+        isManualPrice: false,
+        note: 'Từ hàng đợi máy sản xuất',
+      },
+    ])
+  }
+
   return (
     <main className="pos-shell">
       <section aria-label="K01 topbar" className="pos-topbar">
@@ -143,6 +191,10 @@ export function PosShell({
           service={catalogService}
           selectedCustomer={selectedCustomer}
           onSelectCustomer={setSelectedCustomer}
+        />
+        <ProductionQueuePanel
+          service={productionQueueService}
+          onAddToDraft={handleProductionQueueDraft}
         />
         <h2>Giỏ hàng</h2>
         {cartLines.length === 0 ? <p>Chọn sản phẩm từ lưới nhanh để bắt đầu.</p> : null}

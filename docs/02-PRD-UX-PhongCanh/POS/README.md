@@ -18,7 +18,7 @@
     │   ├── [01-K02-GIO-HANG.md](./K02/01-K02-GIO-HANG.md)       ← Tổng quan & Logic tiếp nhận
     │   ├── [02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md)       ← Dòng SP động (m² / Cái / Combo)
     │   ├── [03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md)       ← Ghi chú đơn hàng tổng
-    │   └── [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md)     ← Hàng đợi máy trạm
+    │   └── [04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md)     ← Hàng đợi máy sản xuất
     │
     └── K03/                      ← Khối K03: Đối tác & Sản phẩm
         ├── [01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md)       ← Hồ sơ đối tác & Bộ lọc giá
@@ -40,7 +40,7 @@
 │  K02-A: Dòng SP động           │  K03-A: Hồ sơ đối tác + Bảng giá      │
 │  K02-B: Ghi chú đơn hàng tổng  │  K03-B: Nhắc bổ sung SĐT KH            │
 │  K02-C: Bộ đếm tổng realtime   │  K03-C: Lưới sản phẩm nhanh           │
-│  K02-D: Hàng đợi máy trạm      │  K03-D: Báo giá / Thanh toán          │
+│  K02-D: Hàng đợi máy sản xuất  │  K03-D: Báo giá / Thanh toán          │
 └─────────────────────────────────┴────────────────────────────────────────┘
 ```
 
@@ -55,7 +55,7 @@
 | K02-A: Dòng SP động | [K02/02-K02A-DONG-SP.md](./K02/02-K02A-DONG-SP.md) | 🔨 |
 | K02-B: Ghi chú đơn hàng | [K02/03-K02B-GHI-CHU.md](./K02/03-K02B-GHI-CHU.md) | 🔨 |
 | K02-C: Bộ đếm tổng | *(trong 02-K02A)* | 🔨 |
-| K02-D: Hàng đợi máy trạm | [K02/04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) | 🔨 |
+| K02-D: Hàng đợi máy sản xuất | [K02/04-K02D-HANG-DOI.md](./K02/04-K02D-HANG-DOI.md) | 🔨 |
 | K03-A: Hồ sơ đối tác | [K03/01-K03A-DOI-TAC.md](./K03/01-K03A-DOI-TAC.md) | 🔨 |
 | K03-B: Nhắc bổ sung SĐT KH | [K03/02-K03B-TOAST.md](./K03/02-K03B-TOAST.md) | 🔨 |
 | K03-C: Lưới sản phẩm | [K03/03-K03C-LUOI-SP.md](./K03/03-K03C-LUOI-SP.md) | 🔨 |
