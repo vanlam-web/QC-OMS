@@ -34,6 +34,9 @@ export interface CheckoutInput {
   items: Array<{
     product_id: string
     quantity: number
+    width_m?: number
+    height_m?: number
+    linear_m?: number
     unit_price: number
     discount_amount?: number
     price_source: string

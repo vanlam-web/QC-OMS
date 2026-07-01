@@ -29,6 +29,13 @@ const line: CheckoutCartLine = {
   isManualPrice: false,
 }
 
+const dimensionLine: CheckoutCartLine = {
+  ...line,
+  width_m: 1.2,
+  height_m: 0.5,
+  linear_m: 2.4,
+}
+
 function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
   return {
     validateCart: vi.fn(),
@@ -109,6 +116,41 @@ it('saves the current cart as a quote and shows BG code', async () => {
     }),
   )
   expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001')
+})
+
+it('keeps line dimensions when saving quotes and checking out', async () => {
+  const service = makeOrderService()
+  render(<CheckoutPanel cartLines={[dimensionLine]} selectedCustomer={customer} orderService={service} />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Báo giá' }))
+
+  expect(service.saveQuote).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          product_id: 'p-1',
+          width_m: 1.2,
+          height_m: 0.5,
+          linear_m: 2.4,
+        }),
+      ],
+    }),
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+
+  expect(service.checkout).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          product_id: 'p-1',
+          width_m: 1.2,
+          height_m: 0.5,
+          linear_m: 2.4,
+        }),
+      ],
+    }),
+  )
 })
 
 it('saving a reopened quote draft creates a new independent quote', async () => {
@@ -308,7 +350,7 @@ it('submits old debt collection separately from the current invoice payment', as
   expect(service.checkout).toHaveBeenCalledWith(
     expect.objectContaining({
       payment: expect.objectContaining({
-        cash_amount: 240000,
+        cash_amount: 290000,
         old_debt_payment_amount: 50000,
         change_returned_amount: 0,
       }),
