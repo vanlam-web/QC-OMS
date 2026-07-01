@@ -15,6 +15,16 @@ Quan sát ngày `01/07/2026` trên trang `Hàng hóa`:
 - Các bộ lọc KiotViet gồm: nhóm hàng, tồn kho, dự kiến hết hàng, thời gian tạo, nhà cung cấp, thương hiệu, vị trí, loại hàng, bán trực tiếp, liên kết kênh bán, trạng thái hàng hóa.
 - Cột mặc định gồm: mã hàng, tên hàng, giá bán, giá vốn, tồn kho, khách đặt, thời gian tạo, dự kiến hết hàng.
 
+Export KiotViet ngày `2026-07-01` có `657` dòng:
+
+- `461` hàng hóa
+- `184` combo/đóng gói
+- `12` dịch vụ
+- `496` dòng đang kinh doanh
+- `161` dòng inactive/trống trạng thái
+- `57` dòng tồn âm
+- `189` dòng có `Hàng thành phần` dạng định mức vật tư
+
 Áp dụng cho QC-OMS:
 
 - Giữ bộ lọc trạng thái để xem được hàng ngưng bán trong module Hàng hóa.
@@ -23,6 +33,8 @@ Quan sát ngày `01/07/2026` trên trang `Hàng hóa`:
 - Không tạo field/module riêng cho thương hiệu hoặc kênh bán trong MVP.
 - Không đưa barcode/QR scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail hoặc bảo hành/bảo trì vào MVP.
 - Nhà cung cấp/vị trí chỉ đưa vào sau khi Purchase/Warehouse location được chốt.
+- Tồn âm là dữ liệu thực tế nên danh sách/báo cáo cần hiển thị rõ để xử lý, không ẩn.
+- Cột `Hàng thành phần` xác nhận BOM/định mức là nghiệp vụ thật, nhưng import/schema BOM để phase riêng.
 
 ---
 

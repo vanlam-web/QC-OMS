@@ -35,6 +35,13 @@ Quyet dinh Owner da chot:
 - Trong POS co the them/sua BOM phat sinh; neu luu thi tao combo/BOM moi, neu khong luu thi chi xem nhu dinh muc cua dong do de tru kho.
 - Owner giao cho spec tu de xuat chi tiet BOM sao cho gon thao tac va phu hop xưởng.
 
+Cap nhat export KiotViet ngay `2026-07-01`:
+
+- `DanhSachSanPham_KV01072026-104741-899.xlsx` co `189` dong co cot `Hang thanh phan`.
+- Dinh dang KiotViet dang la text `MaThanhPhan:SoLuong|MaThanhPhan:SoLuong`.
+- Vi du `HH = DCS:0.6|F5:0.3`, `IDC = DCS:0.1`, `SP000525 = DCS:1.2|A5T:0.42|SP000124:4.5`.
+- Du lieu nay xac nhan BOM/dinh muc la nghiep vu that, nhung QC-OMS khong nen dung text nay lam schema chinh. Khi import/chuyen doi sau nay, chi nen dung lam nguon tao draft BOM de ra soat.
+
 ---
 
 ## 2. Nguyen tac MVP de xuat

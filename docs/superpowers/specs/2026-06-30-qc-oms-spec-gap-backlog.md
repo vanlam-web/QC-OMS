@@ -174,6 +174,8 @@ Source of Truth đã tạo:
 - Trang Customers giữ các thông tin phục vụ bán hàng, bảng giá, gửi bill và công nợ.
 - Mã khách và tên khách là trọng tâm; SĐT không bắt buộc nhưng nếu có thì unique.
 - Không đưa giới tính, sinh nhật, tích điểm, khuyến mại tự động hoặc người phụ trách khách hàng vào MVP.
+- Export KiotViet ngày `2026-07-01` có `503/528` khách không có SĐT, xác nhận SĐT phải optional.
+- Nhóm khách thật đang dùng là `25`, `26`, `30`, `35`, `40`; khách không nhóm chiếm đa số nên bảng giá chung fallback là lõi.
 
 #### 3.2E. PriceBook — PRD-UX
 
@@ -192,6 +194,8 @@ Source of Truth đã tạo:
 - Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng.
 - Công thức giá theo nhóm hàng có thể chọn nguồn giá vốn bình quân hoặc giá vốn mới nhất.
 - Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
+- Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
+- Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
 
 #### 3.2F. Overview Dashboard — PRD-UX
 
@@ -289,6 +293,7 @@ Còn cần chi tiết khi làm phase sửa/hủy nâng cao:
 Draft tham khảo từ export KiotViet:
 
 - `docs/superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md`
+- `docs/superpowers/specs/2026-07-01-kv-exports-products-customers-pricebook-draft.md`
 
 Source of Truth Business đã tạo:
 
@@ -314,6 +319,8 @@ Source of Truth kỹ thuật đã tạo:
 - Hàng tấm quản lý theo tấm nguyên/tấm dở/tấm lỡ, không sửa tổng tồn trực tiếp.
 - Tấm lỡ dưới `0.3m2` mặc định bỏ; nhân viên có thể tạo/sửa thủ công nếu muốn giữ.
 - Kiểm kho có phiếu tạm/cân bằng/hủy; sửa tồn hàng thường ở Hàng hóa tự sinh phiếu kiểm kho đã cân bằng.
+- Export KiotViet ngày `2026-07-01` có `57` dòng tồn âm, xác nhận UI/báo cáo tồn âm là cần thiết.
+- Export cũng có `189` dòng `Hàng thành phần`, xác nhận BOM/định mức là dữ liệu thật nhưng vẫn để phase BOM riêng.
 
 Rủi ro:
 
@@ -329,6 +336,7 @@ Còn cần chi tiết sau MVP:
 Draft tham khảo đã tạo:
 
 - `docs/superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`
+- `docs/superpowers/specs/2026-07-01-kv-exports-products-customers-pricebook-draft.md`
 
 Source of Truth cần bổ sung khi phase này bắt đầu:
 
@@ -350,6 +358,7 @@ Source of Truth cần bổ sung khi phase này bắt đầu:
 - Đề xuất mặc định: sửa BOM tạo version mới; hóa đơn/báo giá lưu snapshot BOM version đã dùng.
 - Đề xuất mặc định: deep-scan tối đa 5 cấp, backend chặn vòng lặp.
 - BOM thiếu cấu hình thì cảnh báo/flag nhưng không chặn checkout trong POS MVP.
+- Export KiotViet ngày `2026-07-01` xác nhận `189` dòng có `Hàng thành phần` theo định dạng `MaThanhPhan:SoLuong|...`; chỉ dùng định dạng này làm nguồn tạo draft BOM khi chuyển đổi, không dùng làm schema chính.
 
 Còn cần đặc tả khi làm phase BOM:
 
