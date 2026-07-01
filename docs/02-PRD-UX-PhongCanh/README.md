@@ -64,7 +64,8 @@
     └── [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md)
 └── System/                      ← Tài khoản, quyền và máy trạm
     ├── [System/README.md](./System/README.md)
-    └── [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md)
+    ├── [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md)
+    └── [System/02-SYSTEM-SETTINGS.md](./System/02-SYSTEM-SETTINGS.md)
 ```
 
 > Mỗi trang mới sẽ có thư mục riêng cùng cấp với `POS/`. Phần nhân viên hiện chỉ làm tài khoản/quyền trong `System/`, không làm chấm công/lương/hoa hồng.
@@ -108,6 +109,7 @@
 | Inventory Report | [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md) | 🔨 |
 | Finance Report | [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md) | 🔨 |
 | System Users/Permissions | [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md) | 🔨 |
+| System Settings | [System/02-SYSTEM-SETTINGS.md](./System/02-SYSTEM-SETTINGS.md) | 🔨 |
 
 ---
 

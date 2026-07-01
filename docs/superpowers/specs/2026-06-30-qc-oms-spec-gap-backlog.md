@@ -206,6 +206,22 @@ Source of Truth đã tạo:
 - Giữ doanh thu hôm nay, thực thu, công nợ mới, số hóa đơn, top hàng, top khách, doanh thu theo người bán, hoạt động gần đây và cảnh báo tồn/công nợ.
 - Không copy trả hàng, chấm công, vay vốn, widget marketing, COD/vận đơn/kênh online từ KiotViet.
 
+#### 3.2G. System Settings — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/System/02-SYSTEM-SETTINGS.md`
+
+Đã định hướng từ KiotViet Settings audit:
+
+- Settings QC-OMS chỉ hiển thị cấu hình có dùng thật trong xưởng.
+- Giữ thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường và cấu hình nền hàng hóa như đơn vị tính/nhóm hàng.
+- Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
+- POS/thu nợ chỉ ghi nhận chuyển khoản vào tài khoản ngân hàng đã khai báo; không cần kết nối QR ting ting/bank partner.
+- Mẫu in là bill thường, không phải HĐĐT.
+- Bỏ giao hàng/COD/đối tác vận chuyển, QR partner/NAPAS/MoMo/ZaloPay, SMS/Zalo marketing provider, ngoại tệ/tỷ giá, VAT/thuế/HĐĐT, tích điểm/voucher/coupon/khuyến mại campaign, bảo hành/bảo trì retail, cân điện tử.
+- Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
+
 #### 3.3. Order draft và Order persistence
 
 Source of Truth đã tạo/cập nhật:
