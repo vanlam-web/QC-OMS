@@ -177,3 +177,50 @@ Không hiển thị menu/chức năng trong lát cắt đầu tiên:
 - trả hàng nhập
 - hóa đơn đầu vào điện tử
 - báo cáo NCC nâng cao
+
+---
+
+## 9. Trạng thái màn theo lát cắt
+
+Để implement không phải làm toàn bộ Purchase một lần, UI chia theo lát cắt:
+
+| Slice | UI bật | UI chưa bật |
+|---|---|---|
+| P1 Supplier foundation | Danh sách NCC, tạo/sửa NCC, liên kết khách hàng | Tab phiếu nhập/công nợ có thể empty/readonly 0 |
+| P2 Purchase draft/list/detail | Danh sách phiếu nhập, tạo/sửa draft hàng thường | Nút Hoàn thành có thể disabled nếu P3 chưa có |
+| P3 Post normal receipt | Nút Hoàn thành cho hàng thường, cập nhật giá nhập cuối | Cuộn/tấm vật lý nếu P4 chưa có |
+| P4 Roll/sheet purchase | Form nhập cuộn/tấm vật lý | Sửa posted nâng cao |
+| P5 Supplier payments | Trả tiền NCC sau phiếu nhập | Trả nhiều tài khoản trong một lần |
+
+Trong P1/P2, UI không được hiển thị nút chức năng chưa làm như thể đã chạy được. Nếu cần giữ vị trí, dùng disabled state kèm tooltip ngắn.
+
+### 9.1. Supplier foundation P1 implement-ready
+
+P1 đủ nhỏ để làm độc lập:
+
+- route/list NCC
+- form thêm/sửa NCC
+- field `linked_customer_id` chọn từ khách hàng hiện có
+- search theo mã/tên/sĐT
+- filter trạng thái
+- cột tổng mua/nợ hiện tại trả `0` nếu chưa có Purchase
+
+Acceptance UI:
+
+- tạo NCC với tên, mã tự sinh nếu bỏ trống
+- SĐT trống vẫn lưu được
+- gắn khách hàng liên kết và mở link qua hồ sơ khách
+- NCC inactive không xuất hiện trong chọn NCC mặc định khi tạo phiếu nhập sau này
+
+### 9.2. Purchase draft P2 implement-ready
+
+P2 đủ nhỏ nếu chỉ làm hàng thường:
+
+- form tạo phiếu nhập draft
+- chọn NCC
+- tìm hàng theo mã/tên
+- dòng hàng thường: số lượng, đơn giá, giảm giá, thành tiền
+- tổng tiền hàng, giảm giá phiếu, cần trả, đã trả tạm, còn phải trả
+- lưu draft, sửa draft
+
+Chưa post tồn/kế toán nếu P3 chưa làm. Draft chỉ là dữ liệu nháp server.

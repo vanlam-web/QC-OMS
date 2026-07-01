@@ -54,10 +54,16 @@
 | `product_id` | FK |
 | `inventory_shape` | Snapshot tại thời điểm nhập: `normal`, `roll`, `sheet` |
 | `unit_id` | Đơn vị mua |
+| `unit_name_snapshot` | Text đơn vị mua tại thời điểm nhập nếu chưa có unit table |
 | `quantity` | Số lượng dòng nhập |
 | `unit_cost` | Đơn giá nhập |
+| `discount_amount` | Giảm giá dòng nếu có |
 | `line_amount` | Thành tiền |
 | `physical_payload` | JSON snapshot cho roll/sheet nếu cần |
+
+P2 có thể dùng `unit_name_snapshot` để tránh phải hoàn tất unit conversion schema trước. Khi unit table/quy đổi đã sẵn sàng, có thể bổ sung FK đầy đủ.
+
+Không cho trùng `product_id` trong cùng một draft P2 nếu backend chưa có merge-line rõ ràng. Điều này giúp `latest_purchase_cost` khi post đơn giản và dễ kiểm tra.
 
 ---
 
@@ -100,3 +106,10 @@ Giá vốn nên lưu tại:
 - bảng tổng hợp cost nếu cần tối ưu báo cáo
 
 Không dùng PriceBook làm nơi sửa giá vốn kế toán. PriceBook MVP chỉ đọc `giá nhập cuối` (`products.latest_purchase_cost`) để tính giá bán theo công thức. Trước khi Purchase receipt hoàn chỉnh, trường này có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát; sau này phiếu nhập `posted` là nguồn chính cập nhật.
+
+Khi post phiếu nhập:
+
+- với mỗi sản phẩm trong phiếu, cập nhật `products.latest_purchase_cost = purchase_receipt_items.unit_cost`
+- cập nhật `products.latest_purchase_cost_at = purchase_receipts.posted_at`
+- cập nhật actor theo người post nếu schema sản phẩm có `latest_purchase_cost_updated_by`
+- nếu cùng sản phẩm bị trùng dòng, backend phải reject hoặc merge trước khi post; P2/P3 ưu tiên reject để đơn giản

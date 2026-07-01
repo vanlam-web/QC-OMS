@@ -611,9 +611,11 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
    - Mức sẵn sàng: trung bình-cao.
    - Lý do: SoT đã có cho NCC, phiếu nhập, công nợ NCC, nhập cuộn/tấm vật lý, cập nhật `latest_purchase_cost`.
    - Nên chia nhỏ:
-     - supplier list/detail + linked customer
-     - purchase receipt draft/list/detail
-     - post receipt tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
+     - P1 supplier list/detail + linked customer
+     - P2 purchase receipt draft/list/detail cho hàng thường
+     - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
+     - P4 roll/sheet purchase objects sau khi Inventory object model đủ rõ
+     - P5 supplier payments sau phiếu nhập
    - Cần implement đánh giá kỹ vì chạm Inventory/Finance nhiều hơn Phase 3B.
 
 3. **Supplier/customer link**

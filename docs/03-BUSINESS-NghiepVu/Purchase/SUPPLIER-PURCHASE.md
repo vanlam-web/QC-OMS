@@ -216,3 +216,99 @@ Quy tắc này đi cùng hướng công nợ khách đã chốt: trả nợ theo
 - Phiếu nhập trả chưa đủ sinh công nợ NCC.
 - Trả tiền NCC tạo phiếu chi/sổ quỹ đúng phương thức tiền.
 - Không có luồng HĐĐT/VAT/thuế trong Purchase MVP.
+
+---
+
+## 9. Đề xuất chia lát cắt implement
+
+Purchase/Supplier chạm Inventory, Finance và PriceBook, nên không nên làm một PR lớn.
+
+### Slice P1 — Supplier foundation
+
+Phạm vi:
+
+- bảng `suppliers`
+- CRUD NCC tối thiểu
+- danh sách/search/filter
+- liên kết thủ công `linked_customer_id`
+- hiển thị tổng mua/nợ hiện tại dạng tổng hợp, có thể trả `0` nếu chưa có phiếu nhập
+
+Không gồm:
+
+- phiếu nhập
+- công nợ thật
+- thanh toán NCC
+- báo cáo NCC
+
+Acceptance:
+
+- tạo NCC chỉ cần tên; mã tự sinh nếu trống
+- số điện thoại được phép trống và không unique cứng
+- gắn khách hàng liên kết nếu cùng organization
+- nếu NCC inactive, không chọn làm NCC mới trong phiếu nhập sau này
+
+### Slice P2 — Purchase receipt draft/list/detail
+
+Phạm vi:
+
+- tạo phiếu nhập `draft`
+- sửa draft
+- danh sách phiếu nhập
+- chi tiết phiếu nhập readonly/edit draft
+- dòng hàng thường với quantity/unit_cost/discount/line_total
+- số chứng từ NCC dạng text
+
+Không gồm:
+
+- post tăng tồn
+- thanh toán thật
+- roll/sheet object vật lý đầy đủ
+
+Acceptance:
+
+- draft không tạo stock movement, cashbook, payable
+- tìm exact mã `PN...` không bị mất do filter tháng hiện tại
+- tính tổng tiền hàng/giảm giá/cần trả/còn phải trả từ dòng hàng
+
+### Slice P3 — Post receipt cho hàng thường
+
+Phạm vi:
+
+- `POST /purchase/receipts/{id}/post`
+- transaction tăng tồn hàng `normal`
+- cập nhật `products.latest_purchase_cost`
+- tạo payable nếu chưa trả đủ
+- tạo cashbook outflow nếu trả ngay
+
+Không gồm:
+
+- roll/sheet object vật lý nếu Inventory chưa sẵn sàng
+- trả nợ NCC sau nhiều phiếu
+- sửa/hủy posted nâng cao
+
+Acceptance:
+
+- post idempotent/guard: không post lại phiếu đã posted
+- rollback toàn bộ nếu stock/cash/payable lỗi
+- `latest_purchase_cost` lấy từ dòng nhập của sản phẩm trong phiếu posted; P2/P3 ưu tiên không cho trùng sản phẩm trong cùng phiếu
+- nếu cùng sản phẩm nhiều dòng trong một phiếu, backend phải merge trước hoặc dùng dòng cuối sau khi validate; ưu tiên không cho trùng dòng sản phẩm trong draft để đơn giản
+
+### Slice P4 — Roll/sheet purchase objects
+
+Phạm vi:
+
+- nhập cuộn/tấm theo vật lý
+- tạo roll/sheet object hoặc lot theo Inventory schema hiện có
+- phân bổ unit cost vào object/lô
+
+Chỉ làm sau khi Inventory roll/sheet object model đủ rõ trong code.
+
+### Slice P5 — Supplier payments
+
+Phạm vi:
+
+- trả tiền NCC sau phiếu nhập
+- phân bổ vào phiếu nhập nợ cũ nhất trước
+- ghi cashbook outflow theo tiền mặt/chuyển khoản một tài khoản
+
+Không cần nhiều tài khoản trong một lần trả ở MVP.

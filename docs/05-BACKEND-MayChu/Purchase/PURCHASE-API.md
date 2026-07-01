@@ -21,6 +21,8 @@
 | `POST` | `/v1/purchase/receipts/{id}/cancel` | Hủy phiếu |
 | `POST` | `/v1/suppliers/{id}/payments` | Trả tiền NCC |
 
+Không cần implement tất cả endpoint trong một slice. Ưu tiên P1/P2/P3 theo [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md#9-đề-xuất-chia-lát-cắt-implement).
+
 ## 2. Supplier/customer link
 
 Hồ sơ NCC có thể liên kết tới khách hàng khi cùng một đối tác vừa mua vừa bán với xưởng.
@@ -34,7 +36,124 @@ Quy tắc API:
 
 ---
 
-## 3. Transaction khi post phiếu nhập
+## 3. Supplier API contract
+
+### `GET /v1/suppliers`
+
+**Permission:** `perm.manage_inventory` hoặc permission quản lý danh mục/kho tương đương trong MVP preset nội bộ.
+
+**Query:**
+
+| Tham số | Mô tả |
+|---|---|
+| `q` | Tìm theo mã/tên/số điện thoại |
+| `status` | `active`, `inactive`, `all`; mặc định `active` |
+| `page`, `page_size` | Phân trang |
+
+**Response item tối thiểu:**
+
+```json
+{
+  "id": "uuid",
+  "code": "NCC000001",
+  "name": "Nguyễn Phong",
+  "phone": "090...",
+  "email": null,
+  "status": "active",
+  "linked_customer": {
+    "id": "uuid",
+    "code": "KH000123",
+    "name": "Nguyễn Phong"
+  },
+  "current_payable_amount": 0,
+  "total_purchase_amount": 0
+}
+```
+
+### `POST /v1/suppliers`
+
+**Input:**
+
+```json
+{
+  "code": "",
+  "name": "Nguyễn Phong",
+  "phone": "",
+  "email": "",
+  "address": "",
+  "tax_code": "",
+  "linked_customer_id": "uuid",
+  "notes": ""
+}
+```
+
+Rules:
+
+- `name` bắt buộc.
+- `code` bỏ trống thì backend tự sinh `NCC000001...`.
+- `phone` được phép trống, không unique cứng.
+- `linked_customer_id` nếu có phải cùng organization.
+
+### `PATCH /v1/suppliers/{id}`
+
+Cho phép sửa các trường hồ sơ và `status`.
+
+Không xóa vật lý NCC đã có chứng từ.
+
+---
+
+## 4. Purchase receipt API contract
+
+### `POST /v1/purchase/receipts`
+
+Tạo phiếu nhập draft.
+
+**Input tối thiểu P2:**
+
+```json
+{
+  "supplier_id": "uuid",
+  "received_at": "2026-07-01T10:00:00+07:00",
+  "supplier_document_no": "HD-NCC-001",
+  "notes": "",
+  "items": [
+    {
+      "product_id": "uuid",
+      "unit_name": "tấm",
+      "quantity": 2,
+      "unit_cost": 100000,
+      "discount_amount": 0
+    }
+  ],
+  "discount_amount": 0,
+  "paid_amount": 0,
+  "payment_method": null,
+  "bank_account_id": null
+}
+```
+
+Rules:
+
+- P2 chỉ cần hỗ trợ hàng thường nếu roll/sheet object model chưa làm.
+- `quantity > 0`, `unit_cost >= 0`, discount không âm.
+- Backend tính `subtotal_amount`, `payable_amount`, `remaining_amount`; không tin tổng tiền từ client.
+- Draft không tạo stock movement, payable, cashbook.
+- Không cho trùng cùng `product_id` trong một draft P2 để tránh nhập nhiều dòng cùng sản phẩm làm mơ hồ `latest_purchase_cost`.
+
+### `GET /v1/purchase/receipts`
+
+Hỗ trợ filter:
+
+- `q`: mã phiếu, mã/tên NCC, số chứng từ NCC
+- `date_from`, `date_to`
+- `status`
+- `created_by`, `posted_by` nếu có
+
+Nếu `q` là exact mã phiếu `PN...`, backend phải bỏ qua/widen date filter mặc định.
+
+### `POST /v1/purchase/receipts/{id}/post`
+
+## 5. Transaction khi post phiếu nhập
 
 `POST /v1/purchase/receipts/{id}/post` phải chạy trong transaction:
 
@@ -46,13 +165,14 @@ Quy tắc API:
 6. lưu giá vốn trên dòng nhập và object vật lý
 7. tạo payable nếu chưa trả đủ
 8. tạo cashbook outflow nếu có trả ngay
-9. chuyển trạng thái phiếu sang `posted`
+9. cập nhật `products.latest_purchase_cost`, `latest_purchase_cost_at`, `latest_purchase_cost_updated_by`
+10. chuyển trạng thái phiếu sang `posted`
 
 Nếu bất kỳ bước nào lỗi, rollback toàn bộ.
 
 ---
 
-## 4. Search và filter
+## 6. Search và filter
 
 Danh sách phiếu nhập cần hỗ trợ:
 
@@ -66,10 +186,11 @@ Nếu search exact mã phiếu, backend nên bỏ qua/widen date filter mặc đ
 
 ---
 
-## 5. Không làm trong API đầu tiên
+## 7. Không làm trong API đầu tiên
 
 - đặt hàng nhập
 - trả hàng nhập
 - tích hợp hóa đơn điện tử/thuế
 - nhiều phương thức thanh toán trong một lần trả NCC
 - báo cáo NCC nâng cao
+- tự động đối trừ công nợ NCC âm với công nợ khách hàng liên kết
