@@ -30,13 +30,16 @@ KiotViet có:
 - Nội dung thấy được: doanh thu, thực thu, số lượng giao dịch, thu khác, làm tròn, phí trả hàng, VAT.
 - Có gợi ý bật thông báo tiền về để đối soát cuối ngày.
 
-### 2.2. Báo cáo bán hàng
+### 2.2. Phân tích kinh doanh / Báo cáo bán hàng
 
 KiotViet có:
 
 - Biểu đồ và báo cáo.
 - Lọc bảng giá, thời gian, phương thức bán hàng, kênh bán, nhân viên.
 - Chỉ số chính: doanh thu thuần theo thời gian.
+- Màn `Phân tích > Kinh doanh` có số hóa đơn, doanh thu, giá trị trả, doanh thu thuần, tổng giá vốn, lợi nhuận gộp.
+- Có so sánh với kỳ trước, trung bình/ngày.
+- Có `Top 10 nhóm hàng` và `Top 10 hàng hóa` theo doanh thu, doanh thu trung bình/đơn và so với kỳ trước.
 
 ### 2.3. Báo cáo tài chính
 
@@ -45,6 +48,7 @@ KiotViet có:
 - Báo cáo theo tháng/năm.
 - Lọc thời gian.
 - Có xử lý dữ liệu tài chính tổng hợp.
+- `Phân tích > Hiệu quả > Công nợ khách hàng` có số lượng khách đang nợ, giá trị nợ hiện tại, tỷ lệ nợ/doanh thu thuần, biến động công nợ 12 tháng, lượng khách theo số ngày nợ, top khách nợ nhiều/lâu.
 
 ### 2.4. Báo cáo hàng hóa
 
@@ -54,6 +58,29 @@ KiotViet có:
 - Lọc kho, bảng giá, thời gian, hàng hóa, loại hàng, thương hiệu, nhóm hàng, tồn kho, nhóm khách/khách hàng.
 - Top sản phẩm doanh thu cao nhất.
 - Top sản phẩm bán chạy theo số lượng.
+- `Phân tích > Hàng hóa` có số mặt hàng đã bán, số lượng thực bán, doanh thu thuần TB/SP, lợi nhuận gộp TB/SP, top nhóm hàng/hàng hóa theo số lượng bán, doanh thu thuần và lợi nhuận gộp.
+
+### 2.5. Phân tích khách hàng
+
+KiotViet có:
+
+- Tổng quan khách hàng: tổng lượng khách, khách cũ, khách mới, khách lẻ.
+- Tổng doanh thu theo khách cũ/khách mới/khách lẻ.
+- Lượng khách, doanh thu, kênh bán.
+- Xu hướng gắn bó, tỷ lệ khách quay trở lại.
+- Chân dung khách hàng: độ tuổi, giới tính, tỉnh thành.
+
+QC-OMS chỉ giữ phần quản trị bán hàng/công nợ: khách cũ/mới/lẻ, top khách doanh thu, khách còn nợ, khách quay lại nếu dữ liệu đủ. Không làm chân dung khách hàng theo độ tuổi/giới tính/tỉnh thành trong scope hiện tại vì các trường này không phải nghiệp vụ xưởng.
+
+### 2.6. Báo cáo kênh bán
+
+KiotViet có báo cáo kênh bán hàng:
+
+- Kiểu hiển thị biểu đồ/báo cáo.
+- Mối quan tâm: bán hàng.
+- Bộ lọc thời gian, người bán, kênh bán.
+
+QC-OMS không làm báo cáo kênh bán trong scope hiện tại vì đã chốt không bán online/đa kênh/TMĐT/MXH.
 
 ---
 
@@ -92,6 +119,8 @@ Nội dung cần có:
 - Doanh thu theo nhân viên bán.
 - Doanh thu theo khách hàng.
 - Doanh thu theo nhóm khách/bảng giá.
+- Doanh thu theo nhóm hàng.
+- Top nhóm hàng/hàng hóa theo doanh thu và số lượng/diện tích bán.
 - Danh sách hóa đơn lớn.
 - Danh sách hóa đơn còn nợ.
 - Danh sách hóa đơn đã sửa/hủy.
@@ -100,6 +129,8 @@ Nội dung cần có:
 - Top khách hàng còn nợ.
 
 Không có báo cáo theo kênh bán vì QC-OMS chỉ quản lý bán hàng nội bộ của xưởng trong MVP.
+
+Các chỉ số giá vốn/lợi nhuận gộp chỉ hiển thị dạng tham khảo khi dữ liệu giá vốn đủ. Không gọi là lợi nhuận kế toán chuẩn cho tới khi Purchase, giá vốn và chi phí sản xuất được chốt.
 
 ### 3.3. Báo cáo hàng hóa/tồn kho
 
@@ -113,6 +144,7 @@ Nội dung cần có:
 - Sản phẩm sắp hết tồn.
 - Sản phẩm bán nhiều.
 - Sản phẩm doanh thu cao.
+- Top nhóm hàng/hàng hóa theo số lượng bán, doanh thu thuần và lợi nhuận gộp tham khảo nếu có giá vốn đủ.
 - Sản phẩm tồn âm.
 - Sản phẩm ngưng bán còn tồn.
 - Chênh lệch OMS/bill với máy sản xuất, nếu đã có dữ liệu đối soát.
@@ -149,6 +181,10 @@ Nội dung cần có:
 - Nợ theo từng khách.
 - Nợ theo từng hóa đơn.
 - Hóa đơn nợ lâu ngày.
+- Số khách đang nợ.
+- Giá trị nợ/doanh thu thuần tham khảo.
+- Biến động công nợ theo tháng.
+- Top khách nợ nhiều nhất và nợ lâu nhất.
 - Lịch sử thu nợ.
 - Khách có nợ tăng nhanh.
 
@@ -173,6 +209,7 @@ Các điểm để sau:
 - Báo cáo lợi nhuận chuẩn kế toán chưa làm khi chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 - Báo cáo công nợ theo tuổi nợ 7/15/30 ngày để sau; trước mắt có danh sách nợ theo khách/hóa đơn và hóa đơn nợ lâu ngày.
 - Báo cáo nhân viên bán có thể làm sau báo cáo cuối ngày, khi phân quyền/nhân viên ổn định hơn.
+- Báo cáo khách hàng theo độ tuổi/giới tính/tỉnh thành không làm trong scope hiện tại.
 
 ---
 
@@ -184,4 +221,5 @@ Các điểm để sau:
 - Báo cáo trả hàng.
 - Báo cáo lợi nhuận chuẩn kế toán.
 - Báo cáo theo thương hiệu/thuộc tính như retail.
+- Báo cáo nhân khẩu học khách hàng như tuổi, giới tính, tỉnh thành.
 - Field thương hiệu riêng trong báo cáo hàng hóa.

@@ -391,8 +391,10 @@ Draft tham khảo KiotViet đã tạo:
 - Báo cáo cuối ngày là báo cáo động; khi dữ liệu chứng từ được sửa hợp lệ, số báo cáo thay đổi theo.
 - Không khóa/chốt báo cáo cuối ngày thành bản bất biến trong QC-OMS hiện tại.
 - Báo cáo/phân tích vẫn cần đầy đủ cho quản trị xưởng: bán hàng, khách hàng, công nợ, hàng hóa/tồn kho và tài chính.
+- Đã bổ sung PRD `Reports/06-CUSTOMER-REPORT.md` cho khách cũ/mới/lẻ, khách quay lại và top khách.
 - Báo cáo hàng hóa của QC-OMS phải nhìn được tồn vật lý cuộn/tấm.
 - Bỏ kênh bán, VAT/HĐĐT và thương hiệu/thuộc tính retail khỏi báo cáo QC-OMS.
+- Bỏ nhân khẩu học khách hàng kiểu retail như tuổi, giới tính, tỉnh thành khỏi báo cáo QC-OMS hiện tại.
 - Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 

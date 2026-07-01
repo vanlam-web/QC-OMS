@@ -38,8 +38,12 @@ Không có bộ lọc kênh bán, giao hàng, COD, VAT/HĐĐT hoặc trả hàng
 | Khách đã trả | Tổng tiền đã thu theo hóa đơn trong kỳ |
 | Công nợ mới | Phần hóa đơn còn nợ phát sinh trong kỳ |
 | Hóa đơn sửa/hủy | Số chứng từ bị hủy do sửa hoặc hủy thủ công |
+| Doanh thu theo nhóm hàng | Tổng doanh thu theo nhóm hàng trong kỳ |
+| Lợi nhuận gộp tham khảo | Chỉ hiển thị khi dữ liệu giá vốn đủ tin cậy |
 
 Doanh thu không chờ khách trả đủ tiền. Phần chưa thu được theo dõi ở công nợ.
+
+Lợi nhuận gộp nếu hiển thị chỉ là tham khảo quản trị, không phải lợi nhuận kế toán chuẩn cho tới khi Purchase, phương pháp giá vốn và chi phí sản xuất được chốt.
 
 ---
 
@@ -56,6 +60,8 @@ Sau MVP có thể bổ sung:
 - doanh thu theo giờ
 - doanh thu theo nhân viên bán
 - doanh thu theo nhóm khách/bảng giá
+- top nhóm hàng theo doanh thu
+- top hàng hóa theo doanh thu/số lượng
 
 Doanh thu theo nhân viên chỉ là góc nhìn báo cáo bán hàng theo người chốt hóa đơn. Không dùng báo cáo này để mở module hoa hồng, bảng lương hoặc KPI nhân sự trong MVP.
 
@@ -89,6 +95,7 @@ Nên có các bảng tóm tắt:
 - top khách hàng còn nợ mới trong kỳ
 - top sản phẩm/dịch vụ theo doanh thu
 - top sản phẩm/dịch vụ theo số lượng
+- top nhóm hàng theo doanh thu
 - danh sách hóa đơn lớn
 - danh sách hóa đơn còn nợ
 
@@ -104,6 +111,7 @@ Không có top theo kênh bán hoặc thương hiệu.
 4. Hóa đơn sửa/hủy trong kỳ không bị mất khỏi audit.
 5. Bấm mã hóa đơn mở chi tiết chứng từ.
 6. Không có bộ lọc/cột kênh bán, COD, HĐĐT hoặc trả hàng.
+7. Nếu hiển thị lợi nhuận gộp, UI phải ghi rõ là tham khảo khi giá vốn chưa chốt đầy đủ.
 
 ---
 

@@ -38,6 +38,7 @@ Tuổi nợ có thể để sau nếu chưa cần cảnh báo sâu; bảng vẫn
 | Nợ mới trong kỳ | Công nợ phát sinh từ hóa đơn bán trong kỳ |
 | Thu nợ trong kỳ | Tiền thu vào hóa đơn nợ cũ trong kỳ |
 | Hóa đơn nợ lâu | Hóa đơn quá ngưỡng ngày đã chọn |
+| Tỷ lệ nợ/doanh thu | Giá trị nợ hiện tại so với doanh thu thuần trong kỳ, chỉ để cảnh báo quản trị |
 
 Không có số dư âm/trả trước trong MVP/current scope.
 
@@ -55,6 +56,13 @@ Không có số dư âm/trả trước trong MVP/current scope.
 | Hóa đơn nợ cũ nhất | Mã hóa đơn và ngày phát sinh |
 | Số hóa đơn nợ | Đếm hóa đơn còn nợ |
 | Thu gần nhất | Ngày/phiếu thu gần nhất |
+| Tuổi nợ lớn nhất | Số ngày của hóa đơn nợ cũ nhất |
+
+Bảng này nên hỗ trợ sắp xếp theo:
+
+- tổng nợ nhiều nhất
+- tuổi nợ lâu nhất
+- tỷ lệ nợ/doanh thu cao nhất nếu dữ liệu đủ
 
 ---
 
@@ -98,8 +106,8 @@ Phân bổ mặc định vào hóa đơn cũ nhất trước.
 3. Báo cáo không tạo hoặc hiển thị khách trả trước/số dư âm.
 4. Thu nợ trong kỳ khớp với phiếu thu và Sổ quỹ.
 5. Hóa đơn hủy/sửa không làm mất lịch sử công nợ.
+6. Báo cáo xem được top khách nợ nhiều nhất và nợ lâu nhất.
 
 ---
 
 ← [Quay về Reports README](./README.md)
-
