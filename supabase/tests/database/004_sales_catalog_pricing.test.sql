@@ -1,6 +1,6 @@
 begin;
 
-select plan(58);
+select plan(59);
 
 select has_table('public', 'products', 'products table exists');
 select has_column('public', 'products', 'organization_id', 'products.organization_id exists');
@@ -62,6 +62,13 @@ select has_column('public', 'price_formula_rules', 'is_active', 'price_formula_r
 select has_column('public', 'price_formula_rules', 'created_by', 'price_formula_rules.created_by exists');
 select has_column('public', 'price_formula_rules', 'updated_by', 'price_formula_rules.updated_by exists');
 select has_index('public', 'price_formula_rules', 'idx_price_formula_rules_org_active', 'price_formula_rules has organization/active index');
+
+select has_function(
+  'public',
+  'apply_price_formula_tx',
+  array['uuid', 'uuid', 'jsonb', 'jsonb'],
+  'price formula apply transaction rpc exists'
+);
 
 select results_eq(
   $$ select count(*)::integer from public.permissions where code = 'perm.edit_price_book' $$,

@@ -17,6 +17,8 @@ const sellMethodLabels: Record<SellMethod, string> = {
   combo: 'Combo',
 }
 
+type AdjustmentMode = 'none' | 'amount' | 'percent'
+
 export function CatalogPage({
   service,
   onOpenDashboard,
@@ -31,7 +33,21 @@ export function CatalogPage({
   const [previewingFormula, setPreviewingFormula] = useState(false)
   const [applyingFormula, setApplyingFormula] = useState(false)
   const [formulaPreview, setFormulaPreview] = useState<PriceFormulaPreview | null>(null)
-  const [formulaForm, setFormulaForm] = useState({ name: '', fixedCost: '', fixedProfit: '' })
+  const [formulaForm, setFormulaForm] = useState({
+    name: '',
+    codeContains: '',
+    nameContains: '',
+    sellMethod: '',
+    costMode: 'fixed' as 'fixed' | 'amount_plus_percent',
+    costAmount: '',
+    costPercent: '',
+    profitMode: 'fixed' as 'fixed' | 'tiers',
+    fixedProfit: '',
+    tierOperator: '>' as '<' | '<=' | '>' | '>=' | '=',
+    tierValue: '',
+    tierAmount: '',
+    adjustments: {} as Record<string, { mode: AdjustmentMode; value: string }>,
+  })
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
   const [form, setForm] = useState<{
@@ -128,16 +144,43 @@ export function CatalogPage({
   }
 
   function buildFormulaInput(): PriceFormulaInput {
+    const priceListAdjustments: PriceFormulaInput['price_list_adjustments'] = {}
+    for (const [priceListId, adjustment] of Object.entries(formulaForm.adjustments)) {
+      const value = Number(adjustment.value || 0)
+      if (adjustment.mode === 'amount') priceListAdjustments[priceListId] = { type: 'amount', amount: value }
+      if (adjustment.mode === 'percent') priceListAdjustments[priceListId] = { type: 'percent', percent: value }
+    }
+
     return {
       name: formulaForm.name,
       product_filter: {
         status: 'active',
-        ...(search.trim() ? { name_contains: search.trim() } : {}),
-        ...(status !== 'all' ? {} : {}),
+        ...(formulaForm.codeContains.trim() ? { code_contains: formulaForm.codeContains.trim() } : {}),
+        ...(formulaForm.nameContains.trim() ? { name_contains: formulaForm.nameContains.trim() } : {}),
+        ...(formulaForm.sellMethod ? { sell_method: formulaForm.sellMethod as SellMethod } : {}),
       },
-      cost_formula: { type: 'fixed', amount: Number(formulaForm.fixedCost || 0) },
-      profit_formula: { type: 'fixed', amount: Number(formulaForm.fixedProfit || 0) },
-      price_list_adjustments: {},
+      cost_formula:
+        formulaForm.costMode === 'fixed'
+          ? { type: 'fixed', amount: Number(formulaForm.costAmount || 0) }
+          : {
+              type: 'amount_plus_percent',
+              amount: Number(formulaForm.costAmount || 0),
+              percent_of_latest_purchase_cost: Number(formulaForm.costPercent || 0),
+            },
+      profit_formula:
+        formulaForm.profitMode === 'fixed'
+          ? { type: 'fixed', amount: Number(formulaForm.fixedProfit || 0) }
+          : {
+              type: 'tiers',
+              tiers: [
+                {
+                  operator: formulaForm.tierOperator,
+                  value: Number(formulaForm.tierValue || 0),
+                  amount: Number(formulaForm.tierAmount || 0),
+                },
+              ],
+            },
+      price_list_adjustments: priceListAdjustments,
     }
   }
 
@@ -269,27 +312,178 @@ export function CatalogPage({
               />
             </label>
             <label>
-              Chi phí cố định
+              Mã hàng chứa
               <input
-                inputMode="numeric"
-                value={formulaForm.fixedCost}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, fixedCost: event.target.value }))}
+                value={formulaForm.codeContains}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, codeContains: event.target.value }))}
               />
             </label>
             <label>
-              Lợi nhuận cố định
+              Tên hàng chứa
               <input
-                inputMode="numeric"
-                value={formulaForm.fixedProfit}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, fixedProfit: event.target.value }))}
+                value={formulaForm.nameContains}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, nameContains: event.target.value }))}
               />
             </label>
-            <button disabled={previewingFormula} type="submit">
-              Xem trước
-            </button>
-            <button disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
-              Áp dụng công thức
-            </button>
+            <label>
+              Cách bán áp dụng
+              <select
+                value={formulaForm.sellMethod}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, sellMethod: event.target.value }))}
+              >
+                <option value="">Tất cả</option>
+                {Object.entries(sellMethodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Kiểu chi phí
+              <select
+                value={formulaForm.costMode}
+                onChange={(event) =>
+                  setFormulaForm((current) => ({
+                    ...current,
+                    costMode: event.target.value as 'fixed' | 'amount_plus_percent',
+                  }))
+                }
+              >
+                <option value="fixed">Cố định</option>
+                <option value="amount_plus_percent">Cộng tiền + % giá nhập</option>
+              </select>
+            </label>
+            <label>
+              Chi phí cộng thêm
+              <input
+                inputMode="numeric"
+                value={formulaForm.costAmount}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, costAmount: event.target.value }))}
+              />
+            </label>
+            <label>
+              % theo giá nhập cuối
+              <input
+                inputMode="decimal"
+                value={formulaForm.costPercent}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, costPercent: event.target.value }))}
+                disabled={formulaForm.costMode === 'fixed'}
+              />
+            </label>
+            <label>
+              Kiểu lợi nhuận
+              <select
+                value={formulaForm.profitMode}
+                onChange={(event) =>
+                  setFormulaForm((current) => ({ ...current, profitMode: event.target.value as 'fixed' | 'tiers' }))
+                }
+              >
+                <option value="fixed">Cố định</option>
+                <option value="tiers">Theo điều kiện giá nhập</option>
+              </select>
+            </label>
+            {formulaForm.profitMode === 'fixed' ? (
+              <label>
+                Lợi nhuận cố định
+                <input
+                  inputMode="numeric"
+                  value={formulaForm.fixedProfit}
+                  onChange={(event) => setFormulaForm((current) => ({ ...current, fixedProfit: event.target.value }))}
+                />
+              </label>
+            ) : (
+              <>
+                <label>
+                  Điều kiện lợi nhuận
+                  <select
+                    value={formulaForm.tierOperator}
+                    onChange={(event) =>
+                      setFormulaForm((current) => ({
+                        ...current,
+                        tierOperator: event.target.value as '<' | '<=' | '>' | '>=' | '=',
+                      }))
+                    }
+                  >
+                    <option value=">">&gt;</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<">&lt;</option>
+                    <option value="<=">&lt;=</option>
+                    <option value="=">=</option>
+                  </select>
+                </label>
+                <label>
+                  Mốc giá nhập
+                  <input
+                    inputMode="numeric"
+                    value={formulaForm.tierValue}
+                    onChange={(event) => setFormulaForm((current) => ({ ...current, tierValue: event.target.value }))}
+                  />
+                </label>
+                <label>
+                  Lợi nhuận tier
+                  <input
+                    inputMode="numeric"
+                    value={formulaForm.tierAmount}
+                    onChange={(event) => setFormulaForm((current) => ({ ...current, tierAmount: event.target.value }))}
+                  />
+                </label>
+              </>
+            )}
+            {state?.priceLists.map((priceList) => (
+              <div className="catalog-adjustment" key={priceList.id}>
+                <label>
+                  Điều chỉnh {priceList.name}
+                  <select
+                    value={formulaForm.adjustments[priceList.id]?.mode ?? 'none'}
+                    onChange={(event) =>
+                      setFormulaForm((current) => ({
+                        ...current,
+                        adjustments: {
+                          ...current.adjustments,
+                          [priceList.id]: {
+                            mode: event.target.value as AdjustmentMode,
+                            value: current.adjustments[priceList.id]?.value ?? '',
+                          },
+                        },
+                      }))
+                    }
+                  >
+                    <option value="none">Không</option>
+                    <option value="amount">Cộng/trừ tiền</option>
+                    <option value="percent">Cộng/trừ %</option>
+                  </select>
+                </label>
+                <label>
+                  Giá trị điều chỉnh {priceList.name}
+                  <input
+                    inputMode="decimal"
+                    value={formulaForm.adjustments[priceList.id]?.value ?? ''}
+                    onChange={(event) =>
+                      setFormulaForm((current) => ({
+                        ...current,
+                        adjustments: {
+                          ...current.adjustments,
+                          [priceList.id]: {
+                            mode: current.adjustments[priceList.id]?.mode ?? 'none',
+                            value: event.target.value,
+                          },
+                        },
+                      }))
+                    }
+                    disabled={(formulaForm.adjustments[priceList.id]?.mode ?? 'none') === 'none'}
+                  />
+                </label>
+              </div>
+            ))}
+            <div className="catalog-formula-actions">
+              <button disabled={previewingFormula} type="submit">
+                Xem trước
+              </button>
+              <button disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
+                Áp dụng công thức
+              </button>
+            </div>
           </form>
         ) : null}
 
@@ -326,6 +520,7 @@ export function CatalogPage({
         {state ? (
           <>
             <p>{state.total} hàng hóa</p>
+            <p className="catalog-price-note">Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.</p>
             <table>
               <thead>
                 <tr>
@@ -347,7 +542,7 @@ export function CatalogPage({
                     <td>{product.name}</td>
                     <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
                     {state.priceLists.map((priceList) => (
-                      <td key={priceList.id}>-</td>
+                      <td key={priceList.id}>Xem preview</td>
                     ))}
                     <td>{sellMethodLabels[product.sell_method]}</td>
                     <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>

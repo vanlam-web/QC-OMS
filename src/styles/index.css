@@ -505,7 +505,7 @@ select {
 
 .catalog-formula-panel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(9rem, 1fr)) auto auto;
+  grid-template-columns: repeat(4, minmax(9rem, 1fr));
   gap: 0.75rem;
   align-items: end;
   border: 1px solid #d9dee7;
@@ -528,12 +528,36 @@ select {
   padding: 0 0.5rem;
 }
 
+.catalog-formula-panel select {
+  min-height: 2.25rem;
+  border: 1px solid #c9d1dd;
+  border-radius: 0.375rem;
+  padding: 0 0.5rem;
+}
+
+.catalog-adjustment {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) minmax(9rem, 1fr);
+  gap: 0.75rem;
+}
+
+.catalog-formula-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+}
+
 .catalog-preview {
   margin: 0 0 1rem;
 }
 
 .catalog-preview p {
   margin: 0 0 0.5rem;
+}
+
+.catalog-price-note {
+  color: #4b5563;
+  font-size: 0.875rem;
 }
 
 .catalog-header button,

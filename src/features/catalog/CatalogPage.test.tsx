@@ -116,19 +116,30 @@ it('shows dynamic price list columns and previews formula results', async () => 
 
   expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
   expect(screen.getByText('25')).toBeInTheDocument()
+  expect(screen.getByText('Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Tạo công thức cho bộ lọc này' }))
   await userEvent.type(screen.getByLabelText('Tên công thức'), 'Fomex')
-  await userEvent.type(screen.getByLabelText('Chi phí cố định'), '5000')
-  await userEvent.type(screen.getByLabelText('Lợi nhuận cố định'), '25000')
+  await userEvent.type(screen.getByLabelText('Mã hàng chứa'), 'MICA')
+  await userEvent.type(screen.getByLabelText('Tên hàng chứa'), 'Mica')
+  await userEvent.selectOptions(screen.getByLabelText('Cách bán áp dụng'), 'linear_m')
+  await userEvent.selectOptions(screen.getByLabelText('Kiểu chi phí'), 'amount_plus_percent')
+  await userEvent.type(screen.getByLabelText('Chi phí cộng thêm'), '5000')
+  await userEvent.type(screen.getByLabelText('% theo giá nhập cuối'), '8')
+  await userEvent.selectOptions(screen.getByLabelText('Kiểu lợi nhuận'), 'tiers')
+  await userEvent.selectOptions(screen.getByLabelText('Điều kiện lợi nhuận'), '>')
+  await userEvent.type(screen.getByLabelText('Mốc giá nhập'), '100000')
+  await userEvent.type(screen.getByLabelText('Lợi nhuận tier'), '25000')
+  await userEvent.selectOptions(screen.getByLabelText('Điều chỉnh Bảng giá chung'), 'amount')
+  await userEvent.type(screen.getByLabelText('Giá trị điều chỉnh Bảng giá chung'), '20000')
   await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
 
   expect(await screen.findByText('150.000')).toBeInTheDocument()
   expect(service.previewPriceFormula).toHaveBeenCalledWith({
     name: 'Fomex',
-    product_filter: { status: 'active' },
-    cost_formula: { type: 'fixed', amount: 5000 },
-    profit_formula: { type: 'fixed', amount: 25000 },
-    price_list_adjustments: {},
+    product_filter: { status: 'active', code_contains: 'MICA', name_contains: 'Mica', sell_method: 'linear_m' },
+    cost_formula: { type: 'amount_plus_percent', amount: 5000, percent_of_latest_purchase_cost: 8 },
+    profit_formula: { type: 'tiers', tiers: [{ operator: '>', value: 100000, amount: 25000 }] },
+    price_list_adjustments: { 'pl-default': { type: 'amount', amount: 20000 } },
   })
 })

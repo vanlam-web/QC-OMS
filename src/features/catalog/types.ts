@@ -82,7 +82,12 @@ export interface PriceFormulaInput {
     sell_method?: SellMethod
   }
   cost_formula: { type: 'fixed'; amount: number } | { type: 'amount_plus_percent'; amount: number; percent_of_latest_purchase_cost: number }
-  profit_formula: { type: 'fixed'; amount: number }
+  profit_formula:
+    | { type: 'fixed'; amount: number }
+    | {
+        type: 'tiers'
+        tiers: Array<{ operator: '<' | '<=' | '>' | '>=' | '='; value: number; amount: number; percent?: number }>
+      }
   price_list_adjustments: Record<string, { type: 'amount'; amount: number } | { type: 'percent'; percent: number }>
 }
 

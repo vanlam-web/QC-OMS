@@ -744,39 +744,15 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async applyPriceFormula(input): Promise<{ formula_rule_id: string; affected_count: number }> {
       const formula = normalizePriceFormula(input.formula);
       validatePriceFormula(formula);
-      const { data: rule, error: ruleError } = await client
-        .from("price_formula_rules")
-        .insert({
-          organization_id: input.organizationId,
-          name: formula.name,
-          product_filter: formula.product_filter,
-          cost_formula: formula.cost_formula,
-          profit_formula: formula.profit_formula,
-          price_list_adjustments: formula.price_list_adjustments,
-          created_by: input.actorUserId,
-          updated_by: input.actorUserId,
-        })
-        .select("id")
-        .single();
-      if (ruleError !== null) throw ruleError;
-
       const uniqueItems = uniqueFormulaSelections(input.selectedItems);
-      const { error: itemError } = await client
-        .from("price_list_items")
-        .upsert(
-          uniqueItems.map((item) => ({
-            organization_id: input.organizationId,
-            product_id: item.product_id,
-            price_list_id: item.price_list_id,
-            unit_price: null,
-            pricing_mode: "formula",
-            formula_rule_id: rule.id,
-          })),
-          { onConflict: "price_list_id,product_id" },
-        );
-      if (itemError !== null) throw itemError;
-
-      return { formula_rule_id: rule.id, affected_count: uniqueItems.length };
+      const { data, error } = await client.rpc("apply_price_formula_tx", {
+        p_organization_id: input.organizationId,
+        p_actor_user_id: input.actorUserId,
+        p_formula: formula,
+        p_selected_items: uniqueItems,
+      });
+      if (error !== null) throw error;
+      return data as { formula_rule_id: string; affected_count: number };
     },
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
       let query = client

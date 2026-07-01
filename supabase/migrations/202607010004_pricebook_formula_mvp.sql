@@ -76,3 +76,89 @@ alter table public.price_list_items
       and formula_rule_id is not null
     )
   );
+
+create or replace function public.apply_price_formula_tx(
+  p_organization_id uuid,
+  p_actor_user_id uuid,
+  p_formula jsonb,
+  p_selected_items jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_rule_id uuid;
+  v_affected_count integer := 0;
+begin
+  if p_formula is null or jsonb_typeof(p_formula) <> 'object' then
+    raise exception using errcode = 'P0001', message = 'VALIDATION_ERROR';
+  end if;
+
+  if p_selected_items is null or jsonb_typeof(p_selected_items) <> 'array' or jsonb_array_length(p_selected_items) = 0 then
+    raise exception using errcode = 'P0001', message = 'VALIDATION_ERROR';
+  end if;
+
+  insert into public.price_formula_rules (
+    organization_id,
+    name,
+    product_filter,
+    cost_formula,
+    profit_formula,
+    price_list_adjustments,
+    created_by,
+    updated_by
+  )
+  values (
+    p_organization_id,
+    p_formula->>'name',
+    coalesce(p_formula->'product_filter', '{}'::jsonb),
+    p_formula->'cost_formula',
+    p_formula->'profit_formula',
+    coalesce(p_formula->'price_list_adjustments', '{}'::jsonb),
+    p_actor_user_id,
+    p_actor_user_id
+  )
+  returning id into v_rule_id;
+
+  with selected_items as (
+    select distinct
+      (item->>'product_id')::uuid as product_id,
+      (item->>'price_list_id')::uuid as price_list_id
+    from jsonb_array_elements(p_selected_items) as item
+  ),
+  upserted as (
+    insert into public.price_list_items (
+      organization_id,
+      product_id,
+      price_list_id,
+      unit_price,
+      pricing_mode,
+      formula_rule_id
+    )
+    select
+      p_organization_id,
+      product_id,
+      price_list_id,
+      null,
+      'formula',
+      v_rule_id
+    from selected_items
+    on conflict (price_list_id, product_id)
+    do update set
+      unit_price = null,
+      pricing_mode = 'formula',
+      formula_rule_id = excluded.formula_rule_id,
+      updated_at = now()
+    returning 1
+  )
+  select count(*) into v_affected_count from upserted;
+
+  return jsonb_build_object(
+    'formula_rule_id', v_rule_id,
+    'affected_count', v_affected_count
+  );
+end;
+$$;
+
+grant execute on function public.apply_price_formula_tx(uuid, uuid, jsonb, jsonb) to service_role;
