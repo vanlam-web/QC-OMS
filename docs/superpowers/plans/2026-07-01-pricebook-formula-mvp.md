@@ -446,7 +446,7 @@ git commit -m "feat: add price formula evaluator"
 - Modify: `supabase/functions/api/repositories/foundation-repository.ts`
 - Modify: `supabase/tests/functions/catalog_test.ts`
 
-- [ ] **Step 1: Write failing route tests**
+- [x] **Step 1: Write failing route tests**
 
 Add to `supabase/tests/functions/catalog_test.ts`:
 
@@ -525,7 +525,7 @@ Deno.test("price formula apply persists selected formula cells", async () => {
 });
 ```
 
-- [ ] **Step 2: Run route tests and verify RED**
+- [x] **Step 2: Run route tests and verify RED**
 
 Run:
 
@@ -535,7 +535,7 @@ npx deno test supabase/tests/functions/catalog_test.ts --allow-env --allow-net
 
 Expected: FAIL with 404 or missing repository methods.
 
-- [ ] **Step 3: Extend contracts and use-cases**
+- [x] **Step 3: Extend contracts and use-cases**
 
 Add repository methods to `FoundationRepository`:
 
@@ -555,7 +555,7 @@ applyPriceFormula(input: {
 
 Add `previewPriceFormula` and `applyPriceFormula` use-cases requiring `perm.edit_price_book`, parsing JSON and calling `validatePriceFormula`.
 
-- [ ] **Step 4: Add routes**
+- [x] **Step 4: Add routes**
 
 In `supabase/functions/api/routes/catalog.ts`, pass `actorUserId` into catalog context and add:
 
@@ -569,14 +569,14 @@ if (url.pathname === "/api/v1/price-lists/formulas/apply" && request.method === 
 }
 ```
 
-- [ ] **Step 5: Implement repository preview/apply**
+- [x] **Step 5: Implement repository preview/apply**
 
 In `foundation-repository.ts`:
 - `previewPriceFormula` loads active products matching filter and active price lists.
 - `applyPriceFormula` inserts one `price_formula_rules` row and upserts selected `price_list_items` as `pricing_mode = 'formula'`, `formula_rule_id = new rule`.
 - Apply returns affected count.
 
-- [ ] **Step 6: Run function tests**
+- [x] **Step 6: Run function tests**
 
 Run:
 
@@ -587,7 +587,7 @@ npx deno check supabase/functions/api/index.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit Task 3**
+- [x] **Step 7: Commit Task 3**
 
 ```bash
 git add supabase/functions/api supabase/tests/functions/catalog_test.ts

@@ -20,6 +20,7 @@ import type {
   PermissionData,
   PaymentReceiptAllocationData,
   PaymentReceiptDetailData,
+  PriceFormulaPreviewData,
   PriceListData,
   ProductData,
   ProductionQueueDraftPayloadData,
@@ -42,6 +43,25 @@ interface PriceRow {
   product_id: string;
   unit_price: number | string;
   price_list_id: string;
+}
+
+interface FormulaProductRow {
+  id: string;
+  code: string;
+  name: string;
+  latest_purchase_cost: number | string | null;
+}
+
+interface FormulaPriceListRow {
+  id: string;
+  name: string;
+}
+
+interface FormulaPriceItemRow {
+  product_id: string;
+  price_list_id: string;
+  unit_price: number | string | null;
+  pricing_mode: "manual" | "formula";
 }
 
 export type PriceFormulaCost =
@@ -582,6 +602,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
             price_list_id: input.priceListId,
             product_id: input.productId,
             unit_price: input.unitPrice,
+            pricing_mode: "manual",
+            formula_rule_id: null,
           },
           { onConflict: "price_list_id,product_id" },
         )
@@ -605,6 +627,94 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .select("id");
       if (error !== null) throw error;
       return (data ?? []).length > 0;
+    },
+    async previewPriceFormula(input): Promise<PriceFormulaPreviewData> {
+      const formula = normalizePriceFormula(input.formula);
+      validatePriceFormula(formula);
+      const [products, priceLists] = await Promise.all([
+        loadFormulaProducts(client, input.organizationId, formula.product_filter),
+        loadFormulaPriceLists(client, input.organizationId),
+      ]);
+
+      const currentItems = await loadFormulaPriceItems(
+        client,
+        input.organizationId,
+        products.map((product) => product.id),
+        priceLists.map((priceList) => priceList.id),
+      );
+      const adjustments = normalizePriceListAdjustments(formula.price_list_adjustments);
+
+      return {
+        affected_count: products.length,
+        items: products.map((product) => {
+          const latestPurchaseCost = toNullableNumber(product.latest_purchase_cost) ?? 0;
+          const productItems = currentItems.get(product.id) ?? new Map();
+          const firstCurrentItem = [...productItems.values()][0];
+
+          return {
+            product_id: product.id,
+            product_code: product.code,
+            product_name: product.name,
+            latest_purchase_cost: latestPurchaseCost,
+            current_mode: firstCurrentItem?.pricing_mode ?? null,
+            current_unit_price: firstCurrentItem === undefined ? null : toNullableNumber(firstCurrentItem.unit_price),
+            computed_prices: priceLists.map((priceList) => {
+              const currentItem = productItems.get(priceList.id);
+              const currentUnitPrice = currentItem === undefined ? null : toNullableNumber(currentItem.unit_price);
+              const computed = computeFormulaPrice({
+                latestPurchaseCost,
+                costFormula: formula.cost_formula,
+                profitFormula: formula.profit_formula,
+                priceListAdjustment: adjustments.get(priceList.id),
+              });
+              return {
+                price_list_id: priceList.id,
+                price_list_name: priceList.name,
+                current_unit_price: currentUnitPrice,
+                computed_unit_price: computed.computed_price,
+                delta: currentUnitPrice === null ? null : computed.computed_price - currentUnitPrice,
+              };
+            }),
+          };
+        }),
+      };
+    },
+    async applyPriceFormula(input): Promise<{ formula_rule_id: string; affected_count: number }> {
+      const formula = normalizePriceFormula(input.formula);
+      validatePriceFormula(formula);
+      const { data: rule, error: ruleError } = await client
+        .from("price_formula_rules")
+        .insert({
+          organization_id: input.organizationId,
+          name: formula.name,
+          product_filter: formula.product_filter,
+          cost_formula: formula.cost_formula,
+          profit_formula: formula.profit_formula,
+          price_list_adjustments: formula.price_list_adjustments,
+          created_by: input.actorUserId,
+          updated_by: input.actorUserId,
+        })
+        .select("id")
+        .single();
+      if (ruleError !== null) throw ruleError;
+
+      const uniqueItems = uniqueFormulaSelections(input.selectedItems);
+      const { error: itemError } = await client
+        .from("price_list_items")
+        .upsert(
+          uniqueItems.map((item) => ({
+            organization_id: input.organizationId,
+            product_id: item.product_id,
+            price_list_id: item.price_list_id,
+            unit_price: null,
+            pricing_mode: "formula",
+            formula_rule_id: rule.id,
+          })),
+          { onConflict: "price_list_id,product_id" },
+        );
+      if (itemError !== null) throw itemError;
+
+      return { formula_rule_id: rule.id, affected_count: uniqueItems.length };
     },
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
       let query = client
@@ -2119,6 +2229,125 @@ async function loadOpenDebtInvoices(
 function paginate<T>(items: T[], page: number, pageSize: number): { items: T[]; total: number } {
   const start = (page - 1) * pageSize;
   return { items: items.slice(start, start + pageSize), total: items.length };
+}
+
+function normalizePriceFormula(formula: Record<string, unknown>): PriceFormulaInput {
+  if (typeof formula.name !== "string" || formula.name.trim().length < 1 || formula.name.trim().length > 120) {
+    throw new Error("FORMULA_NAME_INVALID");
+  }
+  if (!isRecord(formula.product_filter)) throw new Error("FORMULA_PRODUCT_FILTER_INVALID");
+  if (!isRecord(formula.cost_formula)) throw new Error("FORMULA_COST_INVALID");
+  if (!isRecord(formula.profit_formula)) throw new Error("FORMULA_PROFIT_INVALID");
+  if (!isRecord(formula.price_list_adjustments)) throw new Error("FORMULA_ADJUSTMENTS_INVALID");
+
+  return {
+    name: formula.name.trim(),
+    product_filter: formula.product_filter,
+    cost_formula: formula.cost_formula as unknown as PriceFormulaCost,
+    profit_formula: formula.profit_formula as unknown as PriceFormulaProfit,
+    price_list_adjustments: formula.price_list_adjustments as Record<string, PriceFormulaAdjustment>,
+  };
+}
+
+function normalizePriceListAdjustments(
+  adjustments: Record<string, PriceFormulaAdjustment>,
+): Map<string, PriceFormulaAdjustment> {
+  return new Map(Object.entries(adjustments).filter((entry): entry is [string, PriceFormulaAdjustment] =>
+    isRecord(entry[1]) && (entry[1].type === "amount" || entry[1].type === "percent")
+  ));
+}
+
+async function loadFormulaProducts(
+  client: DatabaseClient,
+  organizationId: string,
+  productFilter: Record<string, unknown>,
+): Promise<FormulaProductRow[]> {
+  if ("group_id" in productFilter) throw new Error("FORMULA_PRODUCT_GROUP_UNSUPPORTED");
+  if ("status" in productFilter && productFilter.status !== "active") throw new Error("FORMULA_STATUS_UNSUPPORTED");
+
+  let query = client
+    .from("products")
+    .select("id, code, name, latest_purchase_cost")
+    .eq("organization_id", organizationId)
+    .eq("status", "active")
+    .order("code", { ascending: true });
+
+  const nameContains = typeof productFilter.name_contains === "string" ? productFilter.name_contains.trim() : "";
+  if (nameContains !== "") {
+    query = query.ilike("name", `%${escapeLike(nameContains)}%`);
+  }
+  const codeContains = typeof productFilter.code_contains === "string" ? productFilter.code_contains.trim() : "";
+  if (codeContains !== "") {
+    query = query.ilike("code", `%${escapeLike(codeContains)}%`);
+  }
+  if ("sell_method" in productFilter) {
+    if (typeof productFilter.sell_method !== "string") throw new Error("FORMULA_SELL_METHOD_INVALID");
+    query = query.eq("sell_method", productFilter.sell_method);
+  }
+
+  const { data, error } = await query;
+  if (error !== null) throw error;
+  return (data ?? []) as FormulaProductRow[];
+}
+
+async function loadFormulaPriceLists(
+  client: DatabaseClient,
+  organizationId: string,
+): Promise<FormulaPriceListRow[]> {
+  const { data, error } = await client
+    .from("price_lists")
+    .select("id, name")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .order("is_default", { ascending: false })
+    .order("code", { ascending: true });
+  if (error !== null) throw error;
+  return (data ?? []) as FormulaPriceListRow[];
+}
+
+async function loadFormulaPriceItems(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+  priceListIds: string[],
+): Promise<Map<string, Map<string, FormulaPriceItemRow>>> {
+  if (productIds.length === 0 || priceListIds.length === 0) return new Map();
+  const { data, error } = await client
+    .from("price_list_items")
+    .select("product_id, price_list_id, unit_price, pricing_mode")
+    .eq("organization_id", organizationId)
+    .in("product_id", productIds)
+    .in("price_list_id", priceListIds);
+  if (error !== null) throw error;
+
+  const itemsByProduct = new Map<string, Map<string, FormulaPriceItemRow>>();
+  for (const row of (data ?? []) as FormulaPriceItemRow[]) {
+    if (!itemsByProduct.has(row.product_id)) itemsByProduct.set(row.product_id, new Map());
+    itemsByProduct.get(row.product_id)?.set(row.price_list_id, row);
+  }
+  return itemsByProduct;
+}
+
+function uniqueFormulaSelections(
+  items: Array<{ product_id: string; price_list_id: string }>,
+): Array<{ product_id: string; price_list_id: string }> {
+  const seen = new Set<string>();
+  const uniqueItems = [];
+  for (const item of items) {
+    const key = `${item.product_id}:${item.price_list_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueItems.push(item);
+  }
+  return uniqueItems;
+}
+
+function toNullableNumber(value: number | string | null): number | null {
+  return value === null ? null : Number(value);
+}
+
+function escapeLike(value: string): string {
+  return value.replaceAll("%", "\\%").replaceAll("_", "\\_");
 }
 
 async function hydrateInventoryProducts(

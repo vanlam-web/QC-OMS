@@ -8,10 +8,12 @@ import {
   createPriceList,
   createProduct,
   deletePriceListItem,
+  applyPriceFormula,
   listCustomerGroups,
   listCustomers,
   listPriceLists,
   listProducts,
+  previewPriceFormula,
   resolvePrices,
   updateCustomer,
   updateCustomerGroup,
@@ -41,6 +43,7 @@ export async function handleCatalog(
   }
 
   const context = {
+    actorUserId: currentUser.user.id,
     organizationId: currentUser.organization.id,
     permissions: currentUser.permissions,
   };
@@ -120,6 +123,14 @@ export async function handleCatalog(
         { status: 201 },
       );
     }
+  }
+
+  if (url.pathname === "/api/v1/price-lists/formulas/preview" && request.method === "POST") {
+    return successResponse(await previewPriceFormula(dependencies.repository, context, await request.json()), traceId);
+  }
+
+  if (url.pathname === "/api/v1/price-lists/formulas/apply" && request.method === "POST") {
+    return successResponse(await applyPriceFormula(dependencies.repository, context, await request.json()), traceId);
   }
 
   const priceListMatch = url.pathname.match(/^\/api\/v1\/price-lists\/([^/]+)$/);
