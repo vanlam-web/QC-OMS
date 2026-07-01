@@ -66,7 +66,7 @@ Các nhóm menu chính:
 | Chấm công/lương/hoa hồng | Không thuộc scope hiện tại |
 | Báo cáo phân tích | Làm sau khi dữ liệu lõi ổn định |
 | Bán online/Zalo shop/Website bán hàng | Owner đã chốt không bán hàng online |
-| Thuế & Kế toán/HĐĐT | Owner chốt bỏ khỏi scope QC-OMS ở đây |
+| Thuế & Kế toán/HĐĐT | Owner chốt bỏ khỏi scope QC-OMS hiện tại |
 
 ### Ứng viên bỏ khỏi QC-OMS nếu không có dữ liệu thực tế
 
@@ -80,7 +80,7 @@ Các nhóm menu chính:
 | Đặt hàng | Owner chốt không đặt hàng, chỉ bán đứt; báo giá chỉ là bản giá gửi khách | Bỏ khỏi MVP |
 | Đối tác giao hàng/Vận đơn | Owner chốt không dùng vận đơn, không bán giao hàng; màn KiotViet có nhiều trường COD/giao hàng | Bỏ khỏi MVP |
 | Kênh bán/Bán online/Zalo shop/Website | Không thuộc luồng QC-OMS nội bộ | Bỏ |
-| VAT/HĐĐT/Thuế kế toán | Owner chốt không làm trong QC-OMS ở đây | Bỏ; nếu cần chỉ lưu tên đơn vị/MST/địa chỉ pháp lý như thông tin nội bộ |
+| VAT/HĐĐT/Thuế kế toán | Owner chốt không làm trong QC-OMS hiện tại | Bỏ; nếu cần chỉ lưu tên đơn vị/MST/địa chỉ pháp lý như thông tin nội bộ |
 | Thương hiệu/thuộc tính retail | Có thể ghi trong tên hàng hoặc nhóm hàng | Không tạo field/module riêng |
 
 Ghi chú: "không có dữ liệu" ở đây là dấu hiệu từ giao diện KiotViet đang xem, không phải kết luận kỹ thuật từ database. Các màn có nút `vào đây để tiếp tục tìm kiếm` đã được kiểm tra bằng khoảng dài `01/07/2016 - 01/07/2026` trước khi xếp vào nhóm bỏ/để sau.
@@ -163,6 +163,32 @@ Quyết định QC-OMS:
 - Không bán giao hàng/COD.
 - Không làm `Đặt hàng` kiểu KiotViet; chỉ có bán đứt qua POS/checkout.
 - Địa chỉ nhận hàng, đối tác giao hàng, trạng thái giao hàng, COD và kênh bán không nằm trong MVP.
+
+### 4.3c. Thuế & Kế toán / Hóa đơn điện tử
+
+KiotViet `TaxDeclaration` đang là màn onboarding cho hộ kinh doanh:
+
+- Tiêu đề: `Quản lý thuế và kế toán ngay trong KiotViet`.
+- Nhấn mạnh 2 nhóm tính năng: `Sổ kế toán` và `Tờ khai thuế`.
+- Mô tả `Sổ kế toán`: tự động ghi nhận thu chi từ giao dịch bán hàng.
+- Mô tả `Tờ khai thuế`: tự động tổng hợp dữ liệu, sẵn sàng in nộp mỗi kỳ kê khai.
+- Có thông điệp dữ liệu chỉ lưu trong KiotViet và nút `Tạo hồ sơ kê khai thuế`.
+- Menu KiotViet cũng có mục `Hóa đơn điện tử`.
+
+Quyết định QC-OMS:
+
+- Không làm hồ sơ kê khai thuế.
+- Không làm sổ kế toán thuế.
+- Không làm tờ khai thuế.
+- Không phát hành, chuyển hoặc quản lý HĐĐT trong QC-OMS hiện tại.
+- Không tính VAT/thuế kế toán trên POS, chứng từ bán hàng hoặc báo cáo quản trị.
+- Nếu cần lưu tên công ty, mã số thuế, địa chỉ pháp lý của khách/NCC, chỉ xem là thông tin nội bộ để tham khảo/in bill thường, không mở luồng thuế/HĐĐT.
+
+Lý do:
+
+- Owner đã chốt bỏ thuế/HĐĐT khỏi phạm vi QC-OMS hiện tại.
+- Luồng vận hành xưởng đang ưu tiên bán đứt, kho vật lý, sổ quỹ, công nợ và báo cáo quản trị.
+- Thêm thuế/HĐĐT sẽ kéo theo nghiệp vụ pháp lý/kê khai riêng, không phù hợp mục tiêu thao tác gọn.
 
 ### 4.4. Khách hàng
 

@@ -49,8 +49,8 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 | Ban da kenh/TMDT/MXH | Khong ket noi Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA trong QC-OMS hien tai |
 | Tra hang ban | Khong lam trong QC-OMS hien tai; hoa don sai xu ly bang sua chung tu `MaCu.01` va huy chung tu cu |
 | Tra hang nhap | Khong lam trong lat cat Purchase dau tien; chi xem lai neu sau nay thuc te phat sinh |
-| Hoa don dien tu/VAT/thue | Khong phat hanh HĐĐT, khong tinh VAT/thue ke toan trong QC-OMS hien tai |
-| So ke toan/to khai thue | Khong lam ho so ke khai thue, so ke toan thue trong QC-OMS hien tai |
+| Hoa don dien tu/VAT/thue | Khong phat hanh/quan ly HĐĐT, khong tinh VAT/thue ke toan trong QC-OMS hien tai |
+| So ke toan/to khai thue | Khong lam ho so ke khai thue, so ke toan thue, to khai thue trong QC-OMS hien tai |
 | Thuong hieu retail | Khong tao field/module/report rieng; neu can thi ghi trong ten/ma/nhom hang |
 | Diem thuong/loyalty | Khong lam tich diem, Zalo loyalty/onboarding, khuyen mai tu dong, sinh nhat/gioi tinh retail |
 | Khuyen mai retail | Khong lam module Campaign/Khuyen mai rieng trong QC-OMS hien tai; neu can gia theo so luong thi xem lai trong PriceBook sau |
