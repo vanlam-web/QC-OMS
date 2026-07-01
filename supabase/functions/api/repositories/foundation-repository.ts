@@ -24,6 +24,8 @@ import type {
   ProductData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
+  QuoteReopenPayloadData,
+  QuoteSummaryData,
   ReconciliationData,
   ResolvedPriceData,
   SalesDocumentDetailData,
@@ -577,6 +579,18 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       });
       if (error !== null) throw error;
       return toCheckoutResultData(data);
+    },
+    async saveQuote(input): Promise<QuoteSummaryData> {
+      const { data, error } = await client.rpc("save_quote_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      return toQuoteSummaryData(data);
+    },
+    async getQuoteReopenPayload(input): Promise<QuoteReopenPayloadData | null> {
+      return await loadQuoteReopenPayload(client, input.organizationId, input.quoteId);
     },
     async reviseInvoice(input): Promise<Record<string, unknown>> {
       const { data, error } = await client.rpc("revise_invoice_tx", {
@@ -1175,6 +1189,20 @@ function toCheckoutResultData(value: unknown): CheckoutResultData {
   };
 }
 
+function toQuoteSummaryData(value: unknown): QuoteSummaryData {
+  if (!isRecord(value) || !isRecord(value.order)) {
+    throw new Error("QUOTE_RESULT_INVALID");
+  }
+
+  return {
+    id: String(value.order.id),
+    code: String(value.order.code),
+    order_type: "quote",
+    status: String(value.order.status) as QuoteSummaryData["status"],
+    total_amount: Number(value.order.total_amount),
+  };
+}
+
 function customerSnapshot(value: unknown): { id: string | null; code: string | null; name: string; phone: string | null } {
   const snapshot = isRecord(value) ? value : {};
   if (snapshot.type === "retail") return { id: null, code: null, name: "Khách lẻ", phone: null };
@@ -1183,6 +1211,97 @@ function customerSnapshot(value: unknown): { id: string | null; code: string | n
     code: typeof snapshot.code === "string" ? snapshot.code : null,
     name: typeof snapshot.name === "string" ? snapshot.name : "Khách lẻ",
     phone: typeof snapshot.phone === "string" ? snapshot.phone : null,
+  };
+}
+
+async function loadQuoteReopenPayload(
+  client: DatabaseClient,
+  organizationId: string,
+  quoteId: string,
+): Promise<QuoteReopenPayloadData | null> {
+  const { data: quote, error: quoteError } = await client
+    .from("orders")
+    .select("id, code, status, customer_id, customer_snapshot, price_list_id, subtotal_amount, discount_amount, total_amount, note")
+    .eq("organization_id", organizationId)
+    .eq("id", quoteId)
+    .eq("order_type", "quote")
+    .maybeSingle();
+  if (quoteError !== null) throw quoteError;
+  if (quote === null) return null;
+
+  const { data: itemRows, error: itemsError } = await client
+    .from("order_items")
+    .select("id, product_id, product_snapshot, quantity, width_m, height_m, linear_m, unit_price, discount_amount, price_source, note")
+    .eq("organization_id", organizationId)
+    .eq("order_id", quoteId)
+    .order("line_no", { ascending: true });
+  if (itemsError !== null) throw itemsError;
+
+  const productIds = [...new Set((itemRows ?? []).map((row) => row.product_id).filter((id): id is string => typeof id === "string"))];
+  const products = await loadProductsById(client, organizationId, productIds);
+  const defaultPrices = await loadDefaultPrices(client, organizationId, productIds);
+  const customer = customerSnapshot(quote.customer_snapshot);
+  const customerWarnings = await loadCustomerWarnings(client, organizationId, quote.customer_id, customer);
+  const priceListInfo = await loadQuotePriceListInfo(client, organizationId, quote.price_list_id);
+
+  return {
+    quote: {
+      id: quote.id,
+      code: quote.code,
+      status: quote.status as QuoteReopenPayloadData["quote"]["status"],
+    },
+    customer: {
+      customer_id: quote.customer_id,
+      snapshot: {
+        code: customer.code,
+        name: customer.name,
+        phone: customer.phone,
+      },
+      warnings: customerWarnings,
+    },
+    price_list: priceListInfo,
+    items: (itemRows ?? []).map((row) => {
+      const snapshot = isRecord(row.product_snapshot) ? row.product_snapshot : {};
+      const product = typeof row.product_id === "string" ? products.get(row.product_id) : undefined;
+      const warnings: QuoteReopenPayloadData["items"][number]["warnings"] = [];
+
+      if (typeof row.product_id !== "string" || product === undefined) {
+        warnings.push({ code: "PRODUCT_MISSING", message: "Product is no longer available." });
+      } else if (product.status !== "active") {
+        warnings.push({ code: "PRODUCT_INACTIVE", message: "Product is inactive." });
+      }
+
+      const currentPrice = typeof row.product_id === "string" ? defaultPrices.get(row.product_id) : undefined;
+      if (currentPrice !== undefined && currentPrice !== Number(row.unit_price)) {
+        warnings.push({ code: "CURRENT_PRICE_DIFFERS", message: "Current price differs from quote snapshot." });
+      }
+
+      return {
+        order_item_id: row.id,
+        product_id: row.product_id,
+        product_snapshot: {
+          code: String(snapshot.code ?? ""),
+          name: String(snapshot.name ?? ""),
+          unit_name: String(snapshot.unit_name ?? ""),
+          sell_method: String(snapshot.sell_method ?? "quantity") as QuoteReopenPayloadData["items"][number]["product_snapshot"]["sell_method"],
+        },
+        quantity: Number(row.quantity),
+        width_m: row.width_m === null ? null : Number(row.width_m),
+        height_m: row.height_m === null ? null : Number(row.height_m),
+        linear_m: row.linear_m === null ? null : Number(row.linear_m),
+        unit_price: Number(row.unit_price),
+        discount_amount: Number(row.discount_amount),
+        price_source: String(row.price_source),
+        note: row.note,
+        warnings,
+      };
+    }),
+    summary: {
+      subtotal_amount: Number(quote.subtotal_amount),
+      discount_amount: Number(quote.discount_amount),
+      total_amount: Number(quote.total_amount),
+    },
+    note: quote.note,
   };
 }
 
@@ -1195,6 +1314,105 @@ async function loadSellerMap(client: DatabaseClient, userIds: string[]): Promise
     .in("user_id", uniqueUserIds);
   if (error !== null) throw error;
   return new Map((data ?? []).map((row) => [row.user_id, row.display_name]));
+}
+
+async function loadProductsById(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+): Promise<Map<string, { id: string; status: ProductData["status"] }>> {
+  if (productIds.length === 0) return new Map();
+  const { data, error } = await client
+    .from("products")
+    .select("id, status")
+    .eq("organization_id", organizationId)
+    .in("id", productIds);
+  if (error !== null) throw error;
+  return new Map((data ?? []).map((row) => [row.id, { id: row.id, status: row.status as ProductData["status"] }]));
+}
+
+async function loadDefaultPrices(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+): Promise<Map<string, number>> {
+  if (productIds.length === 0) return new Map();
+  const { data: defaultPriceList, error: priceListError } = await client
+    .from("price_lists")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("is_default", true)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (priceListError !== null) throw priceListError;
+  if (defaultPriceList === null) return new Map();
+
+  const { data, error } = await client
+    .from("price_list_items")
+    .select("product_id, unit_price")
+    .eq("organization_id", organizationId)
+    .eq("price_list_id", defaultPriceList.id)
+    .in("product_id", productIds);
+  if (error !== null) throw error;
+  return new Map((data ?? []).map((row) => [row.product_id, Number(row.unit_price)]));
+}
+
+async function loadCustomerWarnings(
+  client: DatabaseClient,
+  organizationId: string,
+  customerId: string | null,
+  snapshot: { code: string | null; name: string; phone: string | null },
+): Promise<QuoteReopenPayloadData["customer"]["warnings"]> {
+  if (customerId === null) return [];
+  const { data, error } = await client
+    .from("customers")
+    .select("code, name, phone")
+    .eq("organization_id", organizationId)
+    .eq("id", customerId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  if (
+    data === null ||
+    data.code !== snapshot.code ||
+    data.name !== snapshot.name ||
+    data.phone !== snapshot.phone
+  ) {
+    return [{ code: "CUSTOMER_CHANGED", message: "Customer information changed after quote was saved." }];
+  }
+  return [];
+}
+
+async function loadQuotePriceListInfo(
+  client: DatabaseClient,
+  organizationId: string,
+  priceListId: string | null,
+): Promise<QuoteReopenPayloadData["price_list"]> {
+  if (priceListId === null) {
+    return {
+      price_list_id: null,
+      snapshot: { code: null, name: null },
+      warnings: [],
+    };
+  }
+
+  const { data, error } = await client
+    .from("price_lists")
+    .select("code, name, is_active")
+    .eq("organization_id", organizationId)
+    .eq("id", priceListId)
+    .maybeSingle();
+  if (error !== null) throw error;
+
+  return {
+    price_list_id: priceListId,
+    snapshot: {
+      code: data?.code ?? null,
+      name: data?.name ?? null,
+    },
+    warnings: data === null || data.is_active !== true
+      ? [{ code: "PRICE_LIST_INACTIVE", message: "Price list is inactive." }]
+      : [],
+  };
 }
 
 function toSalesDocumentListItem(

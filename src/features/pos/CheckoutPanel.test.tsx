@@ -46,6 +46,14 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
       payment_receipt: { id: 'receipt-1', code: 'PT000001', total_received_amount: 240000 },
       inventory_warnings: [],
     })),
+    saveQuote: vi.fn(async () => ({
+      id: 'quote-1',
+      code: 'BG000001',
+      order_type: 'quote' as const,
+      status: 'active' as const,
+      total_amount: 240000,
+    })),
+    getQuoteReopenPayload: vi.fn(),
     listFinanceAccounts: vi.fn(async () => ({
       items: [
         {
@@ -86,6 +94,72 @@ it('calculates cart total and submits cash checkout', async () => {
   expect(within(receipt).getByText('PT000001')).toBeInTheDocument()
   expect(within(receipt).getByText('Đã trả 240.000')).toBeInTheDocument()
   expect(within(receipt).getByText('Còn nợ 0')).toBeInTheDocument()
+})
+
+it('saves the current cart as a quote and shows BG code', async () => {
+  const service = makeOrderService()
+  render(<CheckoutPanel cartLines={[line]} selectedCustomer={customer} orderService={service} />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Báo giá' }))
+
+  expect(service.saveQuote).toHaveBeenCalledWith(
+    expect.objectContaining({
+      customer_id: 'customer-1',
+      items: [expect.objectContaining({ product_id: 'p-1', unit_price: 120000 })],
+    }),
+  )
+  expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001')
+})
+
+it('saving a reopened quote draft creates a new independent quote', async () => {
+  const service = makeOrderService()
+  render(
+    <CheckoutPanel
+      cartLines={[line]}
+      selectedCustomer={customer}
+      orderService={service}
+      sourceQuote={{ id: 'quote-1', code: 'BG000001' }}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Báo giá' }))
+
+  expect(service.saveQuote).toHaveBeenCalledWith(
+    expect.objectContaining({ items: [expect.objectContaining({ product_id: 'p-1' })] }),
+  )
+  expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001')
+})
+
+it('checks out reopened quote drafts normally and blocks unresolved quote lines locally', async () => {
+  const service = makeOrderService()
+  const { rerender } = render(
+    <CheckoutPanel
+      cartLines={[line]}
+      selectedCustomer={customer}
+      orderService={service}
+      sourceQuote={{ id: 'quote-1', code: 'BG000001' }}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+
+  expect(service.checkout).toHaveBeenCalledWith(
+    expect.not.objectContaining({ source_quote_id: 'quote-1' }),
+  )
+
+  rerender(
+    <CheckoutPanel
+      cartLines={[line]}
+      selectedCustomer={customer}
+      orderService={service}
+      sourceQuote={{ id: 'quote-1', code: 'BG000001' }}
+      quoteBlockedReason="Sản phẩm trong báo giá không còn khả dụng."
+    />,
+  )
+
+  expect(screen.getByRole('button', { name: 'Tạo hóa đơn' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Báo giá' })).toBeDisabled()
+  expect(screen.getByText('Sản phẩm trong báo giá không còn khả dụng.')).toBeInTheDocument()
 })
 
 it('subtracts line discounts from payable total and checkout payload', async () => {

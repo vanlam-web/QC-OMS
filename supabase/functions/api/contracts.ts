@@ -103,6 +103,60 @@ export interface CheckoutResultData {
   inventory_warnings: InventoryWarningData[];
 }
 
+export interface QuoteSummaryData {
+  id: string;
+  code: string;
+  order_type: "quote";
+  status: "active" | "converted" | "cancelled";
+  total_amount: number;
+}
+
+export type QuoteReopenWarningCode =
+  | "CURRENT_PRICE_DIFFERS"
+  | "PRODUCT_INACTIVE"
+  | "PRODUCT_MISSING"
+  | "PRICE_LIST_INACTIVE"
+  | "CUSTOMER_CHANGED";
+
+export interface QuoteReopenWarningData {
+  code: QuoteReopenWarningCode;
+  message: string;
+}
+
+export interface QuoteReopenPayloadData {
+  quote: {
+    id: string;
+    code: string;
+    status: "active" | "converted" | "cancelled";
+  };
+  customer: {
+    customer_id: string | null;
+    snapshot: { code: string | null; name: string; phone: string | null };
+    warnings: QuoteReopenWarningData[];
+  };
+  price_list: {
+    price_list_id: string | null;
+    snapshot: { code: string | null; name: string | null };
+    warnings: QuoteReopenWarningData[];
+  };
+  items: Array<{
+    order_item_id: string;
+    product_id: string | null;
+    product_snapshot: { code: string; name: string; unit_name: string; sell_method: SellMethod };
+    quantity: number;
+    width_m?: number | null;
+    height_m?: number | null;
+    linear_m?: number | null;
+    unit_price: number;
+    discount_amount: number;
+    price_source: string;
+    note: string | null;
+    warnings: QuoteReopenWarningData[];
+  }>;
+  summary: { subtotal_amount: number; discount_amount: number; total_amount: number };
+  note: string | null;
+}
+
 export interface SalesDocumentListItemData {
   id: string;
   code: string;
@@ -499,6 +553,15 @@ export interface FoundationRepository {
     actorUserId: string;
     payload: Record<string, unknown>;
   }): Promise<CheckoutResultData>;
+  saveQuote(input: {
+    organizationId: string;
+    actorUserId: string;
+    payload: Record<string, unknown>;
+  }): Promise<QuoteSummaryData>;
+  getQuoteReopenPayload(input: {
+    organizationId: string;
+    quoteId: string;
+  }): Promise<QuoteReopenPayloadData | null>;
   reviseInvoice(input: {
     organizationId: string;
     actorUserId: string;

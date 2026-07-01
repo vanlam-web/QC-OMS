@@ -13,6 +13,7 @@ import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
 import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
+import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 
 export function AppRoutes() {
   return (
@@ -115,6 +116,7 @@ function SalesDocumentsRoute() {
   const { currentUser, initialized, getAccessToken } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
+  const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
@@ -125,7 +127,17 @@ function SalesDocumentsRoute() {
     return <Navigate to="/forbidden" replace />
   }
 
-  return <SalesDocumentsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+  return (
+    <SalesDocumentsPage
+      service={service}
+      orderService={orderService}
+      onOpenDashboard={() => navigate('/dashboard')}
+      onOpenQuoteInPos={(payload) => {
+        saveQuoteReopenPayload(payload)
+        navigate('/pos')
+      }}
+    />
+  )
 }
 
 function ForbiddenRoute() {

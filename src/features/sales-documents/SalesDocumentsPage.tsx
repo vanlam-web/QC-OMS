@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { SalesDocumentDetail, SalesDocumentListItem } from './types'
 import type { SalesDocumentService } from './sales-document-service'
+import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -23,24 +24,39 @@ function dateTime(value: string) {
 
 export function SalesDocumentsPage({
   service,
+  orderService,
   onOpenDashboard,
+  onOpenQuoteInPos,
 }: {
   service: SalesDocumentService
+  orderService?: Pick<OrderService, 'getQuoteReopenPayload'>
   onOpenDashboard: () => void
+  onOpenQuoteInPos?: (payload: QuoteReopenPayload) => void
 }) {
   const [documents, setDocuments] = useState<SalesDocumentListItem[] | null>(null)
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'invoice' | 'quote'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
   const [selected, setSelected] = useState<SalesDocumentDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
+  const [openingQuoteId, setOpeningQuoteId] = useState<string | null>(null)
+
+  const currentFilters = useCallback((input: { search?: string } = {}) => {
+    return {
+      ...input,
+      type: typeFilter === 'all' ? undefined : typeFilter,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+    }
+  }, [typeFilter, statusFilter])
 
   async function loadDocuments(input: { search?: string } = {}) {
     setError(null)
     try {
-      const result = await service.listSalesDocuments(input)
+      const result = await service.listSalesDocuments(currentFilters(input))
       setDocuments(result.items)
       setTotal(result.total)
       setLastSearch(input.search ?? '')
@@ -56,7 +72,7 @@ export function SalesDocumentsPage({
     async function loadInitialDocuments() {
       setError(null)
       try {
-        const result = await service.listSalesDocuments({})
+        const result = await service.listSalesDocuments(currentFilters({}))
         if (!active) return
         setDocuments(result.items)
         setTotal(result.total)
@@ -70,7 +86,7 @@ export function SalesDocumentsPage({
     return () => {
       active = false
     }
-  }, [service])
+  }, [service, currentFilters])
 
   async function searchDocuments(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -87,6 +103,20 @@ export function SalesDocumentsPage({
       setDetailError(formatApiError(cause, 'Không tải được chi tiết chứng từ.'))
     } finally {
       setLoadingDetailId(null)
+    }
+  }
+
+  async function openQuoteInPos(document: SalesDocumentListItem) {
+    if (orderService === undefined || onOpenQuoteInPos === undefined) return
+    setDetailError(null)
+    setOpeningQuoteId(document.id)
+    try {
+      const payload = await orderService.getQuoteReopenPayload(document.id)
+      onOpenQuoteInPos(payload)
+    } catch (cause) {
+      setDetailError(formatApiError(cause, 'Không mở được báo giá tại POS.'))
+    } finally {
+      setOpeningQuoteId(null)
     }
   }
 
@@ -113,6 +143,31 @@ export function SalesDocumentsPage({
             <label>
               Tìm chứng từ
               <input value={search} onChange={(event) => setSearch(event.target.value)} />
+            </label>
+            <label>
+              Loại chứng từ
+              <select
+                aria-label="Loại chứng từ"
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)}
+              >
+                <option value="all">Tất cả</option>
+                <option value="invoice">Hóa đơn</option>
+                <option value="quote">Báo giá</option>
+              </select>
+            </label>
+            <label>
+              Trạng thái
+              <select
+                aria-label="Trạng thái"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+              >
+                <option value="all">Tất cả</option>
+                <option value="active">Đang hiệu lực</option>
+                <option value="completed">Hoàn tất</option>
+                <option value="cancelled">Đã hủy</option>
+              </select>
             </label>
             <button type="submit">Tìm</button>
           </form>
@@ -146,7 +201,7 @@ export function SalesDocumentsPage({
                         <td>{document.customer.name}</td>
                         <td>{document.seller.name}</td>
                         <td>{money(document.total_amount)}</td>
-                        <td>{document.debt_amount > 0 ? `Còn nợ ${money(document.debt_amount)}` : 'Đã thanh toán'}</td>
+                        <td>{document.payment_status === 'not_applicable' ? 'Không áp dụng' : document.debt_amount > 0 ? `Còn nợ ${money(document.debt_amount)}` : 'Đã thanh toán'}</td>
                         <td>
                           <button
                             disabled={loadingDetailId === document.id}
@@ -155,6 +210,15 @@ export function SalesDocumentsPage({
                           >
                             Mở {document.code}
                           </button>
+                          {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
+                            <button
+                              disabled={openingQuoteId === document.id}
+                              type="button"
+                              onClick={() => void openQuoteInPos(document)}
+                            >
+                              Mở tại POS
+                            </button>
+                          ) : null}
                         </td>
                       </tr>
                     ))}

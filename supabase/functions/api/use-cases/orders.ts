@@ -1,4 +1,4 @@
-import type { CheckoutResultData, FoundationRepository, PermissionCode } from "../contracts.ts";
+import type { CheckoutResultData, FoundationRepository, PermissionCode, QuoteReopenPayloadData, QuoteSummaryData } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 
 export interface OrderContext {
@@ -24,6 +24,53 @@ export async function checkoutOrder(
       actorUserId: context.actorUserId,
       payload,
     });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function saveQuote(
+  repository: FoundationRepository,
+  context: OrderContext,
+  body: unknown,
+): Promise<QuoteSummaryData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const payload = parseQuotePayload(body);
+  if (payloadHasDiscount(payload)) {
+    requireAnyPermission(context, ["perm.apply_discount"]);
+  }
+
+  try {
+    return await repository.saveQuote({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function getQuoteReopenPayload(
+  repository: FoundationRepository,
+  context: OrderContext,
+  quoteId: string,
+): Promise<QuoteReopenPayloadData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+
+  try {
+    const payload = await repository.getQuoteReopenPayload({
+      organizationId: context.organizationId,
+      quoteId,
+    });
+    if (payload === null) {
+      throw new ApiError({
+        status: 404,
+        code: "RESOURCE_NOT_FOUND",
+        message: "The requested resource was not found.",
+      });
+    }
+    return payload;
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -91,6 +138,14 @@ function parseCheckoutPayload(body: unknown): Record<string, unknown> {
     change_returned_amount: changeReturnedAmount,
   };
   return payload;
+}
+
+function parseQuotePayload(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) throw validationError();
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (items.length === 0) throw validationError();
+  for (const item of items) parseCheckoutItem(item);
+  return { ...body };
 }
 
 function parseCheckoutItem(value: unknown): void {

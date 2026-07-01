@@ -4,6 +4,7 @@ import { PosShell } from './PosShell'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { OrderService } from '../orders/order-service'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
+import { saveQuoteReopenPayload } from './quote-draft-handoff'
 
 function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogService {
   return {
@@ -58,11 +59,23 @@ function makeOrderService(): OrderService {
   return {
     validateCart: vi.fn(),
     checkout: vi.fn(),
+    saveQuote: vi.fn(async () => ({
+      id: 'quote-1',
+      code: 'BG000001',
+      order_type: 'quote' as const,
+      status: 'active' as const,
+      total_amount: 120000,
+    })),
+    getQuoteReopenPayload: vi.fn(),
     listFinanceAccounts: vi.fn(async () => ({ items: [] })),
     getCustomerDebt: vi.fn(async () => ({ customer_id: 'customer-1', total_debt: 0, invoices: [] })),
     listRecentCustomerProductPrices: vi.fn(async () => ({ items: [] })),
   }
 }
+
+beforeEach(() => {
+  window.sessionStorage.clear()
+})
 
 function makeProductionQueueService(
   overrides: Partial<ProductionQueueService> = {},
@@ -369,5 +382,124 @@ it('adds a production queue payload to the local draft cart without checkout', a
   expect(await within(cart).findByText('Decal PP')).toBeInTheDocument()
   expect(within(cart).getByText('130.000')).toBeInTheDocument()
   expect(screen.getByText('Đã chọn KH000001 - Khach le')).toBeInTheDocument()
+  expect(orderService.checkout).not.toHaveBeenCalled()
+})
+
+it('reopened quote keeps snapshot price and checks out as a normal draft', async () => {
+  saveQuoteReopenPayload({
+    quote: {
+      id: 'quote-1',
+      code: 'BG000123',
+      status: 'active',
+    },
+    customer: {
+      customer_id: 'customer-1',
+      snapshot: { code: 'KH000001', name: 'Khach le', phone: null },
+      warnings: [],
+    },
+    price_list: {
+      price_list_id: null,
+      snapshot: { code: null, name: null },
+      warnings: [],
+    },
+    items: [{
+      order_item_id: 'quote-item-1',
+      product_id: 'p-1',
+      product_snapshot: { code: 'MICA-3MM', name: 'Mica 3mm', unit_name: 'm', sell_method: 'linear_m' },
+      quantity: 1,
+      unit_price: 99000,
+      discount_amount: 0,
+      price_source: 'manual',
+      note: null,
+      warnings: [{ code: 'CURRENT_PRICE_DIFFERS', message: 'Giá hiện tại khác báo giá.' }],
+    }],
+    summary: { subtotal_amount: 99000, discount_amount: 0, total_amount: 99000 },
+    note: null,
+  })
+  const orderService = makeOrderService()
+
+  render(
+    <PosShell
+      catalogService={makeCatalogService()}
+      orderService={orderService}
+      productionQueueService={makeProductionQueueService()}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  expect((await screen.findAllByText('Từ báo giá BG000123')).length).toBeGreaterThan(0)
+  expect(screen.getByLabelText('Đơn giá Mica 3mm')).toHaveValue(99000)
+  expect(screen.getByText('Giá hiện tại khác báo giá.')).toBeInTheDocument()
+
+  await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
+  await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '99000')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+
+  expect(orderService.checkout).toHaveBeenCalledWith(
+    expect.not.objectContaining({ source_quote_id: 'quote-1' }),
+  )
+})
+
+it('blocks checkout when reopened quote has inactive or missing product warning', async () => {
+  saveQuoteReopenPayload({
+    quote: {
+      id: 'quote-1',
+      code: 'BG000123',
+      status: 'active',
+    },
+    customer: {
+      customer_id: null,
+      snapshot: { code: null, name: 'Khach le', phone: null },
+      warnings: [],
+    },
+    price_list: {
+      price_list_id: null,
+      snapshot: { code: null, name: null },
+      warnings: [],
+    },
+    items: [{
+      order_item_id: 'quote-item-1',
+      product_id: null,
+      product_snapshot: { code: 'OLD', name: 'Hang cu', unit_name: 'tam', sell_method: 'quantity' },
+      quantity: 1,
+      unit_price: 50000,
+      discount_amount: 0,
+      price_source: 'manual',
+      note: null,
+      warnings: [{ code: 'PRODUCT_MISSING', message: 'Sản phẩm không còn trong danh mục.' }],
+    }],
+    summary: { subtotal_amount: 50000, discount_amount: 0, total_amount: 50000 },
+    note: null,
+  })
+  const orderService = makeOrderService()
+
+  render(
+    <PosShell
+      catalogService={makeCatalogService()}
+      orderService={orderService}
+      productionQueueService={makeProductionQueueService()}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  expect(await screen.findByText('Sản phẩm không còn trong danh mục.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tạo hóa đơn' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Báo giá' })).toBeDisabled()
   expect(orderService.checkout).not.toHaveBeenCalled()
 })

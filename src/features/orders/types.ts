@@ -13,6 +13,10 @@ export interface CheckoutCartLine {
   isManualPrice: boolean
   recentPrices?: Array<{ unitPrice: number; soldAt: string; orderCode: string }>
   note?: string
+  quoteWarnings?: Array<{
+    code: 'PRODUCT_INACTIVE' | 'PRODUCT_MISSING' | 'CURRENT_PRICE_DIFFERS'
+    message: string
+  }>
 }
 
 export interface FinanceAccount {
@@ -42,6 +46,56 @@ export interface CheckoutInput {
     old_debt_payment_amount: number
     change_returned_amount: number
   }
+}
+
+export interface QuoteSummary {
+  id: string
+  code: string
+  order_type: 'quote'
+  status: 'active' | 'converted' | 'cancelled'
+  total_amount: number
+}
+
+export interface QuoteReopenPayload {
+  quote: {
+    id: string
+    code: string
+    status: 'active' | 'converted' | 'cancelled'
+  }
+  customer: {
+    customer_id: string | null
+    snapshot: { code: string | null; name: string; phone: string | null }
+    warnings: Array<{ code: 'CUSTOMER_CHANGED'; message: string }>
+  }
+  price_list: {
+    price_list_id: string | null
+    snapshot: { code: string | null; name: string | null }
+    warnings: Array<{ code: 'PRICE_LIST_INACTIVE'; message: string }>
+  }
+  items: Array<{
+    order_item_id: string
+    product_id: string | null
+    product_snapshot: {
+      code: string
+      name: string
+      unit_name: string
+      sell_method: Product['sell_method']
+    }
+    quantity: number
+    width_m?: number | null
+    height_m?: number | null
+    linear_m?: number | null
+    unit_price: number
+    discount_amount: number
+    price_source: string
+    note: string | null
+    warnings: Array<{
+      code: 'PRODUCT_INACTIVE' | 'PRODUCT_MISSING' | 'CURRENT_PRICE_DIFFERS'
+      message: string
+    }>
+  }>
+  summary: { subtotal_amount: number; discount_amount: number; total_amount: number }
+  note: string | null
 }
 
 export interface CheckoutResult {
