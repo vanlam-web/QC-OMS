@@ -33,10 +33,15 @@ export function CheckoutPanel({
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CheckoutResult | null>(null)
 
-  const total = useMemo(
-    () => cartLines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0),
+  const subtotal = useMemo(
+    () => cartLines.reduce((sum, line) => sum + lineSubtotal(line), 0),
     [cartLines],
   )
+  const discountAmount = useMemo(
+    () => cartLines.reduce((sum, line) => sum + lineDiscount(line), 0),
+    [cartLines],
+  )
+  const total = subtotal - discountAmount
   const cashAmount = cashAmountOverride ?? total
   const received = cashAmount + bankAmount
   const surplus = Math.max(received - total, 0)
@@ -118,6 +123,7 @@ export function CheckoutPanel({
           product_id: line.product.id,
           quantity: line.quantity,
           unit_price: line.unitPrice,
+          discount_amount: lineDiscount(line),
           price_source: line.priceSource,
           note: line.note,
         })),
@@ -142,7 +148,15 @@ export function CheckoutPanel({
       <h2>Thanh toán</h2>
       <dl className="checkout-summary">
         <div>
-          <dt>Tổng tiền</dt>
+          <dt>Tiền hàng</dt>
+          <dd>{formatMoney(subtotal)}</dd>
+        </div>
+        <div>
+          <dt>Chiết khấu</dt>
+          <dd>{formatMoney(discountAmount)}</dd>
+        </div>
+        <div>
+          <dt>Khách cần trả</dt>
           <dd>{formatMoney(total)}</dd>
         </div>
         <div>
@@ -293,6 +307,14 @@ export function CheckoutPanel({
 function readMoney(value: string): number {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+function lineSubtotal(line: CheckoutCartLine): number {
+  return Math.round(line.quantity * line.unitPrice)
+}
+
+function lineDiscount(line: CheckoutCartLine): number {
+  return Math.min(Math.max(line.discountAmount ?? 0, 0), lineSubtotal(line))
 }
 
 function formatMoney(value: number): string {

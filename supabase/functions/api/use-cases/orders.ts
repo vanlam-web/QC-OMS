@@ -93,8 +93,10 @@ function parseCheckoutPayload(body: unknown): Record<string, unknown> {
 function parseCheckoutItem(value: unknown): void {
   if (!isRecord(value)) throw validationError();
   if (!isNonEmptyString(value.product_id)) throw validationError();
-  if (parsePositiveNumber(value.quantity) <= 0) throw validationError();
-  if (parseMoney(value.unit_price) < 0) throw validationError();
+  const quantity = parsePositiveNumber(value.quantity);
+  const unitPrice = parseMoney(value.unit_price);
+  const discountAmount = parseMoney(value.discount_amount ?? 0);
+  if (discountAmount > Math.round(quantity * unitPrice)) throw validationError();
   if (!isNonEmptyString(value.price_source)) throw validationError();
 }
 

@@ -166,6 +166,68 @@ it('lets the cashier edit quantity and unit price in the cart', async () => {
   expect(within(cart).getByText('300.000')).toBeInTheDocument()
 })
 
+it('lets operators with apply_discount enter a line discount', async () => {
+  const orderService = makeOrderService()
+  render(
+    <PosShell
+      catalogService={makeCatalogService()}
+      orderService={orderService}
+      productionQueueService={makeProductionQueueService()}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order', 'perm.apply_discount'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  await userEvent.clear(screen.getByLabelText('Giảm Mica 3mm'))
+  await userEvent.type(screen.getByLabelText('Giảm Mica 3mm'), '40000')
+
+  const cart = screen.getByLabelText('K02 giỏ hàng')
+  expect(within(cart).getByText('80.000')).toBeInTheDocument()
+
+  await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
+  await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '80000')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+
+  expect(orderService.checkout).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [expect.objectContaining({ discount_amount: 40000 })],
+      payment: expect.objectContaining({ cash_amount: 80000 }),
+    }),
+  )
+})
+
+it('hides line discount editing without apply_discount permission', async () => {
+  render(
+    <PosShell
+      catalogService={makeCatalogService()}
+      orderService={makeOrderService()}
+      productionQueueService={makeProductionQueueService()}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+
+  expect(screen.queryByLabelText('Giảm Mica 3mm')).not.toBeInTheDocument()
+  expect(screen.getByLabelText('K02 giỏ hàng')).toHaveTextContent('120.000')
+})
+
 it('updates automatic cart prices on customer change but preserves manual prices', async () => {
   const service = makeCatalogService({
     resolvePrices: vi

@@ -198,6 +198,29 @@ Deno.test("checkout validates bank account when bank amount is present", async (
   assertEquals(((await body(response)).error as { code: string }).code, "VALIDATION_ERROR");
 });
 
+Deno.test("checkout validates line discount cannot exceed line subtotal", async () => {
+  const response = await call(
+    "/api/v1/orders/checkout",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{
+          product_id: "p-1",
+          quantity: 1,
+          unit_price: 180000,
+          discount_amount: 180001,
+          price_source: "default_price_list",
+        }],
+        payment: { cash_amount: 0, bank_amount: 0, old_debt_payment_amount: 0 },
+      }),
+    },
+    repo(["perm.create_order"]),
+  );
+
+  assertEquals(response.status, 400);
+  assertEquals(((await body(response)).error as { code: string }).code, "VALIDATION_ERROR");
+});
+
 Deno.test("checkout can return inventory warnings without blocking success", async () => {
   const response = await call(
     "/api/v1/orders/checkout",

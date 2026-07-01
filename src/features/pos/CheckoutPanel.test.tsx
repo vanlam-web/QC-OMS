@@ -70,7 +70,7 @@ it('calculates cart total and submits cash checkout', async () => {
   const service = makeOrderService()
   render(<CheckoutPanel cartLines={[line]} selectedCustomer={customer} orderService={service} />)
 
-  expect(screen.getByText('240.000')).toBeInTheDocument()
+  expect(screen.getAllByText('240.000').length).toBeGreaterThan(0)
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '240000')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
@@ -86,6 +86,38 @@ it('calculates cart total and submits cash checkout', async () => {
   expect(within(receipt).getByText('PT000001')).toBeInTheDocument()
   expect(within(receipt).getByText('Đã trả 240.000')).toBeInTheDocument()
   expect(within(receipt).getByText('Còn nợ 0')).toBeInTheDocument()
+})
+
+it('subtracts line discounts from payable total and checkout payload', async () => {
+  const service = makeOrderService()
+  render(
+    <CheckoutPanel
+      cartLines={[{ ...line, discountAmount: 40000 } as CheckoutCartLine]}
+      selectedCustomer={customer}
+      orderService={service}
+    />,
+  )
+
+  expect(screen.getByText('Tiền hàng')).toBeInTheDocument()
+  expect(screen.getByText('Chiết khấu')).toBeInTheDocument()
+  expect(screen.getByText('Khách cần trả')).toBeInTheDocument()
+  expect(screen.getByText('200.000')).toBeInTheDocument()
+
+  await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
+  await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '200000')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+
+  expect(service.checkout).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          product_id: 'p-1',
+          discount_amount: 40000,
+        }),
+      ],
+      payment: expect.objectContaining({ cash_amount: 200000 }),
+    }),
+  )
 })
 
 it('requires a bank account when bank amount is entered', async () => {

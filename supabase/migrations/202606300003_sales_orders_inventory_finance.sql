@@ -893,6 +893,8 @@ declare
   change_returned_value numeric(12,0);
   sale_payment_value numeric(12,0);
   debt_amount_value numeric(12,0);
+  subtotal_amount_value numeric(12,0) := 0;
+  discount_amount_value numeric(12,0) := 0;
   total_amount_value numeric(12,0);
   payment_status_value text;
   receipt_type_value text;
@@ -903,6 +905,8 @@ declare
   settings_record record;
   quantity_value numeric(12,3);
   unit_price_value numeric(12,0);
+  line_subtotal_value numeric(12,0);
+  line_discount_value numeric(12,0);
   line_total_value numeric(12,0);
   order_item_id_value uuid;
   method_line_no integer := 0;
@@ -987,9 +991,15 @@ begin
     product_id_value := (item_value->>'product_id')::uuid;
     quantity_value := coalesce((item_value->>'quantity')::numeric, 0);
     unit_price_value := coalesce((item_value->>'unit_price')::numeric, 0);
+    line_subtotal_value := round(quantity_value * unit_price_value);
+    line_discount_value := coalesce((item_value->>'discount_amount')::numeric, 0);
 
     if quantity_value <= 0 or unit_price_value < 0 then
       raise exception 'item quantity and unit price are invalid' using errcode = '22023';
+    end if;
+
+    if line_discount_value < 0 or line_discount_value > line_subtotal_value then
+      raise exception 'item discount amount is invalid' using errcode = '22023';
     end if;
 
     select p.*
@@ -1003,10 +1013,11 @@ begin
       raise exception 'product is not active' using errcode = '22023';
     end if;
 
-    total_amount_value := coalesce(total_amount_value, 0) + round(quantity_value * unit_price_value);
+    subtotal_amount_value := subtotal_amount_value + line_subtotal_value;
+    discount_amount_value := discount_amount_value + line_discount_value;
   end loop;
 
-  total_amount_value := coalesce(total_amount_value, 0);
+  total_amount_value := subtotal_amount_value - discount_amount_value;
   sale_payment_value := least(total_amount_value, greatest(total_received_value - old_debt_payment_value, 0));
   debt_amount_value := total_amount_value - sale_payment_value;
 
@@ -1060,8 +1071,8 @@ begin
       jsonb_build_object('type', 'retail')
     ),
     price_list_id_value,
-    total_amount_value,
-    0,
+    subtotal_amount_value,
+    discount_amount_value,
     total_amount_value,
     sale_payment_value,
     debt_amount_value,
@@ -1077,6 +1088,9 @@ begin
     product_id_value := (item_value->>'product_id')::uuid;
     quantity_value := (item_value->>'quantity')::numeric;
     unit_price_value := (item_value->>'unit_price')::numeric;
+    line_subtotal_value := round(quantity_value * unit_price_value);
+    line_discount_value := coalesce((item_value->>'discount_amount')::numeric, 0);
+    line_total_value := line_subtotal_value - line_discount_value;
 
     select p.*
       into product_record
@@ -1089,8 +1103,6 @@ begin
     from public.product_inventory_settings pis
     where pis.product_id = product_id_value
       and pis.organization_id = p_organization_id;
-
-    line_total_value := round(quantity_value * unit_price_value);
 
     insert into public.order_items (
       organization_id,
@@ -1122,8 +1134,8 @@ begin
       product_record.sell_method,
       quantity_value,
       unit_price_value,
-      line_total_value,
-      0,
+      line_subtotal_value,
+      line_discount_value,
       coalesce(item_value->>'price_source', 'manual'),
       line_total_value,
       item_value->>'note'
