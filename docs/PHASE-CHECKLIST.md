@@ -419,7 +419,7 @@ Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation
 - [x] Local `npm test`: 18 files / 51 tests
 - [x] Local `npm run build`
 - [x] Local `npx deno check supabase/functions/api/index.ts`
-- [ ] Local `npm run test:e2e` after cloud/local staging has Phase 2B migration + function.
+- [x] Local `npm run test:e2e`: 2 passed
 - [x] Supabase Cloud staging migration/function deploy and API smoke:
   - [x] `npx supabase db push` applied `202607010001_production_queue.sql`
   - [x] `npx supabase functions deploy api`
