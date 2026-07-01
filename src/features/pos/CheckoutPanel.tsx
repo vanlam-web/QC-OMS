@@ -6,6 +6,7 @@ import type {
   CustomerDebtDetail,
   FinanceAccount,
   OrderService,
+  QuoteSummary,
   RecentPriceList,
 } from '../orders/order-service'
 import { formatApiError } from '../../lib/api/error-message'
@@ -14,10 +15,16 @@ export function CheckoutPanel({
   cartLines,
   selectedCustomer,
   orderService,
+  sourceQuote,
+  quoteBlockedReason = null,
+  onCheckoutSuccess,
 }: {
   cartLines: CheckoutCartLine[]
   selectedCustomer: Customer | null
   orderService: OrderService
+  sourceQuote?: { id: string; code: string }
+  quoteBlockedReason?: string | null
+  onCheckoutSuccess?: () => void
 }) {
   const [cashAmountOverride, setCashAmountOverride] = useState<number | null>(null)
   const [bankAmount, setBankAmount] = useState(0)
@@ -32,6 +39,7 @@ export function CheckoutPanel({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CheckoutResult | null>(null)
+  const [quoteResult, setQuoteResult] = useState<QuoteSummary | null>(null)
 
   const subtotal = useMemo(
     () => cartLines.reduce((sum, line) => sum + lineSubtotal(line), 0),
@@ -101,8 +109,13 @@ export function CheckoutPanel({
   async function submitCheckout() {
     setError(null)
     setResult(null)
+    setQuoteResult(null)
     if (cartLines.length === 0) {
       setError('Chưa có dòng hàng để checkout.')
+      return
+    }
+    if (quoteBlockedReason !== null) {
+      setError(quoteBlockedReason)
       return
     }
     if (bankAmount > 0 && bankAccountId === '') {
@@ -117,6 +130,7 @@ export function CheckoutPanel({
     setSubmitting(true)
     try {
       const checkout = await orderService.checkout({
+        source_quote_id: sourceQuote?.id,
         customer_id: selectedCustomer?.id,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
         items: cartLines.map((line) => ({
@@ -136,8 +150,56 @@ export function CheckoutPanel({
         },
       })
       setResult(checkout)
+      onCheckoutSuccess?.()
     } catch (cause) {
       setError(formatApiError(cause, 'Không tạo được hóa đơn.'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function saveQuote() {
+    setError(null)
+    setResult(null)
+    setQuoteResult(null)
+    if (cartLines.length === 0) {
+      setError('Chưa có dòng hàng để lưu báo giá.')
+      return
+    }
+    if (quoteBlockedReason !== null) {
+      setError(quoteBlockedReason)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const payload = {
+        source_quote_id: sourceQuote?.id,
+        customer_id: selectedCustomer?.id,
+        retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
+        items: cartLines.map((line) => ({
+          product_id: line.product.id,
+          quantity: line.quantity,
+          unit_price: line.unitPrice,
+          discount_amount: lineDiscount(line),
+          price_source: line.priceSource,
+          note: line.note,
+        })),
+        payment: {
+          cash_amount: cashAmount,
+          bank_amount: bankAmount,
+          bank_account_id: bankAmount > 0 ? bankAccountId : null,
+          old_debt_payment_amount: oldDebtPayment,
+          change_returned_amount: surplusMode === 'return' ? surplus : 0,
+        },
+      }
+      setQuoteResult(
+        sourceQuote === undefined
+          ? await orderService.saveQuote(payload)
+          : await orderService.reviseQuote(sourceQuote.id, payload),
+      )
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không lưu được báo giá.'))
     } finally {
       setSubmitting(false)
     }
@@ -285,9 +347,29 @@ export function CheckoutPanel({
       ))}
 
       {error ? <p role="alert">{error}</p> : null}
-      <button disabled={submitting} type="button" onClick={() => void submitCheckout()}>
+      {sourceQuote ? <p>Từ báo giá {sourceQuote.code}</p> : null}
+      {quoteBlockedReason ? <p role="status">{quoteBlockedReason}</p> : null}
+      <button
+        disabled={submitting || cartLines.length === 0 || quoteBlockedReason !== null}
+        type="button"
+        onClick={() => void saveQuote()}
+      >
+        Báo giá
+      </button>
+      <button
+        disabled={submitting || quoteBlockedReason !== null}
+        type="button"
+        onClick={() => void submitCheckout()}
+      >
         Tạo hóa đơn
       </button>
+
+      {quoteResult ? (
+        <section aria-label="Kết quả báo giá" className="checkout-result">
+          <strong>{quoteResult.code}</strong>
+          <p>{formatMoney(quoteResult.total_amount)}</p>
+        </section>
+      ) : null}
 
       {result ? (
         <section aria-label="Kết quả checkout" className="checkout-result">
