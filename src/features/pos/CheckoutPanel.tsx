@@ -59,6 +59,7 @@ export function CheckoutPanel({
   const oldDebtPayment = selectedCustomer !== null && surplusMode === 'old-debt'
     ? oldDebtPaymentAmount + surplus
     : oldDebtPaymentAmount
+  const grossCashAmount = cashAmount + oldDebtPaymentAmount
 
   useEffect(() => {
     let active = true
@@ -132,16 +133,9 @@ export function CheckoutPanel({
       const checkout = await orderService.checkout({
         customer_id: selectedCustomer?.id,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
-        items: cartLines.map((line) => ({
-          product_id: line.product.id,
-          quantity: line.quantity,
-          unit_price: line.unitPrice,
-          discount_amount: lineDiscount(line),
-          price_source: line.priceSource,
-          note: line.note,
-        })),
+        items: cartLines.map(lineToCheckoutItem),
         payment: {
-          cash_amount: cashAmount,
+          cash_amount: grossCashAmount,
           bank_amount: bankAmount,
           bank_account_id: bankAmount > 0 ? bankAccountId : null,
           old_debt_payment_amount: oldDebtPayment,
@@ -175,16 +169,9 @@ export function CheckoutPanel({
       const payload = {
         customer_id: selectedCustomer?.id,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
-        items: cartLines.map((line) => ({
-          product_id: line.product.id,
-          quantity: line.quantity,
-          unit_price: line.unitPrice,
-          discount_amount: lineDiscount(line),
-          price_source: line.priceSource,
-          note: line.note,
-        })),
+        items: cartLines.map(lineToCheckoutItem),
         payment: {
-          cash_amount: cashAmount,
+          cash_amount: grossCashAmount,
           bank_amount: bankAmount,
           bank_account_id: bankAmount > 0 ? bankAccountId : null,
           old_debt_payment_amount: oldDebtPayment,
@@ -391,6 +378,20 @@ function lineSubtotal(line: CheckoutCartLine): number {
 
 function lineDiscount(line: CheckoutCartLine): number {
   return Math.min(Math.max(line.discountAmount ?? 0, 0), lineSubtotal(line))
+}
+
+function lineToCheckoutItem(line: CheckoutCartLine) {
+  return {
+    product_id: line.product.id,
+    quantity: line.quantity,
+    width_m: line.width_m,
+    height_m: line.height_m,
+    linear_m: line.linear_m,
+    unit_price: line.unitPrice,
+    discount_amount: lineDiscount(line),
+    price_source: line.priceSource,
+    note: line.note,
+  }
 }
 
 function formatMoney(value: number): string {

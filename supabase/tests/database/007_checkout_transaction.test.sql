@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(33);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -192,6 +192,63 @@ values (
       )
     )
   )
+);
+
+insert into checkout_results (name, result)
+values (
+  'area_dimensions',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000302',
+          'quantity', 2,
+          'width_m', 1.2,
+          'height_m', 0.5,
+          'unit_price', 65000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 130000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (
+    select width_m
+    from public.order_items
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'area_dimensions')::uuid)
+  ),
+  1.2::numeric,
+  'checkout stores line width snapshot'
+);
+
+select is(
+  (
+    select height_m
+    from public.order_items
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'area_dimensions')::uuid)
+  ),
+  0.5::numeric,
+  'checkout stores line height snapshot'
+);
+
+select is(
+  (
+    select quantity_delta
+    from public.stock_movements
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'area_dimensions')::uuid)
+  ),
+  -1.2::numeric,
+  'area checkout deducts width times height times quantity from stock'
 );
 
 select is(
@@ -414,6 +471,60 @@ select throws_ok(
   'invalid bank account is rejected'
 );
 
+insert into checkout_results (name, result)
+values (
+  'standalone_debt_source',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 50000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 0,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+insert into checkout_results (name, result)
+values (
+  'standalone_debt_collection',
+  public.collect_customer_debt_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'cash_amount', 20000
+    )
+  )
+);
+
+select is(
+  (select count(*)::integer from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'standalone_debt_collection')::uuid)),
+  0,
+  'standalone debt collection does not create an invoice order'
+);
+
+select is(
+  (
+    select receipt_type
+    from public.payment_receipts
+    where id = ((select result->>'payment_receipt_id' from checkout_results where name = 'standalone_debt_collection')::uuid)
+  ),
+  'debt_collection',
+  'standalone debt collection creates a debt collection receipt'
+);
+
 select is(
   (select count(*)::integer from public.orders where code = 'HD999999'),
   0,
@@ -427,7 +538,7 @@ select throws_ok(
       '00000000-0000-4000-8000-000000000001',
       jsonb_build_object(
         'customer_id', '00000000-0000-4000-8000-000000000501',
-        'cash_amount', 10000
+        'cash_amount', 40000
       )
     )
   $$,
@@ -452,8 +563,8 @@ select throws_ok(
 
 select is(
   (select count(*)::integer from public.orders where order_type = 'invoice' and status = 'completed'),
-  7,
-  'successful checkout attempts leave seven completed invoices'
+  9,
+  'successful checkout attempts leave nine completed invoices'
 );
 
 select * from finish();
