@@ -111,6 +111,8 @@ Sản phẩm là **Combo / Biển bảng quảng cáo** — có nhiều thành p
 | **Vật tư phụ (Accessories)** | Keo, Vít, Led, khung nhôm... |
 | **Cơ chế lưu** | `[ ] Không lưu — Chỉ trừ kho` / `[ ] Lưu Combo mới` |
 
+Trong MVP, Combo trước hết là dòng bán hàng có snapshot. Nếu BOM chưa đủ cấu hình, hệ thống vẫn tính tiền theo dòng combo và chưa tự trừ vật tư con. Chức năng lưu combo mới từ POS và deep-scan combo lồng nhau thuộc phase BOM sau.
+
 ---
 
 ## 5. BỘ ĐẾM TỔNG (K02-C)

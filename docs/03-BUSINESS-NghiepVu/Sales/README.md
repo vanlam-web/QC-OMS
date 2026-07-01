@@ -17,6 +17,19 @@
 
 ---
 
+## Ghi chú BOM/Combo
+
+BOM/Combo chưa phải nghiệp vụ đã chốt sâu trong MVP. Hiện tại chỉ giữ ranh giới:
+
+- Combo là dòng bán hàng có snapshot.
+- Nếu BOM đủ cấu hình thì có thể trừ vật tư thành phần khi chốt hóa đơn.
+- Nếu BOM chưa đủ cấu hình thì không tự deep-scan/trừ vật tư con.
+- Lưu combo mới từ POS và combo lồng nhau để phase sau.
+
+Draft điều phối: `../../superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`.
+
+---
+
 ## 🔗 Tham chiếu
 
 - **PRD-UX (POS):** `02-PRD-UX-PhongCanh/POS/`
