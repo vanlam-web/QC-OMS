@@ -3,7 +3,7 @@ import { ConnectionStatus } from '../../components/ConnectionStatus'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { Customer, Product, ResolvedPrice } from '../catalog/types'
-import type { CheckoutCartLine, OrderService } from '../orders/order-service'
+import type { CheckoutCartLine, OrderService, QuoteReopenPayload } from '../orders/order-service'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
 import type { ProductionQueueDraftPayload } from '../production-queue/types'
 import { CheckoutPanel } from './CheckoutPanel'
@@ -35,59 +35,21 @@ export function PosShell({
 }) {
   const [products, setProducts] = useState<Product[]>([])
   const [prices, setPrices] = useState<Record<string, ResolvedPrice>>({})
-  const [cartLines, setCartLines] = useState<CheckoutCartLine[]>([])
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
-  const [sourceQuote, setSourceQuote] = useState<{ id: string; code: string } | undefined>(undefined)
+  const [initialQuotePayload] = useState(() => consumeQuoteReopenPayload())
+  const [cartLines, setCartLines] = useState<CheckoutCartLine[]>(() =>
+    initialQuotePayload === null ? [] : quotePayloadToCartLines(initialQuotePayload),
+  )
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(() =>
+    initialQuotePayload === null ? null : quotePayloadToCustomer(initialQuotePayload),
+  )
+  const [sourceQuote, setSourceQuote] = useState<{ id: string; code: string } | undefined>(() =>
+    initialQuotePayload === null
+      ? undefined
+      : { id: initialQuotePayload.quote.source_quote_id, code: initialQuotePayload.quote.source_quote_code },
+  )
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
-
-  useEffect(() => {
-    const payload = consumeQuoteReopenPayload()
-    if (payload === null) return
-
-    setSourceQuote({ id: payload.quote.source_quote_id, code: payload.quote.source_quote_code })
-    setSelectedCustomer(
-      payload.customer.customer_id === null
-        ? null
-        : {
-            id: payload.customer.customer_id,
-            code: payload.customer.snapshot.code ?? '',
-            name: payload.customer.snapshot.name,
-            phone: payload.customer.snapshot.phone,
-            customer_group_id: null,
-            customer_group: null,
-          },
-    )
-    setCartLines(
-      payload.items.map((item, index) => {
-        const blocked = item.warnings.some(
-          (warning) => warning.code === 'PRODUCT_INACTIVE' || warning.code === 'PRODUCT_MISSING',
-        )
-        return {
-          id: `${payload.quote.source_quote_id}-${index + 1}`,
-          product: {
-            id: item.product_id ?? `missing-${item.order_item_id}`,
-            code: item.product_snapshot.code,
-            name: item.product_snapshot.name,
-            status: blocked ? 'inactive' : 'active',
-            unit_name: item.product_snapshot.unit_name,
-            sell_method: item.product_snapshot.sell_method,
-          },
-          quantity: item.quantity,
-          width_m: item.width_m ?? undefined,
-          height_m: item.height_m ?? undefined,
-          linear_m: item.linear_m ?? undefined,
-          unitPrice: item.unit_price,
-          discountAmount: item.discount_amount,
-          priceSource: item.price_source,
-          isManualPrice: true,
-          note: item.note ?? undefined,
-          quoteWarnings: item.warnings,
-        }
-      }),
-    )
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -370,6 +332,47 @@ function quoteBlockedReason(cartLines: CheckoutCartLine[]): string | null {
   return blockedLine === undefined
     ? null
     : 'Sản phẩm trong báo giá không còn khả dụng. Hãy thay thế dòng trước khi thanh toán.'
+}
+
+function quotePayloadToCustomer(payload: QuoteReopenPayload): Customer | null {
+  if (payload.customer.customer_id === null) return null
+  return {
+    id: payload.customer.customer_id,
+    code: payload.customer.snapshot.code ?? '',
+    name: payload.customer.snapshot.name,
+    phone: payload.customer.snapshot.phone,
+    customer_group_id: null,
+    customer_group: null,
+  }
+}
+
+function quotePayloadToCartLines(payload: QuoteReopenPayload): CheckoutCartLine[] {
+  return payload.items.map((item, index) => {
+    const blocked = item.warnings.some(
+      (warning) => warning.code === 'PRODUCT_INACTIVE' || warning.code === 'PRODUCT_MISSING',
+    )
+    return {
+      id: `${payload.quote.source_quote_id}-${index + 1}`,
+      product: {
+        id: item.product_id ?? `missing-${item.order_item_id}`,
+        code: item.product_snapshot.code,
+        name: item.product_snapshot.name,
+        status: blocked ? 'inactive' : 'active',
+        unit_name: item.product_snapshot.unit_name,
+        sell_method: item.product_snapshot.sell_method,
+      },
+      quantity: item.quantity,
+      width_m: item.width_m ?? undefined,
+      height_m: item.height_m ?? undefined,
+      linear_m: item.linear_m ?? undefined,
+      unitPrice: item.unit_price,
+      discountAmount: item.discount_amount,
+      priceSource: item.price_source,
+      isManualPrice: true,
+      note: item.note ?? undefined,
+      quoteWarnings: item.warnings,
+    }
+  })
 }
 
 function readPositiveNumber(value: string): number {

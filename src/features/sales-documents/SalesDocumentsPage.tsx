@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { SalesDocumentDetail, SalesDocumentListItem } from './types'
 import type { SalesDocumentService } from './sales-document-service'
@@ -45,13 +45,13 @@ export function SalesDocumentsPage({
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
   const [openingQuoteId, setOpeningQuoteId] = useState<string | null>(null)
 
-  function currentFilters(input: { search?: string } = {}) {
+  const currentFilters = useCallback((input: { search?: string } = {}) => {
     return {
       ...input,
       type: typeFilter === 'all' ? undefined : typeFilter,
       status: statusFilter === 'all' ? undefined : statusFilter,
     }
-  }
+  }, [typeFilter, statusFilter])
 
   async function loadDocuments(input: { search?: string } = {}) {
     setError(null)
@@ -86,7 +86,7 @@ export function SalesDocumentsPage({
     return () => {
       active = false
     }
-  }, [service, typeFilter, statusFilter])
+  }, [service, currentFilters])
 
   async function searchDocuments(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
