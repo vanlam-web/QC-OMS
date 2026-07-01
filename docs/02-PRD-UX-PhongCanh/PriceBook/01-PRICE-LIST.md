@@ -106,7 +106,7 @@ QC-OMS ưu tiên:
 
 KiotViet `Khuyến mại` có dữ liệu thật dạng `Hàng hóa - Giá bán theo số lượng mua` cho một số vật tư PVC/CPVC. QC-OMS MVP không làm module khuyến mại/campaign riêng. Nếu sau này cần bán theo bậc số lượng, đặc tả lại như quy tắc giá trong PriceBook, không kéo nguyên module marketing/khuyến mại retail vào POS.
 
-KiotViet hiển thị cả `Giá vốn` và `Giá nhập cuối` trên lưới thiết lập giá. QC-OMS MVP chỉ giữ `Giá nhập cuối` làm cột cố định để tính giá; bỏ cột/nguồn `Giá vốn` khỏi công thức PriceBook để thao tác đơn giản hơn.
+KiotViet hiển thị cả `Giá vốn` và `Giá nhập cuối` trên lưới thiết lập giá. Popup tạo bảng giá của KiotViet cũng đi theo kiểu đơn giản: chọn một nguồn giá rồi cộng/trừ số tiền hoặc phần trăm. QC-OMS giữ tinh thần đơn giản đó, nhưng MVP chỉ giữ `Giá nhập cuối` làm cột cố định để tính giá; bỏ cột/nguồn `Giá vốn` khỏi công thức PriceBook để thao tác đơn giản hơn.
 
 Export bảng giá có nhiều dòng `Bảng giá chung = 0` và một dòng giá nhóm `26 = 0`. Quy tắc mới sau Owner bổ sung:
 
@@ -137,7 +137,7 @@ Nguyên tắc:
 
 ## 8. Công thức giá đơn giản theo cột
 
-QC-OMS tham khảo lưới KiotViet: cột cố định bên trái và ô giá có thể nhập trực tiếp. Nhưng công thức của QC-OMS không làm kiểu Excel tự do.
+QC-OMS tham khảo lưới KiotViet: cột cố định bên trái và ô giá có thể nhập trực tiếp. Công thức cũng gần cách KiotViet cho cộng/trừ số tiền hoặc phần trăm, nhưng được tách rõ thành `Chi phí`, `Lợi nhuận` và điều chỉnh từng bảng giá để phù hợp xưởng quảng cáo. QC-OMS không làm kiểu Excel tự do.
 
 Các cột cố định:
 
