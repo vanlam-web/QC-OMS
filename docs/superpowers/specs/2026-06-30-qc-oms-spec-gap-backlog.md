@@ -332,6 +332,8 @@ Quan sát KiotViet cập nhật ngày `2026-07-01`:
 
 - Bộ lọc `Tháng này` của màn `Nhập hàng` trống vì đầu tháng mới.
 - Mở rộng `01/07/2016 - 01/07/2026` thấy `626 giao dịch`, tổng `Cần trả NCC` khoảng `2,048,849,460`.
+- `Đặt hàng nhập` chỉ thấy `4` phiếu trong cùng khoảng thời gian, tổng khoảng `5,450,000`.
+- `Trả hàng nhập` vẫn không có giao dịch trong cùng khoảng thời gian.
 - Vì vậy Purchase/NCC là nghiệp vụ có dữ liệu thật, nhưng vẫn nên để sau MVP bán hàng cho tới khi nhập tồn vật lý cuộn/tấm được chốt.
 
 Owner cần chốt:

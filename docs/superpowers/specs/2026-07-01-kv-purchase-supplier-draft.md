@@ -82,6 +82,51 @@ KiotViet có:
 - Cột: mã phiếu, thời gian, loại chi, người nhận, cần thanh toán, đã thanh toán, còn phải trả, ghi chú, trạng thái.
 - Có thể liên quan tới sổ quỹ và công nợ đối tác.
 
+### 2.4. Đặt hàng nhập
+
+KiotViet có màn `Đặt hàng nhập` trước khi nhập hàng thật.
+
+Các trường/lọc chính:
+
+- Mã phiếu đặt hàng nhập.
+- Trạng thái: Phiếu tạm, Đã xác nhận NCC, Nhập một phần, trạng thái khác.
+- Thời gian.
+- Người tạo.
+- Người nhận đặt.
+- Nhà cung cấp.
+- Ngày nhập dự kiến.
+- Số ngày chờ.
+- Cần trả NCC.
+
+Quan sát ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tháng này` không có dữ liệu.
+- Mở rộng `01/07/2016 - 01/07/2026` có `4` phiếu đặt hàng nhập, tổng khoảng `5,450,000`.
+- Ví dụ: `PDN000004`, `PDN000003`, `PDN000002`, `PDN000001`.
+
+Kết luận: nghiệp vụ đặt hàng nhập có tồn tại nhưng rất ít so với `626` phiếu nhập hàng. QC-OMS không nên ưu tiên đặt hàng nhập trong MVP; khi hàng về thì nhập kho vật lý trực tiếp quan trọng hơn.
+
+### 2.5. Trả hàng nhập
+
+KiotViet có màn `Trả hàng nhập`.
+
+Các trường/lọc chính:
+
+- Mã phiếu trả.
+- Trạng thái: Phiếu tạm, Đã trả hàng, Đã hủy.
+- Thời gian.
+- Người tạo.
+- Người trả.
+- Nhà cung cấp.
+- Tổng tiền hàng, giảm giá, NCC cần trả, NCC đã trả.
+
+Quan sát ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tháng này` không có dữ liệu.
+- Mở rộng `01/07/2016 - 01/07/2026` vẫn không có giao dịch.
+
+Kết luận: trả hàng nhập không phải nghiệp vụ đang dùng thường xuyên. QC-OMS nên để sau Purchase/Supplier; trong MVP, xử lý sai lệch tồn bằng sửa/hủy chứng từ, kiểm kho hoặc điều chỉnh tồn theo quy tắc đã chốt.
+
 ---
 
 ## 3. Đề xuất cho QC-OMS
@@ -102,6 +147,8 @@ MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
 3. **Supplier Payables**: công nợ cần trả nhà cung cấp và phiếu chi liên quan.
 
 Mua dịch vụ nên đi theo Finance/Cashbook trước, không nhất thiết nằm chung với nhập hàng vật tư.
+
+`Đặt hàng nhập` và `Trả hàng nhập` nên là phase sau của Purchase, không nằm trong lát cắt đầu tiên.
 
 ---
 
@@ -175,6 +222,7 @@ Công nợ NCC tối thiểu:
 ## 6. Không đưa vào MVP nếu chưa chốt
 
 - Trả hàng nhập.
+- Đặt hàng nhập.
 - Hóa đơn đầu vào điện tử.
 - Chiết khấu thanh toán NCC.
 - Kênh bán/đối tác giao hàng trong nhập hàng.
