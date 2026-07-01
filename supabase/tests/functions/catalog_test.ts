@@ -290,3 +290,101 @@ Deno.test("price resolution accepts a customer id", async () => {
   assertEquals(body.items[0].unit_price, 100000);
   assertEquals(body.items[0].price_source, "customer_group_price_list");
 });
+
+Deno.test("price formula preview requires edit_price_book and returns computed rows", async () => {
+  const response = await call(
+    "/api/v1/price-lists/formulas/preview",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Fomex",
+        product_filter: { name_contains: "Mica" },
+        cost_formula: { type: "fixed", amount: 5000 },
+        profit_formula: { type: "fixed", amount: 25000 },
+        price_list_adjustments: { "pl-1": { type: "amount", amount: 20000 } },
+      }),
+    },
+    repo(["perm.edit_price_book"], {
+      previewPriceFormula: () =>
+        Promise.resolve({
+          affected_count: 1,
+          items: [
+            {
+              product_id: "p-1",
+              product_code: "MICA-3MM",
+              product_name: "Mica 3mm",
+              latest_purchase_cost: 100000,
+              current_mode: "manual",
+              current_unit_price: 120000,
+              computed_prices: [
+                {
+                  price_list_id: "pl-1",
+                  price_list_name: "Bảng giá chung",
+                  current_unit_price: 120000,
+                  computed_unit_price: 150000,
+                  delta: 30000,
+                },
+              ],
+            },
+          ],
+        }),
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  const body = await data(response) as { affected_count: number };
+  assertEquals(body.affected_count, 1);
+});
+
+Deno.test("price formula preview is blocked without edit_price_book", async () => {
+  const response = await call(
+    "/api/v1/price-lists/formulas/preview",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Fomex",
+        product_filter: {},
+        cost_formula: { type: "fixed", amount: 5000 },
+        profit_formula: { type: "fixed", amount: 25000 },
+        price_list_adjustments: {},
+      }),
+    },
+    repo(["perm.create_order"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("price formula apply persists selected formula cells", async () => {
+  let receivedActorUserId: string | undefined;
+  let receivedSelectionCount = 0;
+  const response = await call(
+    "/api/v1/price-lists/formulas/apply",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        formula: {
+          name: "Fomex",
+          product_filter: {},
+          cost_formula: { type: "fixed", amount: 5000 },
+          profit_formula: { type: "fixed", amount: 25000 },
+          price_list_adjustments: { "pl-1": { type: "amount", amount: 20000 } },
+        },
+        selected_items: [{ product_id: "p-1", price_list_id: "pl-1" }],
+      }),
+    },
+    repo(["perm.edit_price_book"], {
+      applyPriceFormula: (input: { actorUserId: string; selectedItems: unknown[] }) => {
+        receivedActorUserId = input.actorUserId;
+        receivedSelectionCount = input.selectedItems.length;
+        return Promise.resolve({ formula_rule_id: "rule-1", affected_count: 1 });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(receivedActorUserId, actorId);
+  assertEquals(receivedSelectionCount, 1);
+  const body = await data(response) as { affected_count: number };
+  assertEquals(body.affected_count, 1);
+});

@@ -4,6 +4,7 @@ import type {
   FoundationRepository,
   PermissionCode,
   PriceListData,
+  PriceFormulaPreviewData,
   ProductData,
   ProductStatus,
   ResolvedPriceData,
@@ -13,6 +14,7 @@ import { ApiError } from "../http.ts";
 
 export interface CatalogContext {
   organizationId: string;
+  actorUserId?: string;
   permissions: readonly PermissionCode[];
 }
 
@@ -40,6 +42,11 @@ export interface CustomerGroupListResponse {
 
 export interface ResolvePricesResponse {
   items: ResolvedPriceData[];
+}
+
+export interface PriceFormulaApplyResponse {
+  formula_rule_id: string;
+  affected_count: number;
 }
 
 const sellMethods = new Set<SellMethod>(["quantity", "area_m2", "linear_m", "sheet", "combo"]);
@@ -96,7 +103,12 @@ export async function updateProduct(
   const input = parseProductUpdate(body);
 
   try {
-    const row = await repository.updateProduct({ organizationId: context.organizationId, id, ...input });
+    const row = await repository.updateProduct({
+      organizationId: context.organizationId,
+      id,
+      ...input,
+      latestPurchaseCostUpdatedBy: input.latestPurchaseCost === undefined ? undefined : context.actorUserId,
+    });
     if (row === null) throw notFound();
     return row;
   } catch (cause) {
@@ -185,6 +197,40 @@ export async function deletePriceListItem(
       productId,
     }),
   };
+}
+
+export async function previewPriceFormula(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<PriceFormulaPreviewData> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  const formula = parseFormulaBody(body);
+  try {
+    return await repository.previewPriceFormula({ organizationId: context.organizationId, formula });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function applyPriceFormula(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<PriceFormulaApplyResponse> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  if (context.actorUserId === undefined) throw validationError();
+  const input = parseFormulaApplyBody(body);
+  try {
+    return await repository.applyPriceFormula({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      formula: input.formula,
+      selectedItems: input.selectedItems,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
 }
 
 export async function resolvePrices(
@@ -342,6 +388,7 @@ function parseProductUpdate(body: unknown): {
   status?: ProductStatus;
   unitName?: string;
   sellMethod?: SellMethod;
+  latestPurchaseCost?: number | null;
 } {
   if (!isRecord(body)) throw validationError();
   const input: {
@@ -350,12 +397,14 @@ function parseProductUpdate(body: unknown): {
     status?: ProductStatus;
     unitName?: string;
     sellMethod?: SellMethod;
+    latestPurchaseCost?: number | null;
   } = {};
   if ("code" in body) input.code = normalizeCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("status" in body) input.status = parseStatus(body.status);
   if ("unit_name" in body) input.unitName = normalizeText(body.unit_name, 30);
   if ("sell_method" in body) input.sellMethod = parseSellMethod(body.sell_method);
+  if ("latest_purchase_cost" in body) input.latestPurchaseCost = parseOptionalMoney(body.latest_purchase_cost);
   if (Object.keys(input).length === 0) throw validationError();
   return input;
 }
@@ -390,6 +439,33 @@ function parseUnitPrice(body: unknown): number {
   const value = body.unit_price;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
   return value;
+}
+
+function parseOptionalMoney(value: unknown): number | null {
+  if (value === null) return null;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
+  return value;
+}
+
+function parseFormulaBody(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) throw validationError();
+  return body;
+}
+
+function parseFormulaApplyBody(body: unknown): {
+  formula: Record<string, unknown>;
+  selectedItems: Array<{ product_id: string; price_list_id: string }>;
+} {
+  if (!isRecord(body) || !isRecord(body.formula) || !Array.isArray(body.selected_items)) throw validationError();
+  const selectedItems = body.selected_items.map((item) => {
+    if (!isRecord(item)) throw validationError();
+    return {
+      product_id: parseRequiredId(item.product_id),
+      price_list_id: parseRequiredId(item.price_list_id),
+    };
+  });
+  if (selectedItems.length < 1 || selectedItems.length > 1000) throw validationError();
+  return { formula: body.formula, selectedItems };
 }
 
 function parseResolvePrices(body: unknown): { productIds: string[]; customerId?: string } {
@@ -566,6 +642,9 @@ function mapRepositoryError(cause: unknown): ApiError {
   }
   if (isRecord(cause) && cause.message === "DEFAULT_PRICE_LIST_REQUIRED") {
     return new ApiError({ status: 409, code: "RESOURCE_CONFLICT", message: "Default price list is required." });
+  }
+  if (isRecord(cause) && String(cause.message).startsWith("FORMULA_")) {
+    return new ApiError({ status: 400, code: "VALIDATION_ERROR", message: "Invalid price formula." });
   }
   return new ApiError({ status: 500, code: "INTERNAL_ERROR", message: "An internal error occurred." });
 }

@@ -6,7 +6,9 @@ export type PriceSource =
   | "customer_group_price_list"
   | "fallback_default_price_list"
   | "latest_purchase_cost"
-  | "latest_purchase_cost_missing_zero";
+  | "latest_purchase_cost_missing_zero"
+  | "price_formula"
+  | "price_formula_missing_cost_zero";
 
 export interface RequestContext {
   traceId: string;
@@ -45,6 +47,8 @@ export interface ProductData {
   status: ProductStatus;
   unit_name: string;
   sell_method: SellMethod;
+  latest_purchase_cost: number | null;
+  latest_purchase_cost_at: string | null;
 }
 
 export interface PriceListData {
@@ -77,6 +81,29 @@ export interface ResolvedPriceData {
   unit_price: number;
   price_source: PriceSource;
   price_list_id: string;
+}
+
+export interface PriceFormulaPreviewPriceData {
+  price_list_id: string;
+  price_list_name: string;
+  current_unit_price: number | null;
+  computed_unit_price: number;
+  delta: number | null;
+}
+
+export interface PriceFormulaPreviewItemData {
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  latest_purchase_cost: number;
+  current_mode: "manual" | "formula" | null;
+  current_unit_price: number | null;
+  computed_prices: PriceFormulaPreviewPriceData[];
+}
+
+export interface PriceFormulaPreviewData {
+  affected_count: number;
+  items: PriceFormulaPreviewItemData[];
 }
 
 export interface CheckoutOrderSummaryData {
@@ -485,6 +512,8 @@ export interface FoundationRepository {
     status?: ProductStatus;
     unitName?: string;
     sellMethod?: SellMethod;
+    latestPurchaseCost?: number | null;
+    latestPurchaseCostUpdatedBy?: string;
   }): Promise<ProductData | null>;
   listPriceLists(input: { organizationId: string; activeOnly: boolean }): Promise<PriceListData[]>;
   createPriceList(input: {
@@ -512,6 +541,16 @@ export interface FoundationRepository {
     priceListId: string;
     productId: string;
   }): Promise<boolean>;
+  previewPriceFormula(input: {
+    organizationId: string;
+    formula: Record<string, unknown>;
+  }): Promise<PriceFormulaPreviewData>;
+  applyPriceFormula(input: {
+    organizationId: string;
+    actorUserId: string;
+    formula: Record<string, unknown>;
+    selectedItems: Array<{ product_id: string; price_list_id: string }>;
+  }): Promise<{ formula_rule_id: string; affected_count: number }>;
   listCustomers(input: {
     organizationId: string;
     search?: string;
