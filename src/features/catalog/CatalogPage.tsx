@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { CatalogService } from './catalog-service'
-import type { Product, ProductStatus, SellMethod } from './types'
+import type { PriceFormulaInput, PriceFormulaPreview, PriceList, Product, ProductStatus, SellMethod } from './types'
 
 interface CatalogState {
   products: Product[]
+  priceLists: PriceList[]
   total: number
 }
 
@@ -26,6 +27,11 @@ export function CatalogPage({
   const [state, setState] = useState<CatalogState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [formulaOpen, setFormulaOpen] = useState(false)
+  const [previewingFormula, setPreviewingFormula] = useState(false)
+  const [applyingFormula, setApplyingFormula] = useState(false)
+  const [formulaPreview, setFormulaPreview] = useState<PriceFormulaPreview | null>(null)
+  const [formulaForm, setFormulaForm] = useState({ name: '', fixedCost: '', fixedProfit: '' })
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
   const [form, setForm] = useState<{
@@ -46,7 +52,11 @@ export function CatalogPage({
     setError(null)
     try {
       const result = await service.listProducts({ search: filters.search, status: filters.status })
-      setState({ products: result.items, total: result.total })
+      setState((current) => ({
+        products: result.items,
+        priceLists: current?.priceLists ?? [],
+        total: result.total,
+      }))
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được hàng hóa.'))
     }
@@ -58,9 +68,12 @@ export function CatalogPage({
     async function loadInitialProducts() {
       setError(null)
       try {
-        const result = await service.listProducts({ status: 'active' })
+        const [result, priceListResult] = await Promise.all([
+          service.listProducts({ status: 'active' }),
+          service.listPriceLists(),
+        ])
         if (!active) return
-        setState({ products: result.items, total: result.total })
+        setState({ products: result.items, priceLists: priceListResult.items, total: result.total })
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được hàng hóa.'))
       }
@@ -111,6 +124,56 @@ export function CatalogPage({
       setError(formatApiError(cause, 'Không lưu được hàng hóa.'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  function buildFormulaInput(): PriceFormulaInput {
+    return {
+      name: formulaForm.name,
+      product_filter: {
+        status: 'active',
+        ...(search.trim() ? { name_contains: search.trim() } : {}),
+        ...(status !== 'all' ? {} : {}),
+      },
+      cost_formula: { type: 'fixed', amount: Number(formulaForm.fixedCost || 0) },
+      profit_formula: { type: 'fixed', amount: Number(formulaForm.fixedProfit || 0) },
+      price_list_adjustments: {},
+    }
+  }
+
+  async function previewFormula(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPreviewingFormula(true)
+    setError(null)
+    try {
+      setFormulaPreview(await service.previewPriceFormula(buildFormulaInput()))
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không xem trước được công thức.'))
+    } finally {
+      setPreviewingFormula(false)
+    }
+  }
+
+  async function applyFormula() {
+    if (formulaPreview === null) return
+    setApplyingFormula(true)
+    setError(null)
+    try {
+      await service.applyPriceFormula({
+        formula: buildFormulaInput(),
+        selected_items: formulaPreview.items.flatMap((item) =>
+          item.computed_prices.map((price) => ({
+            product_id: item.product_id,
+            price_list_id: price.price_list_id,
+          })),
+        ),
+      })
+      setFormulaPreview(null)
+      await load()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không áp dụng được công thức.'))
+    } finally {
+      setApplyingFormula(false)
     }
   }
 
@@ -190,6 +253,76 @@ export function CatalogPage({
           </button>
         </form>
 
+        <div className="catalog-toolbar">
+          <button type="button" onClick={() => setFormulaOpen((current) => !current)}>
+            Tạo công thức cho bộ lọc này
+          </button>
+        </div>
+
+        {formulaOpen ? (
+          <form aria-label="Công thức bảng giá" className="catalog-formula-panel" onSubmit={previewFormula}>
+            <label>
+              Tên công thức
+              <input
+                value={formulaForm.name}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, name: event.target.value }))}
+              />
+            </label>
+            <label>
+              Chi phí cố định
+              <input
+                inputMode="numeric"
+                value={formulaForm.fixedCost}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, fixedCost: event.target.value }))}
+              />
+            </label>
+            <label>
+              Lợi nhuận cố định
+              <input
+                inputMode="numeric"
+                value={formulaForm.fixedProfit}
+                onChange={(event) => setFormulaForm((current) => ({ ...current, fixedProfit: event.target.value }))}
+              />
+            </label>
+            <button disabled={previewingFormula} type="submit">
+              Xem trước
+            </button>
+            <button disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
+              Áp dụng công thức
+            </button>
+          </form>
+        ) : null}
+
+        {formulaPreview ? (
+          <section className="catalog-preview" aria-label="Xem trước công thức">
+            <p>{formulaPreview.affected_count} hàng hóa khớp bộ lọc</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã hàng</th>
+                  <th>Tên hàng</th>
+                  <th>Bảng giá</th>
+                  <th>Giá đề xuất</th>
+                  <th>Chênh lệch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {formulaPreview.items.flatMap((item) =>
+                  item.computed_prices.map((price) => (
+                    <tr key={`${item.product_id}-${price.price_list_id}`}>
+                      <td>{item.product_code}</td>
+                      <td>{item.product_name}</td>
+                      <td>{price.price_list_name}</td>
+                      <td>{formatMoney(price.computed_unit_price)}</td>
+                      <td>{price.delta === null ? 'Mới' : formatMoney(price.delta)}</td>
+                    </tr>
+                  )),
+                )}
+              </tbody>
+            </table>
+          </section>
+        ) : null}
+
         {state ? (
           <>
             <p>{state.total} hàng hóa</p>
@@ -198,7 +331,10 @@ export function CatalogPage({
                 <tr>
                   <th>Mã hàng</th>
                   <th>Tên hàng</th>
-                  <th>Đơn vị</th>
+                  <th>Giá nhập cuối</th>
+                  {state.priceLists.map((priceList) => (
+                    <th key={priceList.id}>{priceList.name}</th>
+                  ))}
                   <th>Cách bán</th>
                   <th>Trạng thái</th>
                   <th>Thao tác</th>
@@ -209,7 +345,10 @@ export function CatalogPage({
                   <tr key={product.id}>
                     <td>{product.code}</td>
                     <td>{product.name}</td>
-                    <td>{product.unit_name}</td>
+                    <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
+                    {state.priceLists.map((priceList) => (
+                      <td key={priceList.id}>-</td>
+                    ))}
                     <td>{sellMethodLabels[product.sell_method]}</td>
                     <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
                     <td>
@@ -226,4 +365,8 @@ export function CatalogPage({
       </section>
     </main>
   )
+}
+
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat('vi-VN').format(value)
 }

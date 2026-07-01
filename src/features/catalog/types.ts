@@ -8,6 +8,8 @@ export interface Product {
   status: ProductStatus
   unit_name: string
   sell_method: SellMethod
+  latest_purchase_cost?: number | null
+  latest_purchase_cost_at?: string | null
 }
 
 export interface ProductListResponse {
@@ -50,9 +52,64 @@ export interface ResolvedPrice {
     | 'fallback_default_price_list'
     | 'latest_purchase_cost'
     | 'latest_purchase_cost_missing_zero'
+    | 'price_formula'
+    | 'price_formula_missing_cost_zero'
   price_list_id: string
 }
 
 export interface ResolvePricesResponse {
   items: ResolvedPrice[]
+}
+
+export interface PriceList {
+  id: string
+  code: string
+  name: string
+  is_default: boolean
+  is_active: boolean
+}
+
+export interface PriceListResponse {
+  items: PriceList[]
+}
+
+export interface PriceFormulaInput {
+  name: string
+  product_filter: {
+    status: 'active'
+    name_contains?: string
+    code_contains?: string
+    sell_method?: SellMethod
+  }
+  cost_formula: { type: 'fixed'; amount: number } | { type: 'amount_plus_percent'; amount: number; percent_of_latest_purchase_cost: number }
+  profit_formula: { type: 'fixed'; amount: number }
+  price_list_adjustments: Record<string, { type: 'amount'; amount: number } | { type: 'percent'; percent: number }>
+}
+
+export interface PriceFormulaPreviewPrice {
+  price_list_id: string
+  price_list_name: string
+  current_unit_price: number | null
+  computed_unit_price: number
+  delta: number | null
+}
+
+export interface PriceFormulaPreviewItem {
+  product_id: string
+  product_code: string
+  product_name: string
+  latest_purchase_cost: number
+  current_mode: 'manual' | 'formula' | null
+  current_unit_price: number | null
+  computed_prices: PriceFormulaPreviewPrice[]
+}
+
+export interface PriceFormulaPreview {
+  affected_count: number
+  items: PriceFormulaPreviewItem[]
+}
+
+export interface PriceFormulaApplyResult {
+  formula_rule_id: string
+  affected_count: number
 }

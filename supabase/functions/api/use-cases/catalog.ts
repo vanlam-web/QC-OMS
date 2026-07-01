@@ -103,7 +103,12 @@ export async function updateProduct(
   const input = parseProductUpdate(body);
 
   try {
-    const row = await repository.updateProduct({ organizationId: context.organizationId, id, ...input });
+    const row = await repository.updateProduct({
+      organizationId: context.organizationId,
+      id,
+      ...input,
+      latestPurchaseCostUpdatedBy: input.latestPurchaseCost === undefined ? undefined : context.actorUserId,
+    });
     if (row === null) throw notFound();
     return row;
   } catch (cause) {
@@ -383,6 +388,7 @@ function parseProductUpdate(body: unknown): {
   status?: ProductStatus;
   unitName?: string;
   sellMethod?: SellMethod;
+  latestPurchaseCost?: number | null;
 } {
   if (!isRecord(body)) throw validationError();
   const input: {
@@ -391,12 +397,14 @@ function parseProductUpdate(body: unknown): {
     status?: ProductStatus;
     unitName?: string;
     sellMethod?: SellMethod;
+    latestPurchaseCost?: number | null;
   } = {};
   if ("code" in body) input.code = normalizeCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("status" in body) input.status = parseStatus(body.status);
   if ("unit_name" in body) input.unitName = normalizeText(body.unit_name, 30);
   if ("sell_method" in body) input.sellMethod = parseSellMethod(body.sell_method);
+  if ("latest_purchase_cost" in body) input.latestPurchaseCost = parseOptionalMoney(body.latest_purchase_cost);
   if (Object.keys(input).length === 0) throw validationError();
   return input;
 }
@@ -429,6 +437,12 @@ function parsePriceListUpdate(body: unknown): {
 function parseUnitPrice(body: unknown): number {
   if (!isRecord(body)) throw validationError();
   const value = body.unit_price;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
+  return value;
+}
+
+function parseOptionalMoney(value: unknown): number | null {
+  if (value === null) return null;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
   return value;
 }

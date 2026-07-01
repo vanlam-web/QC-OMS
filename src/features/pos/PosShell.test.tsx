@@ -51,6 +51,9 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
         },
       ],
     })),
+    listPriceLists: vi.fn(async () => ({ items: [] })),
+    previewPriceFormula: vi.fn(),
+    applyPriceFormula: vi.fn(),
     ...overrides,
   }
 }

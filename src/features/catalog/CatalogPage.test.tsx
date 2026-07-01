@@ -39,6 +39,35 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
     listCustomers: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
     createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({ items: [] })),
+    listPriceLists: vi.fn(async () => ({
+      items: [
+        { id: 'pl-default', code: 'DEFAULT', name: 'Bảng giá chung', is_default: true, is_active: true },
+        { id: 'pl-25', code: '25', name: '25', is_default: false, is_active: true },
+      ],
+    })),
+    previewPriceFormula: vi.fn(async () => ({
+      affected_count: 1,
+      items: [
+        {
+          product_id: 'p-1',
+          product_code: 'MICA-3MM',
+          product_name: 'Mica 3mm',
+          latest_purchase_cost: 100000,
+          current_mode: 'manual' as const,
+          current_unit_price: 120000,
+          computed_prices: [
+            {
+              price_list_id: 'pl-default',
+              price_list_name: 'Bảng giá chung',
+              current_unit_price: 120000,
+              computed_unit_price: 150000,
+              delta: 30000,
+            },
+          ],
+        },
+      ],
+    })),
+    applyPriceFormula: vi.fn(async () => ({ formula_rule_id: 'rule-1', affected_count: 1 })),
     ...overrides,
   }
 }
@@ -79,4 +108,27 @@ it('filters by status and toggles product active state', async () => {
 
   await userEvent.click(screen.getByRole('button', { name: 'Ngưng bán' }))
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
+})
+
+it('shows dynamic price list columns and previews formula results', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
+  expect(screen.getByText('25')).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo công thức cho bộ lọc này' }))
+  await userEvent.type(screen.getByLabelText('Tên công thức'), 'Fomex')
+  await userEvent.type(screen.getByLabelText('Chi phí cố định'), '5000')
+  await userEvent.type(screen.getByLabelText('Lợi nhuận cố định'), '25000')
+  await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
+
+  expect(await screen.findByText('150.000')).toBeInTheDocument()
+  expect(service.previewPriceFormula).toHaveBeenCalledWith({
+    name: 'Fomex',
+    product_filter: { status: 'active' },
+    cost_formula: { type: 'fixed', amount: 5000 },
+    profit_formula: { type: 'fixed', amount: 25000 },
+    price_list_adjustments: {},
+  })
 })

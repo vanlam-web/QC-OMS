@@ -47,6 +47,8 @@ export interface ProductData {
   status: ProductStatus;
   unit_name: string;
   sell_method: SellMethod;
+  latest_purchase_cost: number | null;
+  latest_purchase_cost_at: string | null;
 }
 
 export interface PriceListData {
@@ -510,6 +512,8 @@ export interface FoundationRepository {
     status?: ProductStatus;
     unitName?: string;
     sellMethod?: SellMethod;
+    latestPurchaseCost?: number | null;
+    latestPurchaseCostUpdatedBy?: string;
   }): Promise<ProductData | null>;
   listPriceLists(input: { organizationId: string; activeOnly: boolean }): Promise<PriceListData[]>;
   createPriceList(input: {

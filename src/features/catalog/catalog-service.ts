@@ -3,6 +3,10 @@ import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   Customer,
   CustomerListResponse,
+  PriceFormulaApplyResult,
+  PriceFormulaInput,
+  PriceFormulaPreview,
+  PriceListResponse,
   Product,
   ProductListResponse,
   ProductStatus,
@@ -42,6 +46,7 @@ export function createCatalogService(api: CatalogApiRequester) {
         status: ProductStatus
         unit_name: string
         sell_method: SellMethod
+        latest_purchase_cost: number | null
       }>,
     ) =>
       api.request<Product>(`/api/v1/products/${id}`, {
@@ -68,6 +73,20 @@ export function createCatalogService(api: CatalogApiRequester) {
       api.request<ResolvePricesResponse>('/api/v1/pricing/resolve', {
         method: 'POST',
         body: JSON.stringify({ product_ids: productIds, customer_id: customerId }),
+      }),
+    listPriceLists: () => api.request<PriceListResponse>('/api/v1/price-lists'),
+    previewPriceFormula: (input: PriceFormulaInput) =>
+      api.request<PriceFormulaPreview>('/api/v1/price-lists/formulas/preview', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    applyPriceFormula: (input: {
+      formula: PriceFormulaInput
+      selected_items: Array<{ product_id: string; price_list_id: string }>
+    }) =>
+      api.request<PriceFormulaApplyResult>('/api/v1/price-lists/formulas/apply', {
+        method: 'POST',
+        body: JSON.stringify(input),
       }),
   }
 }

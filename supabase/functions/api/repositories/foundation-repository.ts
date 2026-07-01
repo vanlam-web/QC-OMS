@@ -544,7 +544,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listProducts(input): Promise<{ items: ProductData[]; total: number }> {
       let query = client
         .from("products")
-        .select("id, code, name, status, unit_name, sell_method", { count: "exact" })
+        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
+          count: "exact",
+        })
         .eq("organization_id", input.organizationId)
         .order("code", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -570,7 +572,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           unit_name: input.unitName,
           sell_method: input.sellMethod,
         })
-        .select("id, code, name, status, unit_name, sell_method")
+        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .single();
       if (error !== null) throw error;
       return data as ProductData;
@@ -582,19 +584,27 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         status?: "active" | "inactive";
         unit_name?: string;
         sell_method?: string;
+        latest_purchase_cost?: number | null;
+        latest_purchase_cost_at?: string | null;
+        latest_purchase_cost_updated_by?: string | null;
       } = {};
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.status !== undefined) patch.status = input.status;
       if (input.unitName !== undefined) patch.unit_name = input.unitName;
       if (input.sellMethod !== undefined) patch.sell_method = input.sellMethod;
+      if (input.latestPurchaseCost !== undefined) {
+        patch.latest_purchase_cost = input.latestPurchaseCost;
+        patch.latest_purchase_cost_at = new Date().toISOString();
+        patch.latest_purchase_cost_updated_by = input.latestPurchaseCostUpdatedBy ?? null;
+      }
 
       const { data, error } = await client
         .from("products")
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, status, unit_name, sell_method")
+        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .maybeSingle();
       if (error !== null) throw error;
       return data as ProductData | null;

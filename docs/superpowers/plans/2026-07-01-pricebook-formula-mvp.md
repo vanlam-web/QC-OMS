@@ -696,7 +696,7 @@ git commit -m "feat: resolve formula prices dynamically"
 - Modify: `src/features/catalog/CatalogPage.test.tsx`
 - Modify: `src/styles/index.css`
 
-- [ ] **Step 1: Write failing UI tests**
+- [x] **Step 1: Write failing UI tests**
 
 Add to `CatalogPage.test.tsx`:
 
@@ -742,7 +742,7 @@ it('shows dynamic price list columns and previews formula results', async () => 
 });
 ```
 
-- [ ] **Step 2: Run UI tests and verify RED**
+- [x] **Step 2: Run UI tests and verify RED**
 
 Run:
 
@@ -752,7 +752,7 @@ npx vitest run src/features/catalog/CatalogPage.test.tsx
 
 Expected: FAIL because services/UI methods do not exist.
 
-- [ ] **Step 3: Extend frontend service/types**
+- [x] **Step 3: Extend frontend service/types**
 
 Add `PriceList`, `PriceFormulaPreview`, `PriceFormulaInput`, `FormulaApplyResult` to `src/features/catalog/types.ts`.
 
@@ -772,7 +772,7 @@ applyPriceFormula: (input: { formula: PriceFormulaInput; selected_items: Array<{
   })
 ```
 
-- [ ] **Step 4: Implement minimal grid UI**
+- [x] **Step 4: Implement minimal grid UI**
 
 In `CatalogPage.tsx`:
 - Load `listPriceLists()` alongside products.
@@ -786,7 +786,7 @@ In `CatalogPage.tsx`:
 - Preview renders computed prices.
 - Apply sends all previewed product/price list pairs.
 
-- [ ] **Step 5: Run UI tests**
+- [x] **Step 5: Run UI tests**
 
 Run:
 
@@ -797,7 +797,7 @@ npm test
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit Task 5**
+- [x] **Step 6: Commit Task 5**
 
 ```bash
 git add src/features/catalog src/styles/index.css
