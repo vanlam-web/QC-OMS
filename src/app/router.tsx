@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { LoginPage } from '../features/auth/LoginPage'
 import { ForbiddenPage } from './ForbiddenPage'
 import { PosShell } from '../features/pos/PosShell'
@@ -12,6 +12,7 @@ import { createBrowserCatalogService } from '../features/catalog/catalog-service
 import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
 import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
+import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 
@@ -25,6 +26,7 @@ export function AppRoutes() {
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
         <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
+        <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
@@ -136,8 +138,28 @@ function SalesDocumentsRoute() {
         saveQuoteReopenPayload(payload)
         navigate('/pos')
       }}
+      onOpenQuotePrint={(documentId) => navigate(`/sales-documents/${documentId}/quote-print`)}
     />
   )
+}
+
+function QuotePrintRoute() {
+  const { currentUser, initialized, getAccessToken } = useAuth()
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (
+    !currentUser.permissions.includes('perm.create_order') &&
+    !currentUser.permissions.includes('perm.manage_finance')
+  ) {
+    return <Navigate to="/forbidden" replace />
+  }
+  if (!id) return <Navigate to="/sales-documents" replace />
+
+  return <QuotePrintPage documentId={id} service={service} onClose={() => navigate('/sales-documents')} />
 }
 
 function ForbiddenRoute() {

@@ -80,6 +80,18 @@ const quoteListItem = {
   payment_status: 'not_applicable' as const,
 }
 
+const quoteDetail: SalesDocumentDetail = {
+  ...detail,
+  ...quoteListItem,
+  price_list: { id: 'pl-1', code: 'BGCHUNG', name: 'Bảng giá chung' },
+  paid_amount: 0,
+  debt_amount: 0,
+  change_returned_amount: 0,
+  payment_receipts: [],
+  debt_entries: [],
+  stock_movements: [],
+}
+
 const quoteReopenPayload: QuoteReopenPayload = {
   quote: {
     id: 'quote-1',
@@ -210,6 +222,27 @@ it('stores reopen payload through callback when opening active quote in POS', as
 
   expect(orderService.getQuoteReopenPayload).toHaveBeenCalledWith('quote-1')
   expect(onOpenQuoteInPos).toHaveBeenCalledWith(quoteReopenPayload)
+})
+
+it('opens quote print only from quote detail', async () => {
+  const onOpenQuotePrint = vi.fn()
+  const service = makeService({
+    listSalesDocuments: vi.fn(async () => ({
+      items: [quoteListItem],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })),
+    getSalesDocument: vi.fn(async () => quoteDetail),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} onOpenQuotePrint={onOpenQuotePrint} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Mở BG000123' }))
+
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ BG000123' })
+  await userEvent.click(within(detailRegion).getByRole('button', { name: 'Xem/In báo giá' }))
+
+  expect(onOpenQuotePrint).toHaveBeenCalledWith('quote-1')
 })
 
 it('opens invoice detail with item, price list, debt and stock snapshots', async () => {
