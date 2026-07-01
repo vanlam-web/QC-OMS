@@ -356,6 +356,10 @@ Source of Truth đã tạo:
 
 - QC-OMS MVP là bán đứt tại xưởng, không copy các module KiotViet không dùng.
 - Không làm Đặt hàng KiotViet, vận đơn, COD, bán online, HĐĐT/VAT, thương hiệu retail, điểm thưởng, chấm công/lương/hoa hồng.
+- KiotViet `Bán online` là đa kênh/TMĐT/MXH gồm Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA; bỏ khỏi MVP.
+- KiotViet `LoyaltyOnboarding` là onboarding bán hàng/giữ chân khách trên Zalo; bỏ khỏi MVP, QC-OMS chỉ hỗ trợ mở/copy bill để nhân viên tự gửi.
+- KiotViet `Thuế & Kế toán` là hồ sơ kê khai thuế/sổ kế toán cho hộ kinh doanh; bỏ khỏi MVP cùng HĐĐT/VAT/thuế.
+- KiotViet `Khuyến mại` có dữ liệu thật dạng giá theo số lượng mua cho một số vật tư; không làm module Campaign riêng, nếu cần sau này thì xem như PriceBook quantity tier.
 - KiotViet có danh sách 5 nhân viên thật, nhưng các trường mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh chỉ để tham khảo; QC-OMS giữ scope tài khoản/quyền/người thao tác.
 - KiotViet có bảng chấm công, bảng lương, bảng hoa hồng và thiết lập nhân viên; `Bảng lương` có 23 bảng nhưng giá trị lương đều `0`, `Hoa hồng` không có kết quả phù hợp. Tiếp tục bỏ HR/payroll/commission khỏi MVP.
 - Báo cáo nhân viên nếu cần chỉ là doanh thu theo người bán trong Reports, không phải module lương/hoa hồng.

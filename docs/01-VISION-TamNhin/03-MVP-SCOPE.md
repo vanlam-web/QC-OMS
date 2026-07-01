@@ -46,11 +46,14 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 | Giao hang/van don | Khong lam van don, doi tac giao hang, trang thai giao hang, khu vuc giao hang |
 | COD/ban giao hang | Khong lam COD, phi giao hang, doi soat giao hang |
 | Ban online | Khong lam website/Zalo shop/kenh ban online trong MVP |
+| Ban da kenh/TMDT/MXH | Khong ket noi Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA trong MVP |
 | Tra hang ban | Khong lam trong MVP; hoa don sai xu ly bang sua chung tu `MaCu.01` va huy chung tu cu |
 | Tra hang nhap | De sau Purchase/Supplier |
 | Hoa don dien tu/VAT/thue | Khong phat hanh HĐĐT, khong tinh VAT/thue ke toan trong QC-OMS hien tai |
+| So ke toan/to khai thue | Khong lam ho so ke khai thue, so ke toan thue trong QC-OMS hien tai |
 | Thuong hieu retail | Khong tao field/module/report rieng; neu can thi ghi trong ten/ma/nhom hang |
-| Diem thuong/loyalty | Khong lam tich diem, khuyen mai tu dong, sinh nhat/gioi tinh retail |
+| Diem thuong/loyalty | Khong lam tich diem, Zalo loyalty/onboarding, khuyen mai tu dong, sinh nhat/gioi tinh retail |
+| Khuyen mai retail | Khong lam module Campaign/Khuyen mai rieng trong MVP; neu can gia theo so luong thi xem lai trong PriceBook sau |
 | Nhan su cham cong | Khong lam lich lam viec, bang cham cong, bang luong, hoa hong/KPI |
 | Mua dich vu rieng | Trong MVP xu ly bang phieu chi So quy neu can |
 | Vi dien tu | Chua lam; MVP chi tien mat va ngan hang |
