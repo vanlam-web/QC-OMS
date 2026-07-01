@@ -6,7 +6,7 @@
 
 ## 1. Mục tiêu
 
-Trang chi tiết bảng giá cho phép xem và sửa giá bán của từng sản phẩm trong một bảng giá.
+Trang chi tiết bảng giá cho phép xem và sửa giá bán theo lưới sản phẩm, đồng thời cấu hình công thức đơn giản cho `Chi phí`, `Lợi nhuận` và điều chỉnh theo từng bảng giá.
 
 ---
 
@@ -17,9 +17,9 @@ Trang chi tiết bảng giá cho phép xem và sửa giá bán của từng sả
 │ Bảng giá: Đại lý                       [Lưu] [Ngừng dùng] [Thêm sản phẩm]   │
 │ Mã: BG_DAILY                           Nhóm dùng: Đại lý, Khách quen        │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ [Theo mã/tên hàng...] [Nhóm hàng] [Trạng thái hàng]                         │
+│ [Theo mã/tên hàng...] [Nhóm hàng] [Trạng thái hàng] [Tạo CT cho bộ lọc]      │
 │                                                                              │
-│ Mã hàng | Tên hàng | Đơn vị bán | Giá vốn | Giá bảng giá chung | Giá bảng này│
+│ Mã hàng | Tên hàng | Giá nhập cuối | Chi phí | Lợi nhuận | Chung | 25 | 30...│
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -31,16 +31,16 @@ Trang chi tiết bảng giá cho phép xem và sửa giá bán của từng sả
 |---|---|
 | Mã hàng | Mã sản phẩm |
 | Tên hàng | Tên sản phẩm |
-| Đơn vị bán | m2, m tới, tấm, cái, bộ... |
-| Cách tính bán | Theo số lượng, m2, m tới, tấm, combo |
-| Giá vốn | Chỉ đọc nếu có dữ liệu |
-| Giá bảng giá chung | Chỉ đọc để đối chiếu nếu đang sửa bảng giá nhóm |
-| Giá bảng này | Ô nhập giá áp dụng cho bảng hiện tại |
+| Giá nhập cuối | Cột cố định, chỉ đọc, lấy từ lần nhập mua gần nhất |
+| Chi phí | Bấm vào để nhập giá cố định hoặc công thức chi phí |
+| Lợi nhuận | Bấm vào để nhập giá cố định hoặc công thức lợi nhuận có điều kiện |
+| Bảng giá chung | Điều chỉnh cuối cùng cho bảng giá chung |
+| Bảng giá nhóm `25/26/30/35/40` | Điều chỉnh cuối cùng cho từng bảng giá nhóm |
 | Trạng thái hàng | Đang bán hoặc ngưng bán |
 
-Gợi ý từ KiotViet: có thể cho nhập giá trực tiếp trên lưới để thao tác nhanh, nhưng mỗi màn chỉ nên tập trung một bảng giá đang sửa. Không trải nhiều bảng giá nhóm thành nhiều cột ngang trong QC-OMS MVP.
+Các cột cố định tối thiểu là `Mã hàng`, `Tên hàng`, `Giá nhập cuối`. Các cột còn lại có thể cuộn ngang nếu màn hình nhỏ.
 
-Giá vốn là dữ liệu tham khảo lấy từ Purchase/Supplier hoặc tồn vật lý khi module đó đã có. Người dùng không sửa giá vốn tại màn bảng giá.
+Gợi ý từ KiotViet: lưới thiết lập giá có cột mã hàng, tên hàng, giá nhập cuối và ô giá nhập trực tiếp. QC-OMS giữ cách thao tác trên lưới, nhưng bỏ nguồn `Giá vốn` để đơn giản.
 
 ---
 
@@ -89,28 +89,88 @@ Nếu một sản phẩm trong bảng giá nhóm khách có giá bằng `0`, POS
 0 -> Theo giá nhập gần nhất, chưa có thì 0
 ```
 
-Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng. Công thức có thể lấy `giá vốn bình quân` hoặc `giá nhập cuối`, sau đó tính qua nhiều bước chi phí, hao hụt và lợi nhuận riêng cho từng bảng giá. Công thức lưu được làm mặc định lâu dài theo nhóm hàng/sản phẩm.
+Màn này có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng/bộ lọc. Công thức chỉ lấy `giá nhập cuối`, sau đó tính `Chi phí`, `Lợi nhuận` và điều chỉnh theo từng bảng giá.
 
-Ví dụ hướng công thức:
+Giá cuối luôn làm tròn lên `1,000đ`. UI không cần hiển thị lựa chọn làm tròn.
 
-```text
-Giá nền = Giá nhập cuối + vận chuyển + thuế/phí + hao hụt
-Giá bảng 40 = Giá nền + lợi nhuận bảng 40
-Giá bảng 35 = Giá nền + lợi nhuận bảng 35
-```
+Khi giá nhập cuối thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
+
+### 6.1. Cột Chi phí
+
+Khi bấm vào ô `Chi phí`, người dùng chọn một trong hai kiểu:
+
+| Kiểu | Cách nhập | Ví dụ |
+|---|---|---|
+| Giá cố định | Nhập số tiền | `+ 15,000đ` |
+| Công thức | Nhập `+ số tiền` và/hoặc `+ % giá nhập cuối` | `+ 5,000đ + 8%` |
+
+Chi phí không có điều kiện trong MVP.
+
+### 6.2. Cột Lợi nhuận
+
+Khi bấm vào ô `Lợi nhuận`, người dùng chọn một trong hai kiểu:
+
+| Kiểu | Cách nhập | Ví dụ |
+|---|---|---|
+| Giá cố định | Nhập số tiền | `+ 40,000đ` |
+| Công thức điều kiện | Theo bậc giá nhập cuối | Nếu giá nhập cuối <= 100,000 thì +25,000 |
+
+Điều kiện hỗ trợ:
+
+- `<`
+- `<=`
+- `>`
+- `>=`
+- `=`
+- khoảng `từ ... đến ...`
+
+Mỗi dòng điều kiện trả ra một giá trị lợi nhuận dạng:
+
+- `+ số tiền`
+- hoặc `+ % giá nhập cuối`
+- hoặc `+ số tiền + % giá nhập cuối`
+
+### 6.3. Cột bảng giá
+
+Khi bấm vào cột `Bảng giá chung`, `25`, `26`, `30`, `35`, `40`, chỉ cho nhập:
+
+- cộng/trừ số tiền
+- hoặc cộng/trừ phần trăm
+
+Không có điều kiện ở cột bảng giá trong MVP. Điều kiện nằm ở `Lợi nhuận`.
 
 Ví dụ:
 
 ```text
-Fomex 5mm:
-Giá nền = Giá nhập cuối * (1 + 10% vận chuyển + 8% thuế/phí + 10% hao hụt)
-Giá 40 = Giá nền + 40,000/tấm
-Giá 35 = Giá nền + 35,000/tấm
+Bảng giá chung: +20,000đ
+25: +0đ
+30: -5,000đ
+35: -10,000đ
+40: -15,000đ
 ```
 
-Khi giá nhập cuối hoặc giá vốn bình quân thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
+### 6.4. Ví dụ Fom
 
-### 6.1. Gán công thức theo bộ lọc
+```text
+Áp dụng cho: Nhóm hàng Fom
+Giá nhập cuối: 100,000
+
+Chi phí: +5,000 + 8% = 13,000
+
+Lợi nhuận:
+- Nếu giá nhập cuối <= 100,000: +25,000
+- Nếu giá nhập cuối > 100,000 và <= 200,000: +40,000
+- Nếu giá nhập cuối > 200,000: +60,000
+
+Giá tạm = 100,000 + 13,000 + 25,000 = 138,000
+
+Bảng giá chung: 138,000 + 20,000 = 158,000
+25: 138,000 + 0 = 138,000
+30: 138,000 - 5,000 = 133,000
+40: 138,000 - 15,000 = 123,000
+```
+
+### 6.5. Gán công thức theo bộ lọc
 
 Trong màn chi tiết bảng giá, người dùng có thể lọc danh sách sản phẩm rồi bấm `Tạo công thức cho bộ lọc này`.
 
@@ -124,12 +184,10 @@ Bộ lọc được lưu thành một rule công thức. Đề xuất UI:
 Khi lưu rule, hệ thống lưu:
 
 - tên công thức dễ hiểu
-- bảng giá áp dụng hoặc tất cả bảng giá nhóm
 - điều kiện lọc sản phẩm
-- nguồn giá vốn: giá nhập gần nhất hoặc giá vốn bình quân
-- tầng chi phí: vận chuyển, thuế/phí, hao hụt
-- tầng lợi nhuận theo bảng giá
-- cách làm tròn
+- cấu hình `Chi phí`
+- cấu hình `Lợi nhuận`
+- điều chỉnh từng bảng giá
 - trạng thái active/inactive của công thức
 
 Đề xuất để dễ vận hành:
@@ -145,16 +203,16 @@ Nếu nhiều công thức cùng khớp một sản phẩm, dùng ưu tiên:
 2. công thức nhóm hàng có nhiều điều kiện cụ thể hơn
 3. công thức mặc định nhóm hàng
 
-Trước khi áp dụng hàng loạt, màn preview phải hiển thị giá hiện tại, giá nguồn, giá đề xuất, chênh lệch và công thức đang áp dụng.
+Trước khi áp dụng hàng loạt, màn preview phải hiển thị giá hiện tại, giá nhập cuối, chi phí, lợi nhuận, điều chỉnh bảng giá, giá đề xuất và chênh lệch.
 
 Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, màn chi tiết bảng giá không được khóa thiết kế theo lưới export KiotViet. KiotViet chỉ dùng để import dữ liệu ban đầu và đối chiếu nhóm giá hiện có. Luồng chuẩn của QC-OMS cần ưu tiên:
 
 - sửa giá chính thức nhanh cho từng bảng giá
-- thấy giá vốn/giá nhập cuối để tham khảo
+- thấy giá nhập cuối để tham khảo và tính giá
 - có nút tính/gợi ý lại giá theo công thức khi Owner chủ động dùng
 - phân biệt rõ giá đã lưu và giá đề xuất chưa áp dụng
 - giữ lịch sử thay đổi giá để biết ai sửa và sửa lúc nào
-- xem được công thức nào đang áp dụng cho dòng/nhóm hàng và giá mới sinh ra từ nguồn giá nào
+- xem được công thức nào đang áp dụng cho dòng/nhóm hàng
 
 ---
 

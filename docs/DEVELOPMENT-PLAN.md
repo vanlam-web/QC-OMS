@@ -171,6 +171,7 @@ Mốc phát hành logic ban đầu:
 - Chọn bảng giá và hiển thị chiết khấu.
 - Nhắc bổ sung SĐT K03-B.
 - Back-office tối thiểu để quản lý sản phẩm và bảng giá.
+- Future PriceBook formula nâng cao: lưới theo `Mã hàng`, `Tên hàng`, `Giá nhập cuối`, `Chi phí`, `Lợi nhuận`, các bảng giá; chỉ dùng giá nhập cuối, làm tròn 1,000đ mặc định.
 
 **Backend và Database**
 

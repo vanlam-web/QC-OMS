@@ -146,18 +146,15 @@ Nguồn giá vốn phục vụ nhiều mục đích:
 - lịch sử mua hàng
 - báo cáo tồn kho
 - báo cáo lợi nhuận khi phương pháp giá vốn đã chốt
-- công thức PriceBook theo nhóm hàng
+- công thức PriceBook theo nhóm hàng trong MVP chỉ đọc `giá nhập cuối`
 
-### BR-PUR-09: PriceBook có thể dùng giá vốn bình quân hoặc mới nhất
+### BR-PUR-09: PriceBook MVP chỉ dùng giá nhập cuối
 
-PriceBook được phép dùng các nguồn sau khi đã có Purchase:
+PriceBook MVP không chọn nhiều nguồn tính giá để tránh rườm rà.
 
-| Nguồn | Ý nghĩa |
-|---|---|
-| Giá vốn mới nhất | Giá nhập gần nhất của sản phẩm/vật tư |
-| Giá vốn bình quân | Giá vốn trung bình theo dữ liệu nhập/tồn |
+Nguồn duy nhất cho công thức PriceBook là `giá nhập cuối` của sản phẩm/vật tư.
 
-Giá vốn thay đổi không tự sửa giá bán đã lưu nếu chưa có thao tác cập nhật/lưu công thức bảng giá. POS vẫn lấy giá bán chính thức từ bảng giá.
+Khi giá nhập cuối thay đổi, hệ thống tính lại giá đề xuất theo công thức bảng giá. POS chỉ dùng giá mới sau khi người dùng áp dụng giá đề xuất vào bảng giá, trừ rule riêng của bảng giá nhóm `0` lấy động theo giá nhập gần nhất.
 
 ---
 
@@ -214,4 +211,3 @@ Quy tắc này đi cùng hướng công nợ khách đã chốt: trả nợ theo
 - Phiếu nhập trả chưa đủ sinh công nợ NCC.
 - Trả tiền NCC tạo phiếu chi/sổ quỹ đúng phương thức tiền.
 - Không có luồng HĐĐT/VAT/thuế trong Purchase MVP.
-

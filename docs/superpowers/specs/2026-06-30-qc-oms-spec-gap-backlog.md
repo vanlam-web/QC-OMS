@@ -191,13 +191,13 @@ Source of Truth đã tạo:
 - Bảng giá chung là fallback mặc định.
 - Bảng giá nhóm áp dụng qua nhóm khách; khách không gán nhóm dùng bảng giá chung.
 - Không đưa khuyến mại, công thức cập nhật giá hàng loạt hoặc chiết khấu riêng vào MVP.
-- Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng.
-- Công thức giá theo nhóm hàng có thể chọn nguồn giá vốn bình quân hoặc giá vốn mới nhất.
-- Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
+- Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng dựa trên `giá nhập cuối`.
+- Quyết định mới thay thế hướng cũ: PriceBook MVP không chọn giá vốn bình quân/giá vốn mới nhất; chỉ dùng `giá nhập cuối`.
+- Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá nhập cuối thay đổi.
 - Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
 - Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
-- Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế công thức/luồng giá riêng theo nhóm hàng, giá vốn bình quân/giá vốn mới nhất và cách bán thực tế.
-- Owner chốt thêm: công thức giá cần 2 tầng gồm `giá nền trước lợi nhuận` và `giá bán theo từng bảng giá`; ví dụ Fomex 5mm lấy giá nhập cuối cộng vận chuyển, thuế/phí, hao hụt rồi cộng lợi nhuận riêng cho bảng `40/35/30/...`. Công thức phải lưu mặc định lâu dài theo nhóm hàng/sản phẩm và tính lại khi giá nhập/giá vốn thay đổi.
+- Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế lưới riêng theo `Mã hàng`, `Tên hàng`, `Giá nhập cuối`, `Chi phí`, `Lợi nhuận` và các bảng giá.
+- Owner chốt thêm: bỏ khái niệm `giá nền` trong UI. Công thức đơn giản là `Giá nhập cuối + Chi phí + Lợi nhuận + điều chỉnh bảng giá`, luôn làm tròn lên `1,000đ`.
 
 #### 3.2F. Overview Dashboard — PRD-UX
 
@@ -385,8 +385,8 @@ Draft tham khảo KiotViet đã tạo:
 - Purchase/Supplier có trong phạm vi dự án, nhưng sau POS MVP.
 - Khi làm nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
 - Nhập hàng cuộn/tấm phải nhập đúng vật thể mua vào: cuộn là cuộn, tấm là tấm/lô tấm; không mua `m2` cho hàng cuộn/tấm.
-- Giá vốn từ phiếu nhập phải lưu lại để báo cáo và làm dữ liệu cho công thức/gợi ý bảng giá sau này.
-- Công thức bảng giá theo nhóm hàng có thể lấy giá vốn bình quân hoặc giá vốn mới nhất.
+- Giá vốn từ phiếu nhập phải lưu lại để báo cáo; riêng công thức/gợi ý bảng giá MVP chỉ dùng `giá nhập cuối`.
+- Công thức bảng giá theo nhóm hàng không chọn giá vốn bình quân trong MVP.
 - Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
 
 Quan sát KiotViet cập nhật ngày `2026-07-01`:

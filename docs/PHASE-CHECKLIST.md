@@ -552,6 +552,27 @@ Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
 - [ ] Tự gửi Zalo/Facebook/email hoặc lưu lịch sử gửi.
 - [ ] In lại hóa đơn/bill nâng cao nếu chưa có Bill Preview riêng.
 
+## Future — PriceBook formula nâng cao
+
+Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quote/Print/Purchase
+
+### Phạm vi đã chốt
+
+- [ ] Chỉ dùng `giá nhập cuối` làm nguồn tính giá; không dùng giá vốn bình quân trong PriceBook MVP.
+- [ ] Lưới giá có cột cố định `Mã hàng`, `Tên hàng`, `Giá nhập cuối`.
+- [ ] Cột `Chi phí`: chọn giá cố định hoặc công thức `+ số tiền + % giá nhập cuối`.
+- [ ] Cột `Lợi nhuận`: chọn giá cố định hoặc công thức điều kiện theo giá nhập cuối.
+- [ ] Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
+- [ ] Giá cuối luôn làm tròn lên `1,000đ`, không có UI chọn làm tròn.
+- [ ] Chạy công thức phải có preview trước khi áp dụng vào bảng giá.
+
+### Ngoài phạm vi slice đầu
+
+- [ ] Công thức Excel/free-form `+ - * /` tự do.
+- [ ] Chọn nguồn giá vốn bình quân.
+- [ ] Điều kiện phức tạp ở cột bảng giá.
+- [ ] Tự động ghi giá vào bảng giá khi giá nhập cuối thay đổi mà không có bước áp dụng.
+
 ## Lệnh thường dùng
 
 ```bash
