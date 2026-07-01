@@ -20,6 +20,11 @@ Ghi chú từ KiotViet audit ngày `2026-07-01`:
 - KiotViet có `Danh sách nhân viên` với 5 nhân viên thật trong tài khoản đang rà.
 - Các cột chính gồm mã nhân viên, mã chấm công, tên nhân viên, SĐT, CMND/CCCD, nợ và tạm ứng, ghi chú.
 - Có bộ lọc trạng thái đang làm việc/đã nghỉ, phòng ban, chức danh.
+- KiotViet còn có `Bảng chấm công`, `Bảng lương`, `Bảng hoa hồng` và `Thiết lập nhân viên`.
+- `Bảng chấm công` có ca làm, lịch tuần, trạng thái đúng giờ/đi muộn/chấm công thiếu/nghỉ làm.
+- `Bảng lương` có 23 bảng lương nhưng tổng lương/đã trả/còn cần trả đang là `0`, chủ yếu trạng thái tạm tính.
+- `Bảng hoa hồng` có cấu hình theo hàng hóa/nhân viên áp dụng nhưng không có kết quả phù hợp trong lượt rà.
+- `Thiết lập nhân viên` gồm khởi tạo, chấm công, tính lương, ngày làm/nghỉ, Zalo mini app và máy chấm công.
 - QC-OMS chỉ lấy phần cần cho đăng nhập, quyền và ghi nhận người thao tác. Không copy các trường HR/kế toán nhân sự như mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh nếu chưa có nghiệp vụ rõ.
 
 ---
@@ -154,10 +159,14 @@ Một nhân viên có thể đăng nhập ở máy khác nếu có quyền. Máy
 - Chấm công.
 - Mã chấm công.
 - Lịch làm việc.
+- Ca làm việc.
 - Bảng lương.
 - Hoa hồng.
+- Thiết lập lương/thưởng/phụ cấp.
 - KPI/hiệu suất nhân sự sâu.
 - Phân ca nhân viên.
+- Máy chấm công.
+- Zalo mini app cho nhân viên.
 - CMND/CCCD nhân viên.
 - Nợ/tạm ứng nhân viên.
 - Phòng ban/chức danh như module HR riêng.

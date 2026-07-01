@@ -357,6 +357,8 @@ Source of Truth đã tạo:
 - QC-OMS MVP là bán đứt tại xưởng, không copy các module KiotViet không dùng.
 - Không làm Đặt hàng KiotViet, vận đơn, COD, bán online, HĐĐT/VAT, thương hiệu retail, điểm thưởng, chấm công/lương/hoa hồng.
 - KiotViet có danh sách 5 nhân viên thật, nhưng các trường mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh chỉ để tham khảo; QC-OMS giữ scope tài khoản/quyền/người thao tác.
+- KiotViet có bảng chấm công, bảng lương, bảng hoa hồng và thiết lập nhân viên; `Bảng lương` có 23 bảng nhưng giá trị lương đều `0`, `Hoa hồng` không có kết quả phù hợp. Tiếp tục bỏ HR/payroll/commission khỏi MVP.
+- Báo cáo nhân viên nếu cần chỉ là doanh thu theo người bán trong Reports, không phải module lương/hoa hồng.
 - Báo giá chỉ là bản giá, không giữ hàng, không trừ kho, không tạo tiền/công nợ/doanh thu.
 - Purchase/Supplier, giá vốn/lợi nhuận đầy đủ, máy sản xuất tự trừ kho và gửi tin tự động để sau MVP.
 

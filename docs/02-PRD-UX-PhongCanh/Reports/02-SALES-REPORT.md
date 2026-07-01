@@ -57,6 +57,8 @@ Sau MVP có thể bổ sung:
 - doanh thu theo nhân viên bán
 - doanh thu theo nhóm khách/bảng giá
 
+Doanh thu theo nhân viên chỉ là góc nhìn báo cáo bán hàng theo người chốt hóa đơn. Không dùng báo cáo này để mở module hoa hồng, bảng lương hoặc KPI nhân sự trong MVP.
+
 ---
 
 ## 5. Bảng chi tiết hóa đơn
@@ -106,4 +108,3 @@ Không có top theo kênh bán hoặc thương hiệu.
 ---
 
 ← [Quay về Reports README](./README.md)
-
