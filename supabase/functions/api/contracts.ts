@@ -103,6 +103,61 @@ export interface CheckoutResultData {
   inventory_warnings: InventoryWarningData[];
 }
 
+export interface SalesDocumentListItemData {
+  id: string;
+  code: string;
+  order_type: "quote" | "invoice";
+  status: "active" | "converted" | "completed" | "cancelled";
+  created_at: string;
+  customer: { id: string | null; code: string | null; name: string; phone: string | null };
+  seller: { id: string; name: string };
+  subtotal_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  paid_amount: number;
+  debt_amount: number;
+  payment_status: "not_applicable" | "unpaid" | "partial" | "paid";
+  note: string | null;
+}
+
+export interface SalesDocumentDetailData extends SalesDocumentListItemData {
+  price_list: { id: string; code: string; name: string } | null;
+  change_returned_amount: number;
+  items: Array<{
+    id: string;
+    line_no: number;
+    product: { id: string | null; code: string; name: string; unit_name: string; sell_method: SellMethod };
+    quantity: number;
+    unit_price: number;
+    line_subtotal_amount: number;
+    discount_amount: number;
+    line_total: number;
+    price_source: string;
+    note: string | null;
+  }>;
+  payment_receipts: Array<{
+    id: string;
+    code: string;
+    total_received_amount: number;
+    methods: Array<{
+      method_type: "cash" | "bank_transfer";
+      amount: number;
+      finance_account: { id: string; code: string; name: string };
+    }>;
+    allocations: PaymentReceiptAllocationData[];
+  }>;
+  debt_entries: Array<{
+    id: string;
+    entry_type: "invoice_debt" | "debt_payment" | "debt_adjustment";
+    amount_delta: number;
+    balance_after_order: number;
+    balance_after_customer: number;
+    created_at: string;
+  }>;
+  stock_movements: StockMovementData[];
+  history: Array<{ at: string; action: string; actor_name: string; note: string | null }>;
+}
+
 export interface FinanceAccountData {
   id: string;
   code: string;
@@ -450,6 +505,21 @@ export interface FoundationRepository {
     orderId: string;
     payload: Record<string, unknown>;
   }): Promise<Record<string, unknown>>;
+  listSalesDocuments(input: {
+    organizationId: string;
+    search?: string;
+    type?: "quote" | "invoice";
+    status?: "active" | "converted" | "completed" | "cancelled";
+    paymentStatus?: "not_applicable" | "unpaid" | "partial" | "paid";
+    from?: string;
+    to?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: SalesDocumentListItemData[]; total: number }>;
+  getSalesDocument(input: {
+    organizationId: string;
+    orderId: string;
+  }): Promise<SalesDocumentDetailData | null>;
   listFinanceAccounts(input: {
     organizationId: string;
     accountType?: "cash" | "bank";

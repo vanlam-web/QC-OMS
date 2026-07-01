@@ -14,6 +14,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   const onOpenPos = vi.fn()
   const onOpenAdmin = vi.fn()
   const onOpenCatalog = vi.fn()
+  const onOpenSalesDocuments = vi.fn()
   const onSignOut = vi.fn()
 
   render(
@@ -22,6 +23,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
       onOpenPos={onOpenPos}
       onOpenAdmin={onOpenAdmin}
       onOpenCatalog={onOpenCatalog}
+      onOpenSalesDocuments={onOpenSalesDocuments}
       onSignOut={onSignOut}
     />,
   )
@@ -37,6 +39,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   expect(onOpenPos).toHaveBeenCalled()
   expect(onOpenAdmin).toHaveBeenCalled()
   expect(onOpenCatalog).not.toHaveBeenCalled()
+  expect(onOpenSalesDocuments).not.toHaveBeenCalled()
   expect(onSignOut).toHaveBeenCalled()
 })
 
@@ -47,6 +50,7 @@ it('disables modules when the account lacks the matching permission', () => {
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
       onOpenCatalog={vi.fn()}
+      onOpenSalesDocuments={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -64,10 +68,28 @@ it('enables product catalog for accounts with edit price book permission', async
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
       onOpenCatalog={onOpenCatalog}
+      onOpenSalesDocuments={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Bảng giá' }))
   expect(onOpenCatalog).toHaveBeenCalled()
+})
+
+it('opens sales documents for sales or finance accounts', async () => {
+  const onOpenSalesDocuments = vi.fn()
+  render(
+    <DashboardPage
+      currentUser={{ ...currentUser, permissions: ['perm.create_order'] }}
+      onOpenPos={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenCatalog={vi.fn()}
+      onOpenSalesDocuments={onOpenSalesDocuments}
+      onSignOut={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Chứng từ bán hàng' }))
+  expect(onOpenSalesDocuments).toHaveBeenCalled()
 })
