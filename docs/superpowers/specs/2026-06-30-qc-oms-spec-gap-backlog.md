@@ -471,11 +471,11 @@ Còn cần bổ sung khi hạ tầng thật được chốt:
 3. ~~Viết Database Sales Phase 1: customers/products/price lists chuẩn hóa, index tìm kiếm.~~ Đã cập nhật `04-DATABASE/Sales/POS-TABLES.md`.
 4. ~~Viết Backend APIs Phase 1: product search, customer CRUD/search, price resolution.~~ Đã tạo `05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md`.
 5. ~~Viết draft Order persistence: nháp, báo giá, hóa đơn, snapshot dòng hàng.~~ Đã cập nhật `POS-ORDER-LIFECYCLE.md`, `POS-TABLES.md` và tạo `ORDER-API.md`.
-6. Viết Finance/Checkout spec: payment, cashbook, debt allocation, idempotency. Đã tạo `03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`; còn cần Database/API cho Finance và Checkout idempotency.
-7. Viết Inventory policy draft trước khi động đến BOM/khui vật tư sâu.
-8. Viết Production queue + Integration contract cho Phase 6.
-9. Viết Bill/Printer/Messaging spec cho Phase 7.
-10. Viết Production/Backup/Monitoring trước Phase 8.
+6. ~~Viết Finance/Checkout spec: payment, cashbook, debt allocation, idempotency.~~ Đã có Business/DB/API nền cho Checkout, Finance, Cashbook và Debt.
+7. ~~Viết Inventory policy draft trước khi động đến BOM/khui vật tư sâu.~~ Đã có Inventory Business/DB/API nền và draft BOM boundary.
+8. ~~Viết Production queue + Integration contract cho Phase 6.~~ Đã có draft `2026-07-01-production-queue-contract-draft.md`; cần chuyển SoT khi phase bắt đầu.
+9. ~~Viết Bill/Printer/Messaging spec cho Phase 7.~~ Đã có draft `2026-07-01-bill-printer-messaging-draft.md`; cần chuyển SoT khi phase bắt đầu.
+10. ~~Viết Production/Backup/Monitoring trước Phase 8.~~ Đã có baseline `PRODUCTION.md` và `BACKUP-RESTORE.md`; cần chốt công cụ khi hạ tầng thật rõ.
 
 Khuyến nghị cho luồng hiện tại:
 
