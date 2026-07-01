@@ -193,7 +193,7 @@ Source of Truth đã tạo:
 - Không đưa khuyến mại, công thức cập nhật giá hàng loạt hoặc chiết khấu riêng vào MVP.
 - Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng dựa trên `giá nhập cuối`.
 - Quyết định mới thay thế hướng cũ: PriceBook MVP không chọn giá vốn bình quân/giá vốn mới nhất; chỉ dùng `giá nhập cuối`.
-- Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá nhập cuối thay đổi.
+- Quyết định mới ngày `2026-07-01`: ô giá có thể là `giá tay` hoặc `theo công thức`; ô theo công thức tự đổi theo `giá nhập cuối` cho tới khi người dùng nhập giá tay hoặc gắn công thức khác.
 - Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
 - Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
 - Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế lưới riêng theo `Mã hàng`, `Tên hàng`, `Giá nhập cuối`, `Chi phí`, `Lợi nhuận` và các bảng giá.

@@ -154,7 +154,7 @@ PriceBook MVP không chọn nhiều nguồn tính giá để tránh rườm rà.
 
 Nguồn duy nhất cho công thức PriceBook là `giá nhập cuối` của sản phẩm/vật tư.
 
-Khi giá nhập cuối thay đổi, hệ thống tính lại giá đề xuất theo công thức bảng giá. POS chỉ dùng giá mới sau khi người dùng áp dụng giá đề xuất vào bảng giá, trừ rule riêng của bảng giá nhóm `0` lấy động theo giá nhập gần nhất.
+Khi giá nhập cuối thay đổi, các ô giá đang ở chế độ `theo công thức` trong PriceBook tự tính lại theo giá nhập cuối mới. Các ô đã nhập giá tay không tự đổi. Rule riêng của bảng giá nhóm `0` vẫn lấy động theo giá nhập gần nhất.
 
 ---
 

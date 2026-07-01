@@ -9,7 +9,7 @@
 
 Trang danh sách bảng giá giúp quản lý các bảng giá đang dùng cho khách hàng và nhóm khách.
 
-Sau khi module Purchase/Supplier có dữ liệu giá nhập, PriceBook dùng **giá nhập cuối** làm nguồn duy nhất để tính/gợi ý giá bán. Không dùng giá vốn bình quân trong PriceBook MVP để tránh rườm rà. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
+Sau khi module Purchase/Supplier có dữ liệu giá nhập, PriceBook dùng **giá nhập cuối** làm nguồn duy nhất để tính giá bán theo công thức. Không dùng giá vốn bình quân trong PriceBook MVP để tránh rườm rà. Mỗi ô giá có thể là giá nhập tay hoặc giá đang theo công thức.
 
 KiotViet chỉ là nguồn import/tham khảo ban đầu. Luồng giá của QC-OMS phải được thiết kế theo cách xưởng muốn vận hành, không copy nguyên cách KiotViet nếu cách đó không đúng mong muốn.
 
@@ -59,16 +59,18 @@ Khách không gán nhóm dùng bảng giá chung.
 
 | Thao tác | Hành vi |
 |---|---|
-| Tạo bảng giá | Tạo bảng giá mới, mặc định chưa gán nhóm khách |
+| Tạo bảng giá | Chỉ nhập tên bảng giá; không có phạm vi áp dụng hoặc thời gian hiệu lực |
 | Mở chi tiết | Quản lý giá sản phẩm trong bảng |
 | Đổi trạng thái | Bảng giá ngừng dùng không được gán mới cho nhóm khách |
 | Gán nhóm khách | Chọn nhóm khách dùng bảng giá này |
-| Cấu hình công thức | Tạo/sửa công thức gợi ý giá theo nhóm hàng dựa trên giá nhập cuối |
+| Cấu hình công thức | Tạo/sửa công thức theo nhóm hàng/bộ lọc dựa trên giá nhập cuối |
 
 Quy tắc:
 
 - Không cho tắt bảng giá chung nếu đó là bảng giá chung duy nhất.
 - Nếu ngừng dùng một bảng giá đang được nhóm khách sử dụng, phải yêu cầu chọn bảng giá thay thế hoặc hủy thao tác.
+- Tạo bảng giá không bắt buộc nhập công thức. Người dùng có thể nhập giá tay trước, hoặc vào chi tiết bảng giá để gắn công thức sau.
+- Không có `ngày bắt đầu`, `ngày kết thúc`, `hiệu lực theo thời gian` trong MVP. Khi cần đổi giá theo mùa/đợt, tạo hoặc sửa bảng giá trực tiếp.
 - Không có chiết khấu riêng ở màn này trong Phase 1.
 
 ---
@@ -122,16 +124,17 @@ Phần giá cần tách thành 3 lớp để đúng nghiệp vụ quảng cáo:
 
 | Lớp | Ý nghĩa | Ví dụ |
 |---|---|---|
-| Giá đã lưu | Giá chính thức POS dùng khi bán | Bảng giá chung, bảng giá nhóm `25/30/35/40` |
-| Công thức gợi ý | Công thức tạo giá đề xuất theo nhóm hàng | Giá nhập cuối + chi phí + lợi nhuận |
+| Giá tay | Giá cố định do người dùng nhập trực tiếp | Bảng giá chung, bảng giá nhóm `25/30/35/40` |
+| Giá theo công thức | Giá đang được tính động theo công thức đã gắn cho sản phẩm/bộ lọc | Giá nhập cuối + chi phí + lợi nhuận |
 | Lịch sử giá khách | Giá sửa tay từng bán cho khách + sản phẩm | 5 giá gần nhất để chọn lại trong POS |
 
 Nguyên tắc:
 
-- POS luôn dùng giá đã lưu trong bảng giá làm mặc định.
+- POS dùng giá hiệu lực của ô bảng giá: nếu là giá tay thì lấy giá tay; nếu là giá theo công thức thì tính theo `giá nhập cuối` mới nhất.
 - Công thức chỉ dùng `giá nhập cuối`, không chọn giá vốn bình quân.
-- Khi giá nhập cuối thay đổi, giá đề xuất thay đổi theo công thức.
-- Công thức không tự chạy ngầm làm đổi giá bán; người dùng xem preview và bấm áp dụng.
+- Khi giá nhập cuối thay đổi, giá theo công thức thay đổi theo. Hệ thống phải ghi nhớ ô giá đang theo công thức nào cho tới khi người dùng nhập giá tay hoặc áp công thức khác.
+- Khi người dùng nhập giá trực tiếp vào ô giá, ô đó chuyển sang `giá tay` và không còn tự đổi theo công thức.
+- Khi người dùng áp công thức khác cho cùng ô/bộ lọc, công thức mới thay công thức cũ.
 - Giá cuối luôn làm tròn lên theo `1,000đ`; không cần UI chọn cách làm tròn.
 - Nếu nhân viên sửa giá trên POS, lịch sử giá theo khách + sản phẩm được lưu để gợi ý lần sau, không cập nhật ngược bảng giá.
 
@@ -249,10 +252,11 @@ Người dùng có thể lọc sản phẩm rồi bấm `Tạo công thức cho 
 | Điều kiện | Khuyến nghị |
 |---|---|
 | Nhóm hàng | Điều kiện chính |
-| Tên/mã hàng chứa từ khóa | Điều kiện phụ |
+| Tên hàng chứa từ khóa | Điều kiện phụ, dùng để lọc nhanh theo cách nhân viên quen tìm |
+| Mã hàng chứa từ khóa | Điều kiện phụ, dùng khi mã hàng đã có quy ước rõ |
 | Đơn vị/cách bán | Điều kiện phụ |
 
-Không nên gán công thức chỉ bằng tên hàng. Ví dụ lọc tên chứa `fom 5mm` dùng được, nhưng nên kết hợp với nhóm hàng `Fomex` để tránh bắt nhầm sản phẩm.
+Không nên gán công thức chỉ bằng tên hoặc mã nếu có thể gắn nhóm hàng. Ví dụ lọc tên chứa `fom 5mm` dùng được, nhưng nên kết hợp với nhóm hàng `Fomex` để tránh bắt nhầm sản phẩm.
 
 Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
 
@@ -261,42 +265,48 @@ Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
 3. Công thức mặc định của nhóm hàng.
 4. Không có công thức thì giữ giá đã lưu/nhập tay.
 
-### Tự cập nhật khi giá nhập cuối thay đổi
+### Giá theo công thức tự cập nhật khi giá nhập cuối thay đổi
 
 Khi phiếu nhập làm thay đổi `giá nhập cuối`, hệ thống phải tính lại được giá theo công thức đang lưu.
 
 Mặc định:
 
-- hệ thống tạo danh sách giá đề xuất
-- Owner hoặc người có quyền xem chênh lệch và bấm áp dụng
-- POS chỉ dùng giá mới sau khi bảng giá đã được cập nhật
+- ô giá đang theo công thức tự cho ra giá mới khi POS/PriceBook đọc dữ liệu
+- hệ thống vẫn nên hiển thị chênh lệch để Owner biết giá nào vừa đổi theo giá nhập
+- không cần bấm áp dụng lại chỉ vì `giá nhập cuối` thay đổi
+- nếu muốn dừng biến động theo công thức, người dùng nhập giá tay vào ô đó
+- nếu muốn đổi cách tính, người dùng áp công thức khác cho ô/bộ lọc đó
 
 Riêng rule bảng giá nhóm có giá `0` lấy theo `giá nhập gần nhất` là rule đọc động khi POS resolve giá. Khi giá nhập gần nhất thay đổi, POS có thể lấy giá nhập mới nhất ở lần bán sau mà không cần ghi đè lại ô giá `0`. Nếu sản phẩm chưa có giá nhập gần nhất, POS giữ giá `0` và không cần cảnh báo.
 
-### Preview trước khi áp dụng
+### Preview trước khi gắn công thức hàng loạt
 
-Mỗi lần chạy công thức phải có màn xem trước:
+Khi gắn công thức cho nhiều sản phẩm theo bộ lọc, phải có màn xem trước:
 
-- giá đang lưu
+- giá hiện tại
+- chế độ hiện tại: giá tay hay công thức
 - giá nhập cuối
 - chi phí tính ra
 - lợi nhuận tính ra
 - điều chỉnh bảng giá
-- giá đề xuất sau làm tròn
+- giá mới sau làm tròn
 - chênh lệch
-- công thức đã áp dụng
-- checkbox chọn dòng cần áp dụng
+- công thức sắp gắn
+- checkbox chọn dòng cần gắn công thức
 
-Chỉ khi bấm `Áp dụng`, hệ thống mới ghi giá đề xuất vào bảng giá.
+Chỉ khi bấm `Gắn công thức`, các ô được chọn mới chuyển sang chế độ giá theo công thức. Từ đó về sau các ô này tự tính theo `giá nhập cuối` cho tới khi bị nhập giá tay hoặc gắn công thức khác.
 
 ### Trạng thái chốt
 
 Đã chốt:
 
 - PriceBook MVP chỉ dùng `giá nhập cuối` để tính công thức, không dùng giá vốn bình quân.
+- Tạo bảng giá chỉ cần tên; không có phạm vi áp dụng hoặc thời gian hiệu lực.
 - Không có UI chọn làm tròn; luôn làm tròn lên `1,000đ`.
 - Không dùng `Giá nền` như một nhóm riêng trong UI; thay bằng `Chi phí` và `Lợi nhuận`.
 - `Chi phí` chọn một trong hai kiểu: giá cố định hoặc công thức `+ số tiền + %`.
 - `Lợi nhuận` chọn một trong hai kiểu: giá cố định hoặc công thức điều kiện theo giá nhập cuối.
 - Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
-- Giá nhập cuối thay đổi thì giá đề xuất thay đổi theo công thức; chỉ ghi bảng giá khi người dùng áp dụng.
+- Ô giá có thể là giá tay hoặc giá theo công thức.
+- Giá nhập cuối thay đổi thì ô giá theo công thức tự ra giá mới.
+- Ô giá nhớ công thức đang áp dụng cho tới khi người dùng nhập giá tay hoặc gắn công thức khác.

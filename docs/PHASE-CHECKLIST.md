@@ -559,19 +559,23 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 ### Phạm vi đã chốt
 
 - [ ] Chỉ dùng `giá nhập cuối` làm nguồn tính giá; không dùng giá vốn bình quân trong PriceBook MVP.
+- [ ] Tạo bảng giá chỉ cần tên; không có phạm vi áp dụng hoặc thời gian hiệu lực.
 - [ ] Lưới giá có cột cố định `Mã hàng`, `Tên hàng`, `Giá nhập cuối`.
 - [ ] Cột `Chi phí`: chọn giá cố định hoặc công thức `+ số tiền + % giá nhập cuối`.
 - [ ] Cột `Lợi nhuận`: chọn giá cố định hoặc công thức điều kiện theo giá nhập cuối.
 - [ ] Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
 - [ ] Giá cuối luôn làm tròn lên `1,000đ`, không có UI chọn làm tròn.
-- [ ] Chạy công thức phải có preview trước khi áp dụng vào bảng giá.
+- [ ] Ô giá có 2 chế độ: giá tay hoặc theo công thức.
+- [ ] Ô theo công thức tự tính lại khi `giá nhập cuối` thay đổi.
+- [ ] Ô theo công thức ghi nhớ công thức tới khi người dùng nhập giá tay hoặc gắn công thức khác.
+- [ ] Gắn công thức hàng loạt phải có preview trước khi áp dụng cho bộ lọc.
 
 ### Ngoài phạm vi slice đầu
 
 - [ ] Công thức Excel/free-form `+ - * /` tự do.
 - [ ] Chọn nguồn giá vốn bình quân.
 - [ ] Điều kiện phức tạp ở cột bảng giá.
-- [ ] Tự động ghi giá vào bảng giá khi giá nhập cuối thay đổi mà không có bước áp dụng.
+- [ ] Phạm vi áp dụng/thời gian hiệu lực kiểu KiotViet.
 
 ## Lệnh thường dùng
 
