@@ -14,6 +14,7 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
           status: 'active' as const,
           unit_name: 'm',
           sell_method: 'linear_m' as const,
+          latest_purchase_cost: 100000,
         },
       ],
       page: 1,
@@ -63,6 +64,13 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
               computed_unit_price: 150000,
               delta: 30000,
             },
+            {
+              price_list_id: 'pl-25',
+              price_list_name: '25',
+              current_unit_price: null,
+              computed_unit_price: 150000,
+              delta: null,
+            },
           ],
         },
       ],
@@ -110,13 +118,26 @@ it('filters by status and toggles product active state', async () => {
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
 })
 
-it('shows dynamic price list columns and previews formula results', async () => {
+it('renders pricebook as a grid-first pricing workspace', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
+  const header = within(grid).getByRole('row', {
+    name: 'Mã hàng Tên hàng Giá nhập cuối Chi phí Lợi nhuận Bảng giá chung 25 Cách bán Trạng thái Thao tác',
+  })
+  expect(header).toBeInTheDocument()
+  expect(within(grid).getAllByRole('cell', { name: 'Chưa cấu hình' })).toHaveLength(2)
+  expect(within(grid).getAllByRole('cell', { name: 'Chưa xem' })).toHaveLength(2)
+  expect(screen.queryByText('Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.')).not.toBeInTheDocument()
+})
+
+it('previews formula results in the pricebook grid instead of placeholder cells', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
   expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
   expect(screen.getByText('25')).toBeInTheDocument()
-  expect(screen.getByText('Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Tạo công thức cho bộ lọc này' }))
   await userEvent.type(screen.getByLabelText('Tên công thức'), 'Fomex')
@@ -134,7 +155,12 @@ it('shows dynamic price list columns and previews formula results', async () => 
   await userEvent.type(screen.getByLabelText('Giá trị điều chỉnh Bảng giá chung'), '20000')
   await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
 
-  expect(await screen.findByText('150.000')).toBeInTheDocument()
+  expect(await screen.findAllByText('150.000')).toHaveLength(2)
+  const grid = screen.getByRole('table', { name: 'Lưới bảng giá' })
+  expect(within(grid).getByText('Hiện tại 120.000 → 150.000')).toBeInTheDocument()
+  expect(within(grid).queryByText('Giá tay 120.000 → 150.000')).not.toBeInTheDocument()
+  expect(within(grid).queryByText('Theo công thức 120.000 → 150.000')).not.toBeInTheDocument()
+  expect(within(grid).getByText('Mới 150.000')).toBeInTheDocument()
   expect(service.previewPriceFormula).toHaveBeenCalledWith({
     name: 'Fomex',
     product_filter: { status: 'active', code_contains: 'MICA', name_contains: 'Mica', sell_method: 'linear_m' },

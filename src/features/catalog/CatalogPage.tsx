@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { CatalogService } from './catalog-service'
-import type { PriceFormulaInput, PriceFormulaPreview, PriceList, Product, ProductStatus, SellMethod } from './types'
+import type {
+  PriceFormulaInput,
+  PriceFormulaPreview,
+  PriceFormulaPreviewItem,
+  PriceFormulaPreviewPrice,
+  PriceList,
+  Product,
+  ProductStatus,
+  SellMethod,
+} from './types'
 
 interface CatalogState {
   products: Product[]
@@ -218,6 +227,28 @@ export function CatalogPage({
     } finally {
       setApplyingFormula(false)
     }
+  }
+
+  function findPreviewItem(productId: string): PriceFormulaPreviewItem | null {
+    return formulaPreview?.items.find((item) => item.product_id === productId) ?? null
+  }
+
+  function findPreviewPrice(item: PriceFormulaPreviewItem | null, priceListId: string): PriceFormulaPreviewPrice | null {
+    return item?.computed_prices.find((price) => price.price_list_id === priceListId) ?? null
+  }
+
+  function renderPriceListCell(product: Product, priceList: PriceList): string {
+    if (formulaPreview === null) return 'Chưa xem'
+
+    const previewItem = findPreviewItem(product.id)
+    const previewPrice = findPreviewPrice(previewItem, priceList.id)
+    if (previewPrice === null) return 'Không khớp'
+
+    const computed = formatMoney(previewPrice.computed_unit_price)
+    if (previewPrice.current_unit_price === null) return `Mới ${computed}`
+
+    const current = formatMoney(previewPrice.current_unit_price)
+    return `Hiện tại ${current} → ${computed}`
   }
 
   return (
@@ -520,13 +551,14 @@ export function CatalogPage({
         {state ? (
           <>
             <p>{state.total} hàng hóa</p>
-            <p className="catalog-price-note">Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.</p>
-            <table>
+            <table aria-label="Lưới bảng giá">
               <thead>
                 <tr>
                   <th>Mã hàng</th>
                   <th>Tên hàng</th>
                   <th>Giá nhập cuối</th>
+                  <th>Chi phí</th>
+                  <th>Lợi nhuận</th>
                   {state.priceLists.map((priceList) => (
                     <th key={priceList.id}>{priceList.name}</th>
                   ))}
@@ -541,8 +573,10 @@ export function CatalogPage({
                     <td>{product.code}</td>
                     <td>{product.name}</td>
                     <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
+                    <td>Chưa cấu hình</td>
+                    <td>Chưa cấu hình</td>
                     {state.priceLists.map((priceList) => (
-                      <td key={priceList.id}>Xem preview</td>
+                      <td key={priceList.id}>{renderPriceListCell(product, priceList)}</td>
                     ))}
                     <td>{sellMethodLabels[product.sell_method]}</td>
                     <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
