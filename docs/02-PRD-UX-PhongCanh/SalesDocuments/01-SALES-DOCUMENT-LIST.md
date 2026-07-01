@@ -41,9 +41,14 @@ Phase 2D hiện tại chỉ triển khai:
 - exact document-code lookup không bị che bởi filter mặc định
 - bấm mã chứng từ để mở chi tiết readonly
 
-Chưa triển khai trong Phase 2D:
+Phase 3A kế tiếp triển khai:
 
-- mở lại báo giá tại POS
+- lưu/list/detail báo giá `BG...`
+- mở lại báo giá tại POS thành nháp local
+- checkout từ báo giá sang hóa đơn `HD...`
+
+Chưa triển khai trong Phase 2D/3A:
+
 - in lại bill nếu Bill Preview/print flow chưa có
 - sửa hóa đơn
 - hủy hóa đơn

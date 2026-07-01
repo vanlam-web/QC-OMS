@@ -56,6 +56,27 @@ Khi cần thêm dữ liệu vào nháp của khách mà khách có nhiều nháp
 
 ## 4. QUY TẮC BÁO GIÁ
 
+### BR-QUOTE-00: Phạm vi Phase 3A
+
+Phase 3A chỉ chốt các năng lực:
+
+- lưu báo giá từ POS với mã `BG...`
+- xem danh sách/chi tiết báo giá trong Sales Documents
+- mở lại báo giá vào POS như một nháp local để sửa hoặc checkout
+- checkout từ báo giá sang hóa đơn `HD...`
+
+Không bao gồm trong Phase 3A:
+
+- Bill Preview/in báo giá
+- gửi báo giá tự động
+- giữ hàng
+- trừ kho
+- ghi tiền, công nợ hoặc doanh thu
+- tạo production job/lệnh sản xuất
+- delivery/COD/kênh bán/VAT/HĐĐT
+
+Bill Preview/in báo giá tách sang Phase 3B hoặc phase riêng sau khi mẫu bill/print flow được chốt.
+
 ### BR-QUOTE-01: Báo giá vẫn lưu trong đơn hàng
 
 Báo giá được lưu trong nhóm dữ liệu đơn hàng để dễ quản lý, tra cứu và mở lại.
@@ -80,9 +101,15 @@ Khi tạo báo giá:
 
 ### BR-QUOTE-03: Mở lại báo giá
 
-Khi sửa báo giá, hệ thống mở báo giá trở lại màn hình POS như một hóa đơn nháp.
+Khi mở lại báo giá, hệ thống đưa snapshot báo giá trở lại màn hình POS như một hóa đơn nháp local trên máy đang thao tác.
 
-Nhân viên được sửa dòng hàng, khách hàng, bảng giá, giá bán và ghi chú như đơn nháp bình thường.
+Backend không tạo server draft khi mở lại báo giá trong Phase 3A.
+
+Nhân viên được sửa dòng hàng, khách hàng, bảng giá, giá bán và ghi chú như đơn nháp bình thường. Giá trong nháp mở lại mặc định giữ đúng giá snapshot đã lưu trong báo giá, không tự resolve lại theo bảng giá hiện tại.
+
+Nếu giá hiện tại khác giá snapshot, UI chỉ cảnh báo/gợi ý; nhân viên quyết định giữ giá cũ hoặc cập nhật thủ công.
+
+Nếu sản phẩm trong báo giá đã `inactive`, POS vẫn hiển thị dòng từ snapshot để kiểm tra nhưng phải cảnh báo. Checkout không được âm thầm bán sản phẩm inactive/missing; nhân viên phải thay thế dòng hoặc kích hoạt/xử lý sản phẩm theo quyền phù hợp trước khi chốt.
 
 ### BR-QUOTE-04: Chuyển báo giá thành hóa đơn
 
@@ -92,20 +119,57 @@ Khi thanh toán thành công, hệ thống tạo hóa đơn bán hàng với mã
 
 Không có bước đặt hàng/giao hàng trung gian giữa báo giá và hóa đơn trong MVP.
 
+Hóa đơn sinh từ báo giá phải lưu `source_quote_id` và `source_quote_code`.
+
+Mặc định chỉ cho checkout một lần từ một báo giá `active`. Sau khi checkout thành công, báo giá đổi sang trạng thái `converted`. Nếu cần bán lại cùng nội dung, nhân viên tạo báo giá/đơn mới từ thao tác sao chép ở future phase, không checkout lặp từ cùng báo giá.
+
 ### BR-QUOTE-05: Snapshot báo giá
 
 Khi lưu báo giá, hệ thống lưu snapshot dữ liệu tại thời điểm báo giá, gồm tối thiểu:
 
 - khách hàng hoặc thông tin khách lẻ tại thời điểm báo giá
+- nhóm khách và bảng giá áp dụng tại thời điểm báo giá nếu có
 - mã/tên sản phẩm tại thời điểm báo giá
 - đơn vị bán và cách tính bán
 - số lượng, kích thước hoặc mét tới nếu có
 - đơn giá đã áp dụng
+- chiết khấu dòng/chứng từ nếu có
 - nguồn giá: bảng giá chung, bảng giá nhóm, fallback hoặc giá sửa tay
+- cờ giá sửa tay nếu nhân viên sửa khác giá mặc định
 - ghi chú dòng và ghi chú đơn
 - thành tiền dòng và tổng tiền báo giá
 
 Snapshot giúp báo giá mở lại hoặc in lại đúng nội dung đã gửi, kể cả khi bảng giá hoặc tên sản phẩm thay đổi sau đó.
+
+BOM phát sinh trên dòng chưa bắt buộc trong Phase 3A nếu phase BOM chưa implement. Nếu payload POS đã có BOM snapshot, báo giá được phép lưu kèm như dữ liệu snapshot, nhưng không deep-scan/trừ kho cho tới phase BOM.
+
+### BR-QUOTE-06: Trạng thái báo giá MVP
+
+Trạng thái báo giá MVP:
+
+| Trạng thái | Ý nghĩa | Phase |
+|---|---|---|
+| `active` | Báo giá còn mở lại/checkout được | Phase 3A |
+| `converted` | Đã checkout thành hóa đơn `HD...` | Phase 3A |
+| `cancelled` | Đã hủy thủ công hoặc bị thay bằng revision mới | Future/optional |
+
+Không dùng `sent/accepted/expired` làm state nghiệp vụ trong MVP. Gửi cho khách là thao tác ngoài hệ thống hoặc thuộc bill/send phase sau; khách đồng ý được thể hiện bằng checkout thành hóa đơn.
+
+MVP không bắt buộc hạn hiệu lực báo giá. Nếu cần, chỉ lưu `expires_at` nullable để hiển thị/cảnh báo, không tự hủy báo giá trong Phase 3A.
+
+### BR-QUOTE-07: Sửa báo giá dùng revision, không ghi đè snapshot cũ
+
+Báo giá đã lưu không bị sửa đè trực tiếp.
+
+Khi mở lại báo giá và nhân viên bấm lưu báo giá sau khi sửa, hệ thống tạo báo giá revision mới:
+
+```text
+BG000123 -> BG000123.01 -> BG000123.02
+```
+
+Revision mới giữ `base_code` của báo giá gốc và `revision_no` tăng dần. Báo giá cũ không bị xóa; nếu cần loại khỏi danh sách active thì chuyển `cancelled` với lý do `revised` hoặc trạng thái tương đương đã được schema hỗ trợ.
+
+Trong Phase 3A, audit tối thiểu là `created_by`, `created_at`, status history và liên kết revision. Chưa cần màn diff chi tiết từng thay đổi.
 
 ---
 
@@ -179,10 +243,11 @@ Khóa mềm giúp giảm xung đột thao tác, nhưng không thay thế kiểm 
 5. Mở lại báo giá đưa nội dung báo giá trở lại POS như một nháp có thể sửa.
 6. Thanh toán báo giá thành công sinh hóa đơn `HD...` và giữ liên kết tới mã `BG...`.
 7. Báo giá và hóa đơn bán hàng đều giữ snapshot dòng hàng tại thời điểm lưu.
-8. Sửa hóa đơn đã chốt không sửa đè hóa đơn cũ; hệ thống tạo mã mới dạng `MaCu.01` và giữ hóa đơn cũ ở trạng thái đã hủy để truy vết.
-9. Hệ thống không tạo đơn đặt hàng, vận đơn, COD hoặc kênh bán online trong MVP.
-10. Sửa/hủy chứng từ phải xử lý đồng bộ kho, tiền, công nợ và lịch sử liên kết.
-11. Khi nhiều người cùng sửa một chứng từ, hệ thống dùng khóa mềm và version check để tránh ghi đè.
+8. Sửa/lưu lại báo giá không ghi đè báo giá cũ; hệ thống tạo revision dạng `BG000123.01`.
+9. Sửa hóa đơn đã chốt không sửa đè hóa đơn cũ; hệ thống tạo mã mới dạng `MaCu.01` và giữ hóa đơn cũ ở trạng thái đã hủy để truy vết.
+10. Hệ thống không tạo đơn đặt hàng, vận đơn, COD hoặc kênh bán online trong MVP.
+11. Sửa/hủy chứng từ phải xử lý đồng bộ kho, tiền, công nợ và lịch sử liên kết.
+12. Khi nhiều người cùng sửa một chứng từ, hệ thống dùng khóa mềm và version check để tránh ghi đè.
 
 ---
 

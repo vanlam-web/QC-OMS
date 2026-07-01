@@ -504,9 +504,32 @@ Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 ### Còn lại sau Phase 2D
 
 - Không có working branch Phase 2 tiếp theo đang được checklist này theo dõi.
-- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
+- Phase kế tiếp theo roadmap hiện tại: Phase 3A báo giá `BG...` + mở lại vào POS draft local.
+- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, bill preview/in báo giá Phase 3B, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
 - Các phần vẫn nằm ngoài scope hiện tại: delivery/COD, kênh online, tax/HĐĐT.
 - Không mở rộng scope mới từ checklist này.
+
+## Phase 3A — Quote BG + reopen into POS draft
+
+Status: ⏭️ Sẵn sàng lập plan sau khi SoT được handoff
+
+### Phạm vi dự kiến
+
+- [ ] POS lưu báo giá `BG...`.
+- [ ] Sales Documents list/detail cho báo giá.
+- [ ] Mở lại báo giá vào POS draft local, không tạo server draft.
+- [ ] Giữ giá snapshot mặc định; cảnh báo nếu giá hiện tại khác.
+- [ ] Cảnh báo sản phẩm inactive/missing và yêu cầu xử lý trước checkout.
+- [ ] Lưu lại báo giá đã sửa bằng revision `BG...01`, không ghi đè snapshot cũ.
+- [ ] Checkout từ báo giá sang hóa đơn `HD...`, lưu `source_quote_id/source_quote_code`.
+- [ ] Sau checkout, báo giá chuyển `converted`; không checkout lặp từ cùng báo giá.
+
+### Ngoài phạm vi Phase 3A
+
+- [ ] Bill Preview/in báo giá hoặc gửi báo giá tự động.
+- [ ] Hủy báo giá thủ công nếu chưa cần workflow.
+- [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
+- [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.
 
 ## Lệnh thường dùng
 

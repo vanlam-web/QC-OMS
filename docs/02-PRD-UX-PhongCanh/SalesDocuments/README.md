@@ -20,8 +20,8 @@ Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản gi
 |---|---|---|
 | Danh sách chứng từ | ✅ Phase 2D | Readonly list cho hóa đơn `HD...`, có tìm kiếm mã chứng từ |
 | Chi tiết chứng từ | ✅ Phase 2D | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements |
-| In lại bill | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
-| Mở lại báo giá | ⏭️ Future phase | Chưa nằm trong Phase 2D |
+| Báo giá list/detail/reopen | ⏭️ Phase 3A kế tiếp | Lưu/list/detail `BG...`, mở lại vào POS draft local, checkout sang `HD...` |
+| In lại bill/in báo giá | ⏭️ Phase 3B/future | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
 | Sửa hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
 | Hủy hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
 | Đảo kho/tiền/công nợ | ⏭️ Future phase | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |
@@ -36,6 +36,7 @@ Phase 2D không biến SalesDocuments thành module quản lý đầy đủ. Nó
 |---|---|
 | [01-SALES-DOCUMENT-LIST.md](./01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc, cột, thao tác nhanh |
 | [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ readonly hiện tại; mô tả sửa/hủy/in lại là future phase |
+| [03-QUOTE-PHASE-3A.md](./03-QUOTE-PHASE-3A.md) | Ranh giới Phase 3A cho báo giá `BG...` và mở lại vào POS draft |
 
 ---
 

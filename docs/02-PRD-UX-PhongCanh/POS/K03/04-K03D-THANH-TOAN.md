@@ -24,7 +24,7 @@
 | **Loại** | Tác vụ phụ |
 | **Màu** | Xám |
 | **Kích thước** | Nhỏ hơn nút THANH TOÁN |
-| **Chức năng** | Lưu báo giá trong đơn hàng với mã `BG...`, sau đó xử lý bill báo giá theo cấu hình đã chọn |
+| **Chức năng** | Lưu báo giá trong đơn hàng với mã `BG...`; Bill Preview/in báo giá tách sang phase sau |
 
 ### Luồng BÁO GIÁ
 
@@ -36,7 +36,7 @@ Nhân viên bấm [BÁO GIÁ]
           → Không ghi sổ quỹ
           → Không ghi công nợ
           → Không ghi doanh thu
-          → Xử lý bill báo giá theo cấu hình đã chọn
+          → Phase 3A: hiển thị mã báo giá đã lưu, chưa mở Bill Preview
 ```
 
 - Báo giá vẫn lưu trong nhóm đơn hàng để dễ quản lý và tìm lại.
@@ -44,6 +44,7 @@ Nhân viên bấm [BÁO GIÁ]
 - Báo giá không làm mất hóa đơn nháp hiện tại trừ khi người dùng chủ động đóng/xóa nháp.
 - Khi mở lại báo giá để sửa, hệ thống đưa báo giá trở lại POS như một hóa đơn nháp bình thường.
 - Khi khách đồng ý, nhân viên mở báo giá thành nháp, sửa nếu cần rồi bấm `[THANH TOÁN]`.
+- Nếu mở lại báo giá và bấm `[BÁO GIÁ]` sau khi sửa, hệ thống lưu revision mới dạng `BG000123.01`, không ghi đè báo giá cũ.
 - Quy tắc vòng đời báo giá xem tại [POS-ORDER-LIFECYCLE.md](../../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md#4-quy-tắc-báo-giá).
 
 ---
@@ -146,7 +147,8 @@ Nhân viên bấm [THANH TOÁN] (F9)
 
 ## V. BILL PREVIEW / PRINT POPUP
 
-- Sau khi báo giá hoặc hóa đơn được lưu thành công, hệ thống mở **Bill Preview / Print Popup**.
+- Phase 3A chưa mở Bill Preview cho báo giá; phần này là Phase 3B/future nếu chưa có print flow.
+- Sau khi hóa đơn được lưu thành công, hệ thống có thể mở **Bill Preview / Print Popup** theo phase checkout/bill đã được implement.
 - Popup này hiển thị bản xem trước bill giống giao diện in của trình duyệt.
 - Nhân viên có thể in hoặc hủy in.
 - Bill mặc định luôn có sẵn.

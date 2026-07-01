@@ -286,6 +286,7 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `order_type` | `text` | ❌ | `quote` hoặc `invoice` |
 | `status` | `text` | ❌ | Trạng thái chứng từ |
 | `source_quote_id` | `uuid` | ✅ | FK → `public.orders.id`; hóa đơn sinh từ báo giá |
+| `source_quote_code` | `text` | ✅ | Mã báo giá nguồn để hiển thị/truy vết nhanh |
 | `base_code` | `text` | ❌ | Mã gốc của chuỗi chứng từ, ví dụ `HD000123` |
 | `revision_no` | `integer` | ❌ | Số lần sửa; bản gốc là `0`, bản sửa đầu là `1` |
 | `revised_from_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ cũ gần nhất nếu đây là bản sửa |
@@ -323,6 +324,7 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - `discount_amount <= subtotal_amount`
 - `total_amount = subtotal_amount - discount_amount`
 - `source_quote_id` nếu có phải trỏ tới `orders` cùng organization và `order_type = 'quote'`.
+- `source_quote_code` nếu có phải khớp mã báo giá nguồn tại thời điểm checkout.
 - `customer_snapshot` bắt buộc để giữ lịch sử ngay cả khi hồ sơ khách thay đổi.
 - `payment_status IN ('not_applicable', 'unpaid', 'partial', 'paid')`
 - Với `order_type = 'quote'`, `paid_amount = 0`, `debt_amount = 0`, `change_returned_amount = 0`, `payment_status = 'not_applicable'`.
@@ -356,6 +358,14 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Bản cũ chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và trỏ `replaced_by_order_id` tới bản mới.
 - Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
 - Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
+
+### Quy tắc sửa báo giá
+
+- Báo giá đã lưu không sửa đè snapshot cũ.
+- Khi mở lại báo giá, sửa và lưu lại thành báo giá, hệ thống tạo revision mới với `base_code` giữ nguyên và `revision_no` tăng.
+- Ví dụ: `BG000123`; sửa lần 1 tạo `BG000123.01`.
+- Bản quote cũ không bị xóa; nếu cần loại khỏi danh sách active thì chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và liên kết tới bản mới.
+- Checkout từ báo giá đổi báo giá nguồn sang `converted`; mặc định không checkout nhiều lần từ cùng một báo giá đã converted.
 
 ### Index
 

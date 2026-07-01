@@ -219,25 +219,32 @@ Mốc phát hành logic ban đầu:
 
 **Tính năng bàn giao:** Thu ngân lưu báo giá, mở lại để sửa và xem/in bill báo giá.
 
+Chia lát cắt thực thi:
+
+| Lát cắt | Phạm vi |
+|---|---|
+| Phase 3A | Lưu/list/detail báo giá `BG...`, mở lại vào POS draft local, checkout sang `HD...` |
+| Phase 3B/future | Bill Preview/in báo giá và gửi báo giá nếu Owner chốt |
+
 **Frontend**
 
 - Nút `BÁO GIÁ`.
 - Danh sách và tìm kiếm báo giá.
 - Mở lại báo giá thành hóa đơn nháp.
-- Bill Preview và in bill cơ bản.
+- Bill Preview và in bill báo giá để Phase 3B/future nếu print flow chưa đủ SoT.
 
 **Backend và Database**
 
 - Schema đơn hàng, dòng hàng và lịch sử trạng thái.
 - Sinh mã `BG...`.
-- API tạo, đọc và cập nhật báo giá.
+- API tạo, đọc, mở lại và tạo revision báo giá.
 - Lưu snapshot giá và thông tin hàng tại thời điểm báo giá.
 - Không phát sinh kho, tiền, công nợ hoặc doanh thu.
 
 **Điều kiện nghiệm thu**
 
 - Báo giá được lưu và mở lại chính xác.
-- Có thể sửa rồi lưu lại.
+- Có thể sửa rồi lưu lại thành revision `BG...01`, không ghi đè snapshot cũ.
 - Không xuất hiện stock movement hoặc cash transaction.
 
 ### Giai đoạn 4 — Thanh toán, kho cơ bản và công nợ

@@ -155,19 +155,22 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
-Phase 2D chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Các hành động mở lại/in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+Phase 2D chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Phase 3A bật mở lại báo giá vào POS draft local; các hành động in/sửa hóa đơn/hủy hóa đơn/đảo dữ liệu vẫn là future phase nếu chưa có transaction tương ứng.
 
 ---
 
-## 8. Thao tác Future Phase
+## 8. Thao tác Phase Sau
 
-Các thao tác trong mục này **chưa thuộc Phase 2D**. Chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn và kiểm thử đủ cho tác động liên bảng.
+Các thao tác trong mục này **chưa thuộc Phase 2D**. Phase 3A chỉ bật phần mở lại báo giá; các thao tác còn lại chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn và kiểm thử đủ cho tác động liên bảng.
 
-### 8.1. Mở lại báo giá
+### 8.1. Mở lại báo giá — Phase 3A
 
 - Chỉ áp dụng cho chứng từ loại Báo giá chưa hủy.
-- Mở POS với nội dung báo giá như một nháp.
-- Khi checkout, tạo hóa đơn `HD...` và giữ liên kết báo giá nguồn.
+- Mở POS với nội dung báo giá như một nháp local trên máy đang thao tác.
+- Giữ giá snapshot mặc định; nếu giá hiện tại khác thì cảnh báo/gợi ý, không tự đổi giá.
+- Nếu sản phẩm inactive/missing, hiển thị cảnh báo và yêu cầu xử lý dòng trước checkout.
+- Khi checkout, tạo hóa đơn `HD...`, giữ `source_quote_id/source_quote_code` và đổi báo giá sang `converted`.
+- Không checkout nhiều lần từ cùng một báo giá đã `converted`.
 
 ### 8.2. Sửa hóa đơn
 
