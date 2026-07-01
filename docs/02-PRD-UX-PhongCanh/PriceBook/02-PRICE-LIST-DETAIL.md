@@ -91,6 +91,14 @@ Giá đề xuất = nguồn giá vốn theo nhóm hàng * hệ số + chi phí c
 
 Trong đó `nguồn giá vốn` có thể là bình quân hoặc mới nhất tùy cấu hình nhóm hàng.
 
+Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, màn chi tiết bảng giá không được khóa thiết kế theo lưới export KiotViet. KiotViet chỉ dùng để import dữ liệu ban đầu và đối chiếu nhóm giá hiện có. Luồng chuẩn của QC-OMS cần ưu tiên:
+
+- sửa giá chính thức nhanh cho từng bảng giá
+- thấy giá vốn/giá nhập cuối để tham khảo
+- có nút tính/gợi ý lại giá theo công thức khi Owner chủ động dùng
+- phân biệt rõ giá đã lưu và giá đề xuất chưa áp dụng
+- giữ lịch sử thay đổi giá để biết ai sửa và sửa lúc nào
+
 ---
 
 ## 7. Tác động tới POS

@@ -28,11 +28,12 @@ Draft nay khoa ranh gioi de implement khong vo tinh lam BOM phuc tap qua som, do
 Quyet dinh Owner da chot:
 
 - BOM la **dinh muc vat tu** de biet mot san pham/dich vu can tru vat tu nao.
+- Hieu don gian: BOM la "cong thuc tru kho vat tu", khong phai cong thuc tinh gia ban bat buoc.
 - Vi du `In bat` gom bat + muc in + keo dan + khuy bat...
 - BOM co the long nhieu cap: `khung sat ban bat` co the gom `in bat` + `khung sat`; BOM cap 3 co the gom `khung sat ban bat` + `ton`.
 - Khi long BOM, he thong can deep-scan de ra vat tu con cuoi cung khi checkout/preview.
 - Co the sua BOM.
-- Trong POS co the them/sua BOM phat sinh; neu luu thi tao combo/BOM moi, neu khong luu thi chi xem nhu dinh muc cua dong do de tru kho.
+- Trong POS co the them/sua BOM phat sinh; neu luu thi tao combo/BOM moi de dung lai, neu khong luu thi chi xem nhu dinh muc cua dong do de tru kho cho lan ban hien tai.
 - Owner giao cho spec tu de xuat chi tiet BOM sao cho gon thao tac va phu hop xưởng.
 
 Cap nhat export KiotViet ngay `2026-07-01`:

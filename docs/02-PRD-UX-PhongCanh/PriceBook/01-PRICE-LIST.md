@@ -11,6 +11,8 @@ Trang danh sách bảng giá giúp quản lý các bảng giá đang dùng cho k
 
 Sau khi module Purchase/Supplier có dữ liệu giá vốn, PriceBook có thể dùng giá vốn làm dữ liệu tham khảo để gợi ý hoặc tính công thức giá bán. Công thức giá có thể đặt theo từng nhóm hàng và chọn nguồn giá vốn như giá bình quân hoặc giá mới nhất. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
 
+KiotViet chỉ là nguồn import/tham khảo ban đầu. Luồng giá của QC-OMS phải được thiết kế theo cách xưởng muốn vận hành, không copy nguyên cách KiotViet nếu cách đó không đúng mong muốn.
+
 ---
 
 ## 2. Bố cục
@@ -114,3 +116,29 @@ Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook 
 - công thức có thể chọn nguồn `giá vốn bình quân` hoặc `giá vốn mới nhất`
 - công thức chỉ tạo giá đề xuất/cập nhật hàng loạt khi người dùng chủ động áp dụng
 - không tự đổi giá POS nếu chỉ có phiếu nhập mới làm thay đổi giá vốn
+
+## 7. Hướng thiết kế riêng cho QC-OMS
+
+Phần giá cần tách thành 3 lớp để đúng nghiệp vụ quảng cáo:
+
+| Lớp | Ý nghĩa | Ví dụ |
+|---|---|---|
+| Giá đã lưu | Giá chính thức POS dùng khi bán | Bảng giá chung, bảng giá nhóm `25/30/35/40` |
+| Công thức gợi ý | Công thức tạo giá đề xuất theo nhóm hàng | Giá vốn bình quân x hệ số + chi phí |
+| Lịch sử giá khách | Giá sửa tay từng bán cho khách + sản phẩm | 5 giá gần nhất để chọn lại trong POS |
+
+Nguyên tắc đề xuất:
+
+- POS luôn dùng giá đã lưu trong bảng giá làm mặc định.
+- Công thức không tự chạy ngầm làm đổi giá bán; người dùng phải bấm áp dụng/cập nhật.
+- Công thức có thể chạy theo nhóm hàng, không bắt buộc mọi sản phẩm dùng cùng một cách tính.
+- Một sản phẩm có thể cần giá theo `m2`, `m tới`, `tấm`, `cái` hoặc combo; công thức phải hiểu đúng cách bán của sản phẩm.
+- Giá vốn từ nhập hàng là dữ liệu tham khảo cho công thức, không phải giá bán.
+- Nếu nhân viên sửa giá trên POS, lịch sử giá theo khách + sản phẩm được lưu để gợi ý lần sau, không cập nhật ngược bảng giá.
+
+Phần còn cần bàn/chốt trước khi implement PriceBook nâng cao:
+
+- nhóm hàng nào cần công thức riêng
+- công thức tối thiểu cho từng nhóm hàng chính
+- có cần làm tròn giá theo bậc 1.000/5.000/10.000 hay không
+- khi công thức ra giá mới, áp dụng ngay cho cả bảng hay chỉ tạo danh sách đề xuất để Owner duyệt

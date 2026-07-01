@@ -92,6 +92,8 @@ Quyết định/nhận xét:
 - Dữ liệu thật có tồn âm, phù hợp quyết định QC-OMS cho phép bán tiếp sau cảnh báo.
 - Báo cáo tồn kho cần nhìn rõ tồn âm để xử lý sau.
 - Với hàng cuộn/tấm, export chỉ là tổng tham khảo; QC-OMS vẫn quản lý vật lý theo cuộn/tấm.
+- Owner chốt ngày `2026-07-01`: import tạm toàn bộ tồn KiotViet để có dữ liệu chạy trước, sau đó chuẩn hóa dần số cuộn/tấm thật, cuộn nào còn bao nhiêu mét tới, tấm/tấm lỡ nào còn trong kho.
+- Luồng `khui vật tư`/kiểm kho sau này sẽ giúp trừ hoặc sửa từng cuộn/tấm về đúng thực tế, có thể về 0 hoặc còn số mét/tấm ước lượng chính xác hơn.
 
 ### 2.5. BOM/Combo
 
@@ -216,6 +218,7 @@ Quyết định/nhận xét:
   - `0` có thể là giá được khai báo thật.
   - Fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS, không phải vì giá bằng `0`.
 - `Giá vốn` và `Giá nhập cuối` là dữ liệu tham khảo cho PriceBook/công thức giá sau Purchase, không sửa trực tiếp ở bảng giá.
+- Owner chốt ngày `2026-07-01`: cách làm giá của KiotViet chưa đúng mong muốn, nên QC-OMS chỉ import dữ liệu bảng giá hiện có, còn luồng giá/công thức giá phải thiết kế riêng theo cách vận hành xưởng.
 
 ---
 
@@ -233,4 +236,5 @@ Chưa đưa vào SoT DB/API ngay:
 - Import tự động BOM từ cột `Hàng thành phần`.
 - Chuẩn hóa toàn bộ đơn vị.
 - Phương pháp giá vốn chuẩn.
-- Mapping vật lý cuộn/tấm từ tổng tồn KiotViet sang object vật lý QC-OMS.
+- Mapping vật lý cuộn/tấm từ tổng tồn KiotViet sang object vật lý QC-OMS, dù đã chốt hướng import tạm rồi chuẩn hóa dần.
+- Thiết kế PriceBook nâng cao/công thức giá đúng mong muốn của xưởng.

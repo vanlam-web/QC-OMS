@@ -26,6 +26,15 @@ Người dùng có thể mở từ:
 - chi tiết sản phẩm
 - phiếu kiểm kho khi cần chọn đối tượng vật lý
 
+Nếu sản phẩm được import từ KiotViet và chưa chuẩn hóa tồn vật lý, màn này phải hiển thị trạng thái rõ ràng:
+
+```text
+Tồn KiotViet tạm: 128m2
+Tồn cuộn/tấm đã chuẩn hóa: chưa đủ dữ liệu
+```
+
+Mục tiêu là cho phép dùng hệ thống trước, rồi chuẩn hóa kho dần khi có thời gian kiểm lại từng cuộn/tấm.
+
 ---
 
 ## 3. Bố cục
@@ -66,6 +75,19 @@ Người dùng có thể mở từ:
 - Xem lịch sử biến động của cuộn
 
 Khi sửa chiều dài/diện tích còn lại, UI bắt buộc nhập lý do.
+
+### Chuẩn hóa cuộn từ tồn KiotViet tạm
+
+Với hàng cuộn đã import tồn tổng từ KiotViet, người dùng có thể:
+
+- thêm cuộn thật đang còn trong kho
+- nhập chiều dài còn lại theo mét tới, có thể là số ước lượng ban đầu
+- ghi chú nguồn kiểm: kiểm kho, khui vật tư, nhân viên đo lại
+- đánh dấu một phần tồn tạm đã được chuẩn hóa vào các cuộn này
+- đưa cuộn về `hết` khi khui/xuất đến 0
+- sửa lại chiều dài còn lại nếu sau này đo chính xác hơn
+
+UI không bắt người dùng phải tạo đủ tất cả cuộn ngay trong ngày import. Các cuộn/tấm thật được bổ sung dần, và tổng tồn tạm giảm dần theo các lần chuẩn hóa/khui vật tư.
 
 ---
 
@@ -126,6 +148,8 @@ Nhân viên được override đề xuất. UI phải hiển thị rõ đâu là
 4. Sửa tồn đối tượng bắt buộc có lý do nếu làm thay đổi số lượng/diện tích.
 5. Tấm lỡ có thao tác sửa/bỏ thủ công.
 6. Đề xuất cuộn/tấm không tự trừ kho cho đến khi nghiệp vụ gốc xác nhận.
+7. Hàng import từ KiotViet chưa chuẩn hóa phải nhìn thấy phần tồn tạm và phần tồn vật lý đã tạo.
+8. Người dùng chuẩn hóa dần được từng cuộn/tấm, không bị bắt hoàn tất toàn bộ kho ngay sau import.
 
 ---
 

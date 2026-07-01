@@ -60,14 +60,34 @@ Bán 50 tờ sẽ quy đổi thành `0.1 ram` nếu tồn chính là ram.
 
 ### BR-UNIT-INV-03: Khổ/quy cách nên tách khỏi đơn vị
 
-Các giá trị như `Khổ 91`, `Khổ 127`, `500 Tờ`, `1000 Tờ`, `5 kg`, `10 kg` không nên mặc định là đơn vị chuẩn.
+Các giá trị như `Khổ 91`, `Khổ 127`, `500 Tờ`, `1000 Tờ`, `5 kg`, `10 kg`, `Tấm CNC`, `Tấc CNC` không nên mặc định là đơn vị chuẩn.
 
 QC-OMS nên tách:
 
 - đơn vị: `m`, `m2`, `tờ`, `ram`, `kg`, `cuộn`, `tấm`
-- quy cách/variant: khổ rộng, số tờ đóng gói, trọng lượng đóng gói
+- quy cách/variant: khổ rộng, kích thước tấm, số tờ đóng gói, trọng lượng đóng gói
+- cách bán/cách tính: bán theo số lượng, m2, mét tới, nguyên tấm, combo/BOM
+- loại gia công/xử lý: CNC, in, cắt, bế, dán, đóng khung nếu cần
 
 Mục tiêu là tránh danh sách đơn vị bị phình to và trùng nghĩa.
+
+Nói ngắn:
+
+```text
+Đơn vị = thứ dùng để nhập số lượng và tính kho/giá.
+Quy cách = mô tả kích thước/khổ/gói của hàng.
+Cách bán = cách POS hiểu số lượng khách mua.
+```
+
+Ví dụ:
+
+| Dữ liệu KiotViet | QC-OMS nên hiểu |
+|---|---|
+| `Khổ 91` | quy cách khổ rộng, không phải đơn vị |
+| `Tấm CNC` | tấm + loại xử lý/gia công CNC |
+| `500 Tờ` | quy cách đóng gói; đơn vị có thể là `ram` hoặc `tờ` |
+| `m tới` | cách bán/tính giá theo chiều dài, thường dùng cho tấm |
+| `m2` | đơn vị bán/tính giá theo diện tích |
 
 ---
 
@@ -142,5 +162,6 @@ Các giá trị này là default để đề xuất, không khóa cứng. Nhân 
 - Mỗi sản phẩm có một đơn vị tồn chính.
 - Bán bằng đơn vị phụ phải có quy đổi.
 - Quy cách như khổ rộng không làm phình danh mục đơn vị chuẩn.
+- Dữ liệu import từ KiotViet phải được chuẩn hóa thành `đơn vị`, `quy cách`, `cách bán` thay vì copy nguyên chuỗi đơn vị lẫn lộn.
 - Cuộn không bán trực tiếp trên POS.
 - Tấm bán được theo nguyên tấm, m tới hoặc m2 theo cấu hình sản phẩm.

@@ -196,6 +196,7 @@ Source of Truth đã tạo:
 - Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
 - Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
 - Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
+- Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế công thức/luồng giá riêng theo nhóm hàng, giá vốn bình quân/giá vốn mới nhất và cách bán thực tế.
 
 #### 3.2F. Overview Dashboard — PRD-UX
 
@@ -315,12 +316,14 @@ Source of Truth kỹ thuật đã tạo:
 - Hàng đợi máy sản xuất vẫn được gửi thông báo vào POS để tạo hóa đơn nháp; nháp này chưa trừ kho cho tới khi chốt/lưu hóa đơn.
 - Dữ liệu máy sản xuất dùng để đối soát, không tự trừ kho trong MVP.
 - Mỗi sản phẩm có một đơn vị tồn chính; đơn vị bán phụ phải quy đổi.
+- Cần tách rõ `đơn vị`, `quy cách`, `cách bán` và `loại gia công`; không copy nguyên các chuỗi như `Khổ 91`, `Tấm CNC`, `Tấc CNC` thành đơn vị chuẩn.
 - Hàng cuộn quản lý theo từng cuộn vật lý, không sửa tổng tồn trực tiếp.
 - Hàng tấm quản lý theo tấm nguyên/tấm dở/tấm lỡ, không sửa tổng tồn trực tiếp.
 - Tấm lỡ dưới `0.3m2` mặc định bỏ; nhân viên có thể tạo/sửa thủ công nếu muốn giữ.
 - Kiểm kho có phiếu tạm/cân bằng/hủy; sửa tồn hàng thường ở Hàng hóa tự sinh phiếu kiểm kho đã cân bằng.
 - Export KiotViet ngày `2026-07-01` có `57` dòng tồn âm, xác nhận UI/báo cáo tồn âm là cần thiết.
 - Export cũng có `189` dòng `Hàng thành phần`, xác nhận BOM/định mức là dữ liệu thật nhưng vẫn để phase BOM riêng.
+- Owner chốt thêm: import tạm toàn bộ tồn KiotViet, sau đó chuẩn hóa dần cuộn/tấm thật bằng kiểm kho/khui vật tư; không cần đo lại toàn bộ kho trước khi dùng hệ thống.
 
 Rủi ro:
 
