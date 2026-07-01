@@ -1,7 +1,8 @@
-# Shared development server
+# Shared development server fallback
 
-QC-OMS can be developed from many machines while all machines use the same
-internal Supabase/Postgres database.
+QC-OMS currently uses Supabase Cloud as the default dev/staging backend. This
+document is kept for the optional shared-dev LAN/Tailscale fallback where many
+machines use the same internal Supabase/Postgres database.
 
 ## Model
 
@@ -28,7 +29,7 @@ LAN:
 ```text
 App:      http://192.168.1.104:3000
 Supabase: http://192.168.1.104:54321
-API:      http://192.168.1.104:54321/functions/v1/api
+API base: http://192.168.1.104:54321/functions/v1
 ```
 
 Tailscale:
@@ -36,7 +37,7 @@ Tailscale:
 ```text
 App:      http://100.123.122.45:3000
 Supabase: http://100.123.122.45:54321
-API:      http://100.123.122.45:54321/functions/v1/api
+API base: http://100.123.122.45:54321/functions/v1
 ```
 
 ## Server commands
@@ -74,22 +75,22 @@ npm ci
 npm run dev
 ```
 
-By default the app points to the shared LAN server at `192.168.1.104`.
-The shared development anon key is built into the client defaults because it is
-the public Supabase local anon key, not the service role key.
+By default the app points to Supabase Cloud. Use this shared server only when an
+operator explicitly chooses the LAN/Tailscale fallback.
 
-If a developer is remote through Tailscale, create `.env.local`:
+If a developer is remote through Tailscale and the fallback server is active,
+create `.env.local`:
 
 ```env
-VITE_SHARED_SERVER_HOST=100.123.122.45
 VITE_SUPABASE_URL=http://100.123.122.45:54321
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-VITE_API_BASE_URL=http://100.123.122.45:54321/functions/v1/api
+VITE_API_BASE_URL=http://100.123.122.45:54321/functions/v1
 VITE_APP_ENV=shared-dev
 ```
 
-For LAN development, `.env.local` is only needed when overriding the default
-server IP or setting the shared Supabase anon key locally.
+For LAN fallback, use the same shape with `192.168.1.104`. `VITE_API_BASE_URL`
+must point to the Edge Functions root (`.../functions/v1`), not
+`.../functions/v1/api`, because the app client appends `/api/v1/...`.
 
 Never commit `.env.local`, service role keys, passwords, access tokens, or
 refresh tokens.

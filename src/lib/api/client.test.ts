@@ -45,3 +45,18 @@ it('throws typed API errors preserving metadata', async () => {
     fields: { email: ['bad'] },
   })
 })
+
+it('rejects base URLs that already include the API route prefix', async () => {
+  expect(() =>
+    createApiClient({
+      baseUrl: 'https://example.supabase.co/functions/v1/api',
+      getAccessToken: async () => null,
+      fetch: (async () =>
+        new Response(JSON.stringify({ success: true, data: {}, trace_id: 'trace' }), {
+          status: 200,
+        })) as typeof fetch,
+    }),
+  ).toThrow(
+    'VITE_API_BASE_URL must not include /api because client requests already include /api/v1',
+  )
+})

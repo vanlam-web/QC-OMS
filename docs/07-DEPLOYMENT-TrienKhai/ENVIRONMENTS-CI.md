@@ -9,7 +9,7 @@
 
 | Môi trường | Frontend | Backend/Database | Mục đích |
 |---|---|---|---|
-| Local | Vite dev server | Supabase local | Phát triển và test tự động |
+| Local | Vite dev server | Supabase Cloud dev/staging by default; Supabase local only for migration/isolation work | Phát triển hằng ngày và test tự động |
 | Preview | Vercel Preview | Không được tự động dùng production | Review UI theo Pull Request |
 | Staging | Vercel project/domain staging | Supabase project staging | Demo, E2E và Owner acceptance |
 | Production | Vercel project/domain production | Supabase project production | Vận hành thật |
@@ -42,6 +42,7 @@ Quy tắc:
 - Không đặt Service Role Key trong biến Frontend hoặc Vercel client environment.
 - Repository chỉ chứa `.env.example`, không chứa giá trị thật.
 - Secret production chỉ người/quy trình deploy production được truy cập.
+- `VITE_API_BASE_URL` phải là Edge Functions root, ví dụ `https://<project>.supabase.co/functions/v1`. Không thêm `/api` vì client tự gọi `/api/v1/...`.
 
 ---
 
@@ -51,21 +52,18 @@ Yêu cầu công cụ:
 
 - Node.js bản LTS đang được dự án pin;
 - `npm`;
-- Supabase CLI;
-- Docker runtime theo yêu cầu của Supabase local.
+- Supabase CLI và Docker chỉ bắt buộc khi chạy Supabase local/migration isolation.
 
-Luồng khởi động chuẩn:
+Luồng khởi động chuẩn hiện tại:
 
 ```text
 1. Cài dependency
-2. Khởi động Supabase local
-3. Chạy migration + seed
-4. Chạy Edge Function API local
-5. Chạy Vite dev server
-6. Chạy smoke test đăng nhập
+2. Tạo .env.local trỏ Supabase Cloud dev/staging
+3. Chạy Vite dev server
+4. Chạy smoke test đăng nhập
 ```
 
-Các lệnh thực tế phải được đưa vào `package.json` khi scaffold code, tối thiểu gồm `dev`, `build`, `lint`, `typecheck`, `test`, `test:e2e` và nhóm lệnh Supabase local.
+Khi thay đổi migration, RLS, hoặc logic cần DB cô lập, dùng Supabase local như một operator/test path riêng: khởi động Supabase local, chạy migration + seed, chạy Edge Function API local, rồi smoke test.
 
 ---
 

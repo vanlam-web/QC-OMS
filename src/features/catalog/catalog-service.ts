@@ -1,4 +1,5 @@
 import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   Customer,
   CustomerListResponse,
@@ -76,7 +77,7 @@ export type CatalogService = ReturnType<typeof createCatalogService>
 export function createBrowserCatalogService(getAccessToken: () => Promise<string | null>) {
   return createCatalogService(
     createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken,
     }),
   )
