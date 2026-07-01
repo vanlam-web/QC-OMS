@@ -214,6 +214,9 @@ export interface SalesDocumentDetailData extends SalesDocumentListItemData {
     line_no: number;
     product: { id: string | null; code: string; name: string; unit_name: string; sell_method: SellMethod };
     quantity: number;
+    width_m: number | null;
+    height_m: number | null;
+    linear_m: number | null;
     unit_price: number;
     line_subtotal_amount: number;
     discount_amount: number;
