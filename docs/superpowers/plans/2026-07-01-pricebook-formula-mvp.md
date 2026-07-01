@@ -811,7 +811,7 @@ git commit -m "feat: add price formula grid"
 **Files:**
 - No new files unless verification reveals defects.
 
-- [ ] **Step 1: Run full verification**
+- [x] **Step 1: Run full verification**
 
 Run:
 
