@@ -80,8 +80,6 @@ function quoteReopenPayload(overrides: Partial<QuoteReopenPayloadData> = {}): Qu
       id: "quote-1",
       code: "BG000001",
       status: "active",
-      source_quote_id: "quote-1",
-      source_quote_code: "BG000001",
     },
     customer: {
       customer_id: null,
@@ -154,7 +152,6 @@ function repo(
     updateCustomerGroup: () => Promise.resolve(null),
     checkoutOrder: () => Promise.resolve(checkoutResult()),
     saveQuote: () => Promise.resolve(quoteSummary()),
-    reviseQuote: () => Promise.resolve(quoteSummary({ id: "quote-2", code: "BG000001.01" })),
     getQuoteReopenPayload: () => Promise.resolve(quoteReopenPayload()),
     reviseInvoice: () => Promise.resolve({ order_id: "order-1", status: "not_implemented" }),
     ...overrides,
@@ -369,36 +366,7 @@ Deno.test("quote routes save and reopen active quote with create_order", async (
   );
 
   assertEquals(reopenResponse.status, 200);
-  assertEquals(((await body(reopenResponse)).data as QuoteReopenPayloadData).quote.source_quote_code, "BG000001");
-});
-
-Deno.test("quote revision creates new quote and uses create_order guard", async () => {
-  const denied = await call(
-    "/api/v1/orders/quotes/quote-1/revisions",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        items: [{ product_id: "p-1", quantity: 1, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
-      }),
-    },
-    repo([]),
-  );
-
-  assertEquals(denied.status, 403);
-
-  const response = await call(
-    "/api/v1/orders/quotes/quote-1/revisions",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        items: [{ product_id: "p-1", quantity: 2, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
-      }),
-    },
-    repo(["perm.create_order"]),
-  );
-
-  assertEquals(response.status, 201);
-  assertEquals(((await body(response)).data as QuoteSummaryData).code, "BG000001.01");
+  assertEquals(((await body(reopenResponse)).data as QuoteReopenPayloadData).quote.code, "BG000001");
 });
 
 Deno.test("quote save with discount requires apply_discount", async () => {
@@ -429,34 +397,21 @@ Deno.test("quote save with discount requires apply_discount", async () => {
   assertEquals(allowed.status, 201);
 });
 
-Deno.test("checkout from quote maps unresolved inactive or missing lines to QUOTE_REOPEN_BLOCKED", async () => {
+Deno.test("quote revision endpoint is not part of phase 3a", async () => {
   const response = await call(
-    "/api/v1/orders/checkout",
+    "/api/v1/orders/quotes/quote-1/revisions",
     {
       method: "POST",
       body: JSON.stringify({
-        source_quote_id: "quote-1",
         items: [{ product_id: "p-1", quantity: 1, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
-        payment: { cash_amount: 180000, bank_amount: 0, old_debt_payment_amount: 0 },
       }),
     },
-    repo(["perm.create_order"], {
-      getQuoteReopenPayload: () =>
-        Promise.resolve(quoteReopenPayload({
-          items: [{
-            ...quoteReopenPayload().items[0],
-            warnings: [{ code: "PRODUCT_INACTIVE", message: "San pham ngung ban" }],
-          }],
-        })),
-      checkoutOrder: () => {
-        throw new Error("checkout should be blocked before transaction");
-      },
-    }),
+    repo(["perm.create_order"]),
   );
 
   const responseBody = await body(response);
-  assertEquals(response.status, 409);
-  assertEquals((responseBody.error as { code: string }).code, "QUOTE_REOPEN_BLOCKED");
+  assertEquals(response.status, 404);
+  assertEquals((responseBody.error as { code: string }).code, "RESOURCE_NOT_FOUND");
 });
 
 Deno.test("invoice revise requires edit_order_locked and revision_reason", async () => {

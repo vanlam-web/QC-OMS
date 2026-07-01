@@ -1,6 +1,6 @@
 begin;
 
-select plan(19);
+select plan(15);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -34,13 +34,6 @@ select has_function(
   'save_quote_tx',
   array['uuid', 'uuid', 'jsonb'],
   'quote save transaction rpc exists'
-);
-
-select has_function(
-  'public',
-  'revise_quote_tx',
-  array['uuid', 'uuid', 'uuid', 'jsonb'],
-  'quote revision transaction rpc exists'
 );
 
 create temporary table quote_results (
@@ -86,7 +79,7 @@ select is(
 select is(
   (select status from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
   'active',
-  'quote starts active'
+  'quote stays active'
 );
 
 select is(
@@ -121,11 +114,10 @@ select is(
 
 insert into quote_results (name, result)
 values (
-  'quote_revision',
-  public.revise_quote_tx(
+  'copied_quote',
+  public.save_quote_tx(
     '90000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001',
-    ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid),
     jsonb_build_object(
       'customer_id', null,
       'customer_snapshot', jsonb_build_object('type', 'retail', 'name', 'Khach le'),
@@ -138,53 +130,31 @@ values (
           'price_source', 'manual'
         )
       ),
-      'note', 'Bao gia sua'
+      'note', 'Bao gia moi tu noi dung cu'
     )
   )
 );
 
 select ok(
-  (select result->>'order_code' from quote_results where name = 'quote_revision') like 'BG%.01',
-  'revision creates BG .01 code'
+  (select result->>'order_code' from quote_results where name = 'copied_quote') like 'BG%',
+  'saving reopened draft creates a new BG code'
 );
 
-select is(
-  (select status from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
-  'cancelled',
-  'old quote is cancelled after revision'
-);
-
-select is(
-  (select cancel_reason_type from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
-  'revised',
-  'old quote cancel reason is revised'
-);
-
-select throws_ok(
-  $$ select public.revise_quote_tx(
-    '90000000-0000-4000-8000-000000000001',
-    '00000000-0000-4000-8000-000000000001',
-    ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid),
-    jsonb_build_object(
-      'customer_id', null,
-      'customer_snapshot', jsonb_build_object('type', 'retail', 'name', 'Khach le'),
-      'items', jsonb_build_array(jsonb_build_object('product_id', '00000000-0000-4000-8000-000000000303', 'quantity', 1, 'unit_price', 180000, 'discount_amount', 0, 'price_source', 'manual'))
-    )
-  ) $$,
-  '22023',
-  null,
-  'cancelled quote cannot be revised again'
+select isnt(
+  (select result->>'order_code' from quote_results where name = 'copied_quote'),
+  (select result->>'order_code' from quote_results where name = 'base_quote'),
+  'new quote is independent from original quote'
 );
 
 insert into quote_results (name, result)
 values (
-  'invoice_from_quote',
+  'invoice_from_draft',
   public.checkout_order_tx(
     '90000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001',
     jsonb_build_object(
-      'source_quote_id', ((select result->>'order_id' from quote_results where name = 'quote_revision')::uuid),
       'customer_id', null,
+      'retail_debt_note', 'khach le no',
       'items', jsonb_build_array(
         jsonb_build_object(
           'product_id', '00000000-0000-4000-8000-000000000303',
@@ -205,43 +175,27 @@ values (
 );
 
 select is(
-  (select status from public.orders where id = ((select result->>'order_id' from quote_results where name = 'quote_revision')::uuid)),
-  'converted',
-  'checkout converts quote'
+  (select status from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
+  'active',
+  'checkout from reopened draft does not convert original quote'
 );
 
 select is(
-  (select source_quote_id from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_quote')::uuid)),
-  ((select result->>'order_id' from quote_results where name = 'quote_revision')::uuid),
-  'invoice stores source quote id'
+  (select order_type from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_draft')::uuid)),
+  'invoice',
+  'checkout from reopened draft creates normal invoice'
 );
 
 select is(
-  (select source_quote_code from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_quote')::uuid)),
-  (select result->>'order_code' from quote_results where name = 'quote_revision'),
-  'invoice stores source quote code'
+  (select source_quote_id from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_draft')::uuid)),
+  null::uuid,
+  'invoice does not store source quote id in phase 3A'
 );
 
 select is(
-  (select count(*)::integer from public.order_status_history where order_id = ((select result->>'order_id' from quote_results where name = 'quote_revision')::uuid) and to_status = 'converted'),
-  1,
-  'quote conversion writes status history'
-);
-
-select throws_ok(
-  $$ select public.checkout_order_tx(
-    '90000000-0000-4000-8000-000000000001',
-    '00000000-0000-4000-8000-000000000001',
-    jsonb_build_object(
-      'source_quote_id', ((select result->>'order_id' from quote_results where name = 'quote_revision')::uuid),
-      'customer_id', null,
-      'items', jsonb_build_array(jsonb_build_object('product_id', '00000000-0000-4000-8000-000000000303', 'quantity', 1, 'unit_price', 180000, 'discount_amount', 0, 'price_source', 'manual')),
-      'payment', jsonb_build_object('cash_amount', 180000, 'bank_amount', 0, 'old_debt_payment_amount', 0, 'change_returned_amount', 0)
-    )
-  ) $$,
-  '22023',
-  null,
-  'converted quote cannot be checked out again'
+  (select count(*)::integer from public.order_status_history where order_id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid) and to_status = 'converted'),
+  0,
+  'checkout from draft writes no quote conversion history'
 );
 
 select * from finish();

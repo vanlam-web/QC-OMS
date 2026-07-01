@@ -589,16 +589,6 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return toQuoteSummaryData(data);
     },
-    async reviseQuote(input): Promise<QuoteSummaryData> {
-      const { data, error } = await client.rpc("revise_quote_tx", {
-        p_actor_user_id: input.actorUserId,
-        p_organization_id: input.organizationId,
-        p_quote_id: input.quoteId,
-        p_payload: input.payload,
-      });
-      if (error !== null) throw error;
-      return toQuoteSummaryData(data);
-    },
     async getQuoteReopenPayload(input): Promise<QuoteReopenPayloadData | null> {
       return await loadQuoteReopenPayload(client, input.organizationId, input.quoteId);
     },
@@ -1259,8 +1249,6 @@ async function loadQuoteReopenPayload(
       id: quote.id,
       code: quote.code,
       status: quote.status as QuoteReopenPayloadData["quote"]["status"],
-      source_quote_id: quote.id,
-      source_quote_code: quote.code,
     },
     customer: {
       customer_id: quote.customer_id,

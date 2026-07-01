@@ -2,7 +2,7 @@ import type { FoundationRepository } from "../contracts.ts";
 import { ApiError, successResponse } from "../http.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
-import { checkoutOrder, getQuoteReopenPayload, reviseInvoice, reviseQuote, saveQuote } from "../use-cases/orders.ts";
+import { checkoutOrder, getQuoteReopenPayload, reviseInvoice, saveQuote } from "../use-cases/orders.ts";
 
 export interface OrderRouteDependencies {
   auth: AuthClient;
@@ -55,15 +55,6 @@ export async function handleOrders(
     return successResponse(
       await getQuoteReopenPayload(dependencies.repository, context, reopenMatch[1]),
       traceId,
-    );
-  }
-
-  const revisionMatch = url.pathname.match(/^\/api\/v1\/orders\/quotes\/([^/]+)\/revisions$/);
-  if (revisionMatch !== null && request.method === "POST") {
-    return successResponse(
-      await reviseQuote(dependencies.repository, context, revisionMatch[1], await request.json()),
-      traceId,
-      { status: 201 },
     );
   }
 

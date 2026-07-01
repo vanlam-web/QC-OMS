@@ -66,13 +66,6 @@ function makeOrderService(): OrderService {
       status: 'active' as const,
       total_amount: 120000,
     })),
-    reviseQuote: vi.fn(async () => ({
-      id: 'quote-2',
-      code: 'BG000001.01',
-      order_type: 'quote' as const,
-      status: 'active' as const,
-      total_amount: 120000,
-    })),
     getQuoteReopenPayload: vi.fn(),
     listFinanceAccounts: vi.fn(async () => ({ items: [] })),
     getCustomerDebt: vi.fn(async () => ({ customer_id: 'customer-1', total_debt: 0, invoices: [] })),
@@ -392,14 +385,12 @@ it('adds a production queue payload to the local draft cart without checkout', a
   expect(orderService.checkout).not.toHaveBeenCalled()
 })
 
-it('reopened quote keeps snapshot price and sends source quote id on checkout', async () => {
+it('reopened quote keeps snapshot price and checks out as a normal draft', async () => {
   saveQuoteReopenPayload({
     quote: {
       id: 'quote-1',
       code: 'BG000123',
       status: 'active',
-      source_quote_id: 'quote-1',
-      source_quote_code: 'BG000123',
     },
     customer: {
       customer_id: 'customer-1',
@@ -452,7 +443,9 @@ it('reopened quote keeps snapshot price and sends source quote id on checkout', 
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '99000')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
 
-  expect(orderService.checkout).toHaveBeenCalledWith(expect.objectContaining({ source_quote_id: 'quote-1' }))
+  expect(orderService.checkout).toHaveBeenCalledWith(
+    expect.not.objectContaining({ source_quote_id: 'quote-1' }),
+  )
 })
 
 it('blocks checkout when reopened quote has inactive or missing product warning', async () => {
@@ -461,8 +454,6 @@ it('blocks checkout when reopened quote has inactive or missing product warning'
       id: 'quote-1',
       code: 'BG000123',
       status: 'active',
-      source_quote_id: 'quote-1',
-      source_quote_code: 'BG000123',
     },
     customer: {
       customer_id: null,

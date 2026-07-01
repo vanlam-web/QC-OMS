@@ -17,7 +17,6 @@ export async function checkoutOrder(
   if (payloadHasDiscount(payload)) {
     requireAnyPermission(context, ["perm.apply_discount"]);
   }
-  await assertReopenedQuoteCanCheckout(repository, context, payload);
 
   try {
     return await repository.checkoutOrder({
@@ -45,30 +44,6 @@ export async function saveQuote(
     return await repository.saveQuote({
       organizationId: context.organizationId,
       actorUserId: context.actorUserId,
-      payload,
-    });
-  } catch (cause) {
-    throw mapRepositoryError(cause);
-  }
-}
-
-export async function reviseQuote(
-  repository: FoundationRepository,
-  context: OrderContext,
-  quoteId: string,
-  body: unknown,
-): Promise<QuoteSummaryData> {
-  requireAnyPermission(context, ["perm.create_order"]);
-  const payload = parseQuotePayload(body);
-  if (payloadHasDiscount(payload)) {
-    requireAnyPermission(context, ["perm.apply_discount"]);
-  }
-
-  try {
-    return await repository.reviseQuote({
-      organizationId: context.organizationId,
-      actorUserId: context.actorUserId,
-      quoteId,
       payload,
     });
   } catch (cause) {
@@ -188,33 +163,6 @@ function payloadHasDiscount(payload: Record<string, unknown>): boolean {
   return items.some((item) =>
     isRecord(item) && typeof item.discount_amount === "number" && item.discount_amount > 0
   );
-}
-
-async function assertReopenedQuoteCanCheckout(
-  repository: FoundationRepository,
-  context: OrderContext,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  if (!isNonEmptyString(payload.source_quote_id)) return;
-
-  const reopenPayload = await repository.getQuoteReopenPayload({
-    organizationId: context.organizationId,
-    quoteId: payload.source_quote_id,
-  });
-  if (reopenPayload === null) return;
-
-  const hasBlockingLine = reopenPayload.items.some((item) =>
-    item.warnings.some((warning) =>
-      warning.code === "PRODUCT_INACTIVE" || warning.code === "PRODUCT_MISSING"
-    )
-  );
-  if (!hasBlockingLine) return;
-
-  throw new ApiError({
-    status: 409,
-    code: "QUOTE_REOPEN_BLOCKED",
-    message: "Quote has unresolved product lines.",
-  });
 }
 
 function parseRevisionPayload(body: unknown): Record<string, unknown> {

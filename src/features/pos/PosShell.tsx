@@ -45,7 +45,7 @@ export function PosShell({
   const [sourceQuote, setSourceQuote] = useState<{ id: string; code: string } | undefined>(() =>
     initialQuotePayload === null
       ? undefined
-      : { id: initialQuotePayload.quote.source_quote_id, code: initialQuotePayload.quote.source_quote_code },
+      : { id: initialQuotePayload.quote.id, code: initialQuotePayload.quote.code },
   )
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -352,7 +352,7 @@ function quotePayloadToCartLines(payload: QuoteReopenPayload): CheckoutCartLine[
       (warning) => warning.code === 'PRODUCT_INACTIVE' || warning.code === 'PRODUCT_MISSING',
     )
     return {
-      id: `${payload.quote.source_quote_id}-${index + 1}`,
+      id: `${payload.quote.id}-${index + 1}`,
       product: {
         id: item.product_id ?? `missing-${item.order_item_id}`,
         code: item.product_snapshot.code,

@@ -53,13 +53,6 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
       status: 'active' as const,
       total_amount: 240000,
     })),
-    reviseQuote: vi.fn(async () => ({
-      id: 'quote-2',
-      code: 'BG000001.01',
-      order_type: 'quote' as const,
-      status: 'active' as const,
-      total_amount: 240000,
-    })),
     getQuoteReopenPayload: vi.fn(),
     listFinanceAccounts: vi.fn(async () => ({
       items: [
@@ -118,7 +111,7 @@ it('saves the current cart as a quote and shows BG code', async () => {
   expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001')
 })
 
-it('saving a reopened quote calls quote revisions endpoint', async () => {
+it('saving a reopened quote draft creates a new independent quote', async () => {
   const service = makeOrderService()
   render(
     <CheckoutPanel
@@ -131,14 +124,13 @@ it('saving a reopened quote calls quote revisions endpoint', async () => {
 
   await userEvent.click(screen.getByRole('button', { name: 'Báo giá' }))
 
-  expect(service.reviseQuote).toHaveBeenCalledWith(
-    'quote-1',
+  expect(service.saveQuote).toHaveBeenCalledWith(
     expect.objectContaining({ items: [expect.objectContaining({ product_id: 'p-1' })] }),
   )
-  expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001.01')
+  expect(await screen.findByLabelText('Kết quả báo giá')).toHaveTextContent('BG000001')
 })
 
-it('passes source quote id through checkout and blocks unresolved quote lines', async () => {
+it('checks out reopened quote drafts normally and blocks unresolved quote lines locally', async () => {
   const service = makeOrderService()
   const { rerender } = render(
     <CheckoutPanel
@@ -151,7 +143,9 @@ it('passes source quote id through checkout and blocks unresolved quote lines', 
 
   await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
 
-  expect(service.checkout).toHaveBeenCalledWith(expect.objectContaining({ source_quote_id: 'quote-1' }))
+  expect(service.checkout).toHaveBeenCalledWith(
+    expect.not.objectContaining({ source_quote_id: 'quote-1' }),
+  )
 
   rerender(
     <CheckoutPanel

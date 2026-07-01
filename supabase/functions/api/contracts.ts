@@ -128,8 +128,6 @@ export interface QuoteReopenPayloadData {
     id: string;
     code: string;
     status: "active" | "converted" | "cancelled";
-    source_quote_id: string;
-    source_quote_code: string;
   };
   customer: {
     customer_id: string | null;
@@ -558,12 +556,6 @@ export interface FoundationRepository {
   saveQuote(input: {
     organizationId: string;
     actorUserId: string;
-    payload: Record<string, unknown>;
-  }): Promise<QuoteSummaryData>;
-  reviseQuote(input: {
-    organizationId: string;
-    actorUserId: string;
-    quoteId: string;
     payload: Record<string, unknown>;
   }): Promise<QuoteSummaryData>;
   getQuoteReopenPayload(input: {

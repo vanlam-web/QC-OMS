@@ -85,8 +85,6 @@ const quoteReopenPayload: QuoteReopenPayload = {
     id: 'quote-1',
     code: 'BG000123',
     status: 'active',
-    source_quote_id: 'quote-1',
-    source_quote_code: 'BG000123',
   },
   customer: {
     customer_id: 'cus-1',
@@ -121,7 +119,6 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
     validateCart: vi.fn(),
     checkout: vi.fn(),
     saveQuote: vi.fn(),
-    reviseQuote: vi.fn(),
     getQuoteReopenPayload: vi.fn(async () => quoteReopenPayload),
     listFinanceAccounts: vi.fn(),
     getCustomerDebt: vi.fn(),

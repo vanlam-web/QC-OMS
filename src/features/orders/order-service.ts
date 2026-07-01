@@ -41,11 +41,6 @@ export function createOrderService(api: OrderApiRequester) {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-    reviseQuote: (quoteId: string, input: CheckoutInput) =>
-      api.request<QuoteSummary>(`/api/v1/orders/quotes/${quoteId}/revisions`, {
-        method: 'POST',
-        body: JSON.stringify(input),
-      }),
     getQuoteReopenPayload: (quoteId: string) =>
       api.request<QuoteReopenPayload>(`/api/v1/orders/quotes/${quoteId}/reopen-payload`),
     listFinanceAccounts: () => api.request<{ items: FinanceAccount[] }>('/api/v1/finance/accounts'),

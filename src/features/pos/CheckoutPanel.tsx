@@ -130,7 +130,6 @@ export function CheckoutPanel({
     setSubmitting(true)
     try {
       const checkout = await orderService.checkout({
-        source_quote_id: sourceQuote?.id,
         customer_id: selectedCustomer?.id,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
         items: cartLines.map((line) => ({
@@ -174,7 +173,6 @@ export function CheckoutPanel({
     setSubmitting(true)
     try {
       const payload = {
-        source_quote_id: sourceQuote?.id,
         customer_id: selectedCustomer?.id,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
         items: cartLines.map((line) => ({
@@ -193,11 +191,7 @@ export function CheckoutPanel({
           change_returned_amount: surplusMode === 'return' ? surplus : 0,
         },
       }
-      setQuoteResult(
-        sourceQuote === undefined
-          ? await orderService.saveQuote(payload)
-          : await orderService.reviseQuote(sourceQuote.id, payload),
-      )
+      setQuoteResult(await orderService.saveQuote(payload))
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được báo giá.'))
     } finally {

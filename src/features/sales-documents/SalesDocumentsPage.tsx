@@ -38,7 +38,7 @@ export function SalesDocumentsPage({
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'invoice' | 'quote'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'converted' | 'completed' | 'cancelled'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
   const [selected, setSelected] = useState<SalesDocumentDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
@@ -165,7 +165,6 @@ export function SalesDocumentsPage({
               >
                 <option value="all">Tất cả</option>
                 <option value="active">Đang hiệu lực</option>
-                <option value="converted">Đã tạo hóa đơn</option>
                 <option value="completed">Hoàn tất</option>
                 <option value="cancelled">Đã hủy</option>
               </select>

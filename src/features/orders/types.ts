@@ -29,7 +29,6 @@ export interface FinanceAccount {
 }
 
 export interface CheckoutInput {
-  source_quote_id?: string
   customer_id?: string
   retail_debt_note?: string
   items: Array<{
@@ -62,8 +61,6 @@ export interface QuoteReopenPayload {
     id: string
     code: string
     status: 'active' | 'converted' | 'cancelled'
-    source_quote_id: string
-    source_quote_code: string
   }
   customer: {
     customer_id: string | null
