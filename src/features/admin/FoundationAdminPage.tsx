@@ -8,6 +8,15 @@ interface AdminState {
   permissions: Permission[]
 }
 
+const internalStaffDefaultPermissions = [
+  'perm.create_order',
+  'perm.apply_discount',
+  'perm.edit_price_book',
+  'perm.manage_inventory',
+  'perm.manage_finance',
+  'perm.view_shift_report',
+] as const
+
 export function FoundationAdminPage({
   service,
   onOpenDashboard,
@@ -72,7 +81,7 @@ export function FoundationAdminPage({
         email: userForm.email,
         password: userForm.password,
         display_name: userForm.displayName,
-        permissions: ['perm.create_order'],
+        permissions: [...internalStaffDefaultPermissions],
       })
       setUserForm({ email: '', password: '', displayName: '' })
       await load()
