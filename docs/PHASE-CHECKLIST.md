@@ -559,8 +559,10 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 ### Phạm vi đã chốt
 
 - [ ] Chỉ dùng `giá nhập cuối` làm nguồn tính giá; không dùng giá vốn bình quân trong PriceBook MVP.
+- [ ] `giá nhập cuối` đọc từ `products.latest_purchase_cost`; trước Purchase receipt hoàn chỉnh có thể lấy từ import/admin edit, sau này receipt `posted` cập nhật.
 - [ ] Tạo bảng giá chỉ cần tên; không có phạm vi áp dụng hoặc thời gian hiệu lực.
 - [ ] Lưới giá có cột cố định `Mã hàng`, `Tên hàng`, `Giá nhập cuối`.
+- [ ] Các cột bảng giá lấy dynamic từ `price_lists` đang active; không hard-code chỉ `25/26/30/35/40`.
 - [ ] Cột `Chi phí`: chọn giá cố định hoặc công thức `+ số tiền + % giá nhập cuối`.
 - [ ] Cột `Lợi nhuận`: chọn giá cố định hoặc công thức điều kiện theo giá nhập cuối.
 - [ ] Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
@@ -568,7 +570,10 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 - [ ] Ô giá có 2 chế độ: giá tay hoặc theo công thức.
 - [ ] Ô theo công thức tự tính lại khi `giá nhập cuối` thay đổi.
 - [ ] Ô theo công thức ghi nhớ công thức tới khi người dùng nhập giá tay hoặc gắn công thức khác.
+- [ ] Formula rule phải lưu structured trong DB ngay từ slice đầu; không chỉ tính tạm ở UI.
 - [ ] Gắn công thức hàng loạt phải có preview trước khi áp dụng cho bộ lọc.
+- [ ] `perm.edit_price_book` đủ cho preview/gắn công thức; audit tối thiểu actor/filter/số dòng bị ảnh hưởng.
+- [ ] Backend test rounding up `1,000đ`, formula mode resolve, missing latest cost = `0`, và tier overlap validation.
 
 ### Ngoài phạm vi slice đầu
 

@@ -152,7 +152,9 @@ Trong đó:
 
 - `Mã hàng`, `Tên hàng`, `Giá nhập cuối` là chỉ đọc.
 - `Chi phí` và `Lợi nhuận` có thể bấm vào để nhập cấu hình.
-- Các cột bảng giá chỉ cho cộng thêm số tiền hoặc phần trăm so với kết quả trước đó.
+- Các cột bảng giá lấy động từ các bảng giá đang active, không hard-code chỉ `25/26/30/35/40`.
+- Các bảng giá import từ KiotViet hiện có thể tạo các cột `Bảng giá chung`, `25`, `26`, `30`, `35`, `40`; nếu sau này thêm bảng giá mới thì lưới tự thêm cột tương ứng.
+- Các cột bảng giá chỉ cho cộng/trừ số tiền hoặc phần trăm so với kết quả trước đó.
 
 ### Công thức tổng
 
@@ -264,6 +266,43 @@ Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
 2. Công thức theo nhóm hàng + điều kiện phụ.
 3. Công thức mặc định của nhóm hàng.
 4. Không có công thức thì giữ giá đã lưu/nhập tay.
+
+### Nguồn `giá nhập cuối`
+
+Trong phase PriceBook formula đầu tiên, `giá nhập cuối` là snapshot trên sản phẩm, lấy từ dữ liệu import/KiotViet hoặc cập nhật thủ công có kiểm soát trong màn Hàng hóa/PriceBook admin. Đây là `latest_purchase_cost`, không phải giá vốn kế toán.
+
+Khi module Purchase receipt hoàn chỉnh, phiếu nhập `posted` sẽ là nguồn chính cập nhật `latest_purchase_cost`. Nếu sản phẩm chưa có `latest_purchase_cost`, công thức tính với giá nhập cuối `0` và không cần cảnh báo/block.
+
+Không dùng dữ liệu mock trong production. Nếu cần dữ liệu tạm để thử formula, dùng import hoặc thao tác admin cập nhật `latest_purchase_cost` rõ ràng.
+
+### Lưu công thức trong MVP
+
+PriceBook formula MVP phải lưu công thức có cấu trúc, không chỉ tính tạm trên UI. Lý do: ô giá theo công thức phải tiếp tục biến đổi khi `giá nhập cuối` thay đổi và phải nhớ công thức cho tới khi người dùng nhập giá tay hoặc gắn công thức khác.
+
+Tối thiểu cần lưu:
+
+- điều kiện lọc sản phẩm: nhóm hàng, tên chứa, mã chứa, đơn vị/cách bán nếu có
+- cấu hình `Chi phí`
+- cấu hình `Lợi nhuận`
+- điều chỉnh theo từng `price_list_id`
+- người tạo/cập nhật và thời gian
+
+Không lưu công thức dạng text tự do. Backend phải tính được cùng kết quả với UI.
+
+### Permission và audit
+
+`perm.edit_price_book` đủ cho xem preview và gắn công thức. Không cần permission riêng cho từng bước trong MVP.
+
+Vì gắn công thức có thể làm đổi giá POS khi `giá nhập cuối` đổi, backend phải ghi audit tối thiểu: ai gắn công thức, lúc nào, bộ lọc nào, các bảng giá nào bị ảnh hưởng. Nếu audit log chung chưa có, lưu metadata `created_by/updated_by/updated_at` và sự kiện thay đổi PriceBook tối giản.
+
+### Validation công thức
+
+- Làm tròn lên `1,000đ` phải được tính ở backend và có test.
+- `Chi phí` không có điều kiện.
+- `Lợi nhuận` có thể có nhiều bậc điều kiện; backend dùng thứ tự ưu tiên từ trên xuống.
+- Backend phải chặn các bậc điều kiện bị overlap rõ ràng.
+- Gap được phép trong MVP; nếu không có bậc nào khớp thì lợi nhuận tính là `0` và preview phải hiển thị rõ.
+- Giá cuối không được âm; nếu công thức ra âm thì clamp về `0` hoặc chặn lưu theo cách backend chọn, nhưng preview phải thấy rõ.
 
 ### Giá theo công thức tự cập nhật khi giá nhập cuối thay đổi
 

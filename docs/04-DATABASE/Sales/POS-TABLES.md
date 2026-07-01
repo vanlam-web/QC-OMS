@@ -158,7 +158,9 @@ Lưu đơn giá của từng sản phẩm trong từng bảng giá. Bảng này 
 | `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
 | `price_list_id` | `uuid` | ❌ | FK → `public.price_lists.id` |
 | `product_id` | `uuid` | ❌ | FK → `public.products.id` |
-| `unit_price` | `numeric(12,0)` | ❌ | Giá bán theo đơn vị bán của sản phẩm |
+| `pricing_mode` | `text` | ❌ | `manual` hoặc `formula` |
+| `unit_price` | `numeric(12,0)` | ✅ | Giá bán nhập tay theo đơn vị bán của sản phẩm; bắt buộc khi `pricing_mode = manual` |
+| `formula_rule_id` | `uuid` | ✅ | FK → `public.price_formula_rules.id`; bắt buộc khi `pricing_mode = formula` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
 
@@ -175,11 +177,20 @@ public.price_list_items.product_id
 ### Ràng buộc
 
 - `UNIQUE (price_list_id, product_id)`
-- `unit_price >= 0`
+- `pricing_mode IN ('manual', 'formula')`
+- Nếu `pricing_mode = manual` thì `unit_price IS NOT NULL AND unit_price >= 0`.
+- Nếu `pricing_mode = formula` thì `formula_rule_id IS NOT NULL`; giá bán hiệu lực được backend tính theo formula rule và `products.latest_purchase_cost`.
 - `price_list_id` và `product_id` phải thuộc cùng `organization_id`.
 - Với sản phẩm bán theo `m tới`, `unit_price` là giá cho `1 m tới`.
-- Với bảng giá nhóm khách, `unit_price = 0` là sentinel nghiệp vụ: POS resolve theo `giá nhập gần nhất`; nếu chưa có giá nhập gần nhất thì dùng `0`.
-- Với bảng giá chung, `unit_price = 0` giữ nguyên là giá đã khai báo/import, không mang nghĩa fallback.
+- Với bảng giá nhóm khách và `pricing_mode = manual`, `unit_price = 0` là sentinel nghiệp vụ: POS resolve theo `giá nhập gần nhất`; nếu chưa có giá nhập gần nhất thì dùng `0`.
+- Với bảng giá chung và `pricing_mode = manual`, `unit_price = 0` giữ nguyên là giá đã khai báo/import, không mang nghĩa fallback.
+
+### Ghi chú formula
+
+- Formula phải lưu structured trong DB ngay từ MVP đầu tiên, không chỉ tính tạm ở UI.
+- Ô giá `formula` tự tính lại khi `products.latest_purchase_cost` thay đổi.
+- Nếu người dùng nhập giá tay, backend đổi `pricing_mode = manual`, ghi `unit_price`, xóa/ignore `formula_rule_id`.
+- Nếu người dùng gắn công thức khác, backend đổi `formula_rule_id` sang rule mới.
 
 ### Index
 
@@ -188,7 +199,40 @@ public.price_list_items.product_id
 
 ---
 
-## 6. Bảng `public.products` — Sản phẩm / dịch vụ
+## 6. Bảng `public.price_formula_rules` — Công thức giá
+
+### Mục đích
+
+Lưu công thức PriceBook có cấu trúc để các ô giá theo công thức tiếp tục biến đổi theo `giá nhập cuối`.
+
+### Các cột tối thiểu
+
+| Tên cột | Kiểu dữ liệu | Nullable | Mô tả |
+|---|---|---|---|
+| `id` | `uuid` | ❌ | Khóa chính |
+| `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
+| `name` | `text` | ❌ | Tên dễ hiểu, ví dụ `Fomex 5mm` |
+| `product_filter` | `jsonb` | ❌ | Điều kiện lọc: nhóm hàng, tên chứa, mã chứa, sell_method/unit nếu có |
+| `cost_formula` | `jsonb` | ❌ | Cấu hình `Chi phí`: fixed amount hoặc amount + percent |
+| `profit_formula` | `jsonb` | ❌ | Cấu hình `Lợi nhuận`: fixed amount hoặc tiers theo `latest_purchase_cost` |
+| `price_list_adjustments` | `jsonb` | ❌ | Điều chỉnh theo từng `price_list_id`: +/- amount hoặc +/- percent |
+| `is_active` | `boolean` | ❌ | Rule còn dùng được |
+| `created_by` | `uuid` | ✅ | User tạo |
+| `updated_by` | `uuid` | ✅ | User cập nhật gần nhất |
+| `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
+| `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
+
+### Ràng buộc
+
+- Không lưu công thức dạng text tự do.
+- Backend phải validate structured JSON trước khi lưu.
+- `price_list_adjustments` tham chiếu các bảng giá cùng organization.
+- Tiers lợi nhuận được evaluate theo thứ tự; backend chặn overlap rõ ràng, gap được phép và lợi nhuận mặc định `0` nếu không có tier khớp.
+- Giá cuối làm tròn lên `1,000đ`; backend phải có test cho rule rounding.
+
+---
+
+## 7. Bảng `public.products` — Sản phẩm / dịch vụ
 
 ### Mục đích
 
@@ -205,6 +249,8 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 | `status` | `text` | ❌ | `active` hoặc `inactive` |
 | `unit_name` | `text` | ❌ | Tên đơn vị hiển thị, ví dụ `m²`, `m`, `cái`, `bộ` |
 | `sell_method` | `text` | ❌ | Cách tính bán: `quantity`, `area_m2`, `linear_m`, `sheet`, `combo` |
+| `latest_purchase_cost` | `numeric(12,0)` | ✅ | Giá nhập cuối dùng cho PriceBook formula; không phải giá vốn kế toán |
+| `latest_purchase_cost_at` | `timestamptz` | ✅ | Thời điểm nguồn giá nhập cuối được cập nhật |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
 
@@ -229,10 +275,11 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 - `sell_method = 'linear_m'` dùng cho sản phẩm bán theo mét tới; `unit_price` trong `price_list_items` là giá cho `1 m tới`.
 - `Cuộn` không phải đơn vị bán trực tiếp trên POS Phase 1.
 - Quản lý tồn theo cuộn/tấm/lot thuộc Inventory, không nằm trong bảng này.
+- Trước khi Purchase receipt hoàn chỉnh, `latest_purchase_cost` có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát. Khi Purchase receipt `posted` đã có, receipt là nguồn chính cập nhật trường này.
 
 ---
 
-## 7. Bảng `public.customer_product_price_history` — Lịch sử giá riêng
+## 8. Bảng `public.customer_product_price_history` — Lịch sử giá riêng
 
 ### Mục đích
 
@@ -270,7 +317,7 @@ public.customer_product_price_history.product_id
 
 - `idx_customer_product_price_history_recent` trên `(organization_id, customer_id, product_id, sold_at DESC)`
 
-## 8. Bảng `public.orders` — Báo giá và hóa đơn bán hàng
+## 9. Bảng `public.orders` — Báo giá và hóa đơn bán hàng
 
 ### Mục đích
 

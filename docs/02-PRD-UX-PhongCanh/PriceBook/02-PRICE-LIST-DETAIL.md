@@ -35,10 +35,12 @@ Trang chi tiết bảng giá cho phép xem và sửa giá bán theo lưới sả
 | Chi phí | Bấm vào để nhập giá cố định hoặc công thức chi phí |
 | Lợi nhuận | Bấm vào để nhập giá cố định hoặc công thức lợi nhuận có điều kiện |
 | Bảng giá chung | Điều chỉnh cuối cùng cho bảng giá chung |
-| Bảng giá nhóm `25/26/30/35/40` | Điều chỉnh cuối cùng cho từng bảng giá nhóm |
+| Các bảng giá nhóm | Điều chỉnh cuối cùng cho từng bảng giá active, ví dụ `25/26/30/35/40` |
 | Trạng thái hàng | Đang bán hoặc ngưng bán |
 
-Các cột cố định tối thiểu là `Mã hàng`, `Tên hàng`, `Giá nhập cuối`. Các cột còn lại có thể cuộn ngang nếu màn hình nhỏ.
+Các cột cố định tối thiểu là `Mã hàng`, `Tên hàng`, `Giá nhập cuối`. Các cột bảng giá lấy động từ `price_lists` đang active, sắp xếp `Bảng giá chung` trước rồi tới các bảng giá nhóm. Nếu một bảng giá như `25` hoặc `40` chưa tồn tại trong DB thì không hiện cột đó; việc tạo bảng giá là thao tác cấu hình riêng, không tự tạo ngầm khi mở lưới.
+
+Các cột còn lại có thể cuộn ngang nếu màn hình nhỏ.
 
 Gợi ý từ KiotViet: lưới thiết lập giá có cột mã hàng, tên hàng, giá nhập cuối và ô giá nhập trực tiếp. QC-OMS giữ cách thao tác trên lưới, nhưng bỏ nguồn `Giá vốn` để đơn giản.
 
@@ -137,7 +139,7 @@ Mỗi dòng điều kiện trả ra một giá trị lợi nhuận dạng:
 
 ### 6.3. Cột bảng giá
 
-Khi bấm vào cột `Bảng giá chung`, `25`, `26`, `30`, `35`, `40`, chỉ cho nhập:
+Khi bấm vào cột `Bảng giá chung`, `25`, `26`, `30`, `35`, `40` hoặc bất kỳ bảng giá active nào khác, chỉ cho nhập:
 
 - cộng/trừ số tiền
 - hoặc cộng/trừ phần trăm

@@ -359,8 +359,7 @@ Tạo bảng giá.
 ```json
 {
   "code": "DAILY",
-  "name": "Bảng giá đại lý",
-  "is_default": false
+  "name": "Bảng giá đại lý"
 }
 ```
 
@@ -368,7 +367,9 @@ Tạo bảng giá.
 
 - `code`, `name` trim xong không rỗng.
 - `code` không trùng trong organization.
-- Nếu `is_default = true`, Backend phải đảm bảo organization chỉ có một bảng giá chung active.
+- Tạo bảng giá mới không có phạm vi áp dụng hoặc thời gian hiệu lực.
+- Không bắt buộc nhập công thức khi tạo bảng giá.
+- Chỉ seed/import mới tạo bảng giá chung mặc định; UI tạo bảng giá thường không cần truyền `is_default`.
 
 ### `PATCH /price-lists/{id}`
 
@@ -382,7 +383,7 @@ Không cho inactive bảng giá đang là bảng giá chung duy nhất của org
 
 ### `PUT /price-lists/{id}/items/{product_id}`
 
-Tạo hoặc cập nhật giá của một sản phẩm trong bảng giá.
+Tạo hoặc cập nhật giá tay của một sản phẩm trong bảng giá.
 
 **Permission:** `perm.edit_price_book`
 
@@ -399,6 +400,102 @@ Tạo hoặc cập nhật giá của một sản phẩm trong bảng giá.
 - Bảng giá và sản phẩm phải cùng organization.
 - `unit_price >= 0`.
 - Với sản phẩm `sell_method = linear_m`, `unit_price` là giá cho `1 m tới`.
+- Nếu dòng giá trước đó đang theo công thức, thao tác nhập giá tay phải đổi dòng về `pricing_mode = manual` và bỏ liên kết công thức.
+
+### `POST /price-lists/formulas/preview`
+
+Xem trước việc gắn công thức cho một bộ lọc sản phẩm.
+
+**Permission:** `perm.edit_price_book`
+
+**Input:**
+
+```json
+{
+  "name": "Fomex 5mm",
+  "product_filter": {
+    "group_id": "uuid",
+    "name_contains": "5mm",
+    "code_contains": "F5",
+    "sell_method": "sheet"
+  },
+  "cost_formula": {
+    "type": "amount_plus_percent",
+    "amount": 5000,
+    "percent_of_latest_purchase_cost": 8
+  },
+  "profit_formula": {
+    "type": "tiers",
+    "tiers": [
+      { "operator": "<=", "value": 100000, "amount": 25000 },
+      { "from_exclusive": 100000, "to_inclusive": 200000, "amount": 40000 },
+      { "operator": ">", "value": 200000, "amount": 60000 }
+    ]
+  },
+  "price_list_adjustments": [
+    { "price_list_id": "uuid-default", "amount": 20000 },
+    { "price_list_id": "uuid-30", "amount": -5000 }
+  ]
+}
+```
+
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "product_id": "uuid",
+      "product_code": "F5",
+      "product_name": "Fomex 5mm",
+      "latest_purchase_cost": 100000,
+      "current_mode": "manual",
+      "current_unit_price": 150000,
+      "computed_prices": [
+        {
+          "price_list_id": "uuid-default",
+          "price_list_name": "Bảng giá chung",
+          "computed_unit_price": 158000,
+          "delta": 8000
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Rules:**
+
+- Không ghi dữ liệu khi preview.
+- `latest_purchase_cost` null thì tính như `0`, không warning/block.
+- Giá cuối làm tròn lên `1,000đ` ở backend.
+- Backend validate tiers lợi nhuận: chặn overlap rõ ràng; gap được phép, không match tier thì lợi nhuận `0`.
+
+### `POST /price-lists/formulas/apply`
+
+Lưu formula rule và gắn các dòng giá được chọn sang chế độ `formula`.
+
+**Permission:** `perm.edit_price_book`
+
+**Input:** giống preview, thêm danh sách sản phẩm/bảng giá được chọn nếu UI cho bỏ bớt dòng.
+
+```json
+{
+  "formula": { "...": "same as preview" },
+  "selected_items": [
+    { "product_id": "uuid", "price_list_id": "uuid-default" },
+    { "product_id": "uuid", "price_list_id": "uuid-30" }
+  ]
+}
+```
+
+**Rules:**
+
+- Lưu structured formula rule, không lưu công thức text tự do.
+- Các dòng được chọn chuyển sang `pricing_mode = formula` và nhớ `formula_rule_id`.
+- Nếu sau này người dùng nhập giá tay vào dòng đó, dòng chuyển về `pricing_mode = manual`.
+- Ghi audit tối thiểu: actor, thời gian, filter, số dòng/bảng giá bị ảnh hưởng.
+- Không tự tạo bảng giá thiếu. Grid/API chỉ dùng các `price_lists` đang tồn tại.
 
 ### `DELETE /price-lists/{id}/items/{product_id}`
 
@@ -464,14 +561,10 @@ Lấy giá mặc định cho một hoặc nhiều sản phẩm theo khách hàng
 | `default_price_list` | Fallback hoặc dùng bảng giá chung |
 | `latest_purchase_cost` | Bảng giá nhóm để `0`, hệ thống lấy giá nhập gần nhất |
 | `latest_purchase_cost_missing_zero` | Bảng giá nhóm để `0`, nhưng sản phẩm chưa có giá nhập gần nhất nên dùng `0` |
+| `price_formula` | Dòng bảng giá đang theo công thức và được tính từ `latest_purchase_cost` |
+| `price_formula_missing_cost_zero` | Dòng theo công thức nhưng chưa có `latest_purchase_cost`, nên tính từ `0` |
 
 Không trả warning khi `latest_purchase_cost_missing_zero`; Owner chốt giữ thao tác đơn giản, nhân viên có thể sửa giá tay nếu cần.
-
-`price_source` có thể là:
-
-- `customer_group`
-- `default_price_list`
-- `fallback_default_price_list`
 
 ---
 

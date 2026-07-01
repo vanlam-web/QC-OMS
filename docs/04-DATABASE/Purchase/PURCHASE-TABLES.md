@@ -96,4 +96,4 @@ Giá vốn nên lưu tại:
 - object/lô vật lý đối với roll/sheet
 - bảng tổng hợp cost nếu cần tối ưu báo cáo
 
-Không dùng PriceBook làm nơi sửa giá vốn. PriceBook MVP chỉ đọc `giá nhập cuối` để tính/gợi ý giá bán.
+Không dùng PriceBook làm nơi sửa giá vốn kế toán. PriceBook MVP chỉ đọc `giá nhập cuối` (`products.latest_purchase_cost`) để tính giá bán theo công thức. Trước khi Purchase receipt hoàn chỉnh, trường này có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát; sau này phiếu nhập `posted` là nguồn chính cập nhật.
