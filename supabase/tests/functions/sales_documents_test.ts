@@ -196,3 +196,20 @@ Deno.test("missing sales document maps to resource not found", async () => {
 
   assertEquals(response.status, 404);
 });
+
+Deno.test("sales documents API is readonly for phase 2d", async () => {
+  for (const [path, method] of [
+    ["/api/v1/sales-documents", "POST"],
+    ["/api/v1/sales-documents/order-1", "PATCH"],
+    ["/api/v1/sales-documents/order-1", "DELETE"],
+  ] as const) {
+    const response = await call(
+      path,
+      { method, body: method === "POST" || method === "PATCH" ? JSON.stringify({}) : undefined },
+      repo(["perm.create_order"]),
+    );
+
+    assertEquals(response.status, 404);
+    assertEquals(((await body(response)).error as { code: string }).code, "RESOURCE_NOT_FOUND");
+  }
+});
