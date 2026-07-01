@@ -90,3 +90,34 @@ Spec sau phải chốt rõ:
 - Báo cáo đối soát hiển thị được chênh lệch giữa bill và máy chạy.
 - File chạy chưa khớp bill không làm thay đổi tồn kho.
 - Hệ thống vẫn có thể dùng dữ liệu máy sản xuất để cảnh báo và phân tích hao hụt tham khảo.
+
+---
+
+## 6. Lát cắt implement read-only đầu tiên
+
+Để làm được ngay mà không làm rườm rà thao tác POS, lát cắt đầu tiên của đối soát chỉ là báo cáo đọc.
+
+### Slice R1 — Production reconciliation read-only
+
+Phạm vi:
+
+- đọc dữ liệu `production_queue_items` đã có từ Phase 2B
+- đọc hóa đơn `HD...` và dòng hóa đơn đã checkout
+- gom nhóm theo ngày, máy sản xuất, khách hàng, hàng hóa và kích thước nếu có
+- hiển thị tổng `m2 máy`, `m2 bill`, `lệch m2`, số file lỗi parse
+- mở chi tiết để xem danh sách file máy và dòng hóa đơn trong cùng nhóm
+
+Không gồm:
+
+- match file với bill theo kiểu chắc chắn
+- nút xác nhận match thủ công
+- tự tạo hóa đơn
+- tự trừ kho
+- sửa queue item
+- sửa hóa đơn
+
+Quy tắc quan trọng:
+
+- Đây là đối soát tổng hợp, không phải chứng từ kho.
+- Nếu dữ liệu máy và bill lệch, hệ thống chỉ báo để người quản lý kiểm tra.
+- Sau này muốn tự match hoặc tự trừ kho phải mở spec riêng vì Owner đã chốt MVP không dùng máy sản xuất để tự trừ kho.

@@ -9,7 +9,7 @@
 
 Trang danh sách bảng giá giúp quản lý các bảng giá đang dùng cho khách hàng và nhóm khách.
 
-Sau khi module Purchase/Supplier có dữ liệu giá vốn, PriceBook có thể dùng giá vốn làm dữ liệu tham khảo để gợi ý hoặc tính công thức giá bán. Công thức giá có thể đặt theo từng nhóm hàng và chọn nguồn giá vốn như giá bình quân hoặc giá mới nhất. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
+Trong PriceBook MVP, công thức giá chỉ dùng `giá nhập cuối` từ `products.latest_purchase_cost`. Trước khi Purchase/Supplier hoàn chỉnh, giá này có thể được nhập/import hoặc sửa có kiểm soát trong Product admin/API. Giá bán chính thức vẫn là giá đã lưu trong bảng giá; công thức chỉ đổi giá khi người dùng preview và áp dụng.
 
 KiotViet chỉ là nguồn import/tham khảo ban đầu. Luồng giá của QC-OMS phải được thiết kế theo cách xưởng muốn vận hành, không copy nguyên cách KiotViet nếu cách đó không đúng mong muốn.
 
@@ -84,7 +84,7 @@ KiotViet `Hàng hóa > Thiết lập giá` hiển thị bảng giá theo dạng 
 - có import/export và ẩn hiện cột
 - màn đang thấy `496 hàng hóa`
 
-KiotViet có thể hiển thị nhiều bảng giá ngang như `BG1`, `BG2`, `BG3`. QC-OMS không dùng bố cục trải nhiều bảng giá ngang trong MVP vì dễ rối khi sản phẩm nhiều.
+KiotViet có thể hiển thị nhiều bảng giá ngang như `BG1`, `BG2`, `BG3`. QC-OMS dùng lưới bảng giá có cột bảng giá động để nhân viên xem các bảng giá đang active trên cùng một mặt bằng, nhưng không hard-code riêng `25/26/30/35/40`.
 
 Export KiotViet ngày `2026-07-01` có các cột bảng giá thật:
 
@@ -106,16 +106,16 @@ QC-OMS ưu tiên:
 
 KiotViet `Khuyến mại` có dữ liệu thật dạng `Hàng hóa - Giá bán theo số lượng mua` cho một số vật tư PVC/CPVC. QC-OMS MVP không làm module khuyến mại/campaign riêng. Nếu sau này cần bán theo bậc số lượng, đặc tả lại như quy tắc giá trong PriceBook, không kéo nguyên module marketing/khuyến mại retail vào POS.
 
-Giá vốn trong KiotViet hiển thị để tham khảo trên lưới thiết lập giá. QC-OMS cũng cần hiển thị giá vốn khi đã có dữ liệu Purchase, nhưng không cho phép sửa giá vốn trực tiếp từ bảng giá.
+Giá vốn trong KiotViet hiển thị để tham khảo trên lưới thiết lập giá. QC-OMS MVP hiển thị `Giá nhập cuối` trên lưới và không cho sửa giá này trực tiếp trong ô bảng giá.
 
 Export bảng giá có nhiều dòng `Bảng giá chung = 0` và một dòng giá nhóm `26 = 0`. Theo quyết định hiện tại, giá `0` là giá hợp lệ nếu được khai báo; fallback về bảng giá chung chỉ xảy ra khi dòng giá không tồn tại/để trống trong schema QC-OMS, không phải vì giá bằng `0`.
 
-Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook nâng cao:
+Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook nâng cao, nhưng slice MVP đầu chưa thêm schema/filter nhóm hàng:
 
 - mỗi nhóm hàng có thể có công thức riêng
-- công thức có thể chọn nguồn `giá vốn bình quân` hoặc `giá vốn mới nhất`
+- nguồn tính giá trong MVP là `giá nhập cuối`; `giá vốn bình quân` chỉ xem lại sau khi Purchase/Inventory đủ dữ liệu và Owner chốt
 - công thức phải lưu được làm mặc định lâu dài cho nhóm hàng
-- khi giá vốn/giá nhập thay đổi, hệ thống tính lại giá theo công thức để tạo giá mới/giá đề xuất
+- khi giá nhập cuối thay đổi, hệ thống tính lại giá theo công thức để tạo giá mới/giá đề xuất
 - giá POS chỉ đổi khi công thức được áp dụng theo chính sách đã cấu hình; mặc định nên có bước xem/xác nhận áp dụng trước khi cập nhật hàng loạt
 
 ## 7. Hướng thiết kế riêng cho QC-OMS
@@ -125,7 +125,7 @@ Phần giá cần tách thành 3 lớp để đúng nghiệp vụ quảng cáo:
 | Lớp | Ý nghĩa | Ví dụ |
 |---|---|---|
 | Giá đã lưu | Giá chính thức POS dùng khi bán | Bảng giá chung, bảng giá nhóm `25/30/35/40` |
-| Công thức gợi ý | Công thức tạo giá đề xuất theo nhóm hàng | Giá vốn bình quân x hệ số + chi phí |
+| Công thức gợi ý | Công thức tạo giá đề xuất theo bộ lọc sản phẩm | Giá nhập cuối + chi phí + lợi nhuận |
 | Lịch sử giá khách | Giá sửa tay từng bán cho khách + sản phẩm | 5 giá gần nhất để chọn lại trong POS |
 
 Nguyên tắc đề xuất:
@@ -166,11 +166,14 @@ Có thể viết gọn:
 Giá nền = Giá nhập cuối * (1 + 10% + 8% + 10%)
 ```
 
-Nguồn giá đầu vào có thể chọn:
+Nguồn giá đầu vào MVP:
 
-- `giá nhập cuối`
-- `giá vốn bình quân`
-- sau này có thể thêm nguồn khác nếu Purchase/Inventory đủ dữ liệu
+- `giá nhập cuối` từ `products.latest_purchase_cost`
+
+Ngoài phạm vi MVP đầu:
+
+- chọn nguồn `giá vốn bình quân`
+- chọn nguồn giá khác khi Purchase/Inventory đủ dữ liệu
 
 ### Tầng 2: Giá bán theo bảng giá
 
@@ -201,7 +204,7 @@ Một công thức có thể áp dụng cho:
 
 ### Tự cập nhật khi giá nhập thay đổi
 
-Khi phiếu nhập làm thay đổi `giá nhập cuối` hoặc `giá vốn bình quân`, hệ thống phải tính lại được giá theo công thức đang lưu.
+Khi phiếu nhập hoặc thao tác admin được phép làm thay đổi `giá nhập cuối`, hệ thống phải tính lại được giá theo công thức đang lưu.
 
 Mặc định an toàn:
 
@@ -213,12 +216,9 @@ Sau này có thể cho phép một số nhóm hàng tự áp dụng nếu Owner 
 
 ### Làm tròn
 
-Công thức cần hỗ trợ làm tròn giá sau cùng:
+Công thức MVP làm tròn giá sau cùng lên `1,000đ`.
 
-- làm tròn lên theo `1,000`
-- làm tròn lên theo `5,000`
-- làm tròn lên theo `10,000`
-- không làm tròn
+Các kiểu làm tròn khác như `5,000đ`, `10,000đ` hoặc không làm tròn là future scope nếu Owner cần.
 
 ### Trạng thái chốt
 
@@ -227,8 +227,11 @@ Công thức cần hỗ trợ làm tròn giá sau cùng:
 - PriceBook QC-OMS phải hỗ trợ công thức giá nhiều bước, không chỉ cộng/trừ như KiotViet.
 - Công thức lưu mặc định theo nhóm hàng/sản phẩm để dùng lâu dài.
 - Công thức có tầng giá nền trước lợi nhuận và tầng giá bán theo bảng giá.
-- Giá nhập/giá vốn thay đổi thì hệ thống tính lại được giá theo công thức.
+- Giá nhập cuối thay đổi thì hệ thống tính lại được giá theo công thức.
 - Mặc định không đổi POS âm thầm; phải có giá đề xuất/chênh lệch và thao tác áp dụng, trừ khi sau này Owner bật tự áp dụng cho nhóm hàng cụ thể.
+- Lưới bảng giá hiện tại đã có cột `Mã hàng`, `Tên hàng`, `Giá nhập cuối`, `Chi phí`, `Lợi nhuận` và các cột bảng giá active.
+- Trước preview, ô bảng giá hiển thị `Chưa xem`; sau preview hiển thị `Hiện tại ... -> ...`, `Mới ...` hoặc `Không khớp`.
+- Không hiển thị nhãn `Giá tay`/`Theo công thức` theo từng ô nếu API chưa trả `current_mode` theo từng `computed_prices[]`.
 
 Còn cần bàn/chốt trước khi implement PriceBook nâng cao:
 
