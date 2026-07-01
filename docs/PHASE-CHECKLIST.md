@@ -540,6 +540,7 @@ Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
 ### Phạm vi dự kiến
 
 - [ ] Từ chi tiết báo giá `BG...`, mở preview mẫu báo giá mặc định.
+- [ ] Ưu tiên route riêng `/sales-documents/:id/quote-print` hoặc tương đương, frontend-only.
 - [ ] Dùng snapshot báo giá đã lưu; không tự resolve lại giá/danh mục hiện tại.
 - [ ] Hiển thị cửa hàng, mã/ngày báo giá, nhân viên, khách hàng snapshot, dòng hàng, kích thước/m2/mét tới, chiết khấu, tổng tiền và ghi chú.
 - [ ] In bằng trình duyệt/browser print, có CSS print ẩn nav/sidebar/button.
@@ -602,8 +603,8 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
 
 1. **Phase 3B — Simple quote print**
    - Mức sẵn sàng: cao.
-   - Lý do: SoT đã rõ, scope nhỏ, chủ yếu frontend print view từ snapshot báo giá.
-   - Không cần schema mới, không PDF backend, không gửi tự động.
+   - Lý do: SoT đã rõ, scope nhỏ, chủ yếu frontend print view từ snapshot báo giá; file `SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md` đã có route/layout/print CSS/verification gợi ý.
+   - Không cần schema mới, không PDF backend, không gửi tự động, không mở scope in hóa đơn `HD...`.
    - Phù hợp làm ngay nếu Owner muốn có đầu ra nhìn thấy nhanh sau PriceBook formula.
 
 2. **Purchase/Supplier foundation**
