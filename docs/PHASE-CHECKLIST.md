@@ -443,7 +443,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`
 ### Phạm vi Phase 2C
 
 - [x] Discount handling UI cho từng dòng POS.
-- [x] Chỉ user có `perm.apply_discount` được sửa chiết khấu.
+- [x] Chỉ user có `perm.apply_discount` được sửa chiết khấu ở tầng kỹ thuật; preset nhân viên nội bộ MVP mặc định nên có quyền này.
 - [x] POS summary tính subtotal, discount và payable total.
 - [x] Checkout payload gửi `items[].discount_amount`.
 - [x] Backend checkout transaction validate và persist line/order discount.

@@ -12,17 +12,27 @@
 
 ## 👥 2. PHÂN QUYỀN BỘ MÁY (ROLES)
 
+> **Cập nhật MVP 2026-07-01:** QC-OMS vẫn giữ nền tảng permission-based access control để an toàn kỹ thuật và mở rộng sau này. Tuy nhiên trong MVP xưởng nhỏ/nội bộ, nhân viên nội bộ mặc định nên có đủ quyền thao tác chính để tránh vận hành bị chia cắt quá sớm. Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống và các thao tác tài chính nhạy cảm nếu Owner chốt sau.
+
 ### Bảng vai trò mặc định (Default Roles)
 
 | Vai trò | Quyền hạn cốt lõi | Mô tả chi tiết |
 |---------|---------------------|----------------|
 | 👑 **Chủ xưởng** | Full Access | Toàn quyền hệ thống, cấu hình máy in, xem báo cáo tài chính tổng |
-| 💰 **Thu ngân / Kế toán nội bộ** | Create / Edit | Quản lý POS, tạo đơn, chốt bill, theo dõi công nợ, gộp đơn |
-| 🔧 **Thợ máy** | Execute | Vận hành máy in/CNC, bấm nhận đơn, cập nhật trạng thái SX |
+| 💰 **Nhân viên nội bộ / Thu ngân / Kế toán nội bộ** | Operational Access | Mặc định dùng được POS, khách hàng, bảng giá, kho cơ bản, thu tiền/công nợ và chứng từ trong phạm vi MVP |
+| 🔧 **Thợ máy** | Execute / Internal Access | Vận hành máy in/CNC, theo dõi hàng đợi máy sản xuất; nếu dùng chung QC-OMS nội bộ có thể được cấp preset vận hành rộng như nhân viên nội bộ |
 
 ### ⚙️ Cơ chế mở rộng: Vai trò tùy chỉnh (Custom Roles)
 
-Hệ thống hỗ trợ **Ma trận phân quyền động** (Dynamic Permissions Matrix) — cho phép Chủ xưởng tích chọn **Chỉ xem (Read-only)** hoặc **Toàn quyền (Write)** cho từng phân hệ nhỏ.
+Hệ thống hỗ trợ **Ma trận phân quyền động** (Dynamic Permissions Matrix) ở nền kỹ thuật, nhưng MVP không tối ưu theo kiểu SaaS enterprise với quá nhiều role/permission nhỏ.
+
+Nguyên tắc MVP:
+
+- Permission nhỏ vẫn có thể tồn tại trong DB/API để bảo vệ backend.
+- Tài khoản nội bộ mặc định dùng preset đủ quyền thao tác chính.
+- UI không nên ẩn/chặn quá nhiều thao tác thường ngày chỉ vì thiếu một quyền nhỏ.
+- Quyền quản lý user/quyền và cấu hình hệ thống phải tách riêng.
+- Quyền tài chính nhạy cảm có thể tách riêng nếu Owner chốt, nhưng chưa làm phức tạp ở MVP.
 
 **Use case:** Tài khoản tùy biến phục vụ riêng cho nhân sự đặc thù như Kế toán thuê ngoài, Cộng tác viên thiết kế, hoặc Thợ học việc.
 
@@ -59,7 +69,7 @@ Hệ thống **không fix cứng** luồng vận hành. Mọi thông số đều
 
 - Định mức giá theo từng nhóm khách VIP (VD: PNJ)
 - Định mức vật tư tiêu hao theo từng máy in/CNC
-- Ma trận phân quyền nhân sự tùy chỉnh
+- Ma trận phân quyền nhân sự tùy chỉnh ở nền kỹ thuật; MVP vận hành bằng preset nội bộ đơn giản
 - Ngưỡng cảnh báo hao hụt vật tư
 
 ### Thực chiến và Linh hoạt (Practicality)

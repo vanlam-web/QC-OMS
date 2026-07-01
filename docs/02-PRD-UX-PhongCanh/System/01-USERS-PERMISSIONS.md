@@ -15,6 +15,14 @@ QC-OMS dùng permission-based access control:
 - mỗi tài khoản được tick các quyền cụ thể
 - backend vẫn kiểm tra quyền trên mọi API
 
+Quyết định MVP 2026-07-01:
+
+- Permission system vẫn giữ làm nền tảng kỹ thuật.
+- Vận hành xưởng nhỏ/nội bộ không chia nhỏ quyền quá mức.
+- Nhân viên nội bộ mặc định nên được cấp preset đủ quyền thao tác chính của MVP.
+- UI không nên làm trải nghiệm bị chia cắt bởi thiếu các quyền nhỏ như `perm.apply_discount`, trừ khi Owner đã chốt kiểm soát riêng.
+- Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống và có thể là tài chính nhạy cảm nếu Owner chốt sau.
+
 Ghi chú từ KiotViet audit ngày `2026-07-01`:
 
 - KiotViet `Settings > Quản lý người dùng` có 2 tab chính: `Tài khoản người dùng` và `Quản lý vai trò`.
@@ -79,11 +87,13 @@ Form tạo mới:
 - email
 - tên hiển thị
 - mật khẩu tạm
-- danh sách quyền tick chọn
+- preset quyền hoặc danh sách quyền tick chọn
 
 Quy tắc:
 
-- Tài khoản mới mặc định không có quyền nếu chưa tick.
+- Tài khoản mới trong MVP nên mặc định chọn preset `Nhân viên nội bộ` với đủ quyền thao tác chính, để tránh admin phải tick nhiều quyền lặt vặt.
+- Nếu tạo tài khoản quản trị, admin chọn preset `Chủ xưởng/Quản trị` có thêm quyền quản lý user/quyền và cấu hình hệ thống.
+- Nếu cần tài khoản hạn chế đặc biệt, admin có thể bỏ tick thủ công.
 - Email phải hợp lệ và chưa tồn tại.
 - Mật khẩu tạm không hiển thị lại sau khi lưu.
 - Sau khi tạo, admin gửi mật khẩu tạm cho nhân viên bằng kênh nội bộ; QC-OMS không tự gửi email trong MVP/current scope.
@@ -121,6 +131,16 @@ Hiển thị permission theo nhóm:
 
 UI có thể có preset gợi ý như `Thu ngân`, `Kho`, `Quản lý`, nhưng preset chỉ là thao tác tick nhanh. Nguồn quyền cuối cùng vẫn là danh sách permission cụ thể.
 
+Trong MVP, preset khuyến nghị đơn giản hơn:
+
+| Preset | Mục đích | Quy tắc |
+|---|---|---|
+| Chủ xưởng/Quản trị | Toàn quyền, quản lý user/quyền/cấu hình | Có toàn bộ quyền active |
+| Nhân viên nội bộ | Dùng hằng ngày tại xưởng | Có đủ quyền POS, khách hàng, bảng giá, hàng hóa/kho, kiểm kho, tài chính/công nợ/sổ quỹ và chứng từ trong MVP |
+| Hạn chế đặc biệt | Tài khoản thuê ngoài/thử việc | Admin tự bỏ tick quyền không muốn cấp |
+
+Các permission nhỏ như `perm.apply_discount`, `perm.manage_inventory`, `perm.edit_price_book` vẫn có thể tồn tại để backend kiểm soát và mở rộng sau này, nhưng MVP không dùng chúng để tạo trải nghiệm vận hành quá rời rạc cho nhân viên nội bộ.
+
 ### Tab Lịch sử đổi quyền
 
 Mỗi dòng hiển thị:
@@ -150,7 +170,8 @@ Một nhân viên có thể đăng nhập ở máy khác nếu có quyền. Máy
 
 ## 7. Quy Tắc Bảo Mật UX
 
-- Nút/tính năng không có quyền thì không render DOM.
+- Với tài khoản nội bộ mặc định đủ quyền, các nút/tính năng MVP chính nên hiển thị đầy đủ để thao tác liền mạch.
+- Với tài khoản hạn chế đặc biệt, nút/tính năng không có quyền thì không render DOM.
 - Phím tắt không có quyền phải bị chặn và hiện toast `Không có quyền truy cập`.
 - Khi quyền bị thu hồi realtime, UI refetch `/me` và thoát khỏi màn không còn quyền.
 - Không hiện service role key, token hoặc mật khẩu trong UI/log.
@@ -185,11 +206,12 @@ Doanh thu theo nhân viên nếu cần nằm trong Reports, không phải module
 ## 9. Acceptance Criteria UX
 
 1. Admin tạo được tài khoản mới với email, tên hiển thị, mật khẩu tạm và permission.
-2. Admin sửa được tên hiển thị, trạng thái và permission.
-3. Tài khoản inactive không truy cập được ứng dụng.
-4. Lịch sử đổi quyền hiển thị trước/sau và người thay đổi.
-5. UI không hiển thị module chấm công/lương/hoa hồng.
-6. Máy trạm được quản lý riêng, không gắn cứng với user.
+2. Tài khoản mới mặc định có preset quyền phù hợp với vận hành nội bộ MVP, không bắt admin tick từng quyền nhỏ nếu không cần.
+3. Admin sửa được tên hiển thị, trạng thái và permission.
+4. Tài khoản inactive không truy cập được ứng dụng.
+5. Lịch sử đổi quyền hiển thị trước/sau và người thay đổi.
+6. UI không hiển thị module chấm công/lương/hoa hồng.
+7. Máy trạm được quản lý riêng, không gắn cứng với user.
 
 ---
 

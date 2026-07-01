@@ -34,7 +34,7 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 | Tai chinh | So quy tien mat, tai khoan ngan hang, phieu thu/chi, thu no, phan bo no hoa don cu nhat truoc |
 | Doi soat | Doi soat cuoi ngay theo tien mat va tung tai khoan ngan hang |
 | Bao cao | Cuoi ngay, ban hang, cong no, hang hoa/ton kho, tai chinh quan tri |
-| He thong | Tai khoan, quyen tick theo permission, active/inactive, may tram |
+| He thong | Tai khoan, permission system nen tang, active/inactive, may tram; MVP van hanh voi preset noi bo du quyen thao tac chinh |
 
 ---
 
@@ -81,6 +81,8 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 4. Hoa don da luu la moc ghi nhan ban hang: tru kho, ghi thanh toan/cong no, so quy va bao cao.
 5. Thong bao may san xuat co the tao/sua hoa don nhap trong POS, nhung khong duoc tu dong tao stock movement khi chua chot hoa don.
 6. Doi voi spec moi tham khao KiotViet, phai doi chieu file nay truoc khi chuyen vao Source of Truth chi tiet.
+7. Phan quyen MVP uu tien don gian: nhan vien noi bo mac dinh co du quyen thao tac chinh. Khong chia nho UI/luong van hanh theo qua nhieu permission neu chua co nhu cau thuc te.
+8. Permission system van giu lam nen tang ky thuat. Chi tach quyen manh cho quan ly user/quyen, cau hinh he thong va tai chinh nhay cam neu Owner chot sau.
 
 ---
 

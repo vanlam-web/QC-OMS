@@ -14,6 +14,8 @@
 - Permission lưu theo quan hệ nhiều-nhiều, không lưu mảng permission trong profile.
 - Thay đổi permission phải có audit log append-only.
 - Không dùng role cứng làm nguồn authorization.
+- MVP vận hành theo hướng đơn giản: permission system vẫn tồn tại, nhưng tài khoản nội bộ mặc định nên được seed/cấp preset đủ quyền thao tác chính.
+- Không dùng permission nhỏ để tạo rào cản vận hành quá nhiều trong MVP; chỉ tách mạnh cho quản lý user/quyền, cấu hình hệ thống và tài chính nhạy cảm nếu Owner chốt.
 
 ---
 
@@ -173,6 +175,16 @@ Migration/seed Giai đoạn 0 phải tạo:
 2. Danh mục permission theo [Backend AUTH](../../05-BACKEND-MayChu/POS/AUTH.md).
 3. Ít nhất một workstation active cho môi trường local/staging.
 4. Tài khoản bootstrap Owner được tạo bằng quy trình quản trị Supabase, sau đó gắn profile và toàn bộ permission cần thiết bằng script có kiểm soát.
+5. Preset/seed vận hành MVP cho nhân viên nội bộ nên cấp đủ quyền thao tác chính, thay vì bắt admin tick từng permission nhỏ cho mỗi tài khoản.
 
 Không ghi password bootstrap vào repository.
 
+Gợi ý preset dữ liệu:
+
+| Preset | Cách lưu MVP | Ghi chú |
+|---|---|---|
+| Owner/Admin | Gán toàn bộ active permissions | Bắt buộc có `perm.manage_users`; không được gỡ khỏi admin cuối cùng |
+| Internal Staff | Gán các quyền vận hành MVP chính | POS, khách hàng, bảng giá, kho/kiểm kho, tài chính/công nợ/sổ quỹ, chứng từ |
+| Restricted | Gán thủ công theo ngoại lệ | Dùng cho tài khoản thuê ngoài/thử việc nếu phát sinh |
+
+Không bắt buộc tạo bảng `roles` trong MVP nếu preset chỉ là thao tác tick nhanh ở seed/UI. Authorization cuối cùng vẫn đọc từ `user_permissions`.
