@@ -27,11 +27,13 @@ export function SalesDocumentsPage({
   orderService,
   onOpenDashboard,
   onOpenQuoteInPos,
+  onOpenQuotePrint,
 }: {
   service: SalesDocumentService
   orderService?: Pick<OrderService, 'getQuoteReopenPayload'>
   onOpenDashboard: () => void
   onOpenQuoteInPos?: (payload: QuoteReopenPayload) => void
+  onOpenQuotePrint?: (documentId: string) => void
 }) {
   const [documents, setDocuments] = useState<SalesDocumentListItem[] | null>(null)
   const [total, setTotal] = useState(0)
@@ -229,7 +231,7 @@ export function SalesDocumentsPage({
           ) : null}
         </div>
 
-        <SalesDocumentDetailView document={selected} error={detailError} />
+        <SalesDocumentDetailView document={selected} error={detailError} onOpenQuotePrint={onOpenQuotePrint} />
       </section>
     </main>
   )
@@ -238,9 +240,11 @@ export function SalesDocumentsPage({
 function SalesDocumentDetailView({
   document,
   error,
+  onOpenQuotePrint,
 }: {
   document: SalesDocumentDetail | null
   error: string | null
+  onOpenQuotePrint?: (documentId: string) => void
 }) {
   if (error) return <p role="alert">{error}</p>
   if (!document) {
@@ -260,6 +264,11 @@ function SalesDocumentDetailView({
       <header>
         <h2>{document.code}</h2>
         <p>{document.customer.name}</p>
+        {document.order_type === 'quote' && document.code.startsWith('BG') && onOpenQuotePrint ? (
+          <button type="button" onClick={() => onOpenQuotePrint(document.id)}>
+            Xem/In báo giá
+          </button>
+        ) : null}
       </header>
       <dl className="sales-document-summary">
         <div>
