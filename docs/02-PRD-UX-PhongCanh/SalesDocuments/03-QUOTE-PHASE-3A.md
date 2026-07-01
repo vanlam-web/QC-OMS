@@ -166,7 +166,25 @@ Quy tắc:
 
 Lý do: báo giá không phát sinh dữ liệu liên kết nên để nguyên không gây ảnh hưởng nghiệp vụ. Sau này có thể dùng lại nội dung báo giá cũ để tạo báo giá tương tự cho khách khác nếu mở chức năng sao chép.
 
-Sao chép/dùng lại báo giá cho khách khác là future phase, không bắt buộc trong Phase 3A.
+### 6.2. Sao chép báo giá
+
+Owner chốt hướng future: có nút `Sao chép báo giá`.
+
+Hành vi:
+
+1. Người dùng mở một báo giá cũ.
+2. Bấm `Sao chép báo giá`.
+3. Hệ thống mở nội dung báo giá cũ thành một POS draft mới.
+4. Nhân viên có thể chọn/đổi khách hàng khác, sửa dòng hàng/giá/ghi chú nếu cần.
+5. Khi bấm `[BÁO GIÁ]`, hệ thống tạo mã `BG...` mới độc lập.
+
+Quy tắc:
+
+- Không phải revision `BG000123.01`.
+- Không đổi trạng thái báo giá gốc.
+- Không liên kết như `source_quote_id` của hóa đơn.
+- Báo giá gốc chỉ là nguồn sao chép/tham khảo.
+- Chức năng này là future phase, không bắt buộc trong Phase 3A.
 
 ---
 

@@ -169,7 +169,9 @@ Không dùng `sent/accepted/expired` làm state nghiệp vụ trong MVP. Gửi c
 
 MVP không có tự hết hạn báo giá. Nếu sau này cần hạn hiệu lực, chỉ hiển thị/cảnh báo trước; không tự hủy báo giá nếu Owner chưa chốt lại.
 
-Nếu khách không làm nữa, không cần thao tác hủy báo giá trong Phase 3A. Báo giá không phát sinh kho/tiền/công nợ nên để nguyên không ảnh hưởng gì; về sau có thể dùng lại làm mẫu tạo báo giá tương tự cho khách khác nếu mở chức năng sao chép.
+Nếu khách không làm nữa, không cần thao tác hủy báo giá trong Phase 3A. Báo giá không phát sinh kho/tiền/công nợ nên để nguyên không ảnh hưởng gì.
+
+Owner chốt hướng future: sau này có nút `Sao chép báo giá` để dùng lại nội dung báo giá cũ cho khách khác. Sao chép mở báo giá cũ thành POS draft mới, cho chọn/đổi khách và khi lưu sẽ tạo mã `BG...` mới độc lập; không phải revision và không đổi trạng thái báo giá gốc.
 
 ### BR-QUOTE-07: Sửa báo giá dùng revision, không ghi đè snapshot cũ
 

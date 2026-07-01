@@ -352,6 +352,24 @@ Owner chốt: nếu khách không làm nữa thì không cần thao tác gì, đ
 
 Phase 3A không tạo route hủy báo giá thủ công.
 
+### Sao chép báo giá — future
+
+Owner chốt hướng future: có nút `Sao chép báo giá`.
+
+Backend future có thể cung cấp payload tương tự reopen, nhưng semantics khác:
+
+- reopen quote để checkout giữ `source_quote_id/source_quote_code`
+- copy quote để tạo báo giá mới không giữ `source_quote_id`
+
+Khi copy và lưu:
+
+- tạo mã `BG...` mới độc lập
+- `base_code = code`, `revision_no = 0`
+- không đổi trạng thái báo giá gốc
+- không tạo revision `BG...01`
+
+Không implement endpoint copy trong Phase 3A.
+
 ---
 
 ## 5. Invoice link from quote
