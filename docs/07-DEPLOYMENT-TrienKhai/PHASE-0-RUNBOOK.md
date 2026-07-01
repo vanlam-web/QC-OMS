@@ -47,7 +47,7 @@ Run E2E with externally supplied credentials:
 
 ```bash
 export E2E_ADMIN_EMAIL="admin@example.test"
-export E2E_ADMIN_PASSWORD="<not committed>"
+# Provide E2E_ADMIN_PASSWORD from your local shell/session secret.
 npm run test:e2e
 ```
 
