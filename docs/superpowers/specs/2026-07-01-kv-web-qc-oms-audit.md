@@ -1,7 +1,7 @@
 # KiotViet Web Audit for QC-OMS — Draft
 
-> Ngày rà: 2026-07-01  
-> Trạng thái: Draft tham khảo, không phải Source of Truth nghiệp vụ  
+> Ngày rà: 2026-07-01
+> Trạng thái: Draft tham khảo, không phải Source of Truth nghiệp vụ
 > Nguồn: giao diện KiotViet đang đăng nhập tại `quangcaoinvanlam.kiotviet.vn`
 
 ---

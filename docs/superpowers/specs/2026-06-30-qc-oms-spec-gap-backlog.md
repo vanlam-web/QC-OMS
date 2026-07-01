@@ -1,7 +1,7 @@
 # QC-OMS Spec Gap Backlog — Draft
 
-> Ngày lập: 2026-06-30  
-> Trạng thái: Draft điều phối, không phải Source of Truth nghiệp vụ  
+> Ngày lập: 2026-06-30
+> Trạng thái: Draft điều phối, không phải Source of Truth nghiệp vụ
 > Mục tiêu: Ghi lại các phần đặc tả còn thiếu sau khi rà `docs/`, để ưu tiên viết tiếp mà không sửa chồng lên luồng implementation hiện tại.
 
 ---

@@ -1,7 +1,7 @@
 # KiotViet Reporting Draft for QC-OMS
 
-> Ngày rà: 2026-07-01  
-> Trạng thái: Draft tham khảo, chưa phải Source of Truth  
+> Ngày rà: 2026-07-01
+> Trạng thái: Draft tham khảo, chưa phải Source of Truth
 > Nguồn: KiotViet `Báo cáo cuối ngày`, `Báo cáo bán hàng`, `Báo cáo tài chính`, `Báo cáo hàng hóa`
 
 ---

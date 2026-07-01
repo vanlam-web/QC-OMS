@@ -1,6 +1,6 @@
 # System — Tài khoản, quyền và máy trạm
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** `05-BACKEND-MayChu/POS/AUTH.md`, `04-DATABASE/System/AUTH-PERMISSIONS.md`
 
 ---

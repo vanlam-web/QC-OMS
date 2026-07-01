@@ -1,6 +1,6 @@
 # 01-CUSTOMER-LIST — Danh sách khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Khách hàng > Khách hàng`
 
 ---

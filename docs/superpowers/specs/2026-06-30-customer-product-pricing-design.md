@@ -1,7 +1,7 @@
 # Customer, Product và Pricing Phase 1 — Draft Business Spec
 
-> Ngày lập: 2026-06-30  
-> Trạng thái: Draft đã gom quyết định Owner, chưa phải Source of Truth chính thức  
+> Ngày lập: 2026-06-30
+> Trạng thái: Draft đã gom quyết định Owner, chưa phải Source of Truth chính thức
 > Phạm vi: Business rule cho Customer, Product và Pricing phục vụ POS Phase 1
 
 ---

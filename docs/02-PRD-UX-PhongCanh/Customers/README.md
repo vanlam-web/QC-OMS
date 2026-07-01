@@ -1,6 +1,6 @@
 # Customers — Quản lý khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Danh sách khách hàng, hồ sơ khách, nhóm khách, lịch sử bán và công nợ
 
 ---

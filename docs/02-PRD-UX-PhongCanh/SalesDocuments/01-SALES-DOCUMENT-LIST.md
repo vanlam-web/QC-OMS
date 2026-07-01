@@ -1,6 +1,6 @@
 # 01-SALES-DOCUMENT-LIST — Danh sách chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Phase hiện tại:** Phase 2D readonly list/detail cho hóa đơn `HD...`
 > **Tham khảo:** KiotViet `Đơn hàng > Hóa đơn`; không dùng mô hình `Đặt hàng/Giao hàng`
 

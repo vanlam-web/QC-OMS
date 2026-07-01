@@ -1,6 +1,6 @@
 # 01-PRICE-LIST — Danh sách bảng giá
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Hàng hóa > Thiết lập giá`
 
 ---

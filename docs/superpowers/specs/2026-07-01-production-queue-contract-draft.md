@@ -1,7 +1,7 @@
 # Production Queue Contract Draft
 
-> Ngay lap: 2026-07-01  
-> Trang thai: Draft dieu phoi, chua phai Source of Truth Database/Backend/Integration  
+> Ngay lap: 2026-07-01
+> Trang thai: Draft dieu phoi, chua phai Source of Truth Database/Backend/Integration
 > Nguon: PRD K02-D, Legacy QuanLyXuong, quyet dinh Owner ve may san xuat va ton kho.
 
 ---

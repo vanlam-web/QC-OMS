@@ -385,4 +385,3 @@ Open PR to `main` and include:
 - Summary of POS direct checkout UI changes.
 - Verification commands.
 - Note that server DB reset/test remains batched on Windows server if Docker is unavailable locally.
-

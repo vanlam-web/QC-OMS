@@ -1,7 +1,7 @@
 # Spec And Implementation Handoff Workflow
 
-> Ngay lap: 2026-06-30  
-> Trang thai: Draft dieu phoi, khong phai Source of Truth nghiep vu  
+> Ngay lap: 2026-06-30
+> Trang thai: Draft dieu phoi, khong phai Source of Truth nghiep vu
 > Pham vi: Cach luu dac ta va ban giao cho luong implementation de tranh xung dot
 
 ## 1. Muc tieu

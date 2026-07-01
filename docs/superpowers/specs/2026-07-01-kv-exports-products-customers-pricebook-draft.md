@@ -1,7 +1,7 @@
 # KiotViet Exports — Products, Customers, PriceBook Draft
 
-> Ngày rà: 2026-07-01  
-> Trạng thái: Draft phân tích export KiotViet, không phải Source of Truth DB/API  
+> Ngày rà: 2026-07-01
+> Trạng thái: Draft phân tích export KiotViet, không phải Source of Truth DB/API
 > Nguồn:
 > - `/Users/vanlam/Downloads/DanhSachSanPham_KV01072026-104741-899.xlsx`
 > - `/Users/vanlam/Downloads/DanhSachKhachHang_KV01072026-104807-412.xlsx`

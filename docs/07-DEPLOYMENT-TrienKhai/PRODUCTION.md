@@ -1,6 +1,6 @@
 # PRODUCTION — Vận hành môi trường thật
 
-> **Trạng thái:** 🔨 Baseline trước production  
+> **Trạng thái:** 🔨 Baseline trước production
 > **Phạm vi:** Nguyên tắc vận hành production QC-OMS, không thay thế checklist deploy chi tiết.
 
 ---

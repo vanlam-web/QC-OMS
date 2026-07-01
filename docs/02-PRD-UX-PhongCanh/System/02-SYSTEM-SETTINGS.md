@@ -1,6 +1,6 @@
 # 02-SYSTEM-SETTINGS — Thiết lập hệ thống
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo:** KiotViet `Settings` audit ngày `2026-07-01`
 
 ---

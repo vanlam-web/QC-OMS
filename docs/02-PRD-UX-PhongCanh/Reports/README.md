@@ -1,6 +1,6 @@
 # Reports — Báo cáo và phân tích
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Phân tích/Báo cáo`
 
 ---

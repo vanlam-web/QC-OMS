@@ -1,8 +1,8 @@
 # KV Product Export Inventory Draft
 
-> Ngay lap: 2026-06-30  
-> Trang thai: Draft phan tich export KV, khong phai Source of Truth nghiep vu  
-> Nguon du lieu: `/Users/vanlam/Downloads/DanhSachSanPham_KV30062026-122559-834.xlsx`  
+> Ngay lap: 2026-06-30
+> Trang thai: Draft phan tich export KV, khong phai Source of Truth nghiep vu
+> Nguon du lieu: `/Users/vanlam/Downloads/DanhSachSanPham_KV30062026-122559-834.xlsx`
 > Pham vi: Hang hoa, don vi tinh, ton kho, trang thai ban hang, combo/BOM tham khao cho QC-OMS
 
 ## 1. Muc tieu

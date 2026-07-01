@@ -1,6 +1,6 @@
 # 01-USERS-PERMISSIONS — Quản lý tài khoản và quyền
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn kỹ thuật:** `05-BACKEND-MayChu/POS/AUTH.md`, `05-BACKEND-MayChu/FOUNDATION-API.md`
 
 ---

@@ -1,6 +1,6 @@
 # 05-INVENTORY-ADJUSTMENTS — Hủy/điều chỉnh vật tư tối giản
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Chốt từ draft `docs/superpowers/specs/2026-07-01-kv-inventory-adjustments-returns-draft.md`
 
 ---

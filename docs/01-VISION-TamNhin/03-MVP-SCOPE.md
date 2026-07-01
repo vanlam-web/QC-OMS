@@ -1,6 +1,6 @@
 # MVP SCOPE - Pham vi QC-OMS hien tai
 
-> Trang thai: Da chot dinh huong theo Owner - 2026-07-01  
+> Trang thai: Da chot dinh huong theo Owner - 2026-07-01
 > Source of Truth: pham vi san pham hien tai de tranh copy du KiotViet.
 
 ---

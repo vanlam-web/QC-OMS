@@ -1,7 +1,7 @@
 # KiotViet Inventory Adjustments & Returns Draft for QC-OMS
 
-> Ngày rà: 2026-07-01  
-> Trạng thái: Draft tham khảo, chưa phải Source of Truth  
+> Ngày rà: 2026-07-01
+> Trạng thái: Draft tham khảo, chưa phải Source of Truth
 > Nguồn: KiotViet `Xuất dùng nội bộ`, `Xuất hủy`, `Trả hàng nhập`, `Trả hàng`
 
 ---

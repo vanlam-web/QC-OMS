@@ -1,6 +1,6 @@
 # SalesDocuments — Chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Phase hiện tại:** Phase 2D đã merge chỉ có readonly danh sách + chi tiết hóa đơn
 > **Phạm vi dài hạn:** Danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS
 
