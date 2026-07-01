@@ -11,6 +11,8 @@ import { CatalogPage } from '../features/catalog/CatalogPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
+import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
+import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
 
 export function AppRoutes() {
   return (
@@ -21,6 +23,7 @@ export function AppRoutes() {
         <Route path="/pos" element={<PosRoute />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
+        <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
@@ -48,6 +51,7 @@ function DashboardRoute() {
       onOpenPos={() => navigate('/pos')}
       onOpenAdmin={() => navigate('/admin')}
       onOpenCatalog={() => navigate('/products')}
+      onOpenSalesDocuments={() => navigate('/sales-documents')}
       onSignOut={() => void signOut()}
     />
   )
@@ -105,6 +109,23 @@ function CatalogRoute() {
   }
 
   return <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+}
+
+function SalesDocumentsRoute() {
+  const { currentUser, initialized, getAccessToken } = useAuth()
+  const navigate = useNavigate()
+  const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (
+    !currentUser.permissions.includes('perm.create_order') &&
+    !currentUser.permissions.includes('perm.manage_finance')
+  ) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return <SalesDocumentsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
 }
 
 function ForbiddenRoute() {

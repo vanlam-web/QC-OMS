@@ -5,6 +5,7 @@ import { handlePermissions } from "./permissions.ts";
 import { handleUsers } from "./users.ts";
 import { handleCatalog } from "./catalog.ts";
 import { handleOrders } from "./orders.ts";
+import { handleSalesDocuments } from "./sales-documents.ts";
 import { handleFinance } from "./finance.ts";
 import { handleInventory } from "./inventory.ts";
 import { handleProductionQueue } from "./production-queue.ts";
@@ -134,6 +135,21 @@ export function routeRequest(
     }
 
     return handleOrders(request, traceId, {
+      auth: options.auth,
+      repository: options.repository,
+    });
+  }
+
+  if (url.pathname === "/api/v1/sales-documents" || url.pathname.startsWith("/api/v1/sales-documents/")) {
+    if (options.auth === undefined || options.repository === undefined) {
+      throw new ApiError({
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "An internal error occurred.",
+      });
+    }
+
+    return handleSalesDocuments(request, traceId, {
       auth: options.auth,
       repository: options.repository,
     });

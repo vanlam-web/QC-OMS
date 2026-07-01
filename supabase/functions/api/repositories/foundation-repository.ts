@@ -26,6 +26,8 @@ import type {
   ProductionQueueItemData,
   ReconciliationData,
   ResolvedPriceData,
+  SalesDocumentDetailData,
+  SalesDocumentListItemData,
   StockMovementData,
   StocktakeData,
   UserListItem,
@@ -586,6 +588,79 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return isRecord(data) ? data : {};
     },
+    async listSalesDocuments(input): Promise<{ items: SalesDocumentListItemData[]; total: number }> {
+      let query = client
+        .from("orders")
+        .select(
+          "id, code, order_type, status, customer_snapshot, subtotal_amount, discount_amount, total_amount, paid_amount, debt_amount, payment_status, note, created_by, created_at",
+          { count: "exact" },
+        )
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false });
+
+      if (input.type !== undefined) query = query.eq("order_type", input.type);
+      if (input.status !== undefined) query = query.eq("status", input.status);
+      if (input.paymentStatus !== undefined) query = query.eq("payment_status", input.paymentStatus);
+      if (input.from !== undefined) query = query.gte("created_at", input.from);
+      if (input.to !== undefined) query = query.lte("created_at", input.to);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+
+      let rows = data ?? [];
+      if (input.search !== undefined) {
+        const search = input.search.toLocaleLowerCase("vi");
+        rows = rows.filter((row) => {
+          const customer = customerSnapshot(row.customer_snapshot);
+          return row.code.toLocaleLowerCase("vi").includes(search) ||
+            customer.code?.toLocaleLowerCase("vi").includes(search) === true ||
+            customer.name.toLocaleLowerCase("vi").includes(search) ||
+            customer.phone?.toLocaleLowerCase("vi").includes(search) === true ||
+            row.note?.toLocaleLowerCase("vi").includes(search) === true;
+        });
+      }
+
+      const page = paginate(rows, input.page, input.pageSize);
+      const sellers = await loadSellerMap(client, page.items.map((row) => row.created_by));
+      return {
+        items: page.items.map((row) => toSalesDocumentListItem(row, sellers)),
+        total: input.search === undefined ? data?.length ?? 0 : page.total,
+      };
+    },
+    async getSalesDocument(input): Promise<SalesDocumentDetailData | null> {
+      const { data: order, error } = await client
+        .from("orders")
+        .select(
+          "id, code, order_type, status, customer_snapshot, price_list_id, subtotal_amount, discount_amount, total_amount, paid_amount, debt_amount, change_returned_amount, payment_status, note, created_by, created_at",
+        )
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.orderId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      if (order === null) return null;
+
+      const sellers = await loadSellerMap(client, [order.created_by]);
+      const base = toSalesDocumentListItem(order, sellers);
+      const [items, paymentReceipts, debtEntries, stockMovements, history, priceList] = await Promise.all([
+        loadSalesDocumentItems(client, input.organizationId, input.orderId),
+        loadSalesDocumentPaymentReceipts(client, input.organizationId, input.orderId),
+        loadSalesDocumentDebtEntries(client, input.organizationId, input.orderId),
+        loadSalesDocumentStockMovements(client, input.organizationId, input.orderId),
+        loadSalesDocumentHistory(client, input.organizationId, input.orderId),
+        loadSalesDocumentPriceList(client, input.organizationId, order.price_list_id),
+      ]);
+
+      return {
+        ...base,
+        price_list: priceList,
+        change_returned_amount: Number(order.change_returned_amount),
+        items,
+        payment_receipts: paymentReceipts,
+        debt_entries: debtEntries,
+        stock_movements: stockMovements,
+        history,
+      };
+    },
     async listFinanceAccounts(input): Promise<FinanceAccountData[]> {
       let query = client
         .from("finance_accounts")
@@ -1098,6 +1173,187 @@ function toCheckoutResultData(value: unknown): CheckoutResultData {
       })
       : [],
   };
+}
+
+function customerSnapshot(value: unknown): { id: string | null; code: string | null; name: string; phone: string | null } {
+  const snapshot = isRecord(value) ? value : {};
+  if (snapshot.type === "retail") return { id: null, code: null, name: "Khách lẻ", phone: null };
+  return {
+    id: typeof snapshot.id === "string" ? snapshot.id : null,
+    code: typeof snapshot.code === "string" ? snapshot.code : null,
+    name: typeof snapshot.name === "string" ? snapshot.name : "Khách lẻ",
+    phone: typeof snapshot.phone === "string" ? snapshot.phone : null,
+  };
+}
+
+async function loadSellerMap(client: DatabaseClient, userIds: string[]): Promise<Map<string, string>> {
+  const uniqueUserIds = [...new Set(userIds.filter((id) => id.length > 0))];
+  if (uniqueUserIds.length === 0) return new Map();
+  const { data, error } = await client
+    .from("profiles")
+    .select("user_id, display_name")
+    .in("user_id", uniqueUserIds);
+  if (error !== null) throw error;
+  return new Map((data ?? []).map((row) => [row.user_id, row.display_name]));
+}
+
+function toSalesDocumentListItem(
+  row: Record<string, unknown>,
+  sellers: Map<string, string>,
+): SalesDocumentListItemData {
+  const createdBy = String(row.created_by ?? "");
+  return {
+    id: String(row.id),
+    code: String(row.code),
+    order_type: String(row.order_type) as "quote" | "invoice",
+    status: String(row.status) as "active" | "converted" | "completed" | "cancelled",
+    created_at: String(row.created_at),
+    customer: customerSnapshot(row.customer_snapshot),
+    seller: { id: createdBy, name: sellers.get(createdBy) ?? createdBy },
+    subtotal_amount: Number(row.subtotal_amount),
+    discount_amount: Number(row.discount_amount),
+    total_amount: Number(row.total_amount),
+    paid_amount: Number(row.paid_amount),
+    debt_amount: Number(row.debt_amount),
+    payment_status: String(row.payment_status) as "not_applicable" | "unpaid" | "partial" | "paid",
+    note: row.note === null ? null : String(row.note ?? ""),
+  };
+}
+
+async function loadSalesDocumentItems(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<SalesDocumentDetailData["items"]> {
+  const { data, error } = await client
+    .from("order_items")
+    .select("id, line_no, product_id, product_snapshot, quantity, unit_price, line_subtotal_amount, discount_amount, line_total, price_source, note")
+    .eq("organization_id", organizationId)
+    .eq("order_id", orderId)
+    .order("line_no", { ascending: true });
+  if (error !== null) throw error;
+  return (data ?? []).map((row) => {
+    const snapshot = isRecord(row.product_snapshot) ? row.product_snapshot : {};
+    return {
+      id: row.id,
+      line_no: Number(row.line_no),
+      product: {
+        id: row.product_id,
+        code: String(snapshot.code ?? ""),
+        name: String(snapshot.name ?? ""),
+        unit_name: String(snapshot.unit_name ?? ""),
+        sell_method: String(snapshot.sell_method ?? "quantity") as SalesDocumentDetailData["items"][number]["product"]["sell_method"],
+      },
+      quantity: Number(row.quantity),
+      unit_price: Number(row.unit_price),
+      line_subtotal_amount: Number(row.line_subtotal_amount),
+      discount_amount: Number(row.discount_amount),
+      line_total: Number(row.line_total),
+      price_source: row.price_source,
+      note: row.note,
+    };
+  });
+}
+
+async function loadSalesDocumentPaymentReceipts(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<SalesDocumentDetailData["payment_receipts"]> {
+  const { data, error } = await client
+    .from("payment_receipts")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  if (error !== null) throw error;
+  const receipts = await Promise.all((data ?? []).map((row) => loadPaymentReceiptDetail(client, organizationId, row.id)));
+  return receipts.filter((receipt): receipt is PaymentReceiptDetailData => receipt !== null).map((receipt) => ({
+    id: receipt.id,
+    code: receipt.code,
+    total_received_amount: receipt.total_received_amount,
+    methods: receipt.methods,
+    allocations: receipt.allocations,
+  }));
+}
+
+async function loadSalesDocumentDebtEntries(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<SalesDocumentDetailData["debt_entries"]> {
+  const { data, error } = await client
+    .from("customer_debt_entries")
+    .select("id, entry_type, amount_delta, balance_after_order, balance_after_customer, created_at")
+    .eq("organization_id", organizationId)
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  if (error !== null) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    entry_type: row.entry_type,
+    amount_delta: Number(row.amount_delta),
+    balance_after_order: Number(row.balance_after_order),
+    balance_after_customer: Number(row.balance_after_customer),
+    created_at: row.created_at,
+  }));
+}
+
+async function loadSalesDocumentStockMovements(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<StockMovementData[]> {
+  const { data, error } = await client
+    .from("stock_movements")
+    .select("id, product_id, movement_type, quantity_delta, created_at")
+    .eq("organization_id", organizationId)
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  if (error !== null) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    product_id: row.product_id,
+    movement_type: row.movement_type,
+    quantity_delta: Number(row.quantity_delta),
+    created_at: row.created_at,
+  }));
+}
+
+async function loadSalesDocumentHistory(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<SalesDocumentDetailData["history"]> {
+  const { data, error } = await client
+    .from("order_status_history")
+    .select("to_status, reason, changed_by, changed_at")
+    .eq("organization_id", organizationId)
+    .eq("order_id", orderId)
+    .order("changed_at", { ascending: true });
+  if (error !== null) throw error;
+  return await Promise.all((data ?? []).map(async (row) => ({
+    at: row.changed_at,
+    action: row.to_status,
+    actor_name: await loadProfileName(client, row.changed_by),
+    note: row.reason,
+  })));
+}
+
+async function loadSalesDocumentPriceList(
+  client: DatabaseClient,
+  organizationId: string,
+  priceListId: string | null,
+): Promise<SalesDocumentDetailData["price_list"]> {
+  if (priceListId === null) return null;
+  const { data, error } = await client
+    .from("price_lists")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .eq("id", priceListId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data;
 }
 
 async function hydrateCashbookEntry(
