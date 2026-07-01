@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SalesDocumentsPage } from './SalesDocumentsPage'
 import type { SalesDocumentDetail, SalesDocumentService } from './sales-document-service'
+import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
 
 const listItem = {
   id: 'order-1',
@@ -68,6 +69,40 @@ const detail: SalesDocumentDetail = {
   history: [{ at: '2026-06-30T17:08:00Z', action: 'created', actor_name: 'Admin', note: null }],
 }
 
+const quoteListItem = {
+  ...listItem,
+  id: 'quote-1',
+  code: 'BG000123',
+  order_type: 'quote' as const,
+  status: 'active' as const,
+  paid_amount: 0,
+  debt_amount: 0,
+  payment_status: 'not_applicable' as const,
+}
+
+const quoteReopenPayload: QuoteReopenPayload = {
+  quote: {
+    id: 'quote-1',
+    code: 'BG000123',
+    status: 'active',
+    source_quote_id: 'quote-1',
+    source_quote_code: 'BG000123',
+  },
+  customer: {
+    customer_id: 'cus-1',
+    snapshot: { code: 'KH001', name: 'Công ty Phong Cảnh', phone: '0909000000' },
+    warnings: [],
+  },
+  price_list: {
+    price_list_id: null,
+    snapshot: { code: null, name: null },
+    warnings: [],
+  },
+  items: [],
+  summary: { subtotal_amount: 180000, discount_amount: 30000, total_amount: 150000 },
+  note: null,
+}
+
 function makeService(overrides: Partial<SalesDocumentService> = {}): SalesDocumentService {
   return {
     listSalesDocuments: vi.fn(async () => ({
@@ -79,6 +114,20 @@ function makeService(overrides: Partial<SalesDocumentService> = {}): SalesDocume
     getSalesDocument: vi.fn(async () => detail),
     ...overrides,
   }
+}
+
+function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
+  return {
+    validateCart: vi.fn(),
+    checkout: vi.fn(),
+    saveQuote: vi.fn(),
+    reviseQuote: vi.fn(),
+    getQuoteReopenPayload: vi.fn(async () => quoteReopenPayload),
+    listFinanceAccounts: vi.fn(),
+    getCustomerDebt: vi.fn(),
+    listRecentCustomerProductPrices: vi.fn(),
+    ...overrides,
+  } as unknown as OrderService
 }
 
 it('lists invoices with money, seller and customer snapshots', async () => {
@@ -106,6 +155,64 @@ it('searches by document code and keeps filtered empty state clear', async () =>
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985' })
   expect(screen.getByText('Không thấy chứng từ theo bộ lọc hiện tại.')).toBeInTheDocument()
   expect(screen.getByText('Hãy thử mở rộng thời gian hoặc bỏ bớt bộ lọc.')).toBeInTheDocument()
+})
+
+it('filters quotes and exposes reopen only for active quote rows', async () => {
+  const service = makeService({
+    listSalesDocuments: vi.fn(async () => ({
+      items: [quoteListItem],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })),
+  })
+  render(
+    <SalesDocumentsPage
+      service={service}
+      orderService={makeOrderService()}
+      onOpenDashboard={vi.fn()}
+      onOpenQuoteInPos={vi.fn()}
+    />,
+  )
+
+  await screen.findByText('BG000123')
+  await userEvent.selectOptions(screen.getByLabelText('Loại chứng từ'), 'quote')
+  await userEvent.selectOptions(screen.getByLabelText('Trạng thái'), 'active')
+
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({
+    type: 'quote',
+    status: 'active',
+  })
+  expect(await screen.findByRole('button', { name: 'Mở tại POS' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'In' })).not.toBeInTheDocument()
+})
+
+it('stores reopen payload through callback when opening active quote in POS', async () => {
+  const onOpenQuoteInPos = vi.fn()
+  const orderService = makeOrderService()
+  const service = makeService({
+    listSalesDocuments: vi.fn(async () => ({
+      items: [quoteListItem],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })),
+  })
+  render(
+    <SalesDocumentsPage
+      service={service}
+      orderService={orderService}
+      onOpenDashboard={vi.fn()}
+      onOpenQuoteInPos={onOpenQuoteInPos}
+    />,
+  )
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Mở tại POS' }))
+
+  expect(orderService.getQuoteReopenPayload).toHaveBeenCalledWith('quote-1')
+  expect(onOpenQuoteInPos).toHaveBeenCalledWith(quoteReopenPayload)
 })
 
 it('opens invoice detail with item, price list, debt and stock snapshots', async () => {

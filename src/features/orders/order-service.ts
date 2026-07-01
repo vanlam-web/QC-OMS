@@ -1,12 +1,22 @@
 import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
-import type { CheckoutInput, CheckoutResult, CustomerDebtDetail, FinanceAccount, RecentPriceList } from './types'
+import type {
+  CheckoutInput,
+  CheckoutResult,
+  CustomerDebtDetail,
+  FinanceAccount,
+  QuoteReopenPayload,
+  QuoteSummary,
+  RecentPriceList,
+} from './types'
 
 export type {
   CheckoutCartLine,
   CheckoutResult,
   CustomerDebtDetail,
   FinanceAccount,
+  QuoteReopenPayload,
+  QuoteSummary,
   RecentPriceList,
 } from './types'
 
@@ -26,6 +36,18 @@ export function createOrderService(api: OrderApiRequester) {
         method: 'POST',
         body: JSON.stringify(input),
       }),
+    saveQuote: (input: CheckoutInput) =>
+      api.request<QuoteSummary>('/api/v1/orders/quotes', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    reviseQuote: (quoteId: string, input: CheckoutInput) =>
+      api.request<QuoteSummary>(`/api/v1/orders/quotes/${quoteId}/revisions`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    getQuoteReopenPayload: (quoteId: string) =>
+      api.request<QuoteReopenPayload>(`/api/v1/orders/quotes/${quoteId}/reopen-payload`),
     listFinanceAccounts: () => api.request<{ items: FinanceAccount[] }>('/api/v1/finance/accounts'),
     getCustomerDebt: (customerId: string) =>
       api.request<CustomerDebtDetail>(`/api/v1/finance/customers/${customerId}/debt`),

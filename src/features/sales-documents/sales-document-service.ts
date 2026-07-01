@@ -10,9 +10,15 @@ export interface SalesDocumentApiRequester {
 
 export function createSalesDocumentService(api: SalesDocumentApiRequester) {
   return {
-    listSalesDocuments: (input: { search?: string } = {}) => {
+    listSalesDocuments: (input: {
+      search?: string
+      type?: 'quote' | 'invoice'
+      status?: 'active' | 'converted' | 'completed' | 'cancelled'
+    } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
+      if (input.type) params.set('type', input.type)
+      if (input.status) params.set('status', input.status)
       const query = params.toString()
       return api.request<SalesDocumentListResponse>(`/api/v1/sales-documents${query ? `?${query}` : ''}`)
     },
