@@ -40,6 +40,8 @@ Trang chi tiết bảng giá cho phép xem và sửa giá bán của từng sả
 
 Gợi ý từ KiotViet: có thể cho nhập giá trực tiếp trên lưới để thao tác nhanh, nhưng mỗi màn chỉ nên tập trung một bảng giá đang sửa. Không trải nhiều bảng giá nhóm thành nhiều cột ngang trong QC-OMS MVP.
 
+Giá vốn là dữ liệu tham khảo lấy từ Purchase/Supplier hoặc tồn vật lý khi module đó đã có. Người dùng không sửa giá vốn tại màn bảng giá.
+
 ---
 
 ## 4. Quy tắc nhập giá
@@ -78,6 +80,8 @@ Lịch sử giá theo khách + sản phẩm chỉ phát sinh khi POS lưu chứn
 Nếu người dùng thoát trang khi còn dòng giá chưa lưu, UI phải cảnh báo mất thay đổi.
 
 Nếu một sản phẩm có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
+
+Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức, ví dụ dựa trên giá vốn, hệ số lợi nhuận, chi phí hoặc nhóm hàng. Công thức chỉ tạo giá đề xuất hoặc cập nhật khi người dùng chủ động lưu; hệ thống không tự đổi giá bán chỉ vì giá vốn mới phát sinh.
 
 ---
 

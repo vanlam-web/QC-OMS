@@ -152,6 +152,7 @@ Hệ thống tự động tạo tấm lỡ theo rule mặc định:
 4. Dưới `0.3m2` thì mặc định bỏ, không tạo tấm lỡ.
 5. Nếu thực tế mảnh nhỏ vẫn tận dụng được, nhân viên có thể sửa hoặc tạo tấm lỡ thủ công để giữ lại.
 6. MVP chỉ lưu tối đa 1-2 mảnh thừa lớn nhất sau một lần cắt để tránh rác dữ liệu.
+7. Mảnh dưới `0.3m2` bị bỏ không sinh phiếu hủy riêng; nếu thao tác nguồn đã có chứng từ, hệ thống lưu audit nhẹ để sau này kiểm tra được phần bỏ mặc định.
 
 Mỗi tấm lỡ cần lưu:
 
@@ -164,6 +165,8 @@ Mỗi tấm lỡ cần lưu:
 Nhân viên có thể sửa hoặc xóa tấm lỡ sau khi hệ thống tạo.
 
 Mọi thao tác sửa/xóa tấm lỡ phải có log tối thiểu: ai sửa, lúc nào, giá trị cũ/mới, lý do nếu có.
+
+Nếu nhân viên giữ lại mảnh dưới ngưỡng sau khi hệ thống mặc định bỏ, hệ thống tạo tấm lỡ thủ công và ghi log liên kết với thao tác nguồn nếu xác định được.
 
 ---
 
@@ -189,3 +192,4 @@ Sản phẩm ngưng bán:
 - Hàng `roll` không cho sửa tổng tồn, phải sửa theo từng cuộn.
 - Hàng `sheet` không cho sửa tổng tồn, phải sửa theo tấm nguyên/tấm lỡ/tấm dở.
 - Tấm lỡ dưới `0.3m2` không tự tạo, trừ khi nhân viên tạo/sửa thủ công.
+- Mảnh dưới `0.3m2` bị bỏ không tạo phiếu hủy riêng, nhưng vẫn có audit nhẹ nếu có chứng từ nguồn.

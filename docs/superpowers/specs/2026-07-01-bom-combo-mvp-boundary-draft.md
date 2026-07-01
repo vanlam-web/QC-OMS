@@ -1,7 +1,7 @@
 # BOM/Combo MVP Boundary Draft
 
-> Ngay lap: 2026-07-01  
-> Trang thai: Draft dieu phoi, chua phai Source of Truth Business/DB/API  
+> Ngay lap: 2026-07-01
+> Trang thai: Draft dieu phoi da duoc Owner chot huong BOM; chua phai Source of Truth DB/API
 > Nguon: PRD K02-A, export KiotViet, Inventory business da chot.
 
 ---
@@ -21,9 +21,18 @@ Trong khi do Business Inventory da chot MVP theo huong don gian:
 - Tru kho khi luu/chot hoa don chinh thuc.
 - Du lieu may san xuat khong tu tru kho.
 - Roll/sheet quan ly vat ly rieng.
-- BOM/Combo chua chot sau.
+- BOM la dinh muc vat tu, nhung khong bat buoc lam day du ngay trong POS MVP.
 
-Draft nay khoa ranh gioi de implement khong vo tinh lam BOM phuc tap qua som.
+Draft nay khoa ranh gioi de implement khong vo tinh lam BOM phuc tap qua som, dong thoi ghi lai quyet dinh Owner ve BOM nhieu cap.
+
+Quyet dinh Owner da chot:
+
+- BOM la **dinh muc vat tu** de biet mot san pham/dich vu can tru vat tu nao.
+- Vi du `In bat` gom bat + muc in + keo dan + khuy bat...
+- BOM co the long nhieu cap: `khung sat ban bat` co the gom `in bat` + `khung sat`; BOM cap 3 co the gom `khung sat ban bat` + `ton`.
+- Khi long BOM, he thong can deep-scan de ra vat tu con cuoi cung khi checkout/preview.
+- Co the sua BOM.
+- Trong POS co the them/sua BOM phat sinh; neu luu thi tao combo/BOM moi, neu khong luu thi chi xem nhu dinh muc cua dong do de tru kho.
 
 ---
 
@@ -55,9 +64,11 @@ MVP chia 2 cap:
 | Nhan vien them/sua BOM ngay trong POS va chon `Khong luu - Chi tru kho` | BOM vua nhap la dinh muc cua dong hang do; tru kho theo BOM nay khi chot hoa don, khong tao combo moi |
 | Nhan vien them/sua BOM ngay trong POS va chon `Luu Combo moi` | Tru kho theo BOM nay cho hoa don hien tai va luu thanh combo moi trong danh muc de dung lai |
 | Vat tu roll/sheet trong combo | Neu tru thanh phan thi van phai theo rule roll/sheet vat ly, khong tru tong m2 gop |
-| Combo long combo | Khong bat buoc deep-scan trong MVP; neu chua chot thi coi combo con la snapshot dong hang |
+| Combo long combo | Du an co huong ho tro deep-scan; POS MVP co the chua lam day du neu phase nay chua bat dau |
 
 Nguyen tac an toan: **co BOM thi tru theo BOM, khong co BOM thi khong tu doan vat tu con**. He thong co the canh bao de quan ly bo sung BOM sau.
+
+Khi BOM co nhieu cap, he thong phai deep-scan theo cau hinh BOM de tinh vat tu con cuoi cung. Can co validation chong vong lap, vi du `A -> B -> A`.
 
 ### 2.3. Luu hoac khong luu combo moi
 
@@ -75,7 +86,7 @@ Trong MVP, K02-A co the giu nut `[Sua BOM]` neu san pham da co BOM ro.
 
 Nhung can giam ky vong:
 
-- Khong bat buoc ho tro combo cap 2 deep-scan trong MVP.
+- Deep-scan nhieu cap la huong da chot cho phase BOM, nhung co the chua bat buoc trong POS MVP neu chua co DB/API BOM.
 - Khong bat buoc tinh loi nhuan chuan ke toan tu BOM.
 - Tong gia vat tu kho neu hien thi chi la tham khao, khong phai loi nhuan chot.
 - Neu dong combo khong co BOM san va nhan vien cung khong them BOM phat sinh, checkout van tinh tien theo dong combo nhung khong co vat tu con de tru; can hien canh bao neu san pham duoc danh dau la can BOM.
@@ -100,12 +111,11 @@ Khi chuyen thanh Source of Truth, co the can:
 - version BOM de biet hoa don da ban theo cau hinh nao
 - validation chong vong lap neu cho combo long combo
 
-Chua tao DB/API ngay neu chua chot:
+Chua tao DB/API ngay neu phase BOM chua bat dau:
 
-- combo cap 1/cap 2
 - BOM co version khong
-- BOM sua trong don co luu thanh template moi khong
-- deep-scan toi may cap
+- gioi han so cap deep-scan
+- cach tinh chi phi tham khao tu BOM
 
 ---
 
@@ -117,7 +127,8 @@ Checkout hoa don
   -> Voi dong normal/area/linear/sheet: tru kho theo rule Inventory
   -> Voi dong combo:
        neu co BOM san hoac BOM phat sinh trong POS:
-         tao stock movement cho thanh phan theo BOM do
+         deep-scan neu BOM long nhieu cap
+         tao stock movement cho vat tu con cuoi cung theo BOM do
        neu khong co BOM:
          luu snapshot combo
          khong co vat tu con de tru
@@ -125,11 +136,12 @@ Checkout hoa don
   -> Ghi tien/cong no/so quy nhu binh thuong
 ```
 
-Can chot sau:
+Can dac ta chi tiet sau:
 
 - Neu BOM thieu cau hinh thi co cho checkout khong?
 - Neu cho checkout, co can hien canh bao bat buoc xac nhan khong?
 - Co cho stock movement am cho vat tu thanh phan nhu hang thuong khong?
+- Gioi han deep-scan toi bao nhieu cap de tranh cau truc qua phuc tap.
 
 Khuyen nghi MVP: cho checkout, hien canh bao khong chan ban, vi owner da uu tien thao tac gon va ban thieu ton van duoc cho tiep.
 
@@ -154,17 +166,17 @@ Khui dong theo may san xuat co the dung de de xuat/chon vat tu sau, nhung khong 
 
 Khi co thoi gian, nen ha mot so cau trong K02-A tu "bat buoc" thanh "sau MVP":
 
-- "Deep-Scan khi thanh toán" -> sau MVP neu BOM da chot.
-- "Combo cap 2 khoa/deep scan backend" -> draft, chua bat buoc.
+- "Deep-Scan khi thanh toán" -> da chot ve huong nghiep vu, dua vao phase BOM.
+- "Combo cap 2 khoa/deep scan backend" -> dung cho phase BOM, chua bat buoc o POS MVP neu DB/API chua co.
 - "Tong gia vat tu kho" -> tham khao, khong phai loi nhuan chuan.
 - "Luu Combo moi" -> duoc phep neu phase POS/BOM lam den; khong tu dong luu neu nhan vien khong chon.
 
 ---
 
-## 8. Cau hoi can chot truoc khi implement BOM
+## 8. Noi dung con can dac ta truoc khi implement BOM
 
-1. MVP co can tru vat tu thanh phan cho combo nao khong, hay tat ca combo tru theo dong hang chinh truoc?
-2. Neu combo co BOM thieu cau hinh, checkout duoc di tiep hay phai chan?
-3. Khi nhan vien sua BOM trong don, co bao gio luu thanh combo moi ngay tai POS khong?
-4. Co can combo long combo trong MVP khong?
-5. Gia ban combo co doc lap voi tong chi phi vat tu khong? Draft de xuat: co, gia ban doc lap.
+1. Neu combo co BOM thieu cau hinh, checkout duoc di tiep hay phai chan? Khuyen nghi: cho di tiep, canh bao, vi xưởng uu tien ban nhanh.
+2. Co cho stock movement am cho vat tu thanh phan nhu hang thuong khong? Khuyen nghi: co, canh bao.
+3. BOM version hoa nhu the nao de hoa don cu khong thay doi khi BOM hien tai bi sua.
+4. Gioi han deep-scan toi bao nhieu cap; khuyen nghi mac dinh 3-5 cap, backend chan vong lap.
+5. Gia ban combo doc lap voi tong chi phi vat tu; tong chi phi chi la tham khao/bao cao.

@@ -9,6 +9,8 @@
 
 Trang danh sách bảng giá giúp quản lý các bảng giá đang dùng cho khách hàng và nhóm khách.
 
+Sau khi module Purchase/Supplier có dữ liệu giá vốn, PriceBook có thể dùng giá vốn làm dữ liệu tham khảo để gợi ý hoặc tính công thức giá bán. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
+
 ---
 
 ## 2. Bố cục
@@ -89,3 +91,5 @@ QC-OMS ưu tiên:
 - lịch sử 5 giá gần đây theo khách + sản phẩm là nút gợi ý trong POS, không phải 5 cột trong bảng giá
 
 KiotViet `Khuyến mại` có dữ liệu thật dạng `Hàng hóa - Giá bán theo số lượng mua` cho một số vật tư PVC/CPVC. QC-OMS MVP không làm module khuyến mại/campaign riêng. Nếu sau này cần bán theo bậc số lượng, đặc tả lại như quy tắc giá trong PriceBook, không kéo nguyên module marketing/khuyến mại retail vào POS.
+
+Giá vốn trong KiotViet hiển thị để tham khảo trên lưới thiết lập giá. QC-OMS cũng cần hiển thị giá vốn khi đã có dữ liệu Purchase, nhưng không cho phép sửa giá vốn trực tiếp từ bảng giá.

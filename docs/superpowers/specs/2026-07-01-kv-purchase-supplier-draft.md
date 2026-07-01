@@ -1,7 +1,7 @@
 # KiotViet Purchase/Supplier Draft for QC-OMS
 
-> Ngày rà: 2026-07-01  
-> Trạng thái: Draft tham khảo, chưa phải Source of Truth  
+> Ngày rà: 2026-07-01
+> Trạng thái: Draft tham khảo đã được Owner chốt hướng chính; cần chuyển thành SoT khi bắt đầu phase Purchase/Supplier
 > Nguồn: KiotViet `Mua hàng`, `Nhà cung cấp`, `Nhập hàng`, `Mua dịch vụ`, `Hóa đơn đầu vào`, `Báo cáo nhà cung cấp`
 
 ---
@@ -10,7 +10,15 @@
 
 Draft này ghi lại các phần mua hàng/nhà cung cấp trong KiotViet để sau này quyết định QC-OMS có làm hay không, làm ở phase nào, và làm tối giản tới đâu.
 
-Hiện tại QC-OMS đang ưu tiên bán hàng, tồn kho vật lý cuộn/tấm, sổ quỹ và công nợ khách. Mua hàng chưa nên đẩy vào Source of Truth chính nếu Owner chưa chốt.
+Hiện tại QC-OMS đang ưu tiên bán hàng, tồn kho vật lý cuộn/tấm, sổ quỹ và công nợ khách. Owner đã chốt Purchase/Supplier có trong phạm vi dự án, nhưng chưa nằm trong lát cắt POS MVP đang implement.
+
+Quyết định chính:
+
+- Có quản lý nhà cung cấp.
+- Có nhập hàng mua thật.
+- Có công nợ nhà cung cấp.
+- Nhập đúng đơn vị mua vật lý: mua cuộn thì nhập từng cuộn, mua tấm thì nhập tấm/lô tấm; không mua `m2` cho hàng cuộn/tấm.
+- Giá vốn từ phiếu nhập phải lưu lại để sau này PriceBook có thể dùng trong công thức gợi ý/tính giá bán.
 
 ---
 
@@ -35,7 +43,7 @@ Tổng danh sách đang thấy:
 
 Ví dụ cột danh sách: mã NCC, tên NCC, điện thoại, email, nợ cần trả hiện tại, tổng mua.
 
-Kết luận: nhà cung cấp là dữ liệu thật, không nên bỏ hẳn khỏi sản phẩm dài hạn.
+Kết luận: nhà cung cấp là dữ liệu thật và nằm trong phạm vi QC-OMS. Không đưa vào POS MVP, nhưng không loại khỏi dự án.
 
 ### 2.2. Nhập hàng
 
@@ -71,7 +79,7 @@ Form tạo phiếu nhập trong KiotViet có:
 - Ghi chú.
 - Hành động `Lưu tạm` và `Hoàn thành`.
 
-Kết luận: nhập hàng là nghiệp vụ có dữ liệu thật, nhưng vẫn chưa nên bê nguyên luồng KiotViet vào MVP bán hàng. Nếu QC-OMS làm Purchase sau này, phải thiết kế theo tồn vật lý cuộn/tấm của xưởng, không copy cách quản lý tổng số lượng/m2 của KiotViet.
+Kết luận: nhập hàng là nghiệp vụ có dữ liệu thật và cần làm ở phase Purchase/Supplier. Không bê nguyên luồng KiotViet vào MVP bán hàng; QC-OMS phải thiết kế theo tồn vật lý cuộn/tấm của xưởng, không copy cách quản lý tổng số lượng/m2 của KiotViet.
 
 ### 2.3. Mua dịch vụ
 
@@ -170,16 +178,17 @@ Kết luận: chỉ làm báo cáo NCC sau khi Purchase/Supplier được đưa 
 
 ---
 
-## 3. Đề xuất cho QC-OMS
+## 3. Quyết định cho QC-OMS
 
-### 3.1. Chưa làm Purchase trong MVP bán hàng
+### 3.1. Purchase/Supplier có trong dự án, nhưng sau POS MVP
 
-MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
+POS MVP hiện tại chưa làm đầy đủ module mua hàng vì:
 
 - Xưởng cần chốt trước cách nhập tồn cuộn/tấm theo vật lý.
 - Nhập hàng có thể làm thay đổi tồn, giá vốn, công nợ NCC và sổ quỹ cùng lúc.
 - Nếu làm vội theo KiotViet, dễ quay về quản lý tổng m2 thay vì quản lý từng cuộn/tấm đúng mục tiêu QC-OMS.
 - KiotViet có hồ sơ NCC, tổng mua/nợ và nhiều phiếu nhập thật, nhưng luồng nhập của QC-OMS cần khác KiotViet ở điểm cốt lõi: phiếu nhập phải tạo tồn vật lý theo cuộn/tấm nếu hàng đó thuộc nhóm quản lý vật lý.
+- Purchase/Supplier khi làm phải đi cùng công nợ NCC và giá vốn, nên nên tách thành phase riêng để không làm rối checkout.
 
 ### 3.2. Khi làm, nên tách thành 3 phần
 
@@ -189,24 +198,30 @@ MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
 
 Mua dịch vụ nên đi theo Finance/Cashbook trước, không nhất thiết nằm chung với nhập hàng vật tư.
 
-`Đặt hàng nhập` và `Trả hàng nhập` nên là phase sau của Purchase, không nằm trong lát cắt đầu tiên.
+`Đặt hàng nhập` và `Trả hàng nhập` không nằm trong lát cắt Purchase đầu tiên vì KiotViet đang dùng rất ít/không có dữ liệu phù hợp.
 
 `Hóa đơn đầu vào` và `Báo cáo nhà cung cấp` không làm trước Purchase; `Hóa đơn đầu vào` còn thuộc phạm vi thuế/HĐĐT đã loại khỏi MVP.
 
 ---
 
-## 4. Câu hỏi cần Owner chốt
+## 4. Quyết định Owner đã chốt
 
-1. QC-OMS có cần quản lý nhà cung cấp ngay phase đầu không, hay chỉ lưu nguồn nhập trên từng cuộn/tấm?
-2. Khi nhập cuộn, nhân viên có nhập từng cuộn vật lý ngay lúc nhập hàng không?
-3. Khi nhập tấm, nhân viên có nhập từng tấm/kích thước/số lượng tấm ngay lúc nhập hàng không?
-4. Có cần công nợ nhà cung cấp trong MVP không?
-5. Mua dịch vụ như thuê thợ, tiền vận chuyển, tiền điện/nước nên đi qua phiếu chi Sổ quỹ hay cần module Mua dịch vụ riêng?
-6. Giá vốn dùng để báo cáo lợi nhuận lấy từ phiếu nhập mới nhất, trung bình tồn, hay nhập tay theo sản phẩm?
+1. QC-OMS có quản lý nhà cung cấp.
+2. Khi nhập cuộn, phải nhập đúng cuộn vật lý mua vào, có khổ/chiều dài và thông tin giá nhập.
+3. Khi nhập tấm, phải nhập đúng tấm/lô tấm mua vào, có kích thước/số lượng và thông tin giá nhập.
+4. Không nhập mua hàng cuộn/tấm theo `m2`; `m2` chỉ là số quy đổi/tính toán.
+5. Có quản lý công nợ nhà cung cấp.
+6. Giá vốn từ phiếu nhập phải lưu lại để phục vụ báo cáo và công thức bảng giá sau này.
+
+Còn cần tự nghiên cứu/đặc tả tiếp khi vào phase Purchase:
+
+- Phân bổ tiền trả NCC theo phiếu nhập cũ nhất hay chọn phiếu cụ thể.
+- Công thức giá vốn hiển thị trong báo cáo dùng nhập cuối, bình quân, FIFO hay theo object vật lý.
+- Mua dịch vụ đi qua phiếu chi Sổ quỹ hay cần mở rộng công nợ đối tác sau này.
 
 ---
 
-## 5. Định hướng nếu làm Phase sau
+## 5. Định hướng Phase Purchase/Supplier
 
 ### Suppliers
 
@@ -220,9 +235,9 @@ Thông tin tối thiểu:
 - Ghi chú.
 - Trạng thái.
 
-Không cần nhóm NCC trong MVP nếu chưa có nghiệp vụ phân nhóm rõ.
+Không cần nhóm NCC trong lát cắt đầu tiên nếu chưa có nghiệp vụ phân nhóm rõ.
 
-Nếu cần nguồn nhập trên tồn kho trước khi làm Purchase đầy đủ, có thể cho chọn/lưu nhà cung cấp trên từng cuộn/tấm vật lý như metadata, chưa phát sinh công nợ NCC.
+Khi Purchase đầy đủ chưa làm xong nhưng Inventory vật lý cần nguồn nhập, có thể lưu nhà cung cấp trên từng cuộn/tấm như metadata tạm. Khi module Purchase chính thức chạy, metadata này phải được đồng bộ/ngược tham chiếu về phiếu nhập nếu có.
 
 ### Purchase Receipts
 
@@ -234,7 +249,7 @@ Phiếu nhập tối thiểu:
 - Người nhập.
 - Kho.
 - Dòng hàng/vật tư.
-- Số lượng nhập.
+- Số lượng nhập theo đúng đơn vị mua.
 - Giá nhập.
 - Chi phí khác nếu có.
 - Tổng cần trả.
@@ -242,14 +257,14 @@ Phiếu nhập tối thiểu:
 - Còn phải trả.
 - Trạng thái: Phiếu tạm, Đã nhập, Đã hủy.
 
-Với hàng cuộn/tấm, dòng nhập phải tạo object tồn vật lý tương ứng, không chỉ cộng tổng m2.
+Với hàng cuộn/tấm, dòng nhập phải tạo object tồn vật lý tương ứng, không chỉ cộng tổng `m2`.
 
 Quy tắc gợi ý theo loại hàng:
 
-- Hàng thường: nhập số lượng như KiotViet, tăng tồn tổng.
-- Hàng cuộn: mỗi cuộn nhập vào phải có object riêng, gồm khổ, chiều dài ban đầu, m2 ban đầu, số còn lại và trạng thái cuộn.
-- Hàng tấm: nhập theo từng tấm hoặc lô tấm cùng kích thước; hệ thống tạo tồn tấm/tấm lỡ theo cấu hình nhập.
-- Giá nhập gắn vào object/lô vật lý để làm tham khảo giá vốn sau này.
+- Hàng thường: nhập số lượng như KiotViet, tăng tồn tổng theo đơn vị tồn chính.
+- Hàng cuộn: mỗi cuộn nhập vào phải có object riêng, gồm khổ, chiều dài ban đầu, `m2` ban đầu, số còn lại và trạng thái cuộn.
+- Hàng tấm: nhập theo từng tấm hoặc lô tấm cùng kích thước; hệ thống tạo tồn tấm theo số lượng/kích thước thực tế.
+- Giá nhập gắn vào object/lô vật lý để làm giá vốn tham khảo/chính thức tùy phương pháp giá vốn sau này.
 - Không dùng phiếu nhập để tự sửa tồn tổng cuộn/tấm bằng tay; sửa sai tồn vật lý đi qua kiểm kho/điều chỉnh tồn.
 
 ### Supplier Payables
@@ -258,16 +273,26 @@ Công nợ NCC tối thiểu:
 
 - Nợ phát sinh từ phiếu nhập chưa trả đủ.
 - Phiếu chi trả NCC.
-- Phân bổ trả NCC vào phiếu nhập cũ nhất trước hoặc chọn phiếu cụ thể, cần Owner chốt.
+- Phân bổ trả NCC vào phiếu nhập cũ nhất trước hoặc chọn phiếu cụ thể, cần đặc tả khi làm phase này.
+
+### Giá vốn và PriceBook
+
+Giá vốn lưu từ phiếu nhập không chỉ để xem lịch sử mua, mà còn là dữ liệu đầu vào cho:
+
+- báo cáo lợi nhuận khi đã chốt phương pháp giá vốn
+- gợi ý giá bán trong bảng giá
+- công thức bảng giá sau này, ví dụ `giá vốn * hệ số + chi phí` hoặc công thức riêng theo nhóm hàng
+
+PriceBook không tự sửa giá bán khi giá vốn thay đổi nếu người dùng chưa bấm cập nhật/lưu công thức. Giá bán đã lưu trong bảng giá vẫn là giá áp dụng chính thức cho POS.
 
 ---
 
-## 6. Không đưa vào MVP nếu chưa chốt
+## 6. Không đưa vào phạm vi hiện tại
 
-- Trả hàng nhập.
-- Đặt hàng nhập.
-- Hóa đơn đầu vào điện tử.
-- Báo cáo nhà cung cấp.
+- Trả hàng nhập: không làm trong lát cắt đầu tiên; sau này chỉ xem lại nếu thực tế phát sinh.
+- Đặt hàng nhập: không làm trong lát cắt đầu tiên vì dữ liệu KiotViet rất ít.
+- Hóa đơn đầu vào điện tử: không làm trong QC-OMS hiện tại.
+- Báo cáo nhà cung cấp: chỉ làm sau khi Purchase/Supplier có dữ liệu đủ.
 - Chiết khấu thanh toán NCC.
 - Kênh bán/đối tác giao hàng trong nhập hàng.
 - Nhóm nhà cung cấp phức tạp.

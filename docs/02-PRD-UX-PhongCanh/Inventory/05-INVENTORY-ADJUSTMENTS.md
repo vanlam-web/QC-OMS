@@ -12,7 +12,7 @@ Màn/luồng này giúp ghi nhận vật tư bị bỏ, hỏng, dùng nội bộ
 QC-OMS ưu tiên thao tác nhanh:
 
 - không làm Xuất dùng nội bộ riêng
-- không làm Xuất hủy riêng nhiều bước
+- không làm Xuất hủy riêng
 - không làm Trả hàng bán/Trả hàng nhập
 - ghi lịch sử đủ để kiểm tra tồn kho
 
@@ -54,6 +54,8 @@ Quy tắc UI:
 - Khi giữ lại, nhân viên nhập kích thước thực tế, ghi chú nếu cần, rồi hệ thống tạo tấm lỡ trạng thái `available`.
 - Nếu hệ thống tạo tấm lỡ nhưng thực tế không dùng được, nhân viên có thể **Bỏ tấm lỡ**.
 - Nhân viên có thể sửa kích thước tấm lỡ nếu nhập sai.
+- Mảnh dưới `0.3m2` bị bỏ không tạo phiếu hủy riêng; hệ thống chỉ lưu log/audit nhẹ gắn với thao tác nguồn nếu đã có chứng từ nguồn.
+- Nếu sau đó nhân viên giữ lại mảnh nhỏ, hệ thống ghi sự kiện phục hồi/tạo tấm lỡ thủ công để tồn kho không bị mất vết.
 
 Không bắt nhân viên xác nhận tấm lỡ sau mỗi lần bán/cắt vì thao tác này rườm rà.
 
@@ -67,15 +69,15 @@ Danh sách lý do ban đầu:
 |---|---|
 | `tam_lo_bo` | Mảnh thừa/tấm lỡ không giữ lại |
 | `huy_hong` | Vật tư hỏng, rách, bẩn, sai quy cách |
-| `dung_noi_bo` | Dùng cho việc nội bộ xưởng |
 | `khac` | Trường hợp khác, bắt buộc ghi chú |
 
 UI hiển thị bằng tiếng Việt dễ hiểu:
 
 - Tấm lỡ bỏ
 - Hủy hỏng
-- Dùng nội bộ
 - Khác
+
+`Dùng nội bộ` không hiển thị như module/lý do mặc định trong QC-OMS hiện tại vì KiotViet không có dữ liệu thực tế và Owner chưa có nhu cầu rõ. Nếu sau này phát sinh, dùng `Khác` kèm ghi chú trước khi mở reason riêng.
 
 ---
 
@@ -132,6 +134,7 @@ Lịch sử xem tại:
 
 - Không có danh sách phiếu `Xuất hủy` riêng.
 - Không có danh sách phiếu `Xuất dùng nội bộ` riêng.
+- Không có lý do `Dùng nội bộ` mặc định nếu chưa phát sinh nhu cầu thật.
 - Không có duyệt nhiều bước.
 - Không có trả hàng bán.
 - Không có trả hàng nhập.
@@ -149,8 +152,8 @@ Nếu cần hoàn tiền cho khách trong trường hợp đặc biệt, dùng p
 4. Mọi điều chỉnh tồn ghi lịch sử đủ người, thời gian, lý do và giá trị trước/sau.
 5. Không xuất hiện menu/module riêng cho Xuất hủy, Xuất dùng nội bộ hoặc Trả hàng trong MVP/current scope.
 6. Điều chỉnh tồn không tự tạo phiếu thu/chi.
+7. Mảnh dưới `0.3m2` bị bỏ chỉ ghi audit nhẹ theo thao tác nguồn, không sinh phiếu hủy riêng.
 
 ---
 
 ← [Quay về Inventory README](./README.md)
-

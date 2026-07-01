@@ -141,6 +141,33 @@ Khi nhân viên sửa hóa đơn đã chốt:
 
 Quy tắc này áp dụng chung cho các phiếu/chứng từ có cơ chế sửa sau chốt; mỗi domain sẽ mô tả chi tiết tác động đảo kho, tiền và công nợ tương ứng.
 
+### BR-INV-05: Sửa chứng từ phải đồng bộ dữ liệu liên kết
+
+Khi sửa/hủy hóa đơn đã phát sinh kho, tiền hoặc công nợ, hệ thống không chỉ sửa nội dung hiển thị của hóa đơn.
+
+Toàn bộ dữ liệu liên kết phải được xử lý đồng bộ trong cùng nghiệp vụ:
+
+- hóa đơn cũ chuyển trạng thái đã hủy vì sửa chứng từ
+- bút toán kho của hóa đơn cũ được đảo hoặc bù trừ theo quy tắc Inventory
+- phiếu thu/sổ quỹ/công nợ liên quan được đảo hoặc bù trừ theo quy tắc Finance
+- hóa đơn mới `MaCu.01` ghi lại kho, tiền, công nợ theo nội dung mới
+- lịch sử liên kết giữa chứng từ cũ và mới phải đủ để kiểm tra
+
+Không được để trường hợp hóa đơn đã sửa nhưng tồn kho, sổ quỹ hoặc công nợ vẫn đứng theo bản cũ.
+
+### BR-INV-06: Khóa mềm khi sửa chứng từ
+
+Khi một nhân viên mở chứng từ đã chốt để sửa, hệ thống nên tạo khóa mềm có thời hạn.
+
+Quy tắc mặc định:
+
+- nếu chứng từ đang được người khác sửa, UI cảnh báo tên người/máy đang giữ khóa
+- quản lý hoặc người có quyền vẫn có thể mở nếu khóa đã quá hạn hoặc cần tiếp quản
+- backend vẫn kiểm tra version khi lưu để tránh ghi đè dữ liệu mới hơn
+- nếu version đã đổi, người lưu sau phải tải lại chứng từ và thao tác lại trên bản mới
+
+Khóa mềm giúp giảm xung đột thao tác, nhưng không thay thế kiểm tra version ở backend.
+
 ---
 
 ## 6. Acceptance Criteria nghiệp vụ
@@ -154,6 +181,8 @@ Quy tắc này áp dụng chung cho các phiếu/chứng từ có cơ chế sử
 7. Báo giá và hóa đơn bán hàng đều giữ snapshot dòng hàng tại thời điểm lưu.
 8. Sửa hóa đơn đã chốt không sửa đè hóa đơn cũ; hệ thống tạo mã mới dạng `MaCu.01` và giữ hóa đơn cũ ở trạng thái đã hủy để truy vết.
 9. Hệ thống không tạo đơn đặt hàng, vận đơn, COD hoặc kênh bán online trong MVP.
+10. Sửa/hủy chứng từ phải xử lý đồng bộ kho, tiền, công nợ và lịch sử liên kết.
+11. Khi nhiều người cùng sửa một chứng từ, hệ thống dùng khóa mềm và version check để tránh ghi đè.
 
 ---
 
