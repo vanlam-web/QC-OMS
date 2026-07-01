@@ -21,6 +21,33 @@ Draft nay giup sau nay tach thanh Integration chinh thuc cho Printer/Messaging m
 
 ## 2. Quyet dinh da chot
 
+### 2.0. Tham khao KiotViet `Mau in`
+
+KiotViet `PrintTemplates` co cac nhom mau:
+
+- Dat hang
+- Hoa don
+- Giao hang
+- Tra hang
+- Doi tra hang
+- Dat hang nhap
+- Nhap hang
+- Tra hang nhap
+- Chuyen hang
+- Phieu thu
+- Phieu chi
+- Binh luan
+
+Tai khoan dang ra soat co mau dang chon `Bao gia chua the - A4` va thao tac `Xem truoc mau in`.
+
+Quyet dinh QC-OMS:
+
+- Giu mau `Bao gia` va `Hoa don/bill ban hang`.
+- Giu mau `Phieu thu` va `Phieu chi` khi Finance can in/xuat phieu.
+- Khong lam mau `Dat hang`, `Giao hang`, `Tra hang`, `Doi tra hang`, `Chuyen hang` trong scope ban dut.
+- Khong lam mau `Dat hang nhap`, `Nhap hang`, `Tra hang nhap` cho toi khi phase Purchase/Supplier bat dau.
+- Mau in QC-OMS la bill/phieu thu chi noi bo, khong phai HĐĐT.
+
 ### 2.1. Trong MVP
 
 - Sau khi luu bao gia `BG...` hoac hoa don `HD...`, he thong mo Bill Preview / Print Popup.

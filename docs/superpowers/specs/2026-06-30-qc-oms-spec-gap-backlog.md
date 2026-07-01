@@ -493,6 +493,8 @@ Source of Truth cần tạo sau khi phase này bắt đầu:
 Đã định hướng:
 
 - Bill lấy dữ liệu từ snapshot chứng từ, không lấy lại bảng giá/tên hàng/khách hiện tại.
+- KiotViet `Mẫu in` có nhiều nhóm chứng từ; QC-OMS chỉ giữ báo giá, hóa đơn/bill bán hàng, phiếu thu và phiếu chi trong scope hiện tại.
+- Không làm mẫu đặt hàng, giao hàng, trả hàng, đổi trả hàng, chuyển hàng, đặt hàng nhập, nhập hàng hoặc trả hàng nhập cho tới khi có phase nghiệp vụ tương ứng.
 - MVP chỉ hỗ trợ in browser, sinh ảnh bill và mở đúng nơi gửi.
 - Nhân viên tự kiểm tra, dán ảnh và bấm gửi.
 - Không tự động gửi Zalo/Facebook, không lưu lịch sử gửi bill và không rollback chứng từ nếu gửi lỗi.

@@ -415,6 +415,7 @@ Một số chi tiết đã thấy:
 - `Quản lý chi nhánh` đang có `Chi nhánh trung tâm`.
 - `Bảo mật` có xác thực khi xuất file và xác thực 2 lớp cho nhân viên.
 - `Gửi SMS, Zalo` có mẫu tin và thiết lập kết nối SMS/Zalo.
+- `Mẫu in` có các nhóm mẫu đặt hàng, hóa đơn, giao hàng, trả hàng, đổi trả hàng, đặt hàng nhập, nhập hàng, trả hàng nhập, chuyển hàng, phiếu thu, phiếu chi và bình luận; đang thấy mẫu `Báo giá chưa thế - A4` với thao tác xem trước.
 - `Hàng hóa` trong Settings có mã vạch, tự động gợi ý thông tin, đơn vị tính, thuộc tính, nhóm hàng, thương hiệu, vị trí, phương pháp tính giá vốn, bảo hành/bảo trì, sản xuất hàng hóa và phân quyền theo nhóm hàng.
 - `Mua hàng` có thiết lập nhà cung cấp theo chi nhánh, đặt hàng nhập, chi phí nhập hàng và mua dịch vụ.
 - `Đơn hàng` có đặt hàng, giao dịch khi hết tồn, in báo giá, xác nhận trước khi hoàn thành, giới hạn trả hàng, khóa thay đổi thời gian giao dịch, chặn sửa HĐĐT và thu khác.
@@ -428,6 +429,7 @@ Quyết định QC-OMS:
 - Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
 - Chuyển khoản trong POS/thu nợ chỉ ghi vào tài khoản ngân hàng đã khai báo, không cần kết nối QR partner.
 - Mẫu in giữ cho bill thường; không liên quan HĐĐT.
+- Mẫu in scope hiện tại chỉ gồm báo giá, hóa đơn/bill bán hàng, phiếu thu và phiếu chi; không làm mẫu đặt hàng/giao hàng/trả hàng/chuyển hàng/nhập hàng trong MVP.
 - Giữ lịch sử thao tác/audit log, nhưng không cho sửa/xóa log từ UI thường.
 - Không làm giao hàng/COD/đối tác vận chuyển.
 - Không làm QR ting ting, đăng ký bank partner, NAPAS, MoMo/ZaloPay hoặc ví điện tử trong MVP.
