@@ -71,4 +71,3 @@ Backend/database layer phải hỗ trợ:
 Dữ liệu `Hàng thành phần` từ KiotViet được import vào trạng thái nháp/cần rà soát.
 
 Không lưu định dạng text `Ma:SoLuong|Ma:SoLuong` làm schema chính.
-

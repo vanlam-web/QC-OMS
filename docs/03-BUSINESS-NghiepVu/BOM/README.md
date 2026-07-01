@@ -18,4 +18,3 @@
 BOM trong QC-OMS là **định mức vật tư để trừ kho**, không phải công thức giá bán.
 
 Giá bán vẫn đến từ bảng giá hoặc giá nhân viên sửa trên dòng bán. BOM chỉ giúp biết khi bán một sản phẩm/combo thì cần trừ những vật tư nào.
-

@@ -31,4 +31,3 @@ Không làm trong lát cắt đầu tiên:
 - hóa đơn điện tử/VAT/thuế đầu vào
 - mua dịch vụ thành module riêng nếu phiếu chi sổ quỹ đã đủ dùng
 - báo cáo nhà cung cấp nâng cao trước khi có dữ liệu Purchase chuẩn
-

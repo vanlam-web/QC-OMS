@@ -55,4 +55,3 @@ Validation:
 BOM API chỉ tính vật tư cần trừ. Việc chọn cuộn/tấm nào và ghi stock movement vẫn theo Inventory service/rules.
 
 Không được trừ tổng `m2` trực tiếp cho hàng `roll` hoặc `sheet`.
-

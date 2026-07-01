@@ -176,4 +176,3 @@ Quy tắc import:
 - BOM thiếu cấu hình không chặn checkout trong MVP, nhưng phải có cảnh báo/flag.
 - BOM không tự tính hoặc ép giá bán.
 - Vật tư cuộn/tấm trong BOM trừ kho theo tồn vật lý, không trừ tổng `m2`.
-
