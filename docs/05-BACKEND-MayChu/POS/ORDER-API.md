@@ -247,6 +247,81 @@ Response cần gồm:
 
 Không tự resolve lại giá và không tự thay dòng theo danh mục hiện tại.
 
+**Response data ví dụ:**
+
+```json
+{
+  "quote": {
+    "id": "uuid",
+    "code": "BG000123",
+    "status": "active",
+    "source_quote_id": "uuid",
+    "source_quote_code": "BG000123"
+  },
+  "customer": {
+    "customer_id": "uuid",
+    "snapshot": {
+      "code": "KH000001",
+      "name": "Công ty ABC",
+      "phone": "0901234567"
+    },
+    "warnings": []
+  },
+  "price_list": {
+    "price_list_id": "uuid",
+    "snapshot": {
+      "code": "BG_DAILY",
+      "name": "Bảng giá đại lý"
+    },
+    "warnings": ["PRICE_LIST_INACTIVE"]
+  },
+  "items": [
+    {
+      "order_item_id": "uuid",
+      "product_id": "uuid",
+      "product_snapshot": {
+        "code": "MICA-3MM",
+        "name": "Mica 3mm",
+        "unit_name": "m",
+        "sell_method": "linear_m"
+      },
+      "sell_method": "linear_m",
+      "quantity": 1,
+      "linear_m": 1.5,
+      "unit_price": 120000,
+      "price_source": "customer_group",
+      "discount_amount": 0,
+      "line_total": 180000,
+      "note": "Cắt gấp",
+      "warnings": [
+        {
+          "code": "CURRENT_PRICE_DIFFERS",
+          "message": "Giá hiện tại khác giá đã lưu trong báo giá",
+          "current_unit_price": 130000,
+          "snapshot_unit_price": 120000
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "subtotal_amount": 180000,
+    "discount_amount": 0,
+    "total_amount": 180000
+  },
+  "note": "Giao chiều nay"
+}
+```
+
+Warning codes Phase 3A:
+
+| Code | Ý nghĩa | Checkout |
+|---|---|---|
+| `CURRENT_PRICE_DIFFERS` | Giá hiện tại khác giá snapshot | Không chặn |
+| `PRODUCT_INACTIVE` | Sản phẩm đã ngưng bán | Chặn nếu dòng chưa thay thế/xử lý |
+| `PRODUCT_MISSING` | Không tìm thấy sản phẩm | Chặn nếu dòng chưa thay thế |
+| `PRICE_LIST_INACTIVE` | Bảng giá không còn active | Không chặn |
+| `CUSTOMER_CHANGED` | Hồ sơ khách hiện tại khác snapshot đáng kể | Không chặn |
+
 ### `POST /orders/quotes/{id}/revisions`
 
 Lưu báo giá mới dựa trên báo giá cũ sau khi người dùng mở lại và sửa.
@@ -256,6 +331,8 @@ Lưu báo giá mới dựa trên báo giá cũ sau khi người dùng mở lại
 Validation giống `POST /orders/quotes`.
 
 Chỉ cho tạo revision từ báo giá `order_type = quote` và `status = active`.
+
+Không cho tạo revision từ báo giá `converted` trong Phase 3A.
 
 Workflow:
 
@@ -381,6 +458,8 @@ Nếu khách trả dư và nhân viên chọn cấn vào nợ cũ, phần cấn 
 - Backend tự tính lại `line_subtotal_amount`, `line_total`, `subtotal_amount`, `discount_amount`, `total_amount`.
 - Nếu `source_quote_id` có giá trị, báo giá phải cùng organization, `order_type = quote`, `status = active`.
 - Nếu checkout từ báo giá, hóa đơn phải lưu `source_quote_id` và `source_quote_code` để Sales Documents truy vết nhanh.
+- Nếu checkout từ báo giá đã `converted` hoặc không còn `active`, trả `RESOURCE_CONFLICT`.
+- Nếu payload còn dòng từ báo giá có warning `PRODUCT_INACTIVE` hoặc `PRODUCT_MISSING` chưa được thay thế/xử lý, trả `QUOTE_REOPEN_BLOCKED`.
 - Nếu `customer_id` null và hóa đơn còn nợ, `retail_debt_note` bắt buộc.
 - `cash_amount >= 0`, `bank_amount >= 0`, `old_debt_payment_amount >= 0`.
 - Nếu `bank_amount > 0`, `bank_account_id` bắt buộc, active, cùng organization và là tài khoản `bank`.
@@ -546,6 +625,7 @@ Giải phóng khóa hóa đơn.
 | 403 | `WORKSTATION_INVALID` | Workstation không hợp lệ |
 | 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy customer/product/order trong organization |
 | 409 | `RESOURCE_CONFLICT` | Báo giá không còn active, đơn đang bị khóa hoặc mã chứng từ xung đột |
+| 422 | `QUOTE_REOPEN_BLOCKED` | Payload mở lại báo giá còn dòng inactive/missing chưa xử lý khi checkout |
 | 422 | `CHECKOUT_FAILED` | Checkout không thể hoàn tất do lỗi nghiệp vụ có thể giải thích |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống không công khai chi tiết |
 

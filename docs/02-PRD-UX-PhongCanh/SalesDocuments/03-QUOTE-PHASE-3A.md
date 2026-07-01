@@ -76,6 +76,20 @@ Khi bấm `Mở tại POS`:
 
 Không tạo server draft trong Phase 3A.
 
+### 4.1. Cảnh báo khi mở lại
+
+UI phải gom cảnh báo ở đầu nháp hoặc trên từng dòng, không tự sửa dữ liệu thay người dùng.
+
+| Mã cảnh báo | Khi nào | Hành vi Phase 3A |
+|---|---|---|
+| `CURRENT_PRICE_DIFFERS` | Giá hiện tại theo bảng giá khác giá snapshot | Giữ giá snapshot; hiển thị nút/tuỳ chọn cập nhật thủ công nếu UI có |
+| `PRODUCT_INACTIVE` | Sản phẩm còn tồn tại nhưng đã ngưng bán | Hiển thị dòng snapshot; không cho checkout cho tới khi thay dòng hoặc xử lý sản phẩm |
+| `PRODUCT_MISSING` | Sản phẩm không còn tìm thấy trong danh mục | Hiển thị dòng snapshot; không cho checkout cho tới khi thay dòng |
+| `PRICE_LIST_INACTIVE` | Bảng giá snapshot không còn active | Giữ giá snapshot; cảnh báo để nhân viên biết |
+| `CUSTOMER_CHANGED` | Hồ sơ khách hiện tại khác snapshot đáng kể hoặc khách đã inactive | Giữ snapshot; cho nhân viên chọn lại khách nếu cần |
+
+Không cần chặn lưu lại báo giá chỉ vì `CURRENT_PRICE_DIFFERS` hoặc `PRICE_LIST_INACTIVE`. Chỉ chặn checkout khi còn dòng `PRODUCT_INACTIVE` hoặc `PRODUCT_MISSING` chưa xử lý.
+
 Nếu sản phẩm inactive/missing:
 
 - vẫn hiển thị dòng snapshot để nhân viên biết báo giá cũ có gì
@@ -96,6 +110,8 @@ Không ghi đè snapshot báo giá cũ.
 
 Phase 3A chỉ cần audit tối thiểu: ai tạo, lúc nào, trạng thái và liên kết revision. Màn diff chi tiết để sau.
 
+Nếu báo giá gốc đã `converted`, không tạo revision từ báo giá đó trong Phase 3A. Nhân viên phải tạo báo giá/đơn mới để tránh làm mơ hồ hóa đơn đã sinh từ bản báo giá nào.
+
 ---
 
 ## 6. Checkout từ báo giá
@@ -110,3 +126,16 @@ Khi checkout từ nháp có nguồn báo giá:
 
 Báo giá không giữ hàng và không tạo sản xuất; nếu khách đồng ý thì checkout mới là mốc trừ kho/tiền/công nợ theo rule hóa đơn.
 
+---
+
+## 7. Acceptance Criteria Phase 3A
+
+- Lưu báo giá tạo mã `BG...`, trạng thái `active`, không tạo stock/cash/debt/revenue.
+- Sales Documents tìm được báo giá theo mã exact dù filter thời gian mặc định đang che kết quả.
+- Chi tiết báo giá hiển thị snapshot, không tự cập nhật theo danh mục/bảng giá hiện tại.
+- Mở lại báo giá tạo POS draft local, không tạo bản ghi server draft.
+- Reopen giữ giá snapshot mặc định và trả cảnh báo nếu giá hiện tại khác.
+- Dòng sản phẩm inactive/missing không bị mất khỏi nháp, nhưng checkout bị chặn cho tới khi dòng được xử lý.
+- Lưu lại báo giá đã sửa tạo revision `BG...01`, không ghi đè báo giá cũ.
+- Checkout từ báo giá tạo `HD...`, lưu `source_quote_id/source_quote_code`, đổi quote sang `converted` trong cùng transaction.
+- Báo giá đã `converted` không checkout lại và không tạo revision trong Phase 3A.
