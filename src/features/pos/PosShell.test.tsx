@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { PosShell } from './PosShell'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { OrderService } from '../orders/order-service'
+import type { ProductionQueueService } from '../production-queue/production-queue-service'
 
 function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogService {
   return {
@@ -63,11 +64,25 @@ function makeOrderService(): OrderService {
   }
 }
 
+function makeProductionQueueService(
+  overrides: Partial<ProductionQueueService> = {},
+): ProductionQueueService {
+  return {
+    listQueue: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
+    listHistory: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
+    addToDraft: vi.fn(),
+    dismiss: vi.fn(),
+    restore: vi.fn(),
+    ...overrides,
+  }
+}
+
 it('renders POS landmarks, profile identity, and active product grid', async () => {
   render(
     <PosShell
       catalogService={makeCatalogService()}
       orderService={makeOrderService()}
+      productionQueueService={makeProductionQueueService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
@@ -99,6 +114,7 @@ it('resolves prices again with the selected customer', async () => {
     <PosShell
       catalogService={service}
       orderService={makeOrderService()}
+      productionQueueService={makeProductionQueueService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
@@ -124,6 +140,7 @@ it('lets the cashier edit quantity and unit price in the cart', async () => {
     <PosShell
       catalogService={makeCatalogService()}
       orderService={makeOrderService()}
+      productionQueueService={makeProductionQueueService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
@@ -179,6 +196,7 @@ it('updates automatic cart prices on customer change but preserves manual prices
     <PosShell
       catalogService={service}
       orderService={makeOrderService()}
+      productionQueueService={makeProductionQueueService()}
       currentUser={{
         user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
         organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
@@ -212,4 +230,82 @@ it('updates automatic cart prices on customer change but preserves manual prices
   )
   const priceInputs = screen.getAllByLabelText('Đơn giá Mica 3mm')
   expect(priceInputs[1]).toHaveValue(90000)
+})
+
+it('adds a production queue payload to the local draft cart without checkout', async () => {
+  const catalogService = makeCatalogService({
+    resolvePrices: vi.fn(async () => ({
+      items: [
+        {
+          product_id: 'p-2',
+          unit_price: 65000,
+          price_source: 'default_price_list' as const,
+          price_list_id: 'pl-1',
+        },
+      ],
+    })),
+  })
+  const orderService = makeOrderService()
+  const productionQueueService = makeProductionQueueService({
+    listQueue: vi.fn(async () => ({
+      items: [
+        {
+          id: 'queue-1',
+          production_machine: { id: 'machine-1', code: 'IN-DECAL', name: 'In decal' },
+          raw_file_name: 'KH000001_DECAL-PP_120x50_x2',
+          received_at: '2026-07-01T10:30:00Z',
+          status: 'queued' as const,
+          parse_status: 'ok' as const,
+          parse_error: null,
+          parsed: {},
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })),
+    addToDraft: vi.fn(async () => ({
+      queue_item_id: 'queue-1',
+      customer: { id: 'customer-1', code: 'KH000001', name: 'Khach le' },
+      draft_line: {
+        product_id: 'p-2',
+        product_code: 'DECAL-PP',
+        product_name: 'Decal PP',
+        unit_name: 'm²',
+        sell_method: 'area_m2' as const,
+        width_m: 1.2,
+        height_m: 0.5,
+        linear_m: null,
+        quantity: 2,
+        source: 'production_queue' as const,
+      },
+    })),
+  })
+
+  render(
+    <PosShell
+      catalogService={catalogService}
+      orderService={orderService}
+      productionQueueService={productionQueueService}
+      currentUser={{
+        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+        workstation: null,
+        permissions: ['perm.create_order'],
+      }}
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Thêm KH000001_DECAL-PP_120x50_x2 vào nháp' }),
+  )
+
+  const cart = screen.getByLabelText('K02 giỏ hàng')
+  expect(await within(cart).findByText('Decal PP')).toBeInTheDocument()
+  expect(within(cart).getByText('130.000')).toBeInTheDocument()
+  expect(screen.getByText('Đã chọn KH000001 - Khach le')).toBeInTheDocument()
+  expect(orderService.checkout).not.toHaveBeenCalled()
 })

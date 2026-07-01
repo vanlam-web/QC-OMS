@@ -10,6 +10,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { CatalogPage } from '../features/catalog/CatalogPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
+import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
 
 export function AppRoutes() {
   return (
@@ -57,6 +58,10 @@ function PosRoute() {
   const navigate = useNavigate()
   const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
   const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
+  const productionQueueService = useMemo(
+    () => createBrowserProductionQueueService(getAccessToken),
+    [getAccessToken],
+  )
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
   if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to="/forbidden" replace />
@@ -64,6 +69,7 @@ function PosRoute() {
     <PosShell
       catalogService={catalogService}
       orderService={orderService}
+      productionQueueService={productionQueueService}
       currentUser={currentUser}
       connected={accessConnection === 'connected'}
       onSignOut={() => void signOut()}
