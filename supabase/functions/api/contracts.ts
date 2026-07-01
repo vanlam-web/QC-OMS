@@ -1,7 +1,12 @@
 export type PermissionCode = `perm.${string}`;
 export type ProductStatus = "active" | "inactive";
 export type SellMethod = "quantity" | "area_m2" | "linear_m" | "sheet" | "combo";
-export type PriceSource = "default_price_list" | "customer_group_price_list" | "fallback_default_price_list";
+export type PriceSource =
+  | "default_price_list"
+  | "customer_group_price_list"
+  | "fallback_default_price_list"
+  | "latest_purchase_cost"
+  | "latest_purchase_cost_missing_zero";
 
 export interface RequestContext {
   traceId: string;

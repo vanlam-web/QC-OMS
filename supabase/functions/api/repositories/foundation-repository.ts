@@ -38,6 +38,57 @@ import type {
 
 type DatabaseClient = SupabaseClient;
 
+interface PriceRow {
+  product_id: string;
+  unit_price: number | string;
+  price_list_id: string;
+}
+
+export function resolvePriceRows(input: {
+  productIds: string[];
+  defaultPriceListId: string;
+  customerPriceListId: string | null;
+  priceRows: PriceRow[];
+  latestPurchaseCosts: ReadonlyMap<string, number>;
+}): ResolvedPriceData[] {
+  const customerPrices = new Map<string, ResolvedPriceData>();
+  const defaultPrices = new Map<string, ResolvedPriceData>();
+
+  for (const row of input.priceRows) {
+    const unitPrice = Number(row.unit_price);
+    if (row.price_list_id === input.customerPriceListId) {
+      const latestPurchaseCost = input.latestPurchaseCosts.get(row.product_id);
+      customerPrices.set(row.product_id, {
+        product_id: row.product_id,
+        unit_price: unitPrice === 0 ? latestPurchaseCost ?? 0 : unitPrice,
+        price_source: unitPrice === 0
+          ? latestPurchaseCost === undefined
+            ? "latest_purchase_cost_missing_zero"
+            : "latest_purchase_cost"
+          : "customer_group_price_list",
+        price_list_id: row.price_list_id,
+      });
+      continue;
+    }
+
+    defaultPrices.set(row.product_id, {
+      product_id: row.product_id,
+      unit_price: unitPrice,
+      price_source: input.customerPriceListId === null ? "default_price_list" : "fallback_default_price_list",
+      price_list_id: row.price_list_id,
+    });
+  }
+
+  return input.productIds.map((productId) =>
+    customerPrices.get(productId) ?? defaultPrices.get(productId) ?? {
+      product_id: productId,
+      unit_price: 0,
+      price_source: input.customerPriceListId === null ? "default_price_list" : "fallback_default_price_list",
+      price_list_id: input.defaultPriceListId,
+    }
+  );
+}
+
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
   return {
     async getCurrentUser(input: GetCurrentUserInput): Promise<CurrentUserRecord | null> {
@@ -541,35 +592,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .in("product_id", productIds);
       if (priceRowsError !== null) throw priceRowsError;
 
-      const customerPrices = new Map<string, ResolvedPriceData>();
-      const defaultPrices = new Map<string, ResolvedPriceData>();
-
-      for (const row of priceRows ?? []) {
-        const price = {
-          product_id: row.product_id,
-          unit_price: Number(row.unit_price),
-          price_source: row.price_list_id === customerPriceListId
-            ? "customer_group_price_list" as const
-            : customerPriceListId === null
-            ? "default_price_list" as const
-            : "fallback_default_price_list" as const,
-          price_list_id: row.price_list_id,
-        };
-        if (row.price_list_id === customerPriceListId) {
-          customerPrices.set(row.product_id, price);
-        } else {
-          defaultPrices.set(row.product_id, price);
-        }
-      }
-
-      return productIds.map((productId) =>
-        customerPrices.get(productId) ?? defaultPrices.get(productId) ?? {
-          product_id: productId,
-          unit_price: 0,
-          price_source: customerPriceListId === null ? "default_price_list" : "fallback_default_price_list",
-          price_list_id: defaultPriceList.id,
-        }
-      );
+      return resolvePriceRows({
+        productIds,
+        defaultPriceListId: defaultPriceList.id,
+        customerPriceListId,
+        priceRows: priceRows ?? [],
+        latestPurchaseCosts: new Map(),
+      });
     },
     async checkoutOrder(input): Promise<CheckoutResultData> {
       const { data, error } = await client.rpc("checkout_order_tx", {
