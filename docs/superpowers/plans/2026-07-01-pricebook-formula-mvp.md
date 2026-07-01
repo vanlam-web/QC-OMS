@@ -269,7 +269,7 @@ git commit -m "feat: add price formula schema"
 - Modify: `supabase/functions/api/repositories/foundation-repository.ts`
 - Create: `supabase/tests/functions/price_formula_test.ts`
 
-- [ ] **Step 1: Write failing helper tests**
+- [x] **Step 1: Write failing helper tests**
 
 Create `supabase/tests/functions/price_formula_test.ts`:
 
@@ -348,7 +348,7 @@ Deno.test("formula validation blocks obvious overlapping tiers", () => {
 });
 ```
 
-- [ ] **Step 2: Run helper tests and verify RED**
+- [x] **Step 2: Run helper tests and verify RED**
 
 Run:
 
@@ -358,7 +358,7 @@ npx deno test supabase/tests/functions/price_formula_test.ts --allow-env --allow
 
 Expected: FAIL because helper functions do not exist.
 
-- [ ] **Step 3: Add helper types and implementation**
+- [x] **Step 3: Add helper types and implementation**
 
 In `supabase/functions/api/contracts.ts`, add `price_formula` sources:
 
@@ -418,7 +418,7 @@ export function computeFormulaPrice(input: {
 
 Add internal `computeCost`, `computeProfit`, `computeAdjustment`, `roundUpToThousand`, `validatePriceFormula`, and tier interval overlap helpers.
 
-- [ ] **Step 4: Run helper tests and verify GREEN**
+- [x] **Step 4: Run helper tests and verify GREEN**
 
 Run:
 
@@ -428,7 +428,7 @@ npx deno test supabase/tests/functions/price_formula_test.ts --allow-env --allow
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add supabase/functions/api/contracts.ts supabase/functions/api/repositories/foundation-repository.ts supabase/tests/functions/price_formula_test.ts

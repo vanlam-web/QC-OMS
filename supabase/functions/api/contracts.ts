@@ -6,7 +6,9 @@ export type PriceSource =
   | "customer_group_price_list"
   | "fallback_default_price_list"
   | "latest_purchase_cost"
-  | "latest_purchase_cost_missing_zero";
+  | "latest_purchase_cost_missing_zero"
+  | "price_formula"
+  | "price_formula_missing_cost_zero";
 
 export interface RequestContext {
   traceId: string;

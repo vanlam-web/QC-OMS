@@ -44,6 +44,168 @@ interface PriceRow {
   price_list_id: string;
 }
 
+export type PriceFormulaCost =
+  | { type: "fixed"; amount: number }
+  | { type: "amount_plus_percent"; amount?: number; percent_of_latest_purchase_cost?: number };
+
+export type PriceFormulaTier =
+  | {
+    operator: "<" | "<=" | ">" | ">=" | "=";
+    value: number;
+    amount?: number;
+    percent?: number;
+  }
+  | {
+    from_exclusive?: number;
+    from_inclusive?: number;
+    to_exclusive?: number;
+    to_inclusive?: number;
+    amount?: number;
+    percent?: number;
+  };
+
+export type PriceFormulaProfit =
+  | { type: "fixed"; amount: number; percent?: number }
+  | { type: "tiers"; tiers: PriceFormulaTier[] };
+
+export type PriceFormulaAdjustment =
+  | { type: "amount"; amount: number }
+  | { type: "percent"; percent: number };
+
+export interface PriceFormulaInput {
+  name: string;
+  product_filter: Record<string, unknown>;
+  cost_formula: PriceFormulaCost;
+  profit_formula: PriceFormulaProfit;
+  price_list_adjustments: Record<string, PriceFormulaAdjustment>;
+}
+
+export function computeFormulaPrice(input: {
+  latestPurchaseCost: number | null;
+  costFormula: PriceFormulaCost;
+  profitFormula: PriceFormulaProfit;
+  priceListAdjustment?: PriceFormulaAdjustment;
+}): {
+  latest_purchase_cost: number;
+  cost_amount: number;
+  profit_amount: number;
+  adjustment_amount: number;
+  computed_price: number;
+} {
+  const latestPurchaseCost = input.latestPurchaseCost ?? 0;
+  const costAmount = computeFormulaCost(input.costFormula, latestPurchaseCost);
+  const profitAmount = computeFormulaProfit(input.profitFormula, latestPurchaseCost);
+  const basePrice = latestPurchaseCost + costAmount + profitAmount;
+  const adjustmentAmount = computeFormulaAdjustment(input.priceListAdjustment, basePrice);
+
+  return {
+    latest_purchase_cost: latestPurchaseCost,
+    cost_amount: costAmount,
+    profit_amount: profitAmount,
+    adjustment_amount: adjustmentAmount,
+    computed_price: roundUpToThousand(basePrice + adjustmentAmount),
+  };
+}
+
+export function validatePriceFormula(input: PriceFormulaInput): void {
+  if (input.product_filter !== null && typeof input.product_filter === "object" && "group_id" in input.product_filter) {
+    throw new Error("FORMULA_PRODUCT_GROUP_UNSUPPORTED");
+  }
+
+  if (input.profit_formula.type !== "tiers") {
+    return;
+  }
+
+  const intervals: Array<{ min: number; max: number; tier: PriceFormulaTier }> = [];
+  for (const tier of input.profit_formula.tiers) {
+    const interval = tierToInterval(tier);
+    if (interval === null) {
+      throw new Error("FORMULA_TIER_INVALID");
+    }
+    if (intervals.some((existing) => intervalsOverlap(existing, interval))) {
+      throw new Error("FORMULA_TIER_OVERLAP");
+    }
+    intervals.push({ ...interval, tier });
+  }
+}
+
+function computeFormulaCost(formula: PriceFormulaCost, latestPurchaseCost: number): number {
+  if (formula.type === "fixed") {
+    return roundMoney(formula.amount);
+  }
+
+  return roundMoney((formula.amount ?? 0) + latestPurchaseCost * ((formula.percent_of_latest_purchase_cost ?? 0) / 100));
+}
+
+function computeFormulaProfit(formula: PriceFormulaProfit, latestPurchaseCost: number): number {
+  if (formula.type === "fixed") {
+    return roundMoney((formula.amount ?? 0) + latestPurchaseCost * ((formula.percent ?? 0) / 100));
+  }
+
+  const matchingTier = formula.tiers.find((tier) => tierMatches(tier, latestPurchaseCost));
+  if (matchingTier === undefined) {
+    return 0;
+  }
+
+  return roundMoney((matchingTier.amount ?? 0) + latestPurchaseCost * ((matchingTier.percent ?? 0) / 100));
+}
+
+function computeFormulaAdjustment(adjustment: PriceFormulaAdjustment | undefined, priceBeforeAdjustment: number): number {
+  if (adjustment === undefined) {
+    return 0;
+  }
+  if (adjustment.type === "amount") {
+    return roundMoney(adjustment.amount);
+  }
+  return roundMoney(priceBeforeAdjustment * (adjustment.percent / 100));
+}
+
+function roundMoney(value: number): number {
+  return Math.ceil(value);
+}
+
+function roundUpToThousand(value: number): number {
+  return Math.ceil(value / 1000) * 1000;
+}
+
+function tierMatches(tier: PriceFormulaTier, value: number): boolean {
+  if ("operator" in tier) {
+    if (tier.operator === "<") return value < tier.value;
+    if (tier.operator === "<=") return value <= tier.value;
+    if (tier.operator === ">") return value > tier.value;
+    if (tier.operator === ">=") return value >= tier.value;
+    return value === tier.value;
+  }
+
+  const aboveMin = tier.from_exclusive !== undefined
+    ? value > tier.from_exclusive
+    : tier.from_inclusive !== undefined
+    ? value >= tier.from_inclusive
+    : true;
+  const belowMax = tier.to_exclusive !== undefined
+    ? value < tier.to_exclusive
+    : tier.to_inclusive !== undefined
+    ? value <= tier.to_inclusive
+    : true;
+  return aboveMin && belowMax;
+}
+
+function tierToInterval(tier: PriceFormulaTier): { min: number; max: number } | null {
+  if ("operator" in tier) {
+    if (tier.operator === "<" || tier.operator === "<=") return { min: Number.NEGATIVE_INFINITY, max: tier.value };
+    if (tier.operator === ">" || tier.operator === ">=") return { min: tier.value, max: Number.POSITIVE_INFINITY };
+    return { min: tier.value, max: tier.value };
+  }
+
+  const min = tier.from_exclusive ?? tier.from_inclusive ?? Number.NEGATIVE_INFINITY;
+  const max = tier.to_exclusive ?? tier.to_inclusive ?? Number.POSITIVE_INFINITY;
+  return min <= max ? { min, max } : null;
+}
+
+function intervalsOverlap(left: { min: number; max: number }, right: { min: number; max: number }): boolean {
+  return left.min <= right.max && right.min <= left.max;
+}
+
 export function resolvePriceRows(input: {
   productIds: string[];
   defaultPriceListId: string;
