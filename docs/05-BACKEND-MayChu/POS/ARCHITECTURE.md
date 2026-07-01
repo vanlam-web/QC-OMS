@@ -31,7 +31,7 @@ Component UI **TUYỆT ĐỐI KHÔNG** viết trực tiếp trong `.tsx` / `.sve
 | **Order note** | Ghi chú tổng tab active | `setNote(text)` |
 | **Customer** | KH đang chọn, bảng giá, % chiết khấu | `setCustomer(id)`, `clearCustomer()`, `setPriceList(id)` |
 | **Toast** | Trạng thái hiển thị Toast | `showMissingPhoneToast()`, `hideToast()` |
-| **Workstation queue** | Danh sách file đang chờ K02-D | `enqueueFile()`, `removeFromQueue()` |
+| **Production queue** | Danh sách file máy sản xuất đang chờ K02-D | `enqueueFile()`, `removeFromQueue()` |
 | **Connection** | Realtime: Connected / Connecting / Disconnected | `setConnection(state)` |
 | **Active user** | Hồ sơ nhân viên đang đăng nhập + `user_id` session | `setUser(profile)` |
 
@@ -148,7 +148,7 @@ Ngay lập tức gọi: POST /api/v1/orders/HD010664/lock
     ↓
 Server ghi cờ locked_by + locked_at vào bảng orders
     ↓
-Realtime push xuống các máy trạm xưởng
+Realtime push xuống màn hình/máy sản xuất liên quan
     ↓
 Màn hình xưởng hiển thị: [🔒 Đang thanh toán tại quầy]
     ↓

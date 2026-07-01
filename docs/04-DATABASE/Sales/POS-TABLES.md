@@ -450,30 +450,34 @@ Ghi lịch sử đổi trạng thái của báo giá và hóa đơn để truy v
 
 ---
 
-## 11. Supabase Realtime Channel — `workstation_queue`
+## 11. Production queue placeholder
 
 ### Mục đích
 
-Realtime channel để máy trạm xưởng gửi sự kiện, phục vụ luồng K02-D ở các phase sau.
+K02-D dùng hàng đợi máy sản xuất để đưa thông báo/file vào POS và tạo hóa đơn nháp. Chi tiết bảng production queue, event history, claim và restore chưa nằm trong Sales tables; sẽ được thiết kế ở phase Production queue.
 
-### Cấu hình
+Sales chỉ lưu kết quả khi nhân viên chốt/lưu báo giá hoặc hóa đơn. Thông báo máy sản xuất không tự tạo `orders`, không tự trừ kho và không tự ghi doanh thu.
+
+### Realtime channel dự kiến
 
 | Thành phần | Giá trị |
 |---|---|
-| Channel name | `workstation_queue` |
+| Channel name | `production_queue` |
 | Type | Broadcast |
 | Visibility | Private |
 
-### Event payload dự kiến
+### Payload tối thiểu dự kiến
 
 ```json
 {
-  "workstation_id": "string",
-  "event_type": "job_started | job_completed | job_cancelled",
-  "order_id": "string",
+  "production_machine_id": "string",
+  "queue_item_id": "string",
+  "event_type": "queued | claimed | dismissed | restored",
   "timestamp": "ISO8601"
 }
 ```
+
+Payload chính thức xem draft `docs/superpowers/specs/2026-07-01-production-queue-contract-draft.md` trước khi chuyển thành Database/Backend Source of Truth.
 
 ---
 
