@@ -2,7 +2,7 @@
 
 > Ngày rà: 2026-07-01  
 > Trạng thái: Draft tham khảo, chưa phải Source of Truth  
-> Nguồn: KiotViet `Mua hàng`, `Nhà cung cấp`, `Nhập hàng`, `Mua dịch vụ`
+> Nguồn: KiotViet `Mua hàng`, `Nhà cung cấp`, `Nhập hàng`, `Mua dịch vụ`, `Hóa đơn đầu vào`, `Báo cáo nhà cung cấp`
 
 ---
 
@@ -82,6 +82,16 @@ KiotViet có:
 - Cột: mã phiếu, thời gian, loại chi, người nhận, cần thanh toán, đã thanh toán, còn phải trả, ghi chú, trạng thái.
 - Có thể liên quan tới sổ quỹ và công nợ đối tác.
 
+Quan sát ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tháng này` không có kết quả.
+- Màn có tổng nhanh: `Cần thanh toán`, `Đã thanh toán`, `Còn phải trả`.
+- Đối tượng nộp/nhận có lựa chọn `Tất cả`, `Nhà cung cấp`, `Khác`.
+- Công nợ đối tác có lọc `Tất cả`, `Đã thanh toán`, `Thanh toán 1 phần`, `Chưa thanh toán`.
+- Datepicker màn này không có nút mở rộng nhanh kiểu `vào đây`; chưa xác nhận được dữ liệu dài hạn trong lượt rà này.
+
+Kết luận: `Mua dịch vụ` giống một biến thể của phiếu chi/công nợ đối tác. Với QC-OMS MVP, chưa cần module riêng nếu Sổ quỹ đã có phiếu chi rõ loại chi, người nhận và tài khoản tiền.
+
 ### 2.4. Đặt hàng nhập
 
 KiotViet có màn `Đặt hàng nhập` trước khi nhập hàng thật.
@@ -127,6 +137,37 @@ Quan sát ngày `01/07/2026`:
 
 Kết luận: trả hàng nhập không phải nghiệp vụ đang dùng thường xuyên. QC-OMS nên để sau Purchase/Supplier; trong MVP, xử lý sai lệch tồn bằng sửa/hủy chứng từ, kiểm kho hoặc điều chỉnh tồn theo quy tắc đã chốt.
 
+### 2.6. Hóa đơn đầu vào
+
+KiotViet có màn `Hóa đơn đầu vào` để quản lý hóa đơn đầu vào và tối ưu nhập liệu khi tạo phiếu nhập, phiếu chi.
+
+Quan sát ngày `01/07/2026`:
+
+- Màn hiển thị trạng thái `Chưa có kết nối với Cơ quan Thuế`.
+- Có nút `Kết nối ngay`.
+- Đây là tính năng thuộc nhóm hóa đơn điện tử/thuế, không phải luồng nhập kho vật lý tối thiểu.
+
+Kết luận: QC-OMS không làm hóa đơn điện tử/VAT/thuế trong scope hiện tại, nên bỏ `Hóa đơn đầu vào` khỏi MVP. Nếu cần lưu số hóa đơn đầu vào, chỉ lưu như trường tham chiếu text trên phiếu nhập, không tích hợp Cơ quan Thuế.
+
+### 2.7. Báo cáo nhà cung cấp
+
+KiotViet có `Báo cáo nhà cung cấp` trong nhóm Phân tích.
+
+Các trường chính:
+
+- Kiểu hiển thị: Biểu đồ hoặc Báo cáo.
+- Mối quan tâm: mặc định `Nhập hàng`.
+- Thời gian.
+- Tìm nhà cung cấp theo mã, tên, số điện thoại.
+- Biểu đồ `Top 10 nhà cung cấp nhập hàng nhiều nhất`.
+
+Quan sát ngày `01/07/2026`:
+
+- Bộ lọc mặc định `Tuần này` không có dữ liệu đáng kể.
+- Báo cáo này phụ thuộc dữ liệu Purchase/Supplier, không độc lập với module nhập hàng.
+
+Kết luận: chỉ làm báo cáo NCC sau khi Purchase/Supplier được đưa vào Source of Truth. Trong MVP báo cáo tài chính không hiển thị công nợ NCC nếu Purchase chưa làm.
+
 ---
 
 ## 3. Đề xuất cho QC-OMS
@@ -149,6 +190,8 @@ MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
 Mua dịch vụ nên đi theo Finance/Cashbook trước, không nhất thiết nằm chung với nhập hàng vật tư.
 
 `Đặt hàng nhập` và `Trả hàng nhập` nên là phase sau của Purchase, không nằm trong lát cắt đầu tiên.
+
+`Hóa đơn đầu vào` và `Báo cáo nhà cung cấp` không làm trước Purchase; `Hóa đơn đầu vào` còn thuộc phạm vi thuế/HĐĐT đã loại khỏi MVP.
 
 ---
 
@@ -224,6 +267,7 @@ Công nợ NCC tối thiểu:
 - Trả hàng nhập.
 - Đặt hàng nhập.
 - Hóa đơn đầu vào điện tử.
+- Báo cáo nhà cung cấp.
 - Chiết khấu thanh toán NCC.
 - Kênh bán/đối tác giao hàng trong nhập hàng.
 - Nhóm nhà cung cấp phức tạp.

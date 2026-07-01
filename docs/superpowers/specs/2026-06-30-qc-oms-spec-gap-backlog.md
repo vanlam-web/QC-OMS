@@ -334,6 +334,9 @@ Quan sát KiotViet cập nhật ngày `2026-07-01`:
 - Mở rộng `01/07/2016 - 01/07/2026` thấy `626 giao dịch`, tổng `Cần trả NCC` khoảng `2,048,849,460`.
 - `Đặt hàng nhập` chỉ thấy `4` phiếu trong cùng khoảng thời gian, tổng khoảng `5,450,000`.
 - `Trả hàng nhập` vẫn không có giao dịch trong cùng khoảng thời gian.
+- `Mua dịch vụ` giống phiếu chi/công nợ đối tác; chưa cần module riêng nếu Sổ quỹ có phiếu chi đủ loại chi/người nhận/tài khoản tiền.
+- `Hóa đơn đầu vào` đang yêu cầu kết nối Cơ quan Thuế, thuộc phạm vi HĐĐT/thuế đã loại khỏi MVP.
+- `Báo cáo nhà cung cấp` phụ thuộc Purchase/Supplier, để sau khi module nhập hàng được chốt.
 - Vì vậy Purchase/NCC là nghiệp vụ có dữ liệu thật, nhưng vẫn nên để sau MVP bán hàng cho tới khi nhập tồn vật lý cuộn/tấm được chốt.
 
 Owner cần chốt:
