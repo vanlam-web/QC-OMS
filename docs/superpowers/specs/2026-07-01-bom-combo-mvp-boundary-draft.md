@@ -51,20 +51,21 @@ MVP chia 2 cap:
 
 | Truong hop | Cach xu ly |
 |---|---|
-| Combo co BOM ro rang, thanh phan da cau hinh don vi/so luong day du | Co the tru kho theo thanh phan khi chot hoa don |
-| Combo chua co BOM ro hoac nhan vien tao/sua tu do | Chi luu snapshot dong ban; khong tu deep-scan/tru vat tu thanh phan neu chua du cau hinh |
+| Combo co BOM san trong danh muc | Tru kho theo thanh phan khi chot hoa don |
+| Nhan vien them/sua BOM ngay trong POS va chon `Khong luu - Chi tru kho` | BOM vua nhap la dinh muc cua dong hang do; tru kho theo BOM nay khi chot hoa don, khong tao combo moi |
+| Nhan vien them/sua BOM ngay trong POS va chon `Luu Combo moi` | Tru kho theo BOM nay cho hoa don hien tai va luu thanh combo moi trong danh muc de dung lai |
 | Vat tu roll/sheet trong combo | Neu tru thanh phan thi van phai theo rule roll/sheet vat ly, khong tru tong m2 gop |
 | Combo long combo | Khong bat buoc deep-scan trong MVP; neu chua chot thi coi combo con la snapshot dong hang |
 
-Nguyen tac an toan: **khong du cau hinh thi khong tu dong tru vat tu con**. He thong co the canh bao thieu cau hinh de quan ly bo sung sau.
+Nguyen tac an toan: **co BOM thi tru theo BOM, khong co BOM thi khong tu doan vat tu con**. He thong co the canh bao de quan ly bo sung BOM sau.
 
-### 2.3. Khong tu luu combo moi
+### 2.3. Luu hoac khong luu combo moi
 
 Khi nhan vien sua BOM trong don:
 
-- Mac dinh chi luu snapshot trong chung tu.
-- Khong tu tao SKU/combo moi.
-- Neu can "Luu Combo moi", day la thao tac quan tri danh muc va de sau MVP.
+- Mac dinh `Khong luu - Chi tru kho`: luu snapshot BOM trong chung tu va dung BOM do de tru kho cho hoa don hien tai.
+- Neu chon `Luu Combo moi`: tao combo/SKU moi trong danh muc de dung lai sau.
+- Khong tu tao combo moi neu nhan vien khong chon `Luu Combo moi`.
 
 ---
 
@@ -74,16 +75,16 @@ Trong MVP, K02-A co the giu nut `[Sua BOM]` neu san pham da co BOM ro.
 
 Nhung can giam ky vong:
 
-- Khong bat buoc ho tro combo cap 2 deep-scan.
+- Khong bat buoc ho tro combo cap 2 deep-scan trong MVP.
 - Khong bat buoc tinh loi nhuan chuan ke toan tu BOM.
 - Tong gia vat tu kho neu hien thi chi la tham khao, khong phai loi nhuan chot.
-- Neu BOM thieu cau hinh, checkout khong nen crash; hien canh bao va chi luu snapshot dong ban theo rule da chot.
+- Neu dong combo khong co BOM san va nhan vien cung khong them BOM phat sinh, checkout van tinh tien theo dong combo nhung khong co vat tu con de tru; can hien canh bao neu san pham duoc danh dau la can BOM.
 
 Thong diep UI de sau:
 
 ```text
-Combo nay chua du cau hinh vat tu de tru kho tu dong.
-Hoa don van duoc luu; vui long kiem tra ton kho/bo sung BOM sau.
+Combo nay chua co BOM de tru vat tu con.
+Hoa don van duoc luu; vui long kiem tra ton kho hoac bo sung BOM sau.
 ```
 
 ---
@@ -115,12 +116,12 @@ Checkout hoa don
   -> Validate dong ban
   -> Voi dong normal/area/linear/sheet: tru kho theo rule Inventory
   -> Voi dong combo:
-       neu co BOM ro va du cau hinh:
-         tao stock movement cho thanh phan
-       neu BOM thieu/chua chot:
+       neu co BOM san hoac BOM phat sinh trong POS:
+         tao stock movement cho thanh phan theo BOM do
+       neu khong co BOM:
          luu snapshot combo
-         khong tu tao stock movement con
-         ghi canh bao/flag de quan ly xu ly sau neu can
+         khong co vat tu con de tru
+         ghi canh bao/flag neu san pham can BOM
   -> Ghi tien/cong no/so quy nhu binh thuong
 ```
 
@@ -156,7 +157,7 @@ Khi co thoi gian, nen ha mot so cau trong K02-A tu "bat buoc" thanh "sau MVP":
 - "Deep-Scan khi thanh toán" -> sau MVP neu BOM da chot.
 - "Combo cap 2 khoa/deep scan backend" -> draft, chua bat buoc.
 - "Tong gia vat tu kho" -> tham khao, khong phai loi nhuan chuan.
-- "Luu Combo moi" -> chuc nang quan tri danh muc, de sau.
+- "Luu Combo moi" -> duoc phep neu phase POS/BOM lam den; khong tu dong luu neu nhan vien khong chon.
 
 ---
 

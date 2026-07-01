@@ -300,14 +300,15 @@ Source of Truth cần bổ sung khi phase này bắt đầu:
 
 - Combo trong POS trước hết là dòng bán hàng có snapshot.
 - Giá bán combo độc lập với tổng giá vật tư thành phần.
-- Nếu BOM rõ và đủ cấu hình, có thể trừ kho theo thành phần khi chốt hóa đơn.
-- Nếu BOM chưa rõ hoặc thiếu cấu hình, MVP không tự deep-scan/trừ vật tư con; chỉ lưu snapshot và cảnh báo nếu cần.
-- Sửa BOM trong đơn mặc định chỉ lưu snapshot chứng từ, không tự tạo SKU/combo mới.
+- Nếu combo có BOM sẵn trong danh mục, trừ kho theo BOM đó khi chốt hóa đơn.
+- Nếu nhân viên thêm/sửa BOM ngay trong POS và chọn `Không lưu — Chỉ trừ kho`, BOM phát sinh là định mức của dòng hàng đó và vẫn dùng để trừ kho.
+- Nếu chọn `Lưu Combo mới`, lưu cấu trúc thành combo mới trong danh mục để dùng lại.
+- Không tự tạo SKU/combo mới nếu nhân viên không chọn lưu.
 
 Còn thiếu/chưa chốt:
 
 - BOM cấp 1/cấp 2 là cấu trúc bán hàng hay cấu trúc vật tư sản xuất.
-- Quy tắc chỉnh BOM trong đơn có lưu thành combo mới hay chỉ snapshot trong đơn.
+- Quy tắc chỉnh BOM trong đơn đã chốt: không lưu thì là BOM phát sinh dùng cho hóa đơn đó; có lưu thì tạo combo mới.
 - Cách tính giá bán combo so với tổng chi phí vật tư.
 - Cách deep-scan khi checkout và khi preview.
 

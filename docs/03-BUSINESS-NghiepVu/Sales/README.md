@@ -22,9 +22,10 @@
 BOM/Combo chưa phải nghiệp vụ đã chốt sâu trong MVP. Hiện tại chỉ giữ ranh giới:
 
 - Combo là dòng bán hàng có snapshot.
-- Nếu BOM đủ cấu hình thì có thể trừ vật tư thành phần khi chốt hóa đơn.
-- Nếu BOM chưa đủ cấu hình thì không tự deep-scan/trừ vật tư con.
-- Lưu combo mới từ POS và combo lồng nhau để phase sau.
+- Nhân viên có thể thêm/sửa BOM ngay trong POS.
+- Nếu chọn **Không lưu — Chỉ trừ kho**, BOM vừa nhập là định mức của dòng hàng đó và vẫn dùng để trừ kho khi chốt hóa đơn.
+- Nếu chọn **Lưu Combo mới**, cấu trúc đó được lưu thành combo mới trong danh mục để dùng lại sau.
+- Combo lồng nhau/deep-scan phức tạp để phase sau.
 
 Draft điều phối: `../../superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`.
 
