@@ -1,7 +1,7 @@
 # SalesDocuments — Chứng từ bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng
-> **Phase hiện tại:** Phase 2D đã merge chỉ có readonly danh sách + chi tiết hóa đơn
+> **Phase hiện tại:** Đã có danh sách/chi tiết chứng từ và luồng báo giá `BG...` mở lại vào POS
 > **Phạm vi dài hạn:** Danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS
 
 ---
@@ -18,15 +18,16 @@ Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản gi
 
 | Nhóm năng lực | Trạng thái | Ghi chú |
 |---|---|---|
-| Danh sách chứng từ | ✅ Phase 2D | Readonly list cho hóa đơn `HD...`, có tìm kiếm mã chứng từ |
-| Chi tiết chứng từ | ✅ Phase 2D | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements |
-| In lại bill | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
-| Mở lại báo giá | ⏭️ Future phase | Chưa nằm trong Phase 2D |
+| Danh sách chứng từ | ✅ Đã có | List cho hóa đơn `HD...` và báo giá `BG...`, có tìm kiếm mã chứng từ |
+| Chi tiết chứng từ | ✅ Đã có | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements nếu có |
+| Mở lại báo giá | ✅ Đã có | Mở `BG...` active vào POS draft local, giữ snapshot và cảnh báo lệch |
+| In/xem báo giá | ⏭️ Phase 3B | Mẫu báo giá mặc định, frontend-only print view |
+| In lại bill hóa đơn | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
 | Sửa hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
 | Hủy hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
 | Đảo kho/tiền/công nợ | ⏭️ Future phase | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |
 
-Phase 2D không biến SalesDocuments thành module quản lý đầy đủ. Nó chỉ giúp xem lại chứng từ đã phát sinh để đối chiếu.
+SalesDocuments hiện vẫn không phải module quản lý đầy đủ. Nó giúp tra cứu chứng từ đã phát sinh và mở lại báo giá; sửa/hủy hóa đơn, đảo kho/tiền/công nợ và in bill nâng cao vẫn là future phase.
 
 ---
 
@@ -36,6 +37,7 @@ Phase 2D không biến SalesDocuments thành module quản lý đầy đủ. Nó
 |---|---|
 | [01-SALES-DOCUMENT-LIST.md](./01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc, cột, thao tác nhanh |
 | [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ readonly hiện tại; mô tả sửa/hủy/in lại là future phase |
+| [04-QUOTE-PRINT-PHASE-3B.md](./04-QUOTE-PRINT-PHASE-3B.md) | Source of Truth implement-ready cho in/xem báo giá đơn giản |
 
 ---
 

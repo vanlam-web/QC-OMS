@@ -2,6 +2,9 @@
 
 Tài liệu này dùng để nối mạch giữa các session Codex.
 
+Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm tại
+[WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md). Mọi slice mới hoặc review PR nên đọc file đó trước để tránh quên nhịp làm việc.
+
 ## Trạng thái branch/worktree
 
 - Main working branch: `main`
@@ -17,6 +20,12 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 - Phase 2C plan: `docs/superpowers/plans/2026-07-01-phase-2c-pos-discount-ui.md`
 - Phase 2D đã merge vào `main`: PR #8, merge commit `552db05`
 - Phase 2D plan: `docs/superpowers/plans/2026-07-01-phase-2d-sales-documents-readonly.md`
+- Phase 3A quote/reopen đã merge vào `main`: PR #15, merge commit `f6df941`
+- PriceBook zero price correction đã merge vào `main`: PR #16, merge commit `75ebc89`
+- PriceBook formula MVP đã merge vào `main`: PR #17, merge commit `c72ab46`
+- POS checkout data integrity đã merge vào `main`: PR #18, merge commit `5544421`
+- Sales Documents dimensions detail đã merge vào `main`: PR #19, merge commit `e34bc61`
+- PriceBook UI refinement đã merge vào `main`: PR #20, merge commit `3374312`
 
 ## Phase 0 — Foundation
 
@@ -330,7 +339,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 - [x] `BG...` chỉ là báo giá/snapshot giá; không giữ kho, không tạo sản xuất, không tạo tiền/công nợ/doanh thu.
 - [x] Không làm HĐĐT/VAT/thuế kế toán trong scope hiện tại.
 - [x] POS Customer modal không có tab `Thông tin xuất hóa đơn`; thông tin pháp lý nếu cần chỉ là thông tin nội bộ.
-- [x] Price Book: giá khai báo `0` là giá hợp lệ; không fallback vì giá falsy.
+- [x] Price Book: giá `0` không fallback vì falsy; bảng giá chung giữ 0, bảng giá nhóm dùng 0 làm rule lấy giá nhập gần nhất, thiếu giá nhập thì vẫn 0.
 - [x] Reports có End Of Day SoT cho phase sau, nhưng không implement trong Phase 2A.
 - [x] Inventory adjustment SoT mới dành cho future Inventory branch; không đưa vào POS checkout UI.
 - [x] MVP scope lock `c4c4f67`: direct checkout tại xưởng; không mở lại Orders/Giao hàng/COD/HĐĐT/VAT/kênh online/HR/payroll trong MVP.
@@ -342,7 +351,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 - [x] Sync docs SoT mới vào implementation branch.
 - [x] Cart lines editable: số lượng, đơn giá, xóa dòng.
 - [x] Manual price marker và preserve khi đổi khách/bảng giá.
-- [x] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu.
+- [x] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu; nếu giá nhóm 0 thì resolve theo giá nhập gần nhất hoặc 0 nếu chưa có giá nhập.
 - [x] Customer debt display trong checkout.
 - [x] Tách tiền trả hóa đơn hiện tại và tiền thu nợ cũ trong UI/payload.
 - [x] Cash/bank/mixed payment tối đa một tài khoản bank.
@@ -504,9 +513,146 @@ Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 ### Còn lại sau Phase 2D
 
 - Không có working branch Phase 2 tiếp theo đang được checklist này theo dõi.
-- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
+- Phase 3A lưu/mở lại báo giá và PriceBook formula MVP đã merge sau Phase 2D.
+- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, in báo giá đơn giản Phase 3B, production ingestion tự động hoặc Purchase/Supplier.
 - Các phần vẫn nằm ngoài scope hiện tại: delivery/COD, kênh online, tax/HĐĐT.
 - Không mở rộng scope mới từ checklist này.
+
+## Phase 3A — Quote BG + reopen into POS draft
+
+Status: ✅ Hoàn thành và đã merge vào `main` qua PR #15
+
+### Phạm vi đã hoàn thành
+
+- [x] POS lưu báo giá `BG...`.
+- [x] Sales Documents list/detail cho báo giá bằng bộ lọc `Báo giá`, không có module/menu báo giá riêng.
+- [x] Mở lại báo giá vào POS draft local, không tạo server draft.
+- [x] Giữ giá snapshot mặc định; cảnh báo nếu giá hiện tại khác.
+- [x] Cảnh báo sản phẩm inactive/missing và yêu cầu xử lý trước checkout.
+- [x] Từ nháp mở lại, bấm `BÁO GIÁ` tạo `BG...` mới độc lập, không revision/copy link.
+- [x] Từ nháp mở lại, bấm `THANH TOÁN` tạo `HD...` như checkout POS bình thường.
+- [x] Đóng nháp bằng `X` không ghi gì thêm; báo giá gốc giữ nguyên `active`.
+- [x] Báo giá không tự hủy/hết hạn theo thời gian.
+
+### Ngoài phạm vi Phase 3A
+
+- [ ] In/xem báo giá đơn giản bằng mẫu mặc định; gửi thủ công ngoài hệ thống nếu cần.
+- [ ] Không làm hủy báo giá thủ công; báo giá không dùng nữa cứ để nguyên để tra cứu/dùng lại sau.
+- [ ] Không làm nút/endpoint sao chép báo giá riêng.
+- [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
+- [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.
+
+## Phase 3B — Simple quote print
+
+Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
+
+### Phạm vi dự kiến
+
+- [ ] Từ chi tiết báo giá `BG...`, mở preview mẫu báo giá mặc định.
+- [ ] Ưu tiên route riêng `/sales-documents/:id/quote-print` hoặc tương đương, frontend-only.
+- [ ] Dùng snapshot báo giá đã lưu; không tự resolve lại giá/danh mục hiện tại.
+- [ ] Hiển thị cửa hàng, mã/ngày báo giá, nhân viên, khách hàng snapshot, dòng hàng, kích thước/m2/mét tới, chiết khấu, tổng tiền và ghi chú.
+- [ ] In bằng trình duyệt/browser print, có CSS print ẩn nav/sidebar/button.
+- [ ] Không làm thay đổi trạng thái báo giá và không phát sinh kho/tiền/công nợ/doanh thu.
+
+### Ngoài phạm vi Phase 3B
+
+- [ ] Export PDF/ảnh ở backend.
+- [ ] Nhiều mẫu bill/báo giá tùy biến.
+- [ ] Tự gửi Zalo/Facebook/email hoặc lưu lịch sử gửi.
+- [ ] In lại hóa đơn/bill nâng cao nếu chưa có Bill Preview riêng.
+
+## PriceBook formula MVP
+
+Status: ✅ Hoàn thành và đã merge vào `main` qua PR #17 và PR #20 correction
+
+### Phạm vi đã hoàn thành
+
+- [x] Chỉ dùng `giá nhập cuối` làm nguồn tính giá; không dùng giá vốn bình quân trong PriceBook MVP.
+- [x] `giá nhập cuối` đọc từ `products.latest_purchase_cost`; trước Purchase receipt hoàn chỉnh có thể lấy từ import/admin edit, sau này receipt `posted` cập nhật.
+- [x] Product admin/API cho phép `perm.edit_price_book` nhập/sửa `latest_purchase_cost` tạm thời, có audit metadata tối thiểu.
+- [x] Tạo bảng giá chỉ cần tên; không có phạm vi áp dụng hoặc thời gian hiệu lực.
+- [x] Lưới giá có cột cố định `Mã hàng`, `Tên hàng`, `Giá nhập cuối`, `Chi phí`, `Lợi nhuận`.
+- [x] Các cột bảng giá lấy dynamic từ `price_lists` đang active; không hard-code chỉ `25/26/30/35/40`.
+- [x] Formula filter slice đầu chỉ dùng field hiện có: tên chứa, mã chứa, `sell_method`, `status = active`; chưa làm `product_groups/group_id`.
+- [x] Cột `Chi phí`: chọn giá cố định hoặc công thức `+ số tiền + % giá nhập cuối`.
+- [x] Cột `Lợi nhuận`: chọn giá cố định hoặc công thức điều kiện theo giá nhập cuối.
+- [x] Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
+- [x] Giá cuối luôn làm tròn lên `1,000đ`, không có UI chọn làm tròn.
+- [x] Ô giá có 2 chế độ dữ liệu: giá tay hoặc theo công thức.
+- [x] Ô theo công thức tự tính lại khi `giá nhập cuối` thay đổi.
+- [x] Ô theo công thức ghi nhớ công thức tới khi người dùng nhập giá tay hoặc gắn công thức khác.
+- [x] Formula rule lưu structured trong DB ngay từ slice đầu; không chỉ tính tạm ở UI.
+- [x] Gắn công thức hàng loạt có preview trước khi áp dụng cho bộ lọc.
+- [x] `perm.edit_price_book` đủ cho preview/gắn công thức; audit tối thiểu actor/filter/số dòng bị ảnh hưởng.
+- [x] Backend test rounding up `1,000đ`, formula mode resolve, missing latest cost = `0`, và tier overlap validation.
+- [x] PR #20 correction đổi grid-first UI, thêm cột `Chi phí`/`Lợi nhuận`, bỏ placeholder hàng loạt và dùng nhãn preview trung tính theo từng ô.
+
+### Known gap sau PR #20
+
+- [ ] UI chưa hiển thị nhãn `Giá tay`/`Theo công thức` theo từng ô bảng giá vì API chưa trả `current_mode` trong từng `computed_prices[]`.
+- [ ] Nếu Owner muốn nhãn này luôn đúng per-cell, cần mở slice API/type expansion trước UI refinement tiếp theo.
+
+### Ngoài phạm vi slice đầu
+
+- [ ] Công thức Excel/free-form `+ - * /` tự do.
+- [ ] Chọn nguồn giá vốn bình quân.
+- [ ] Điều kiện phức tạp ở cột bảng giá.
+- [ ] Phạm vi áp dụng/thời gian hiệu lực kiểu KiotViet.
+- [ ] Product group schema/UI/filter (`product_groups`, `products.product_group_id`) trong formula MVP đầu.
+
+## Implementation-ready queue
+
+Status: 🔄 Dùng để hai luồng làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
+
+Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ SoT hoặc gần đủ SoT để implement có thể chuẩn bị plan khi xong việc đang làm.
+
+### Đang làm / ưu tiên hiện tại
+
+1. **Spec sync/correction**
+   - Trạng thái: đang đồng bộ luồng đặc tả thay thế với `main`.
+   - Mục tiêu: đưa docs điều phối và docs SoT còn thiếu vào `main`, sửa wording PriceBook/SalesDocuments bị cũ sau các PR #15/#17/#20.
+
+### Có thể làm tiếp sau spec sync
+
+1. **Phase 3B — Simple quote print**
+   - Mức sẵn sàng: cao.
+   - Lý do: SoT đã rõ, scope nhỏ, chủ yếu frontend print view từ snapshot báo giá; file `SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md` đã có route/layout/print CSS/verification gợi ý.
+   - Không cần schema mới, không PDF backend, không gửi tự động, không mở scope in hóa đơn `HD...`.
+   - Phù hợp làm ngay nếu Owner muốn có đầu ra nhìn thấy nhanh sau khi báo giá/mở lại báo giá đã có.
+
+2. **Purchase/Supplier foundation**
+   - Mức sẵn sàng: trung bình-cao.
+   - Lý do: SoT đã có cho NCC, phiếu nhập, công nợ NCC, nhập cuộn/tấm vật lý, cập nhật `latest_purchase_cost`.
+   - Nên chia nhỏ:
+     - P1 supplier list/detail + linked customer
+     - P2 purchase receipt draft/list/detail cho hàng thường
+     - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
+     - P4 roll/sheet purchase objects sau khi Inventory object model đủ rõ
+     - P5 supplier payments sau phiếu nhập
+   - Cần implement đánh giá kỹ vì chạm Inventory/Finance nhiều hơn Phase 3B.
+
+3. **Supplier/customer link**
+   - Mức sẵn sàng: cao nếu làm như lát cắt nhỏ.
+   - Lý do: SoT đã chốt `linked_customer_id`; NCC có thể đồng thời là khách hàng.
+   - Có thể đi cùng Purchase/Supplier hoặc tách nhỏ trước nếu cần nền dữ liệu.
+
+4. **Production reconciliation read-only**
+   - Mức sẵn sàng: cao nếu làm read-only aggregate report.
+   - Lý do: SoT đã chốt máy sản xuất chỉ để đối soát, không tự trừ kho MVP; Phase 2B đã có production queue data.
+   - Scope gợi ý:
+     - list tổng hợp theo ngày/máy/khách/hàng/kích thước
+     - tổng `m2 máy`, `m2 bill`, `lệch m2`, file lỗi parse
+     - detail drawer hai cột: file máy và dòng hóa đơn
+   - Không làm ingestion phức tạp, confirm-match, tự tạo hóa đơn hoặc tự trừ kho.
+
+### Chưa nên mở nếu chưa chốt thêm
+
+- Sửa/hủy hóa đơn có đảo kho/tiền/công nợ.
+- Product group schema/UI/filter cho PriceBook formula.
+- Purchase return/trả hàng nhập.
+- Máy sản xuất tự động trừ kho hoặc tự match file với bill.
+- HĐĐT/VAT, delivery/COD, kênh online.
 
 ## Lệnh thường dùng
 

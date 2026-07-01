@@ -1,7 +1,7 @@
 # 02-SALES-DOCUMENT-DETAIL — Chi tiết chứng từ bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng
-> **Phase hiện tại:** Phase 2D readonly detail cho hóa đơn `HD...`
+> **Phase hiện tại:** Readonly detail cho `HD...`/`BG...`; báo giá active mở lại được vào POS draft
 
 ---
 
@@ -27,24 +27,25 @@ Quan sát hóa đơn `HD010985` ngày `30/06/2026`:
 
 ## 1. Mục tiêu
 
-Trang chi tiết giúp kiểm tra toàn bộ nội dung chứng từ đã lưu, gồm dữ liệu snapshot, thanh toán, công nợ, trừ kho và lịch sử sửa/hủy.
+Trang chi tiết giúp kiểm tra toàn bộ nội dung chứng từ đã lưu, gồm dữ liệu snapshot, thanh toán, công nợ, trừ kho và lịch sử nếu có.
 
-Phase 2D hiện tại chỉ đọc dữ liệu đã có:
+Hiện tại đã đọc dữ liệu đã có:
 
-- thông tin tổng quan hóa đơn
+- thông tin tổng quan hóa đơn hoặc báo giá
 - snapshot dòng hàng
-- tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có
+- tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có; báo giá không phát sinh tiền/kho/công nợ
 - stock movements liên quan nếu Backend trả về
+- thao tác mở lại báo giá active vào POS draft local
 
-Chưa triển khai trong Phase 2D:
+Chưa triển khai:
 
 - nút sửa hóa đơn
 - nút hủy hóa đơn
-- mở lại báo giá
-- in lại bill nếu Bill Preview/print flow chưa sẵn sàng
+- in/xem báo giá mẫu mặc định, thuộc Phase 3B
+- in lại bill hóa đơn nếu Bill Preview/print flow chưa sẵn sàng
 - transaction đảo kho/tiền/công nợ
 
-Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation Phase 2D.
+Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
 
 ---
 
@@ -155,19 +156,20 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
-Phase 2D chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Các hành động mở lại/in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+Hiện tại chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Mở lại báo giá đã có ở mức draft local; in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
 
 ---
 
 ## 8. Thao tác Future Phase
 
-Các thao tác trong mục này **chưa thuộc Phase 2D**. Chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn và kiểm thử đủ cho tác động liên bảng.
+Các thao tác trong mục này chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn nếu có tác động liên bảng, và kiểm thử đủ.
 
 ### 8.1. Mở lại báo giá
 
 - Chỉ áp dụng cho chứng từ loại Báo giá chưa hủy.
 - Mở POS với nội dung báo giá như một nháp.
-- Khi checkout, tạo hóa đơn `HD...` và giữ liên kết báo giá nguồn.
+- Khi checkout, tạo hóa đơn `HD...` như checkout POS bình thường.
+- Hiện tại không tạo server draft và không tự sửa trạng thái báo giá gốc.
 
 ### 8.2. Sửa hóa đơn
 
