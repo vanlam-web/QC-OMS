@@ -52,6 +52,8 @@ Theo nguyên tắc top-down, **03-BUSINESS chỉ được thiết kế khi**:
 | **Inventory** | `Inventory/UNIT-CONVERSION.md` | Đơn vị tồn chính, đơn vị bán phụ và quy đổi | 🔨 Đang xây dựng |
 | **Inventory** | `Inventory/STOCKTAKE.md` | Phiếu kiểm kho, cân bằng kho và phiếu tự động khi sửa tồn | 🔨 Đang xây dựng |
 | **Inventory** | `Inventory/PRODUCTION-RECONCILIATION.md` | Đối soát OMS/bill với dữ liệu máy sản xuất | 🔨 Đang xây dựng |
+| **Purchase** | `Purchase/SUPPLIER-PURCHASE.md` | Nhà cung cấp, phiếu nhập, công nợ NCC và giá vốn | 🔨 Đang xây dựng |
+| **BOM** | `BOM/BOM-RULES.md` | Định mức vật tư, combo nhiều cấp, snapshot và trừ kho | 🔨 Đang xây dựng |
 
 ---
 
@@ -59,7 +61,7 @@ Theo nguyên tắc top-down, **03-BUSINESS chỉ được thiết kế khi**:
 
 | Domain | Mô tả | Trạng thái |
 |--------|--------|------------|
-| **Workstation** | Máy trạm, queue xưởng, điều phối | ⬜ Chưa có |
+| **Workstation** | Máy sản xuất, queue xưởng, điều phối | ⬜ Chưa có |
 
 ---
 

@@ -49,6 +49,8 @@
     ├── [PriceBook/README.md](./PriceBook/README.md)
     ├── [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md)
     └── [PriceBook/02-PRICE-LIST-DETAIL.md](./PriceBook/02-PRICE-LIST-DETAIL.md)
+├── Purchase/                    ← Nhà cung cấp & nhập hàng
+    └── [Purchase/01-SUPPLIER-PURCHASE.md](./Purchase/01-SUPPLIER-PURCHASE.md)
 ├── Finance/                     ← Sổ quỹ, công nợ và đối soát
     ├── [Finance/README.md](./Finance/README.md)
     ├── [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md)
@@ -98,6 +100,7 @@
 | Customer Detail | [Customers/02-CUSTOMER-DETAIL.md](./Customers/02-CUSTOMER-DETAIL.md) | 🔨 |
 | Price List | [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md) | 🔨 |
 | Price List Detail | [PriceBook/02-PRICE-LIST-DETAIL.md](./PriceBook/02-PRICE-LIST-DETAIL.md) | 🔨 |
+| Supplier/Purchase | [Purchase/01-SUPPLIER-PURCHASE.md](./Purchase/01-SUPPLIER-PURCHASE.md) | 🔨 |
 | Finance Layout | [Finance/01-FINANCE-LAYOUT.md](./Finance/01-FINANCE-LAYOUT.md) | 🔨 |
 | Cashbook UX | [Finance/02-CASHBOOK.md](./Finance/02-CASHBOOK.md) | 🔨 |
 | Customer Debt UX | [Finance/03-CUSTOMER-DEBT.md](./Finance/03-CUSTOMER-DEBT.md) | 🔨 |

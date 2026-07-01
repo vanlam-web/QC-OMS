@@ -15,6 +15,8 @@
 | `Inventory/INVENTORY-TABLES.md` | Bảng kho vật tư: đơn vị, cấu hình tồn kho, stock movement, cuộn, tấm và kiểm kho | 🔨 Một phần |
 | `Finance/PAYMENT-DEBT-TABLES.md` | Bảng thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 Một phần |
 | `Finance/CASHBOOK-TABLES.md` | Bảng sổ quỹ, phiếu thu/chi thủ công và đối soát cuối ngày | 🔨 Một phần |
+| `Purchase/PURCHASE-TABLES.md` | Bảng nhà cung cấp, phiếu nhập, công nợ NCC và nguồn giá vốn | 🔨 Một phần |
+| `BOM/BOM-TABLES.md` | Bảng BOM version, thành phần BOM và snapshot BOM trên chứng từ | 🔨 Một phần |
 
 ---
 
@@ -32,6 +34,8 @@ Thiết kế các bảng lưu trữ trên **Supabase**, định nghĩa rõ các 
 | **Finance** | finance_accounts, payment_receipts, payment_receipt_methods, customer_debt_entries, customer_debt_allocations, cashbook_vouchers, cashbook_entries, cash_reconciliations, cash_reconciliation_items | 🔨 Một phần |
 | **Inventory** | inventory_units, product_inventory_settings, product_unit_conversions, inventory_rolls, inventory_sheets, stock_movements, stocktakes, stocktake_items | 🔨 Một phần |
 | **System** | organizations, profiles, workstations, permissions, audit permission | ✅ Chốt Giai đoạn 0 |
+| **Purchase** | suppliers, purchase_receipts, purchase_receipt_items, supplier payables/payments | 🔨 Một phần |
+| **BOM** | product_boms, product_bom_items, order_item_bom_snapshots | 🔨 Một phần |
 
 ---
 

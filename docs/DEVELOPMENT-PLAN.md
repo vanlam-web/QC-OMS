@@ -104,7 +104,7 @@ Nguồn theo dõi chi tiết: [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
 | Phase 2 | Giỏ hàng và hóa đơn nháp | Đã có POS direct checkout UI; nháp production queue ở 2B |
 | Phase 3 | Báo giá và Bill Preview | Báo giá/bill nâng cao chưa hoàn tất; Sales Documents readonly đã làm sớm ở 2D |
 | Phase 4 | Thanh toán, kho cơ bản và công nợ | Checkout transaction, inventory/finance foundation đã làm sớm ở 1C/2A |
-| Phase 5 | Combo/BOM và quản lý vật tư | Chưa làm implementation sâu; chỉ có spec/ranh giới |
+| Phase 5 | Combo/BOM và quản lý vật tư | Chưa làm implementation sâu; đã có SoT nghiệp vụ/DB/API mức khung |
 | Phase 6 | Hàng đợi máy sản xuất realtime | Production queue foundation đã làm sớm ở 2B; ingestion/realtime đầy đủ còn phase sau |
 | Phase 7 | Bill nâng cao và hỗ trợ gửi khách | Chưa làm |
 | Phase 8 | Production và vận hành | Đang cập nhật dần theo Supabase Cloud/dev-staging; production hardening còn sau |
@@ -275,6 +275,12 @@ Mốc phát hành logic ban đầu:
 ### Giai đoạn 5 — Combo/BOM và quản lý vật tư
 
 **Tính năng bàn giao:** Thu ngân bán Combo, chỉnh BOM và hệ thống trừ đúng từng vật tư thành phần.
+
+Source of Truth hiện tại:
+
+- Business: [BOM-RULES.md](./03-BUSINESS-NghiepVu/BOM/BOM-RULES.md)
+- Database: [BOM-TABLES.md](./04-DATABASE/BOM/BOM-TABLES.md)
+- Backend: [BOM-API.md](./05-BACKEND-MayChu/BOM/BOM-API.md)
 
 **Frontend**
 
