@@ -19,7 +19,7 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 |---|---|---|
 | Thông tin cửa hàng | Tên cửa hàng/xưởng, điện thoại, địa chỉ, logo nếu cần | Dùng cho bill, báo cáo và thông tin nội bộ; không cần URL/hạn dùng kiểu KiotViet |
 | Người dùng & quyền | Tài khoản, trạng thái, permission, lịch sử đổi quyền | Chi tiết ở `01-USERS-PERMISSIONS.md` |
-| Chi nhánh | Giữ nền tảng chi nhánh, nhưng MVP chỉ cần `Chi nhánh trung tâm` | Không thiết kế luồng chuyển hàng/liên chi nhánh trong MVP |
+| Chi nhánh | Giữ nền tảng nội bộ để phòng hờ, nhưng MVP chỉ có một chi nhánh ngầm | Không hiển thị chọn/nhãn chi nhánh và không thiết kế luồng chuyển hàng/liên chi nhánh trong MVP |
 | Bảo mật | Xác thực khi xuất file, cảnh báo đăng nhập lạ, 2FA nếu triển khai được | Không hiển thị token/mật khẩu/key trong UI/log |
 | Tài khoản quỹ | Tiền mặt và từng tài khoản ngân hàng | Nằm trong Finance/Sổ quỹ; không dùng ví điện tử MVP |
 | Mẫu in/bill | Mẫu bill thường, chọn/in lại bill | Không phải HĐĐT |
@@ -49,7 +49,7 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 Ghi chú đơn giản hóa:
 
 - KiotViet `Thông tin cửa hàng` có cả địa chỉ truy cập và hạn sử dụng tài khoản. QC-OMS không đưa các trường này vào Settings vận hành.
-- KiotViet `Quản lý chi nhánh` có địa chỉ lấy hàng, số người dùng, múi giờ và trạng thái. QC-OMS giữ nền dữ liệu chi nhánh để gắn chứng từ/người dùng, nhưng MVP chỉ vận hành một chi nhánh.
+- KiotViet `Quản lý chi nhánh` có địa chỉ lấy hàng, số người dùng, múi giờ và trạng thái. QC-OMS có thể giữ `branch_id` nội bộ để phòng hờ, nhưng MVP chỉ vận hành một chi nhánh ngầm nên UI không hiện `Chi nhánh trung tâm`, bộ chọn chi nhánh hoặc tab quản lý chi nhánh.
 
 ---
 

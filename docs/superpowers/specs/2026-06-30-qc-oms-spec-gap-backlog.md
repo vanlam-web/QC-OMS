@@ -217,7 +217,7 @@ Source of Truth đã tạo:
 - Settings QC-OMS chỉ hiển thị cấu hình có dùng thật trong xưởng.
 - Giữ thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường và cấu hình nền hàng hóa như đơn vị tính/nhóm hàng.
 - Thông tin cửa hàng chỉ giữ tên, SĐT, địa chỉ và logo nếu cần cho bill/báo cáo; không cần URL/hạn dùng kiểu KiotViet trong Settings vận hành.
-- Chi nhánh MVP chỉ cần một `Chi nhánh trung tâm`; chưa làm chuyển hàng/liên chi nhánh hoặc địa chỉ lấy hàng phức tạp.
+- Chi nhánh MVP chỉ là một chi nhánh ngầm để phòng hờ dữ liệu; UI không cần hiện `Chi nhánh trung tâm`, bộ chọn chi nhánh hoặc tab quản lý chi nhánh. Chưa làm chuyển hàng/liên chi nhánh hoặc địa chỉ lấy hàng phức tạp.
 - Settings hàng hóa chỉ giữ đơn vị tính, nhóm hàng, giá vốn tham khảo và hướng BOM/định mức riêng của QC-OMS; không copy nguyên toggle KiotViet.
 - Vai trò/preset người dùng nếu có chỉ là tick quyền nhanh; authorization vẫn theo permission cụ thể.
 - Bảo mật giữ mức nhẹ: xác thực lại khi xuất file nhạy cảm và 2FA cho quản trị/thiết bị lạ là hướng tốt, nhưng không bắt buộc làm rườm rà trong MVP đầu.

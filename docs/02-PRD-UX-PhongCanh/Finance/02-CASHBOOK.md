@@ -16,7 +16,7 @@ Quan sát ngày `01/07/2026`:
   - trạng thái `Đã thanh toán`
   - `Không hạch toán`
   - người tạo/người thu
-  - chi nhánh
+  - chi nhánh nếu sau này có nhiều chi nhánh; MVP một chi nhánh ngầm nên không hiển thị bộ lọc này
   - phương thức thanh toán `Tiền mặt`
   - người nộp là khách hàng
   - ghi rõ phiếu thu tự động gắn với hóa đơn `HD010973`

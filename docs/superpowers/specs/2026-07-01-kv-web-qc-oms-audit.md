@@ -434,7 +434,7 @@ Quyết định QC-OMS:
 - Giữ Settings ở mức tối giản, chỉ hiện các cấu hình thật sự dùng trong QC-OMS.
 - Giữ: thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường, đơn vị tính/nhóm hàng/cấu hình hàng hóa liên quan Inventory/PriceBook/BOM.
 - Thông tin cửa hàng chỉ giữ tên, SĐT, địa chỉ và logo nếu cần cho bill/báo cáo; không cần URL/hạn dùng kiểu KiotViet trong Settings vận hành.
-- Chi nhánh MVP chỉ cần một `Chi nhánh trung tâm`; chưa làm chuyển hàng/liên chi nhánh hoặc địa chỉ lấy hàng phức tạp.
+- Chi nhánh MVP chỉ là một chi nhánh ngầm để phòng hờ dữ liệu; UI không cần hiện `Chi nhánh trung tâm`, bộ chọn chi nhánh hoặc tab quản lý chi nhánh. Chưa làm chuyển hàng/liên chi nhánh hoặc địa chỉ lấy hàng phức tạp.
 - Thiết lập hàng hóa được đơn giản hóa: giữ đơn vị tính, nhóm hàng, giá vốn tham khảo và hướng BOM/định mức riêng của QC-OMS; không copy nguyên các toggle KiotViet.
 - Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
 - Chuyển khoản trong POS/thu nợ chỉ ghi vào tài khoản ngân hàng đã khai báo, không cần kết nối QR partner.

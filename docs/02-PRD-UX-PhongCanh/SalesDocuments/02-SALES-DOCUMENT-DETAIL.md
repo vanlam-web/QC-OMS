@@ -53,7 +53,7 @@ Hiển thị:
 - Khách hàng snapshot tại thời điểm lưu.
 - Người bán/người tạo.
 - Bảng giá đã áp dụng.
-- Chi nhánh nếu sau này có nhiều chi nhánh/kho.
+- Chi nhánh không hiển thị trong MVP vì hiện chỉ có một chi nhánh ngầm; chỉ bổ sung nếu sau này thật sự vận hành nhiều chi nhánh/kho.
 - Ghi chú đơn.
 - Tổng tiền hàng, giảm giá, khách cần trả, khách đã trả, còn nợ hoặc tiền thừa đã trả lại.
 
