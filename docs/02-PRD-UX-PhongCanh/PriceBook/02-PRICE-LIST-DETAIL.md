@@ -81,7 +81,15 @@ Nếu người dùng thoát trang khi còn dòng giá chưa lưu, UI phải cả
 
 Nếu một sản phẩm có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
 
-Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức, ví dụ dựa trên giá vốn, hệ số lợi nhuận, chi phí hoặc nhóm hàng. Công thức chỉ tạo giá đề xuất hoặc cập nhật khi người dùng chủ động lưu; hệ thống không tự đổi giá bán chỉ vì giá vốn mới phát sinh.
+Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng. Công thức có thể lấy `giá vốn bình quân` hoặc `giá vốn mới nhất`, sau đó áp dụng hệ số lợi nhuận, chi phí hoặc quy tắc riêng của nhóm hàng. Công thức chỉ tạo giá đề xuất hoặc cập nhật khi người dùng chủ động lưu; hệ thống không tự đổi giá bán chỉ vì giá vốn mới phát sinh.
+
+Ví dụ hướng công thức:
+
+```text
+Giá đề xuất = nguồn giá vốn theo nhóm hàng * hệ số + chi phí cộng thêm
+```
+
+Trong đó `nguồn giá vốn` có thể là bình quân hoặc mới nhất tùy cấu hình nhóm hàng.
 
 ---
 

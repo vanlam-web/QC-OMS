@@ -33,6 +33,7 @@ Quyet dinh Owner da chot:
 - Khi long BOM, he thong can deep-scan de ra vat tu con cuoi cung khi checkout/preview.
 - Co the sua BOM.
 - Trong POS co the them/sua BOM phat sinh; neu luu thi tao combo/BOM moi, neu khong luu thi chi xem nhu dinh muc cua dong do de tru kho.
+- Owner giao cho spec tu de xuat chi tiet BOM sao cho gon thao tac va phu hop xưởng.
 
 ---
 
@@ -69,6 +70,15 @@ MVP chia 2 cap:
 Nguyen tac an toan: **co BOM thi tru theo BOM, khong co BOM thi khong tu doan vat tu con**. He thong co the canh bao de quan ly bo sung BOM sau.
 
 Khi BOM co nhieu cap, he thong phai deep-scan theo cau hinh BOM de tinh vat tu con cuoi cung. Can co validation chong vong lap, vi du `A -> B -> A`.
+
+De xuat chot cho phase BOM:
+
+- BOM hien hanh duoc version hoa; moi lan sua cau hinh BOM tao version moi.
+- Hoa don/bao gia luu snapshot BOM version da dung, de chung tu cu khong bi thay doi khi BOM hien tai duoc sua.
+- Deep-scan mac dinh toi da 5 cap; qua gioi han thi backend chan va bao loi cau hinh.
+- BOM item co the tro toi vat tu la hoac mot BOM/san pham co BOM con.
+- Khi checkout, he thong quy doi ve vat tu la cuoi cung de tao stock movement.
+- Neu mot nhanh BOM thieu cau hinh, he thong canh bao nhung khong chan checkout trong POS MVP; dong do duoc flag de quan ly bo sung BOM sau.
 
 ### 2.3. Luu hoac khong luu combo moi
 
@@ -113,8 +123,8 @@ Khi chuyen thanh Source of Truth, co the can:
 
 Chua tao DB/API ngay neu phase BOM chua bat dau:
 
-- BOM co version khong
-- gioi han so cap deep-scan
+- schema version BOM va snapshot BOM
+- gioi han so cap deep-scan, mac dinh de xuat 5 cap
 - cach tinh chi phi tham khao tu BOM
 
 ---
@@ -136,12 +146,12 @@ Checkout hoa don
   -> Ghi tien/cong no/so quy nhu binh thuong
 ```
 
-Can dac ta chi tiet sau:
+De xuat chot tam cho BOM phase:
 
-- Neu BOM thieu cau hinh thi co cho checkout khong?
-- Neu cho checkout, co can hien canh bao bat buoc xac nhan khong?
-- Co cho stock movement am cho vat tu thanh phan nhu hang thuong khong?
-- Gioi han deep-scan toi bao nhieu cap de tranh cau truc qua phuc tap.
+- BOM thieu cau hinh: cho checkout, hien canh bao va flag dong hang.
+- Stock movement am cho vat tu thanh phan: cho phep nhu hang thuong, nhung canh bao.
+- Deep-scan toi da 5 cap.
+- Sua BOM tao version moi; hoa don cu dung snapshot/version cu.
 
 Khuyen nghi MVP: cho checkout, hien canh bao khong chan ban, vi owner da uu tien thao tac gon va ban thieu ton van duoc cho tiep.
 
@@ -175,8 +185,7 @@ Khi co thoi gian, nen ha mot so cau trong K02-A tu "bat buoc" thanh "sau MVP":
 
 ## 8. Noi dung con can dac ta truoc khi implement BOM
 
-1. Neu combo co BOM thieu cau hinh, checkout duoc di tiep hay phai chan? Khuyen nghi: cho di tiep, canh bao, vi xưởng uu tien ban nhanh.
-2. Co cho stock movement am cho vat tu thanh phan nhu hang thuong khong? Khuyen nghi: co, canh bao.
-3. BOM version hoa nhu the nao de hoa don cu khong thay doi khi BOM hien tai bi sua.
-4. Gioi han deep-scan toi bao nhieu cap; khuyen nghi mac dinh 3-5 cap, backend chan vong lap.
-5. Gia ban combo doc lap voi tong chi phi vat tu; tong chi phi chi la tham khao/bao cao.
+1. Chi tiet UI sua BOM trong POS: hien dang cay hay bang phang co nut mo rong.
+2. Chi tiet API luu version BOM va snapshot BOM.
+3. Cach hien tong chi phi vat tu tham khao tu BOM.
+4. Gia ban combo doc lap voi tong chi phi vat tu; tong chi phi chi la tham khao/bao cao.

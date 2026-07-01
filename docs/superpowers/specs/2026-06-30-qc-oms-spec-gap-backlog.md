@@ -189,6 +189,9 @@ Source of Truth đã tạo:
 - Bảng giá chung là fallback mặc định.
 - Bảng giá nhóm áp dụng qua nhóm khách; khách không gán nhóm dùng bảng giá chung.
 - Không đưa khuyến mại, công thức cập nhật giá hàng loạt hoặc chiết khấu riêng vào MVP.
+- Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng.
+- Công thức giá theo nhóm hàng có thể chọn nguồn giá vốn bình quân hoặc giá vốn mới nhất.
+- Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
 
 #### 3.3. Order draft và Order persistence
 
@@ -275,7 +278,7 @@ Source of Truth kỹ thuật đã tạo:
 
 Rủi ro:
 
-- PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên chốt schema hoặc backend sâu cho BOM/máy sản xuất trước khi Owner chốt chính sách sản xuất chi tiết.
+- PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên implement schema/backend sâu cho BOM/máy sản xuất cho tới khi phase đó bắt đầu, dù hướng nghiệp vụ BOM và production queue đã rõ hơn.
 
 Còn cần chi tiết sau MVP:
 
@@ -305,12 +308,15 @@ Source of Truth cần bổ sung khi phase này bắt đầu:
 - Không tự tạo SKU/combo mới nếu nhân viên không chọn lưu.
 - BOM có thể lồng nhiều cấp, ví dụ `khung sắt bắn bạt` gồm `in bạt` + `khung sắt`; phase BOM cần deep-scan để ra vật tư con cuối cùng.
 - Có thể sửa BOM.
+- Đề xuất mặc định: sửa BOM tạo version mới; hóa đơn/báo giá lưu snapshot BOM version đã dùng.
+- Đề xuất mặc định: deep-scan tối đa 5 cấp, backend chặn vòng lặp.
+- BOM thiếu cấu hình thì cảnh báo/flag nhưng không chặn checkout trong POS MVP.
 
 Còn cần đặc tả khi làm phase BOM:
 
-- Version BOM để hóa đơn cũ không bị đổi theo BOM hiện tại.
-- Giới hạn số cấp deep-scan và validation chống vòng lặp.
-- UX cảnh báo khi BOM thiếu vật tư hoặc tồn vật tư con âm.
+- UI sửa BOM trong POS: dạng cây hay bảng phẳng có mở rộng.
+- API/schema cụ thể cho BOM version và order item BOM snapshot.
+- Cách hiển thị tổng chi phí vật tư tham khảo từ BOM.
 
 ---
 
@@ -328,6 +334,7 @@ Draft tham khảo KiotViet đã tạo:
 - Khi làm nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
 - Nhập hàng cuộn/tấm phải nhập đúng vật thể mua vào: cuộn là cuộn, tấm là tấm/lô tấm; không mua `m2` cho hàng cuộn/tấm.
 - Giá vốn từ phiếu nhập phải lưu lại để báo cáo và làm dữ liệu cho công thức/gợi ý bảng giá sau này.
+- Công thức bảng giá theo nhóm hàng có thể lấy giá vốn bình quân hoặc giá vốn mới nhất.
 - Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
 
 Quan sát KiotViet cập nhật ngày `2026-07-01`:
@@ -344,7 +351,7 @@ Quan sát KiotViet cập nhật ngày `2026-07-01`:
 Khi vào phase Purchase cần đặc tả tiếp:
 
 - Phân bổ tiền trả NCC theo phiếu nhập cũ nhất hay chọn phiếu cụ thể.
-- Phương pháp giá vốn: nhập cuối, bình quân, FIFO hoặc theo object vật lý.
+- Phương pháp giá vốn cho báo cáo lợi nhuận chuẩn: nhập cuối, bình quân, FIFO hoặc theo object vật lý. Lưu ý phần PriceBook đã chốt được chọn bình quân hoặc mới nhất để gợi ý giá.
 - Mua dịch vụ có tiếp tục là phiếu chi hay cần mở rộng thành công nợ đối tác.
 
 #### 3.7B. MVP Scope lock
@@ -427,10 +434,10 @@ Source of Truth cần tạo/bổ sung khi phase này bắt đầu:
 - Queue phải có atomic claim để hai POS không xử lý trùng một thông báo.
 - Channel realtime dự kiến là `production_queue`, không dùng thuật ngữ `workstation_queue`.
 - Parser filename dự kiến theo PRD K02-D: `KH_[HH_]daixrong(_xSL)?(_ghichu)?`.
+- Pilot dùng production agent mới gửi API event vào QC-OMS. Legacy bridge chỉ là fallback/tham khảo, không phải hướng mặc định.
 
-Owner/Technical cần chốt:
+Technical cần đặc tả:
 
-- Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
 - Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
 - Queue item lỗi khách/hàng có hiện cho thu ngân hay chỉ hiện cho quản lý.
 - Khi add-to-draft claim thành công nhưng frontend local draft fail, restore thủ công có đủ cho MVP không.
@@ -521,9 +528,8 @@ Khuyến nghị cho luồng hiện tại:
 Còn cần Owner quyết định ở các phase sau:
 
 - Nháp hóa đơn lưu server từ Phase 2 hay chỉ LocalStorage cho tới khi báo giá/thanh toán.
-- Cơ chế máy sản xuất gửi event trong pilot: file watcher, API, webhook hoặc simulator.
 - Phương pháp giá vốn chính thức khi Purchase/Supplier bắt đầu.
-- Pilot máy sản xuất dùng legacy bridge, agent mới, webhook/API hay simulator.
+- Chi tiết contract production agent mới nếu bắt đầu phase máy sản xuất.
 
 Đã chốt và cần giữ:
 

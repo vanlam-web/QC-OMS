@@ -18,7 +18,7 @@ Quyết định chính:
 - Có nhập hàng mua thật.
 - Có công nợ nhà cung cấp.
 - Nhập đúng đơn vị mua vật lý: mua cuộn thì nhập từng cuộn, mua tấm thì nhập tấm/lô tấm; không mua `m2` cho hàng cuộn/tấm.
-- Giá vốn từ phiếu nhập phải lưu lại để sau này PriceBook có thể dùng trong công thức gợi ý/tính giá bán.
+- Giá vốn từ phiếu nhập phải lưu lại để sau này PriceBook có thể dùng trong công thức gợi ý/tính giá bán theo nhóm hàng.
 
 ---
 
@@ -212,11 +212,13 @@ Mua dịch vụ nên đi theo Finance/Cashbook trước, không nhất thiết n
 4. Không nhập mua hàng cuộn/tấm theo `m2`; `m2` chỉ là số quy đổi/tính toán.
 5. Có quản lý công nợ nhà cung cấp.
 6. Giá vốn từ phiếu nhập phải lưu lại để phục vụ báo cáo và công thức bảng giá sau này.
+7. Công thức bảng giá có thể đặt theo từng nhóm hàng.
+8. Công thức bảng giá có thể lấy nguồn giá vốn bình quân hoặc giá vốn mới nhất.
 
 Còn cần tự nghiên cứu/đặc tả tiếp khi vào phase Purchase:
 
 - Phân bổ tiền trả NCC theo phiếu nhập cũ nhất hay chọn phiếu cụ thể.
-- Công thức giá vốn hiển thị trong báo cáo dùng nhập cuối, bình quân, FIFO hay theo object vật lý.
+- Công thức giá vốn dùng cho báo cáo lợi nhuận chuẩn có thể cần khác nguồn giá vốn dùng để gợi ý bảng giá.
 - Mua dịch vụ đi qua phiếu chi Sổ quỹ hay cần mở rộng công nợ đối tác sau này.
 
 ---
@@ -281,7 +283,12 @@ Giá vốn lưu từ phiếu nhập không chỉ để xem lịch sử mua, mà 
 
 - báo cáo lợi nhuận khi đã chốt phương pháp giá vốn
 - gợi ý giá bán trong bảng giá
-- công thức bảng giá sau này, ví dụ `giá vốn * hệ số + chi phí` hoặc công thức riêng theo nhóm hàng
+- công thức bảng giá theo nhóm hàng, ví dụ `giá vốn * hệ số + chi phí` hoặc công thức riêng theo nhóm hàng
+
+Nguồn giá vốn cho công thức PriceBook có thể chọn:
+
+- `giá vốn bình quân`
+- `giá vốn mới nhất`
 
 PriceBook không tự sửa giá bán khi giá vốn thay đổi nếu người dùng chưa bấm cập nhật/lưu công thức. Giá bán đã lưu trong bảng giá vẫn là giá áp dụng chính thức cho POS.
 

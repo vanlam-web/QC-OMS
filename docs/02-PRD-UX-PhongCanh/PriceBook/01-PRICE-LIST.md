@@ -9,7 +9,7 @@
 
 Trang danh sách bảng giá giúp quản lý các bảng giá đang dùng cho khách hàng và nhóm khách.
 
-Sau khi module Purchase/Supplier có dữ liệu giá vốn, PriceBook có thể dùng giá vốn làm dữ liệu tham khảo để gợi ý hoặc tính công thức giá bán. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
+Sau khi module Purchase/Supplier có dữ liệu giá vốn, PriceBook có thể dùng giá vốn làm dữ liệu tham khảo để gợi ý hoặc tính công thức giá bán. Công thức giá có thể đặt theo từng nhóm hàng và chọn nguồn giá vốn như giá bình quân hoặc giá mới nhất. Giá bán chính thức vẫn là giá đã lưu trong bảng giá.
 
 ---
 
@@ -61,6 +61,7 @@ Khách không gán nhóm dùng bảng giá chung.
 | Mở chi tiết | Quản lý giá sản phẩm trong bảng |
 | Đổi trạng thái | Bảng giá ngừng dùng không được gán mới cho nhóm khách |
 | Gán nhóm khách | Chọn nhóm khách dùng bảng giá này |
+| Cấu hình công thức | Tạo/sửa công thức gợi ý giá theo nhóm hàng khi module giá vốn đã sẵn sàng |
 
 Quy tắc:
 
@@ -93,3 +94,10 @@ QC-OMS ưu tiên:
 KiotViet `Khuyến mại` có dữ liệu thật dạng `Hàng hóa - Giá bán theo số lượng mua` cho một số vật tư PVC/CPVC. QC-OMS MVP không làm module khuyến mại/campaign riêng. Nếu sau này cần bán theo bậc số lượng, đặc tả lại như quy tắc giá trong PriceBook, không kéo nguyên module marketing/khuyến mại retail vào POS.
 
 Giá vốn trong KiotViet hiển thị để tham khảo trên lưới thiết lập giá. QC-OMS cũng cần hiển thị giá vốn khi đã có dữ liệu Purchase, nhưng không cho phép sửa giá vốn trực tiếp từ bảng giá.
+
+Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook nâng cao:
+
+- mỗi nhóm hàng có thể có công thức riêng
+- công thức có thể chọn nguồn `giá vốn bình quân` hoặc `giá vốn mới nhất`
+- công thức chỉ tạo giá đề xuất/cập nhật hàng loạt khi người dùng chủ động áp dụng
+- không tự đổi giá POS nếu chỉ có phiếu nhập mới làm thay đổi giá vốn
