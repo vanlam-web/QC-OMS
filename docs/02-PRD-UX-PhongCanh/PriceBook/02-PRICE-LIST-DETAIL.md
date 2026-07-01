@@ -38,6 +38,8 @@ Trang chi tiết bảng giá cho phép xem và sửa giá bán của từng sả
 | Giá bảng này | Ô nhập giá áp dụng cho bảng hiện tại |
 | Trạng thái hàng | Đang bán hoặc ngưng bán |
 
+Gợi ý từ KiotViet: có thể cho nhập giá trực tiếp trên lưới để thao tác nhanh, nhưng mỗi màn chỉ nên tập trung một bảng giá đang sửa. Không trải nhiều bảng giá nhóm thành nhiều cột ngang trong QC-OMS MVP.
+
 ---
 
 ## 4. Quy tắc nhập giá
@@ -73,6 +75,10 @@ Khi bấm **Lưu**:
 
 Lịch sử giá theo khách + sản phẩm chỉ phát sinh khi POS lưu chứng từ bán có giá sửa tay.
 
+Nếu người dùng thoát trang khi còn dòng giá chưa lưu, UI phải cảnh báo mất thay đổi.
+
+Nếu một sản phẩm có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
+
 ---
 
 ## 7. Tác động tới POS
@@ -80,4 +86,3 @@ Lịch sử giá theo khách + sản phẩm chỉ phát sinh khi POS lưu chứn
 - Dòng hàng mới trên POS dùng giá mới sau khi bảng giá được lưu.
 - Dòng hàng đang mở trong POS và chưa sửa giá thủ công có thể được tính lại khi đổi khách/bảng giá hoặc reload dữ liệu.
 - Dòng đã sửa giá thủ công trong POS không bị đè bởi thay đổi bảng giá.
-

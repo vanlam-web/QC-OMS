@@ -1,7 +1,13 @@
 import { createApiClient } from '../../lib/api/client'
 import type { CheckoutInput, CheckoutResult, CustomerDebtDetail, FinanceAccount, RecentPriceList } from './types'
 
-export type { CheckoutCartLine, CheckoutResult, FinanceAccount, RecentPriceList } from './types'
+export type {
+  CheckoutCartLine,
+  CheckoutResult,
+  CustomerDebtDetail,
+  FinanceAccount,
+  RecentPriceList,
+} from './types'
 
 export interface OrderApiRequester {
   request<T>(path: string, init?: RequestInit): Promise<T>

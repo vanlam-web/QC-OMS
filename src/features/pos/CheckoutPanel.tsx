@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Customer } from '../catalog/types'
-import type { CheckoutCartLine, CheckoutResult, FinanceAccount, OrderService, RecentPriceList } from '../orders/order-service'
+import type {
+  CheckoutCartLine,
+  CheckoutResult,
+  CustomerDebtDetail,
+  FinanceAccount,
+  OrderService,
+  RecentPriceList,
+} from '../orders/order-service'
 import { formatApiError } from '../../lib/api/error-message'
 
 export function CheckoutPanel({
@@ -15,9 +22,12 @@ export function CheckoutPanel({
   const [cashAmountOverride, setCashAmountOverride] = useState<number | null>(null)
   const [bankAmount, setBankAmount] = useState(0)
   const [bankAccountId, setBankAccountId] = useState('')
+  const [oldDebtPaymentAmount, setOldDebtPaymentAmount] = useState(0)
   const [retailDebtNote, setRetailDebtNote] = useState('')
   const [surplusMode, setSurplusMode] = useState<'return' | 'old-debt'>('return')
   const [accounts, setAccounts] = useState<FinanceAccount[]>([])
+  const [customerDebt, setCustomerDebt] = useState<CustomerDebtDetail | null>(null)
+  const [debtLookupError, setDebtLookupError] = useState<string | null>(null)
   const [recentPrices, setRecentPrices] = useState<Record<string, RecentPriceList['items']>>({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +41,11 @@ export function CheckoutPanel({
   const received = cashAmount + bankAmount
   const surplus = Math.max(received - total, 0)
   const debt = Math.max(total - received, 0)
+  const visibleCustomerDebt =
+    selectedCustomer !== null && customerDebt?.customer_id === selectedCustomer.id ? customerDebt : null
+  const oldDebtPayment = selectedCustomer !== null && surplusMode === 'old-debt'
+    ? oldDebtPaymentAmount + surplus
+    : oldDebtPaymentAmount
 
   useEffect(() => {
     let active = true
@@ -46,6 +61,31 @@ export function CheckoutPanel({
       active = false
     }
   }, [orderService])
+
+  useEffect(() => {
+    let active = true
+
+    if (selectedCustomer === null) return
+
+    orderService
+      .getCustomerDebt(selectedCustomer.id)
+      .then((response) => {
+        if (active) {
+          setCustomerDebt(response)
+          setDebtLookupError(null)
+          setOldDebtPaymentAmount(0)
+        }
+      })
+      .catch((cause) => {
+        if (active) {
+          setDebtLookupError(formatApiError(cause, 'Không tải được công nợ khách hàng.'))
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [orderService, selectedCustomer])
 
   async function showRecentPrices(line: CheckoutCartLine) {
     if (selectedCustomer === null) return
@@ -85,7 +125,7 @@ export function CheckoutPanel({
           cash_amount: cashAmount,
           bank_amount: bankAmount,
           bank_account_id: bankAmount > 0 ? bankAccountId : null,
-          old_debt_payment_amount: selectedCustomer !== null && surplusMode === 'old-debt' ? surplus : 0,
+          old_debt_payment_amount: oldDebtPayment,
           change_returned_amount: surplusMode === 'return' ? surplus : 0,
         },
       })
@@ -109,12 +149,30 @@ export function CheckoutPanel({
           <dt>Còn nợ</dt>
           <dd>{formatMoney(debt)}</dd>
         </div>
+        {selectedCustomer !== null ? (
+          <div>
+            <dt>Tổng nợ hiện tại</dt>
+            <dd>{formatMoney(visibleCustomerDebt?.total_debt ?? 0)}</dd>
+          </div>
+        ) : null}
       </dl>
 
+      {selectedCustomer !== null && debtLookupError ? <p role="status">{debtLookupError}</p> : null}
+      {selectedCustomer !== null && visibleCustomerDebt?.invoices.length ? (
+        <ul className="customer-debt-list" aria-label="Hóa đơn còn nợ">
+          {visibleCustomerDebt.invoices.slice(0, 3).map((invoice) => (
+            <li key={invoice.order_id}>
+              <span>{invoice.order_code}</span>
+              <span>{formatMoney(invoice.remaining_debt)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <label>
-        Tiền mặt
+        Tiền mặt trả hóa đơn
         <input
-          aria-label="Tiền mặt"
+          aria-label="Tiền mặt trả hóa đơn"
           inputMode="numeric"
           type="number"
           value={cashAmount}
@@ -122,15 +180,27 @@ export function CheckoutPanel({
         />
       </label>
       <label>
-        Chuyển khoản
+        Chuyển khoản trả hóa đơn
         <input
-          aria-label="Chuyển khoản"
+          aria-label="Chuyển khoản trả hóa đơn"
           inputMode="numeric"
           type="number"
           value={bankAmount}
           onChange={(event) => setBankAmount(readMoney(event.target.value))}
         />
       </label>
+      {selectedCustomer !== null ? (
+        <label>
+          Thu nợ cũ
+          <input
+            aria-label="Thu nợ cũ"
+            inputMode="numeric"
+            type="number"
+            value={oldDebtPaymentAmount}
+            onChange={(event) => setOldDebtPaymentAmount(readMoney(event.target.value))}
+          />
+        </label>
+      ) : null}
       <label>
         Tài khoản nhận chuyển khoản
         <select
@@ -208,8 +278,9 @@ export function CheckoutPanel({
       {result ? (
         <section aria-label="Kết quả checkout" className="checkout-result">
           <strong>{result.order.code}</strong>
-          <span>Đã trả {formatMoney(result.order.paid_amount)}</span>
-          <span>Còn nợ {formatMoney(result.order.debt_amount)}</span>
+          {result.payment_receipt ? <span>{result.payment_receipt.code}</span> : null}
+          <p>{`Đã trả ${formatMoney(result.order.paid_amount)}`}</p>
+          <p>{`Còn nợ ${formatMoney(result.order.debt_amount)}`}</p>
           {result.inventory_warnings.map((warning) => (
             <p key={`${warning.product_id}-${warning.message}`}>{warning.message}</p>
           ))}

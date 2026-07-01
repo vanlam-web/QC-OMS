@@ -55,6 +55,18 @@ export function PosShell({
         setPrices(
           Object.fromEntries(priceResult.items.map((price) => [price.product_id, price])),
         )
+        setCartLines((current) =>
+          current.map((line) => {
+            if (line.isManualPrice) return line
+            const resolved = priceResult.items.find((price) => price.product_id === line.product.id)
+            if (resolved === undefined) return line
+            return {
+              ...line,
+              unitPrice: resolved.unit_price,
+              priceSource: resolved.price_source,
+            }
+          }),
+        )
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được sản phẩm POS.'))
       } finally {
@@ -83,6 +95,33 @@ export function PosShell({
         isManualPrice: false,
       },
     ])
+  }
+
+  function updateLineQuantity(lineId: string, quantity: number) {
+    setCartLines((current) =>
+      current.map((line) =>
+        line.id === lineId ? { ...line, quantity: Math.max(quantity, 0) } : line,
+      ),
+    )
+  }
+
+  function updateLineUnitPrice(lineId: string, unitPrice: number) {
+    setCartLines((current) =>
+      current.map((line) =>
+        line.id === lineId
+          ? {
+              ...line,
+              unitPrice: Math.max(unitPrice, 0),
+              priceSource: 'manual',
+              isManualPrice: true,
+            }
+          : line,
+      ),
+    )
+  }
+
+  function removeLine(lineId: string) {
+    setCartLines((current) => current.filter((line) => line.id !== lineId))
   }
 
   return (
@@ -115,15 +154,50 @@ export function PosShell({
                 <th>Đơn vị</th>
                 <th>SL</th>
                 <th>Giá</th>
+                <th>Thành tiền</th>
+                <th>Nguồn giá</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {cartLines.map((line) => (
                 <tr key={line.id}>
-                  <td>{line.product.name}</td>
+                  <td>
+                    <strong>{line.product.name}</strong>
+                    <span>{line.product.code}</span>
+                  </td>
                   <td>{line.product.unit_name}</td>
-                  <td>{line.quantity.toLocaleString('vi-VN')}</td>
-                  <td>{line.unitPrice.toLocaleString('vi-VN')}</td>
+                  <td>
+                    <input
+                      aria-label={`Số lượng ${line.product.name}`}
+                      inputMode="decimal"
+                      min="0"
+                      type="number"
+                      value={line.quantity}
+                      onChange={(event) =>
+                        updateLineQuantity(line.id, readPositiveNumber(event.target.value))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      aria-label={`Đơn giá ${line.product.name}`}
+                      inputMode="numeric"
+                      min="0"
+                      type="number"
+                      value={line.unitPrice}
+                      onChange={(event) =>
+                        updateLineUnitPrice(line.id, readPositiveNumber(event.target.value))
+                      }
+                    />
+                  </td>
+                  <td>{(line.quantity * line.unitPrice).toLocaleString('vi-VN')}</td>
+                  <td>{line.isManualPrice ? 'Giá sửa tay' : 'Giá tự động'}</td>
+                  <td>
+                    <button type="button" onClick={() => removeLine(line.id)}>
+                      Xóa
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -146,4 +220,9 @@ export function PosShell({
       </section>
     </main>
   )
+}
+
+function readPositiveNumber(value: string): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 }

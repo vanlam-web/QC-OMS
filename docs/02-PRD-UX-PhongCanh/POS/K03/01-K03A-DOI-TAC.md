@@ -27,7 +27,7 @@
 | **Bảng giá** | Dropdown chọn bảng giá theo tên cho khách hàng đã chọn. Nếu khách không được gán bảng giá thì dùng Bảng giá chung. Tự động tính lại Thành tiền trong K02-A khi đổi bảng giá. | — |
 | **Chiết khấu** | Hiển thị riêng phần trăm chiết khấu nếu chính sách giá đang áp dụng có chiết khấu. | — |
 | **Công nợ và doanh thu** | Hiển thị tóm tắt dư nợ hiện tại và tổng doanh thu của khách đã chọn. | — |
-| **Chi tiết KH đã chọn** | Nhấp vào khách hàng đã chọn để mở bảng chi tiết hồ sơ, thông tin xuất hóa đơn, lịch sử bán hàng và dư nợ. | — |
+| **Chi tiết KH đã chọn** | Nhấp vào khách hàng đã chọn để mở bảng chi tiết hồ sơ, lịch sử bán hàng và dư nợ. | — |
 | **Bỏ chọn KH** | Reset về trạng thái Khách lẻ (không áp bảng giá, không gắn đối tác vào đơn) | — |
 
 ---
@@ -92,7 +92,6 @@
 - Nếu SĐT để trống, hệ thống cho phép lưu khách hàng.
 - Nếu SĐT đã tồn tại, hệ thống hiển thị khách hàng tương ứng để người dùng chọn lại và không cho tạo hồ sơ trùng.
 - Nút `[Lưu]` tạo hồ sơ khách hàng. Nút `[Bỏ qua]` hoặc `[X]` đóng modal; nếu đã nhập dữ liệu thì phải xác nhận trước khi bỏ thay đổi.
-- Thông tin xuất hóa đơn không bắt buộc nhập khi thêm khách tại POS và có thể bổ sung sau trong bảng chi tiết khách hàng.
 - Sau khi tạo nhanh thành công, khách mới được tự động gán vào tab hóa đơn đang active; thu ngân không cần tìm lại.
 - Mã khách hàng là mã chính thức dùng trong POS và là mã `KH` được máy sản xuất dùng khi gửi thông báo về K02-D.
 - Khi mã khách hàng được sửa:
@@ -108,7 +107,7 @@
   - **Thêm mới:** mở bằng nút `[+]`, các trường dữ liệu ban đầu để trống.
   - **Chỉnh sửa:** mở bằng cách nhấp vào khách hàng đã chọn, các trường được điền bằng dữ liệu hiện có.
 - Hai chế độ sử dụng cùng bố cục, quy tắc nhập liệu và hành vi đóng bảng.
-- Chế độ Thêm mới chỉ hiển thị hai tab **Thông tin** và **Thông tin xuất hóa đơn**.
+- Chế độ Thêm mới chỉ hiển thị tab **Thông tin**.
 - Hai tab **Lịch sử bán hàng** và **Dư nợ** chỉ hiển thị trong chế độ Chỉnh sửa đối với khách hàng đã tồn tại.
 - Phần đầu bảng hiển thị:
   - Chế độ Thêm mới: tiêu đề `Thêm khách hàng`; thông tin khách, dư nợ và tổng doanh thu chưa có dữ liệu.
@@ -119,7 +118,7 @@
 │ Thêm khách hàng / Chi tiết khách hàng                                  [X]  │
 │ [Tên KH]  [Mã KH]        Dư nợ: [...]        Tổng doanh thu: [...]           │
 │                                                                              │
-│ [Thông tin] [Thông tin xuất hóa đơn] [Lịch sử bán hàng] [Dư nợ]              │
+│ [Thông tin] [Lịch sử bán hàng] [Dư nợ]                                      │
 │                                                                              │
 │ Nội dung tab đang chọn                                                       │
 │                                                                              │
@@ -128,37 +127,24 @@
 ```
 
 - Ở chế độ Thêm mới, hai tab **Lịch sử bán hàng** và **Dư nợ** không hiển thị.
-- Bảng chi tiết gồm bốn tab:
+- Bảng chi tiết gồm ba tab:
   - **Thông tin:** hồ sơ và thông tin liên hệ của khách.
-  - **Thông tin xuất hóa đơn:** thông tin phục vụ xuất hóa đơn.
   - **Lịch sử bán hàng:** các giao dịch bán hàng của khách.
   - **Dư nợ:** lịch sử phát sinh và thanh toán công nợ.
 - Người dùng có quyền sử dụng POS được sửa toàn bộ thông tin khách hàng trong bảng này, gồm cả nhóm khách hàng và cấu hình gửi tin nhắn.
-- Các trường thông tin gồm: mã khách hàng, tên khách hàng, SĐT, địa chỉ, nhóm khách hàng, email, nút cấu hình gửi tin nhắn/bill, ghi chú và thông tin xuất hóa đơn. Cấu trúc trường phải thống nhất với form thêm khách hàng.
+- Các trường thông tin gồm: mã khách hàng, tên khách hàng, SĐT, địa chỉ, nhóm khách hàng, email, nút cấu hình gửi tin nhắn/bill, ghi chú và thông tin pháp lý nội bộ nếu cần. Cấu trúc trường phải thống nhất với form thêm khách hàng.
 - Nút `[Lưu]` tạo khách trong chế độ Thêm mới hoặc ghi nhận thay đổi trong chế độ Chỉnh sửa. Nút `[Bỏ qua]`, `[X]` hoặc phím `Esc` dùng để đóng bảng; nhấp ra ngoài modal không đóng bảng.
 - Nếu khách đang được gắn vào tab hóa đơn active và việc chỉnh sửa làm thay đổi nhóm khách hàng hoặc bảng giá áp dụng, sau khi lưu hệ thống tính lại các dòng đang dùng giá tự động và giữ nguyên các dòng đã sửa giá thủ công.
 - Nếu đóng bảng hoặc bấm `[Bỏ qua]` khi có dữ liệu đã thay đổi nhưng chưa lưu, hệ thống yêu cầu xác nhận bỏ thay đổi.
 - Tab Lịch sử bán hàng và tab Dư nợ hiển thị dữ liệu đã có; quy tắc nghiệp vụ chi tiết sẽ được đặc tả sau.
 - Khi sửa và bổ sung SĐT hợp lệ, cảnh báo thiếu SĐT tại K03-B không còn hiển thị.
 
-### V.1. Tab Thông tin xuất hóa đơn
+### V.1. Thông tin pháp lý nội bộ
 
-- Loại khách gồm hai lựa chọn: **Cá nhân** và **Tổ chức/Hộ kinh doanh**.
-- Khi chọn **Tổ chức/Hộ kinh doanh**, hệ thống hiển thị thêm trường Tên đơn vị.
-- Thông tin xuất hóa đơn gồm:
-  - Tên người mua.
-  - Tên đơn vị, khi áp dụng.
-  - Mã số thuế.
-  - Địa chỉ xuất hóa đơn.
-  - Tỉnh/Thành phố và Phường/Xã.
-  - Số CCCD và số hộ chiếu.
-  - Email và SĐT nhận hóa đơn.
-- Tên ngân hàng và số tài khoản được lưu trong cùng tab để phục vụ đối chiếu thanh toán; đây không phải nhóm thông tin chính của hóa đơn.
-- Khi mở tab lần đầu và chưa có dữ liệu riêng, hệ thống tự lấy tên, SĐT, email và địa chỉ từ hồ sơ khách hàng. Người dùng được sửa lại các giá trị này độc lập với hồ sơ chung.
-- Nút `[Tra cứu MST]` dùng mã số thuế để tự điền tên pháp lý và địa chỉ khi dịch vụ tra cứu đã được cấu hình. Cơ chế tích hợp dịch vụ sẽ được đặc tả sau.
-- Cho phép lưu hồ sơ xuất hóa đơn chưa đầy đủ. Hệ thống chỉ cảnh báo các trường còn thiếu khi người dùng thực sự lập hóa đơn điện tử.
-- Không mặc định bắt buộc đồng thời email và SĐT. Việc kiểm tra dữ liệu người nhận căn cứ vào cấu hình của dịch vụ hóa đơn điện tử tại thời điểm phát hành.
-- Người dùng có quyền sử dụng POS được sửa toàn bộ thông tin trong tab này.
+- QC-OMS không làm hóa đơn điện tử/VAT trong scope hiện tại.
+- Không có tab `Thông tin xuất hóa đơn` riêng trong POS.
+- Nếu xưởng cần lưu tên đơn vị, mã số thuế hoặc địa chỉ pháp lý để tham khảo nội bộ, đặt trong tab **Thông tin** hoặc ghi chú khách hàng.
+- Không có nút tra cứu MST, phát hành HĐĐT hoặc kiểm tra trường bắt buộc cho HĐĐT.
 
 ### V.2. Tab Lịch sử bán hàng
 
