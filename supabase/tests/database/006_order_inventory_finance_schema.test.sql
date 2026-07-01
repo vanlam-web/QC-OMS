@@ -1,6 +1,6 @@
 begin;
 
-select plan(79);
+select plan(80);
 
 select has_table('public', 'orders', 'orders table exists');
 select has_table('public', 'order_items', 'order_items table exists');
@@ -18,6 +18,7 @@ select has_column('public', 'orders', 'paid_amount', 'orders.paid_amount exists'
 select has_column('public', 'orders', 'debt_amount', 'orders.debt_amount exists');
 select has_column('public', 'orders', 'change_returned_amount', 'orders.change_returned_amount exists');
 select has_column('public', 'orders', 'payment_status', 'orders.payment_status exists');
+select has_column('public', 'orders', 'source_quote_code', 'orders.source_quote_code exists');
 select has_index('public', 'orders', 'idx_orders_org_type_status', 'orders has type/status index');
 select has_index('public', 'orders', 'idx_orders_org_base_revision', 'orders has base/revision index');
 
