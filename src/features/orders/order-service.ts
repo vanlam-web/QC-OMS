@@ -1,4 +1,5 @@
 import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
 import type { CheckoutInput, CheckoutResult, CustomerDebtDetail, FinanceAccount, RecentPriceList } from './types'
 
 export type {
@@ -40,7 +41,7 @@ export type OrderService = ReturnType<typeof createOrderService>
 export function createBrowserOrderService(getAccessToken: () => Promise<string | null>) {
   return createOrderService(
     createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken,
     }),
   )

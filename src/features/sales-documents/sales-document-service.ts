@@ -1,4 +1,5 @@
 import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
 import type { SalesDocumentDetail, SalesDocumentListResponse } from './types'
 
 export type { SalesDocumentDetail, SalesDocumentListItem, SalesDocumentListResponse } from './types'
@@ -24,7 +25,7 @@ export type SalesDocumentService = ReturnType<typeof createSalesDocumentService>
 export function createBrowserSalesDocumentService(getAccessToken: () => Promise<string | null>) {
   return createSalesDocumentService(
     createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken,
     }),
   )

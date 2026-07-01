@@ -16,6 +16,7 @@ import {
 import { AccessSync } from './AccessSync'
 import type { AccessConnectionState, RealtimeClient } from '../../lib/realtime/access-channel'
 import { AuthContext, type AuthContextValue } from './auth-context'
+import { runtimeConfig } from '../../lib/config/runtime'
 
 const bootstrapTimeoutMs = 8000
 
@@ -35,7 +36,7 @@ export function AuthProvider({
     if (api) return createFoundationService(api)
 
     const client = createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken: authService.getAccessToken,
     })
     return createFoundationService(client)

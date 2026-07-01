@@ -1,5 +1,6 @@
 import type { CurrentUserData } from '../../lib/api/types'
 import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
 import type { Permission, PermissionCode, UserListResponse } from './types'
 
 export interface ApiRequester {
@@ -45,7 +46,7 @@ export type FoundationService = ReturnType<typeof createFoundationService>
 export function createBrowserFoundationService(getAccessToken: () => Promise<string | null>) {
   return createFoundationService(
     createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken,
     }),
   )

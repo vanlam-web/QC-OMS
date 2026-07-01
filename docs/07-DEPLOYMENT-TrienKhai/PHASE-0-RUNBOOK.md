@@ -14,9 +14,9 @@ POS is a sales module in QC-OMS. It is not a physical workstation selection step
 
 ## Architecture decision
 
-Supabase and Docker run on the shared server, not on each developer laptop. Developer machines run the frontend and connect to the shared Supabase server through Tailscale.
+Current dev/staging uses Supabase Cloud as the primary backend. Developer machines run the Vite frontend locally and connect to the cloud Supabase project and cloud Edge Function API.
 
-This keeps database state, Edge Functions, Auth users, and migration verification centralized for multiple dev machines.
+The old shared-dev LAN/Tailscale server is retained only as an optional fallback or operator-run environment. It is not the default runtime path for new development.
 
 ## Developer machine setup
 
@@ -25,7 +25,6 @@ Required locally:
 - Node.js 22
 - npm
 - Deno 2.x
-- Tailscale connected to the QC-OMS network
 
 Install dependencies:
 
@@ -36,10 +35,13 @@ npm ci
 Frontend `.env.local` should contain only public frontend values:
 
 ```bash
-VITE_SUPABASE_URL=http://100.123.122.45:54321
-VITE_SUPABASE_ANON_KEY=<anon key from server>
-VITE_API_BASE_URL=http://100.123.122.45:54321/functions/v1
+VITE_SUPABASE_URL=https://yentlbgbtmumilbzttge.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon key from Supabase Cloud>
+VITE_API_BASE_URL=https://yentlbgbtmumilbzttge.supabase.co/functions/v1
+VITE_APP_ENV=cloud-dev
 ```
+
+`VITE_API_BASE_URL` is the Edge Functions root. Do not append `/api`; the app client already calls paths such as `/api/v1/health`.
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
 
@@ -49,9 +51,9 @@ Start the frontend:
 npm run dev -- --host 127.0.0.1
 ```
 
-## Shared-server smoke
+## Cloud smoke
 
-Shared server login:
+Cloud staging login:
 
 - Account: `admin`
 - Email equivalent: `admin@qc.local`
@@ -67,7 +69,7 @@ Manual smoke from a dev machine:
 6. Open `Quan tri` only with an account that has admin permission.
 7. Sign out and confirm the app returns to `/login`.
 
-Optional automated smoke from a Tailscale-connected machine:
+Optional automated smoke:
 
 ```bash
 export E2E_ADMIN_EMAIL="admin@qc.local"
@@ -75,11 +77,11 @@ export E2E_ADMIN_EMAIL="admin@qc.local"
 npm run test:e2e
 ```
 
-The automated smoke can skip E2E bootstrap when the shared server admin user already exists. If a test needs to create or reset users, run that bootstrap on the server side or from a trusted operator shell, not from frontend `.env.local`.
+The automated smoke can skip E2E bootstrap when the cloud admin user already exists. If a test needs to create or reset users, run that bootstrap from a trusted operator shell, not from frontend `.env.local`.
 
 ## Server-side verification
 
-Run database and Edge Function integration checks on the shared server, where Docker and Supabase are installed:
+Run database and Edge Function integration checks locally or from a trusted operator machine when a slice touches migrations or cloud runtime behavior:
 
 ```bash
 npm run supabase:reset
@@ -127,12 +129,12 @@ The default GitHub Actions workflow is intentionally independent of the private 
 - Edge Function unit tests
 - committed-secret scan
 
-Database tests and browser E2E against the shared Supabase server are server/operator gates, not default pull-request gates, until the project adds an approved CI-to-Tailscale connection.
+Database tests and browser E2E against non-public/private fallback environments are operator gates, not default pull-request gates.
 
 ## Staging deploy order
 
 1. Confirm developer verification is green.
-2. Confirm server-side database and Edge Function verification is green.
+2. Confirm server-side database and Edge Function verification is green when the slice touches those layers.
 3. Push reviewed migrations to the authorized staging Supabase project.
 4. Deploy Edge Function `api`.
 5. Configure frontend environment variables for staging.
@@ -153,5 +155,5 @@ If staging smoke fails after deploy:
 
 ## Known limitations
 
-- GitHub CI currently does not connect to the private Tailscale Supabase server.
+- Shared-dev LAN/Tailscale is an optional fallback, not the default dev/staging backend.
 - The Phase 0 rate limiter is in memory and acceptable only for a single staging instance. Replace it with a distributed store before multi-instance production traffic.

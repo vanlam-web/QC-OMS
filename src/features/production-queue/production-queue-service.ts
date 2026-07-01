@@ -1,4 +1,5 @@
 import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
 import type { ProductionQueueDraftPayload, ProductionQueueListResponse } from './types'
 
 export interface ProductionQueueApiRequester {
@@ -26,7 +27,7 @@ export type ProductionQueueService = ReturnType<typeof createProductionQueueServ
 export function createBrowserProductionQueueService(getAccessToken: () => Promise<string | null>) {
   return createProductionQueueService(
     createApiClient({
-      baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      baseUrl: runtimeConfig.apiBaseUrl,
       getAccessToken,
     }),
   )
