@@ -286,13 +286,25 @@ Còn cần chốt/chi tiết sau MVP:
 
 #### 3.6. BOM/Combo business
 
-Source of Truth cần bổ sung:
+Draft tham khảo đã tạo:
+
+- `docs/superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`
+
+Source of Truth cần bổ sung khi phase này bắt đầu:
 
 - Business Sales hoặc Inventory tùy ranh giới cuối cùng.
 - Database BOM tables.
 - Backend validation chống vòng lặp BOM.
 
-Thiếu hiện tại:
+Đã định hướng tạm thời:
+
+- Combo trong POS trước hết là dòng bán hàng có snapshot.
+- Giá bán combo độc lập với tổng giá vật tư thành phần.
+- Nếu BOM rõ và đủ cấu hình, có thể trừ kho theo thành phần khi chốt hóa đơn.
+- Nếu BOM chưa rõ hoặc thiếu cấu hình, MVP không tự deep-scan/trừ vật tư con; chỉ lưu snapshot và cảnh báo nếu cần.
+- Sửa BOM trong đơn mặc định chỉ lưu snapshot chứng từ, không tự tạo SKU/combo mới.
+
+Còn thiếu/chưa chốt:
 
 - BOM cấp 1/cấp 2 là cấu trúc bán hàng hay cấu trúc vật tư sản xuất.
 - Quy tắc chỉnh BOM trong đơn có lưu thành combo mới hay chỉ snapshot trong đơn.
