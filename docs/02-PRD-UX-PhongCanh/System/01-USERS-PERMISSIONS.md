@@ -17,6 +17,9 @@ QC-OMS dùng permission-based access control:
 
 Ghi chú từ KiotViet audit ngày `2026-07-01`:
 
+- KiotViet `Settings > Quản lý người dùng` có 2 tab chính: `Tài khoản người dùng` và `Quản lý vai trò`.
+- Bảng tài khoản gồm tên hiển thị, tên đăng nhập, điện thoại, vai trò và trạng thái.
+- KiotViet có gợi ý thiết lập quyền mặc định theo vai trò để phân quyền nhanh.
 - KiotViet có `Danh sách nhân viên` với 5 nhân viên thật trong tài khoản đang rà.
 - Các cột chính gồm mã nhân viên, mã chấm công, tên nhân viên, SĐT, CMND/CCCD, nợ và tạm ứng, ghi chú.
 - Có bộ lọc trạng thái đang làm việc/đã nghỉ, phòng ban, chức danh.
@@ -26,6 +29,7 @@ Ghi chú từ KiotViet audit ngày `2026-07-01`:
 - `Bảng hoa hồng` có cấu hình theo hàng hóa/nhân viên áp dụng nhưng không có kết quả phù hợp trong lượt rà.
 - `Thiết lập nhân viên` gồm khởi tạo, chấm công, tính lương, ngày làm/nghỉ, Zalo mini app và máy chấm công.
 - QC-OMS chỉ lấy phần cần cho đăng nhập, quyền và ghi nhận người thao tác. Không copy các trường HR/kế toán nhân sự như mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh nếu chưa có nghiệp vụ rõ.
+- QC-OMS có thể dùng preset/vai trò để tick quyền nhanh, nhưng authorization vẫn dựa trên permission cụ thể.
 
 ---
 
@@ -151,6 +155,8 @@ Một nhân viên có thể đăng nhập ở máy khác nếu có quyền. Máy
 - Khi quyền bị thu hồi realtime, UI refetch `/me` và thoát khỏi màn không còn quyền.
 - Không hiện service role key, token hoặc mật khẩu trong UI/log.
 - Không cho vô hiệu hóa tài khoản quản trị cuối cùng hoặc gỡ quyền `perm.manage_users` khỏi quản trị cuối cùng.
+- Có thể yêu cầu xác thực lại trước khi xuất file nhạy cảm như khách hàng, hàng hóa, hóa đơn hoặc sổ quỹ.
+- Nếu triển khai 2FA, ưu tiên tình huống đăng nhập thiết bị lạ hoặc tài khoản có quyền quản trị; không bắt buộc làm trong MVP đầu.
 
 ---
 

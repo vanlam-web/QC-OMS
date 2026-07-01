@@ -43,21 +43,53 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 | Bảo hành/bảo trì/sửa chữa retail | Bỏ |
 | Thương hiệu/thuộc tính retail | Không tạo module riêng; nếu cần ghi trong tên/mã/nhóm hàng |
 | Xóa dữ liệu gian hàng theo lịch | Không làm UI thường. Nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt |
+| Khóa sổ giao dịch kiểu KiotViet | Để sau. MVP ưu tiên báo cáo động và sửa chứng từ có lịch sử `MaCu.01` |
 | Cân điện tử | Bỏ hiện tại, vì xưởng chưa có nghiệp vụ cân bán hàng |
 
 ---
 
-## 4. Quy Tắc UX
+## 4. Thiết Lập Hàng Hóa
+
+KiotViet có nhiều toggle hàng hóa. QC-OMS chỉ giữ phần phục vụ vận hành xưởng:
+
+| KiotViet Settings | QC-OMS |
+|---|---|
+| Đơn vị tính | Giữ. Dùng danh mục đơn vị gọn, không tạo tràn lan quy cách thành đơn vị |
+| Nhóm hàng | Giữ. Dùng cho lọc, báo cáo, bảng giá/công thức giá và cấu hình sản xuất sau này |
+| Phương pháp giá vốn | Giữ dưới dạng cấu hình tham khảo cho phase Purchase/PriceBook; MVP chưa gọi là giá vốn kế toán chuẩn |
+| Sản xuất hàng hóa | Không copy nguyên KiotViet. QC-OMS dùng hướng BOM/định mức vật tư riêng khi phase BOM bắt đầu |
+| Phân quyền theo nhóm hàng | Để sau. MVP dùng permission theo module; chỉ bổ sung quyền theo nhóm hàng nếu vận hành thật sự cần |
+| Mã vạch hàng hóa | Không làm trong MVP/POS hiện tại |
+| Tự động gợi ý thông tin hàng hóa từ KiotViet | Bỏ |
+| Thuộc tính màu/kích cỡ/chất liệu kiểu retail | Bỏ; nếu cần ghi vào tên/mã/nhóm hàng hoặc quy cách sản phẩm |
+| Thương hiệu | Bỏ module riêng; nếu cần ghi trong tên/mã/nhóm hàng |
+| Vị trí giá/kệ/tủ | Để sau Warehouse Location; không làm trong MVP |
+| Bảo hành/bảo trì/yêu cầu sửa chữa | Bỏ |
+
+Quy tắc đơn giản hóa:
+
+- Product Settings không phải nơi sửa tồn cuộn/tấm trực tiếp.
+- Cấu hình ảnh hưởng trừ kho, giá vốn hoặc bảng giá phải nằm ở đúng module Inventory/PriceBook/Purchase, không ẩn sâu trong một trang Settings chung.
+- Nếu một setting chưa có nghiệp vụ xưởng rõ, mặc định không hiện trên UI.
+
+---
+
+## 5. Quy Tắc UX
 
 - Trang Settings chỉ hiển thị nhóm cấu hình có trong scope QC-OMS.
 - Không hiện các menu đã loại để tránh người dùng tưởng hệ thống có nghiệp vụ đó.
 - Cấu hình ảnh hưởng tiền/kho/quyền phải ghi audit log.
 - Thao tác nguy hiểm như vô hiệu hóa tài khoản quản trị cuối cùng, xóa dữ liệu, hoặc xóa tài khoản ngân hàng đang có giao dịch phải bị chặn.
 - Nếu cấu hình đang được chứng từ sử dụng, UI cho đổi trạng thái `inactive` thay vì xóa vật lý.
+- Xuất file nhạy cảm có thể yêu cầu xác thực lại nếu người dùng có quyền cấu hình bật.
+- 2FA nếu làm thì ưu tiên tài khoản quản trị và đăng nhập từ thiết bị lạ, không biến MVP thành luồng đăng nhập rườm rà.
+- Audit log tối thiểu cần lọc theo nhân viên, tính năng và thời gian.
+- Audit log phải ghi rõ hành động chính như tạo/sửa/hủy hóa đơn, tạo phiếu thu/chi, nhập hàng, kiểm kho, xuất file và đổi cấu hình quan trọng.
+- MVP không khóa báo cáo cuối ngày thành số bất biến; nếu sau này cần khóa sổ, phải mở spec riêng để xử lý sửa chứng từ, kho, sổ quỹ và công nợ sau ngày khóa.
 
 ---
 
-## 5. Acceptance Criteria UX
+## 6. Acceptance Criteria UX
 
 1. Admin xem và sửa được thông tin cửa hàng cơ bản.
 2. Admin quản lý được tài khoản/quyền từ nhóm System.
@@ -65,6 +97,9 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 4. Settings không hiển thị giao hàng/COD/online/VAT/HĐĐT/QR partner/ví điện tử/ngoại tệ.
 5. Các thay đổi cấu hình quan trọng có audit log.
 6. Không có thao tác xóa dữ liệu hàng loạt trong UI vận hành thường ngày.
+7. Settings hàng hóa không hiển thị barcode/POS scan, tự gợi ý hàng hóa, thuộc tính retail, thương hiệu, bảo hành hoặc cân điện tử trong MVP.
+8. Vai trò/preset nếu có chỉ là tick quyền nhanh, không thay permission cụ thể.
+9. Lịch sử thao tác xem được các hành động quan trọng và không cho sửa/xóa từ UI.
 
 ---
 

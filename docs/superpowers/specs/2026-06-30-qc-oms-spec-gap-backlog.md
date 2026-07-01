@@ -216,10 +216,17 @@ Source of Truth đã tạo:
 
 - Settings QC-OMS chỉ hiển thị cấu hình có dùng thật trong xưởng.
 - Giữ thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường và cấu hình nền hàng hóa như đơn vị tính/nhóm hàng.
+- Settings hàng hóa chỉ giữ đơn vị tính, nhóm hàng, giá vốn tham khảo và hướng BOM/định mức riêng của QC-OMS; không copy nguyên toggle KiotViet.
+- Vai trò/preset người dùng nếu có chỉ là tick quyền nhanh; authorization vẫn theo permission cụ thể.
+- Bảo mật giữ mức nhẹ: xác thực lại khi xuất file nhạy cảm và 2FA cho quản trị/thiết bị lạ là hướng tốt, nhưng không bắt buộc làm rườm rà trong MVP đầu.
+- Audit log nên lọc theo nhân viên/tính năng/thời gian và ghi chi tiết tạo/sửa/hủy hóa đơn, phiếu thu/chi, nhập hàng, kiểm kho, xuất file và đổi cấu hình.
+- Chưa làm khóa sổ kiểu KiotViet trong MVP; báo cáo cuối ngày vẫn động, sửa chứng từ theo `MaCu.01` và audit log.
+- Không làm lịch xóa dữ liệu gian hàng trong UI vận hành thường ngày.
 - Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
 - POS/thu nợ chỉ ghi nhận chuyển khoản vào tài khoản ngân hàng đã khai báo; không cần kết nối QR ting ting/bank partner.
 - Mẫu in là bill thường, không phải HĐĐT.
 - Bỏ giao hàng/COD/đối tác vận chuyển, QR partner/NAPAS/MoMo/ZaloPay, SMS/Zalo marketing provider, ngoại tệ/tỷ giá, VAT/thuế/HĐĐT, tích điểm/voucher/coupon/khuyến mại campaign, bảo hành/bảo trì retail, cân điện tử.
+- Bỏ barcode/POS scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail, thương hiệu riêng và vị trí giá/kệ/tủ khỏi MVP.
 - Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
 
 #### 3.3. Order draft và Order persistence

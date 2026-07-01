@@ -19,7 +19,9 @@ Quan sát ngày `01/07/2026` trên trang `Hàng hóa`:
 
 - Giữ bộ lọc trạng thái để xem được hàng ngưng bán trong module Hàng hóa.
 - Giữ `dự kiến hết hàng` ở mức cột cảnh báo tồn thấp nếu công thức đơn giản; có thể để sau nếu chưa có tốc độ bán ổn định.
+- Giữ đơn vị tính và nhóm hàng là dữ liệu nền.
 - Không tạo field/module riêng cho thương hiệu hoặc kênh bán trong MVP.
+- Không đưa barcode/QR scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail hoặc bảo hành/bảo trì vào MVP.
 - Nhà cung cấp/vị trí chỉ đưa vào sau khi Purchase/Warehouse location được chốt.
 
 ---
@@ -64,6 +66,8 @@ Màn này không thay thế POS bán hàng. Sản phẩm ngưng bán vẫn xem v
 | Dự kiến hết hàng | Sau MVP hoặc chỉ hiển thị cảnh báo nếu tính được đơn giản |
 
 Sau MVP có thể bổ sung nhà cung cấp và vị trí. Không tạo bộ lọc thương hiệu/kênh bán riêng trong MVP; nếu cần nhận diện thương hiệu thì ghi trong tên/mã/nhóm hàng.
+
+Không có bộ lọc barcode/thuộc tính retail/bảo hành trong MVP.
 
 ---
 

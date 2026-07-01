@@ -414,6 +414,7 @@ Một số chi tiết đã thấy:
 - `Quản lý người dùng` có danh sách tài khoản, vai trò và trạng thái.
 - `Quản lý chi nhánh` đang có `Chi nhánh trung tâm`.
 - `Bảo mật` có xác thực khi xuất file và xác thực 2 lớp cho nhân viên.
+- `Quản lý người dùng` có `Tài khoản người dùng`, `Quản lý vai trò`, cột tên hiển thị, tên đăng nhập, điện thoại, vai trò, trạng thái và gợi ý quyền mặc định theo vai trò.
 - `Gửi SMS, Zalo` có mẫu tin và thiết lập kết nối SMS/Zalo.
 - `Mẫu in` có các nhóm mẫu đặt hàng, hóa đơn, giao hàng, trả hàng, đổi trả hàng, đặt hàng nhập, nhập hàng, trả hàng nhập, chuyển hàng, phiếu thu, phiếu chi và bình luận; đang thấy mẫu `Báo giá chưa thế - A4` với thao tác xem trước.
 - `Hàng hóa` trong Settings có mã vạch, tự động gợi ý thông tin, đơn vị tính, thuộc tính, nhóm hàng, thương hiệu, vị trí, phương pháp tính giá vốn, bảo hành/bảo trì, sản xuất hàng hóa và phân quyền theo nhóm hàng.
@@ -421,16 +422,22 @@ Một số chi tiết đã thấy:
 - `Đơn hàng` có đặt hàng, giao dịch khi hết tồn, in báo giá, xác nhận trước khi hoàn thành, giới hạn trả hàng, khóa thay đổi thời gian giao dịch, chặn sửa HĐĐT và thu khác.
 - `Khách hàng` có khách theo chi nhánh/người phụ trách, khách đồng thời là NCC, cảnh báo công nợ, trường bắt buộc, tích điểm, khuyến mại, voucher và coupon.
 - KiotViet có màn `Lịch xóa`/`Xóa dữ liệu gian hàng`, gồm lựa chọn xóa toàn bộ dữ liệu hoặc một số nhóm dữ liệu.
+- `Lịch sử thao tác` theo dõi thao tác nhân viên, có lọc nhân viên/tính năng/thời gian và ghi chi tiết các việc như tạo hóa đơn, tạo phiếu thu/chi, nhập hàng, xuất file công nợ.
+- `Khóa sổ` chặn chỉnh sửa giao dịch trước ngày khóa sổ hoặc đổi ngày giao dịch về trước thời điểm khóa.
+- `Xóa dữ liệu gian hàng` cho đặt lịch xóa dữ liệu cũ và nhận thông báo khi hoàn tất.
 
 Quyết định QC-OMS:
 
 - Giữ Settings ở mức tối giản, chỉ hiện các cấu hình thật sự dùng trong QC-OMS.
 - Giữ: thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường, đơn vị tính/nhóm hàng/cấu hình hàng hóa liên quan Inventory/PriceBook/BOM.
+- Thiết lập hàng hóa được đơn giản hóa: giữ đơn vị tính, nhóm hàng, giá vốn tham khảo và hướng BOM/định mức riêng của QC-OMS; không copy nguyên các toggle KiotViet.
 - Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
 - Chuyển khoản trong POS/thu nợ chỉ ghi vào tài khoản ngân hàng đã khai báo, không cần kết nối QR partner.
 - Mẫu in giữ cho bill thường; không liên quan HĐĐT.
 - Mẫu in scope hiện tại chỉ gồm báo giá, hóa đơn/bill bán hàng, phiếu thu và phiếu chi; không làm mẫu đặt hàng/giao hàng/trả hàng/chuyển hàng/nhập hàng trong MVP.
 - Giữ lịch sử thao tác/audit log, nhưng không cho sửa/xóa log từ UI thường.
+- Vai trò/preset nếu có chỉ dùng để tick quyền nhanh; nguồn authorization vẫn là permission cụ thể.
+- Bảo mật giữ mức nhẹ: có thể xác thực lại khi xuất file nhạy cảm và 2FA cho tài khoản quản trị/thiết bị lạ nếu triển khai được.
 - Không làm giao hàng/COD/đối tác vận chuyển.
 - Không làm QR ting ting, đăng ký bank partner, NAPAS, MoMo/ZaloPay hoặc ví điện tử trong MVP.
 - Không làm SMS/Zalo marketing provider; chỉ giữ hỗ trợ mở/copy/gửi ảnh bill theo cấu hình khách đã chốt trong POS.
@@ -438,8 +445,11 @@ Quyết định QC-OMS:
 - Không làm VAT, Thuế & Kế toán, HĐĐT.
 - Không làm tích điểm, voucher, coupon, khuyến mại campaign trong MVP.
 - Không làm bảo hành/bảo trì retail.
+- Không làm mã vạch/POS scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail, thương hiệu riêng hoặc vị trí giá/kệ/tủ trong MVP.
 - Không làm cân điện tử.
 - Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
+- Giữ audit log đơn giản với bộ lọc nhân viên/tính năng/thời gian và chi tiết hành động quan trọng.
+- Chưa làm khóa sổ kiểu KiotViet trong MVP. Báo cáo cuối ngày vẫn là báo cáo động; sửa chứng từ theo quy tắc `MaCu.01` và audit log.
 
 PRD-UX đã bổ sung:
 
