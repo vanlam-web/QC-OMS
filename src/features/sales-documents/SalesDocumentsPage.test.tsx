@@ -123,3 +123,17 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(within(detailRegion).getByText('Công nợ hóa đơn 150.000 ₫')).toBeInTheDocument()
   expect(within(detailRegion).getByText('sale_deduction -8.25 m²')).toBeInTheDocument()
 })
+
+it('keeps saved invoice detail read-only until safe revise cancel and print flows exist', async () => {
+  const service = makeService()
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Mở HD010985' }))
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+
+  expect(within(detailRegion).queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
+  expect(within(detailRegion).queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument()
+  expect(within(detailRegion).queryByRole('button', { name: 'Huỷ' })).not.toBeInTheDocument()
+  expect(within(detailRegion).queryByRole('button', { name: 'In' })).not.toBeInTheDocument()
+  expect(within(detailRegion).queryByRole('button', { name: 'In lại' })).not.toBeInTheDocument()
+})
