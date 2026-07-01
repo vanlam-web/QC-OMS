@@ -108,7 +108,13 @@ KiotViet `Khuyến mại` có dữ liệu thật dạng `Hàng hóa - Giá bán 
 
 Giá vốn trong KiotViet hiển thị để tham khảo trên lưới thiết lập giá. QC-OMS cũng cần hiển thị giá vốn khi đã có dữ liệu Purchase, nhưng không cho phép sửa giá vốn trực tiếp từ bảng giá.
 
-Export bảng giá có nhiều dòng `Bảng giá chung = 0` và một dòng giá nhóm `26 = 0`. Theo quyết định hiện tại, giá `0` là giá hợp lệ nếu được khai báo; fallback về bảng giá chung chỉ xảy ra khi dòng giá không tồn tại/để trống trong schema QC-OMS, không phải vì giá bằng `0`.
+Export bảng giá có nhiều dòng `Bảng giá chung = 0` và một dòng giá nhóm `26 = 0`. Quy tắc mới sau Owner bổ sung:
+
+- Với bảng giá chung, giá `0` vẫn là giá đã khai báo từ dữ liệu import; không fallback chỉ vì falsy.
+- Với bảng giá nhóm khách, giá `0` là một tín hiệu nghiệp vụ có chủ ý: bán theo `giá nhập gần nhất` của sản phẩm cho khách thuộc nhóm/bảng giá đó.
+- Fallback về bảng giá chung chỉ xảy ra khi dòng giá không tồn tại/để trống, không phải vì giá bằng `0`.
+
+Nói cách khác, `0` không còn được hiểu chung chung là "miễn phí" trong bảng giá nhóm. Nếu sau này thật sự cần bán miễn phí/tặng hàng, xử lý bằng giá sửa tay/chiết khấu trên POS hoặc một rule riêng, không lẫn với bảng giá nhóm.
 
 Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook nâng cao:
 
@@ -210,6 +216,46 @@ Mặc định an toàn:
 - POS chỉ dùng giá mới sau khi bảng giá đã được cập nhật
 
 Sau này có thể cho phép một số nhóm hàng tự áp dụng nếu Owner bật rõ chính sách đó.
+
+Riêng rule bảng giá nhóm có giá `0` lấy theo `giá nhập gần nhất` là rule đọc động khi POS resolve giá. Khi giá nhập gần nhất thay đổi, POS có thể lấy giá nhập mới nhất ở lần bán sau mà không cần ghi đè lại ô giá `0`. Nếu sản phẩm chưa có giá nhập gần nhất, POS giữ giá `0` và không cần cảnh báo, để thao tác bán hàng không bị rườm rà. UI bảng giá nên hiển thị rõ đây là `Theo giá nhập gần nhất, chưa có thì 0`, không chỉ hiện số `0` trống nghĩa.
+
+### Gán công thức theo bộ lọc đã lưu
+
+QC-OMS nên cho tạo công thức bằng cách:
+
+1. Người dùng lọc sản phẩm trong bảng giá.
+2. Bấm `Tạo công thức cho bộ lọc này`.
+3. Hệ thống lưu bộ lọc thành điều kiện áp dụng công thức.
+4. Khi bấm xem trước/tính lại, hệ thống lấy các sản phẩm khớp điều kiện hiện tại và tạo giá đề xuất.
+
+Đề xuất điều kiện lọc được phép lưu:
+
+| Điều kiện | Khuyến nghị | Lý do |
+|---|---|---|
+| Nhóm hàng | Bắt buộc hoặc ưu tiên chính | Ổn định nhất, phù hợp cách xưởng quản lý vật tư |
+| Tên/mã hàng chứa từ khóa | Điều kiện phụ | Tiện giống KV, nhưng dễ sai nếu đổi tên |
+| Đơn vị/cách bán | Điều kiện phụ | Tách công thức m2, m tới, tấm, cái |
+| Trạng thái hàng | Chỉ dùng khi xem trước | Không nên để công thức phụ thuộc vào active/inactive quá chặt |
+
+Không nên gán công thức chỉ bằng tên hàng. Ví dụ lọc tên chứa `fom 5mm` dùng được, nhưng nên kết hợp với nhóm hàng `Fomex` để tránh bắt nhầm sản phẩm.
+
+Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
+
+1. Công thức gắn trực tiếp cho sản phẩm.
+2. Công thức theo nhóm hàng + điều kiện phụ.
+3. Công thức mặc định của nhóm hàng.
+4. Không có công thức thì giữ giá đã lưu/nhập tay.
+
+Mỗi lần chạy công thức phải có màn xem trước:
+
+- giá đang lưu
+- giá nhập gần nhất/giá vốn bình quân dùng làm nguồn
+- giá đề xuất
+- chênh lệch
+- công thức đã áp dụng
+- checkbox chọn dòng cần áp dụng
+
+Chỉ khi bấm `Áp dụng`, hệ thống mới ghi giá đề xuất vào bảng giá.
 
 ### Làm tròn
 

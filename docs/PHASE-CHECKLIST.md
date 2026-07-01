@@ -330,7 +330,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 - [x] `BG...` chỉ là báo giá/snapshot giá; không giữ kho, không tạo sản xuất, không tạo tiền/công nợ/doanh thu.
 - [x] Không làm HĐĐT/VAT/thuế kế toán trong scope hiện tại.
 - [x] POS Customer modal không có tab `Thông tin xuất hóa đơn`; thông tin pháp lý nếu cần chỉ là thông tin nội bộ.
-- [x] Price Book: giá khai báo `0` là giá hợp lệ; không fallback vì giá falsy.
+- [x] Price Book: giá `0` không fallback vì falsy; bảng giá chung giữ 0, bảng giá nhóm dùng 0 làm rule lấy giá nhập gần nhất, thiếu giá nhập thì vẫn 0.
 - [x] Reports có End Of Day SoT cho phase sau, nhưng không implement trong Phase 2A.
 - [x] Inventory adjustment SoT mới dành cho future Inventory branch; không đưa vào POS checkout UI.
 - [x] MVP scope lock `c4c4f67`: direct checkout tại xưởng; không mở lại Orders/Giao hàng/COD/HĐĐT/VAT/kênh online/HR/payroll trong MVP.
@@ -342,7 +342,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 - [x] Sync docs SoT mới vào implementation branch.
 - [x] Cart lines editable: số lượng, đơn giá, xóa dòng.
 - [x] Manual price marker và preserve khi đổi khách/bảng giá.
-- [x] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu.
+- [x] Re-resolve automatic prices khi đổi khách, không coi giá `0` là thiếu; nếu giá nhóm 0 thì resolve theo giá nhập gần nhất hoặc 0 nếu chưa có giá nhập.
 - [x] Customer debt display trong checkout.
 - [x] Tách tiền trả hóa đơn hiện tại và tiền thu nợ cũ trong UI/payload.
 - [x] Cash/bank/mixed payment tối đa một tài khoản bank.

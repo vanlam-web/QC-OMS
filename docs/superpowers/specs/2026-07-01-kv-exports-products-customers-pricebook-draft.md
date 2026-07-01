@@ -215,7 +215,8 @@ Quyết định/nhận xét:
 - Các bảng giá nhóm thật đang có tên/nhãn `25`, `26`, `30`, `35`, `40`.
 - Không trải nhiều bảng giá ngang trong UI QC-OMS MVP; mỗi bảng giá mở chi tiết riêng.
 - Dòng giá `0` phải được hiểu cẩn thận:
-  - `0` có thể là giá được khai báo thật.
+  - Với bảng giá chung, `0` có thể là giá được khai báo/import thật.
+  - Với bảng giá nhóm, Owner bổ sung rule mới: `0` nghĩa là lấy theo giá nhập gần nhất; nếu chưa có giá nhập gần nhất thì POS vẫn dùng `0`.
   - Fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS, không phải vì giá bằng `0`.
 - `Giá vốn` và `Giá nhập cuối` là dữ liệu tham khảo cho PriceBook/công thức giá sau Purchase, không sửa trực tiếp ở bảng giá.
 - Owner chốt ngày `2026-07-01`: cách làm giá của KiotViet chưa đúng mong muốn, nên QC-OMS chỉ import dữ liệu bảng giá hiện có, còn luồng giá/công thức giá phải thiết kế riêng theo cách vận hành xưởng.
@@ -227,7 +228,7 @@ Quyết định/nhận xét:
 Đã đủ chắc để cập nhật SoT:
 
 - Customer: SĐT optional, unique nếu có; nhóm khách thật khớp bảng giá; khách không nhóm rất nhiều nên fallback bảng giá chung là lõi.
-- PriceBook: bảng giá nhóm hiện tại là `25/26/30/35/40`; không dùng layout trải ngang; giá `0` không đồng nghĩa với thiếu giá.
+- PriceBook: bảng giá nhóm hiện tại là `25/26/30/35/40`; không dùng layout trải ngang; giá `0` không đồng nghĩa với thiếu giá. Với bảng giá nhóm, `0` là rule lấy giá nhập gần nhất, chưa có thì vẫn 0.
 - Product/Inventory: giữ đơn vị/nhóm hàng, nhưng phải chuẩn hóa; không copy thương hiệu/thuộc tính retail; tồn âm phải hiển thị.
 - BOM draft: có dữ liệu BOM thật, nhưng schema cần phase riêng.
 

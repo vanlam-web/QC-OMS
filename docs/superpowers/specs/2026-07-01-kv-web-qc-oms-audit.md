@@ -285,7 +285,7 @@ Quyết định QC-OMS hiện tại:
 - Giá mặc định luôn lấy theo bảng giá hiện hành.
 - Giá sửa tay lưu lịch sử theo khách + sản phẩm; POS có nút xem 5 giá gần đây.
 - Mỗi màn chi tiết chỉ sửa một bảng giá đang chọn để tránh lưới quá rộng.
-- Giá `0` là một giá hợp lệ nếu được khai báo; fallback về bảng giá chung chỉ xảy ra khi dòng giá không tồn tại/để trống.
+- Giá `0` không fallback chỉ vì falsy. Với bảng giá chung, `0` giữ nguyên là giá đã khai báo/import. Với bảng giá nhóm, `0` là rule lấy giá nhập gần nhất; nếu chưa có giá nhập gần nhất thì POS vẫn dùng `0`.
 
 QC-OMS đã đặc tả tương ứng tại:
 

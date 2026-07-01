@@ -178,6 +178,8 @@ public.price_list_items.product_id
 - `unit_price >= 0`
 - `price_list_id` và `product_id` phải thuộc cùng `organization_id`.
 - Với sản phẩm bán theo `m tới`, `unit_price` là giá cho `1 m tới`.
+- Với bảng giá nhóm khách, `unit_price = 0` là sentinel nghiệp vụ: POS resolve theo `giá nhập gần nhất`; nếu chưa có giá nhập gần nhất thì dùng `0`.
+- Với bảng giá chung, `unit_price = 0` giữ nguyên là giá đã khai báo/import, không mang nghĩa fallback.
 
 ### Index
 

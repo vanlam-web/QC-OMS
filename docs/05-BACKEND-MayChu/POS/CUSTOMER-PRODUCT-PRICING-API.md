@@ -437,7 +437,9 @@ Lấy giá mặc định cho một hoặc nhiều sản phẩm theo khách hàng
 4. Nếu khách có nhóm active, lấy bảng giá của nhóm; nếu không, dùng bảng giá chung.
 5. Với mỗi sản phẩm, tìm giá trong bảng giá đã chọn.
 6. Nếu không có giá trong bảng giá đã chọn, fallback về bảng giá chung.
-7. Trả giá và nguồn giá.
+7. Nếu bảng giá đã chọn là bảng giá nhóm và dòng giá có `unit_price = 0`, lấy `giá nhập gần nhất` của sản phẩm làm giá mặc định.
+8. Nếu chưa có `giá nhập gần nhất`, trả giá `0` và không tạo cảnh báo.
+9. Trả giá và nguồn giá.
 
 **Response data:**
 
@@ -453,6 +455,17 @@ Lấy giá mặc định cho một hoặc nhiều sản phẩm theo khách hàng
   ]
 }
 ```
+
+`price_source` có thể là:
+
+| Giá trị | Ý nghĩa |
+|---|---|
+| `customer_group` | Giá cụ thể trong bảng giá nhóm |
+| `default_price_list` | Fallback hoặc dùng bảng giá chung |
+| `latest_purchase_cost` | Bảng giá nhóm để `0`, hệ thống lấy giá nhập gần nhất |
+| `latest_purchase_cost_missing_zero` | Bảng giá nhóm để `0`, nhưng sản phẩm chưa có giá nhập gần nhất nên dùng `0` |
+
+Không trả warning khi `latest_purchase_cost_missing_zero`; Owner chốt giữ thao tác đơn giản, nhân viên có thể sửa giá tay nếu cần.
 
 `price_source` có thể là:
 

@@ -23,6 +23,8 @@ Giá mặc định trên POS được xác định theo thứ tự:
 
 Nếu bảng giá của nhóm không có giá cho sản phẩm, POS dùng giá trong bảng giá chung cho sản phẩm đó.
 
+Nếu bảng giá nhóm có dòng giá sản phẩm và `unit_price = 0`, POS không fallback về bảng giá chung và không coi đây là lỗi. Đây là rule đặc biệt đã chốt: giá mặc định lấy theo `giá nhập gần nhất` của sản phẩm cho khách thuộc nhóm/bảng giá đó. Nếu sản phẩm chưa có giá nhập gần nhất, POS giữ giá `0` và không cần cảnh báo.
+
 ### BR-PRICE-02: Đổi khách trên đơn
 
 Khi đổi khách trên đơn, POS cập nhật giá các dòng hàng theo bảng giá áp dụng của khách mới.
@@ -72,6 +74,34 @@ Khi bán lại cùng khách hàng và cùng sản phẩm:
 - POS vẫn hiển thị giá mặc định theo bảng giá trước.
 - Nếu khách hàng đó đã có lịch sử giá riêng với sản phẩm, hệ thống cung cấp tối đa 5 giá gần nhất để nhân viên có thể chọn lại.
 - Lịch sử giá là nguồn gợi ý, không thay thế giá mặc định theo bảng giá.
+
+### BR-PRICE-06: Bảng giá nhóm bằng 0 lấy theo giá nhập gần nhất
+
+Rule `bảng giá nhóm = 0 -> giá nhập gần nhất` chỉ áp dụng cho bảng giá nhóm khách.
+
+Không áp dụng cho bảng giá chung, vì dữ liệu import từ KiotViet có thể có giá chung bằng 0 và cần giữ nguyên để rà soát.
+
+Khi POS resolve giá:
+
+```text
+Khách thuộc bảng giá nhóm
+  -> Có dòng giá sản phẩm trong bảng nhóm?
+      -> Không có: fallback bảng giá chung
+      -> Có và giá > 0: dùng giá nhóm
+      -> Có và giá = 0:
+            -> nếu có giá nhập gần nhất: dùng giá nhập gần nhất
+            -> nếu chưa có giá nhập gần nhất: dùng 0, không cảnh báo
+```
+
+Nguồn giá trả về nên phân biệt rõ:
+
+- `customer_group`: giá số cụ thể từ bảng giá nhóm
+- `latest_purchase_cost`: giá lấy từ giá nhập gần nhất do dòng nhóm bằng 0
+- `latest_purchase_cost_missing_zero`: bảng giá nhóm bằng 0 nhưng chưa có giá nhập gần nhất, nên tạm dùng 0
+- `default_price_list`: fallback bảng giá chung
+- `manual`: nhân viên sửa tay
+
+Nếu giá lấy từ `latest_purchase_cost` hoặc `latest_purchase_cost_missing_zero`, snapshot dòng bán/hóa đơn/báo giá phải lưu rõ nguồn giá này để sau này biết vì sao đơn giá đi theo giá nhập hoặc bằng 0.
 
 ---
 
@@ -150,7 +180,7 @@ Các nội dung sau không chốt trong tài liệu này:
 - quản lý tồn theo cuộn, tấm, lot hoặc vật tư dở
 - chính sách tồn âm
 - BOM và deep-scan vật tư
-- schema Database chi tiết cho bảng giá và lịch sử giá
+- schema Database chi tiết cho công thức giá nâng cao
 - API contract chi tiết cho Product, Customer và Pricing
 
 ---
@@ -167,6 +197,7 @@ Các nội dung sau không chốt trong tài liệu này:
 8. Sản phẩm ngưng bán không xuất hiện trong tìm kiếm POS.
 9. Sản phẩm ngưng bán vẫn tìm được ở trang Hàng hóa bằng bộ lọc trạng thái.
 10. Sản phẩm bán theo `m tới` dùng giá theo `1 m tới`.
+11. Với bảng giá nhóm, giá `0` lấy theo giá nhập gần nhất; nếu chưa có giá nhập gần nhất thì POS dùng 0 và không cảnh báo.
 
 ---
 

@@ -52,6 +52,8 @@ Giá vốn là dữ liệu tham khảo lấy từ Purchase/Supplier hoặc tồn
 - Với sản phẩm bán theo số lượng, giá là giá cho một đơn vị bán.
 - Nếu bảng giá nhóm không có giá cho sản phẩm, POS fallback về bảng giá chung.
 - Sản phẩm ngưng bán vẫn có thể thấy trong bảng giá khi bật bộ lọc trạng thái, nhưng không xuất hiện trong POS.
+- Với bảng giá nhóm khách, nếu nhập giá `0`, hệ thống hiểu là `Theo giá nhập gần nhất` cho sản phẩm đó trong bảng giá nhóm này.
+- Với bảng giá chung, giá `0` giữ nguyên là dữ liệu import/giá đã khai báo; không tự chuyển thành fallback.
 
 ---
 
@@ -79,7 +81,13 @@ Lịch sử giá theo khách + sản phẩm chỉ phát sinh khi POS lưu chứn
 
 Nếu người dùng thoát trang khi còn dòng giá chưa lưu, UI phải cảnh báo mất thay đổi.
 
-Nếu một sản phẩm có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
+Nếu một sản phẩm trong bảng giá chung có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
+
+Nếu một sản phẩm trong bảng giá nhóm khách có giá bằng `0`, POS không hiểu là miễn phí. POS lấy `giá nhập gần nhất` làm giá mặc định cho khách thuộc nhóm/bảng giá đó. Nếu chưa có giá nhập gần nhất thì giá mặc định vẫn là `0` và không cần cảnh báo. UI nên hiển thị badge hoặc text rõ, ví dụ:
+
+```text
+0 -> Theo giá nhập gần nhất, chưa có thì 0
+```
 
 Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng. Công thức có thể lấy `giá vốn bình quân` hoặc `giá nhập cuối`, sau đó tính qua nhiều bước chi phí, hao hụt và lợi nhuận riêng cho từng bảng giá. Công thức lưu được làm mặc định lâu dài theo nhóm hàng/sản phẩm.
 
@@ -101,6 +109,43 @@ Giá 35 = Giá nền + 35,000/tấm
 ```
 
 Khi giá nhập cuối hoặc giá vốn bình quân thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
+
+### 6.1. Gán công thức theo bộ lọc
+
+Trong màn chi tiết bảng giá, người dùng có thể lọc danh sách sản phẩm rồi bấm `Tạo công thức cho bộ lọc này`.
+
+Bộ lọc được lưu thành một rule công thức. Đề xuất UI:
+
+```text
+[Nhóm hàng: Fomex] [Tên/mã chứa: 5mm] [Cách bán: tấm]
+    -> [Tạo công thức cho bộ lọc này]
+```
+
+Khi lưu rule, hệ thống lưu:
+
+- tên công thức dễ hiểu
+- bảng giá áp dụng hoặc tất cả bảng giá nhóm
+- điều kiện lọc sản phẩm
+- nguồn giá vốn: giá nhập gần nhất hoặc giá vốn bình quân
+- tầng chi phí: vận chuyển, thuế/phí, hao hụt
+- tầng lợi nhuận theo bảng giá
+- cách làm tròn
+- trạng thái active/inactive của công thức
+
+Đề xuất để dễ vận hành:
+
+- Nhóm hàng nên là điều kiện chính khi tạo công thức.
+- Tên/mã hàng chỉ dùng để thu hẹp trong nhóm hàng, không nên là điều kiện duy nhất.
+- Nếu cần rất đặc biệt, cho phép gắn công thức trực tiếp cho một vài sản phẩm.
+- Khi sản phẩm mới được tạo và khớp bộ lọc công thức, lần chạy công thức sau sẽ đưa sản phẩm đó vào danh sách đề xuất.
+
+Nếu nhiều công thức cùng khớp một sản phẩm, dùng ưu tiên:
+
+1. công thức gắn trực tiếp sản phẩm
+2. công thức nhóm hàng có nhiều điều kiện cụ thể hơn
+3. công thức mặc định nhóm hàng
+
+Trước khi áp dụng hàng loạt, màn preview phải hiển thị giá hiện tại, giá nguồn, giá đề xuất, chênh lệch và công thức đang áp dụng.
 
 Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, màn chi tiết bảng giá không được khóa thiết kế theo lưới export KiotViet. KiotViet chỉ dùng để import dữ liệu ban đầu và đối chiếu nhóm giá hiện có. Luồng chuẩn của QC-OMS cần ưu tiên:
 
