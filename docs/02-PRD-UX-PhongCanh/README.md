@@ -9,6 +9,9 @@
 ```
 02-PRD-UX/
 ├── README.md                     ← (file này)
+├── Overview/                    ← Tổng quan vận hành
+    ├── [Overview/README.md](./Overview/README.md)
+    └── [Overview/01-DASHBOARD.md](./Overview/01-DASHBOARD.md)
 ├── POS/                         ← Trang Bán hàng
     ├── [01-POS-LAYOUT.md](./POS/01-POS-LAYOUT.md)                   ← Bản đồ tổng thể
     ├── [POS/README.md](./POS/README.md)                              ← Chỉ mục POS
@@ -72,6 +75,7 @@
 
 | Khối | File | Trạng thái |
 |---|---|---|
+| Overview Dashboard | [Overview/01-DASHBOARD.md](./Overview/01-DASHBOARD.md) | 🔨 |
 | Bản đồ tổng thể POS | [POS/01-POS-LAYOUT.md](./POS/01-POS-LAYOUT.md) | ✅ |
 | K01: Top Bar | [POS/K01/01-K01-TOPBAR.md](./POS/K01/01-K01-TOPBAR.md) | 🔨 |
 | K02-A: Dòng SP động | [POS/K02/02-K02A-DONG-SP.md](./POS/K02/02-K02A-DONG-SP.md) | 🔨 |

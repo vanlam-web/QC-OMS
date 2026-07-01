@@ -45,6 +45,7 @@ Các nhóm menu chính:
 
 | KiotViet | QC-OMS tương ứng | Trạng thái |
 |---|---|---|
+| Tổng quan | Overview Dashboard | Đã có PRD-UX tổng quan vận hành |
 | Bán hàng | POS | Đã có PRD-UX POS, Business/DB/API đang mở rộng |
 | Danh sách hàng hóa | Inventory/Product | Đã có PRD-UX Inventory |
 | Thiết lập giá | Price List | Đã có PRD-UX/Business/DB/API nền |
@@ -88,6 +89,30 @@ Ghi chú: "không có dữ liệu" ở đây là dấu hiệu từ giao diện K
 ---
 
 ## 4. Ghi chú theo màn hình
+
+### 4.0. Tổng quan / Dashboard
+
+KiotViet có:
+
+- Kết quả bán hàng hôm nay: doanh thu, trả hàng, doanh thu thuần.
+- Biểu đồ doanh thu theo ngày/giờ/thứ.
+- Top 10 hàng bán chạy.
+- Top 10 khách mua nhiều nhất.
+- Doanh thu theo nhân viên.
+- Theo dõi chấm công và link thiết lập chấm công.
+- Widget dịch vụ ngoài như thanh toán QR/vay vốn.
+- Cảnh báo hoạt động đăng nhập khác thường.
+- Hoạt động gần đây với link hóa đơn, ví dụ `HD010985`.
+
+Quyết định QC-OMS:
+
+- Làm Dashboard tổng quan vận hành riêng tại `docs/02-PRD-UX-PhongCanh/Overview/01-DASHBOARD.md`.
+- Giữ doanh thu hôm nay, thực thu, công nợ mới, số hóa đơn, top hàng, top khách, doanh thu theo người bán và hoạt động gần đây.
+- Có thể thêm cảnh báo tồn âm, công nợ lâu ngày và chứng từ sửa/hủy.
+- Không hiển thị trả hàng vì không làm trả hàng bán.
+- Không hiển thị chấm công/ca làm/vay vốn/widget marketing dịch vụ ngoài.
+- Không hiển thị COD/vận đơn/kênh bán online.
+- Số Dashboard phải khớp Reports/Finance/Sales Documents cùng khoảng thời gian.
 
 ### 4.1. Sổ quỹ
 

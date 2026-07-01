@@ -193,6 +193,19 @@ Source of Truth đã tạo:
 - Công thức giá theo nhóm hàng có thể chọn nguồn giá vốn bình quân hoặc giá vốn mới nhất.
 - Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
 
+#### 3.2F. Overview Dashboard — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/Overview/README.md`
+- `docs/02-PRD-UX-PhongCanh/Overview/01-DASHBOARD.md`
+
+Đã định hướng:
+
+- Dashboard là màn tóm tắt vận hành, không thay thế Reports.
+- Giữ doanh thu hôm nay, thực thu, công nợ mới, số hóa đơn, top hàng, top khách, doanh thu theo người bán, hoạt động gần đây và cảnh báo tồn/công nợ.
+- Không copy trả hàng, chấm công, vay vốn, widget marketing, COD/vận đơn/kênh online từ KiotViet.
+
 #### 3.3. Order draft và Order persistence
 
 Source of Truth đã tạo/cập nhật:
