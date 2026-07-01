@@ -147,7 +147,7 @@ Dashboard, retention và alert nâng cao hoàn thiện ở Giai đoạn 8.
 
 - Staging và production dùng khả năng backup phù hợp của Supabase project.
 - Trước production phải ghi nhận rõ lịch backup hiện có và người chịu trách nhiệm kiểm tra.
-- Restore drill đầy đủ, RPO và RTO được chốt ở Giai đoạn 8.
+- Restore drill, RPO và RTO baseline xem [BACKUP-RESTORE.md](./BACKUP-RESTORE.md); trước production thật cần xác nhận lại theo hạ tầng đang dùng.
 - Seed local/staging không được chạy tự động trên production.
 
 ---
@@ -160,4 +160,3 @@ Dashboard, retention và alert nâng cao hoàn thiện ở Giai đoạn 8.
 - Không có production secret trong source hoặc Preview.
 - CI chặn merge khi lint, typecheck, test hoặc build thất bại.
 - Smoke test đăng nhập chạy thành công sau deploy staging.
-

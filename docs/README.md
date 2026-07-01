@@ -215,6 +215,8 @@
 |---|---|---|
 | [07-DEPLOYMENT-TrienKhai/README.md](./07-DEPLOYMENT-TrienKhai/README.md) | Mục lục Deployment | ✅ |
 | [07-DEPLOYMENT-TrienKhai/_RULES.md](./07-DEPLOYMENT-TrienKhai/_RULES.md) | Quy tắc layer 07 | ✅ |
+| [07-DEPLOYMENT-TrienKhai/PRODUCTION.md](./07-DEPLOYMENT-TrienKhai/PRODUCTION.md) | Vận hành production, smoke test, rollback và monitoring tối thiểu | 🔨 |
+| [07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md](./07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md) | Backup, RPO/RTO baseline và restore drill | 🔨 |
 | [07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md](./07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md) | Quy ước triển khai & vận hành | ✅ |
 | [07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md](./07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md) | Local, staging và CI/CD baseline | ✅ |
 | `07-DEPLOYMENT-TrienKhai/*/` | Chưa có deployment riêng cho từng domain | ⬜ |

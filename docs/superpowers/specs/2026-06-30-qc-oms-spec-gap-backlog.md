@@ -442,18 +442,25 @@ Source of Truth cần tạo sau khi phase này bắt đầu:
 
 #### 3.12. Deployment production, backup, RPO/RTO
 
-Source of Truth cần bổ sung:
+Source of Truth baseline đã tạo:
 
 - `docs/07-DEPLOYMENT-TrienKhai/PRODUCTION.md`
 - `docs/07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md`
-- monitoring/alerting runbook
 
-Thiếu hiện tại:
+Đã định hướng:
 
-- RPO/RTO.
-- Backup schedule và restore drill.
-- Alert cụ thể cho checkout fail, DB error, queue lag, realtime disconnect.
-- Quy trình rollback app + corrective migration.
+- Production chỉ promote commit đã qua CI/staging/smoke test.
+- Rollback app theo Git SHA ổn định; database dùng corrective migration hoặc restore theo runbook.
+- RPO baseline 24 giờ, RTO baseline 4 giờ làm việc.
+- Backup tự động hằng ngày, giữ tối thiểu 14 ngày.
+- Restore drill phải chạy định kỳ vào môi trường riêng.
+- Alert tối thiểu cho API/login/checkout/DB/backup/SSL/realtime hoặc queue khi có.
+
+Còn cần bổ sung khi hạ tầng thật được chốt:
+
+- Công cụ monitoring/alert cụ thể.
+- Kênh cảnh báo chính thức.
+- Checklist restore theo nhà cung cấp production thật.
 
 ---
 

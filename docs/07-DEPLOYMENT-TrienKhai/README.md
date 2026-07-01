@@ -43,6 +43,8 @@ Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tư
 | `DEPLOYMENT_CONVENTIONS.md` | Quy ước chung: Docker, CI/CD, Backup, Monitoring, DR | ✅ Hoàn tất |
 | `PHASE-0-RUNBOOK.md` | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
 | [ENVIRONMENTS-CI.md](./ENVIRONMENTS-CI.md) | Local, staging, production baseline và CI/CD | ✅ Chốt Giai đoạn 0 |
+| [PRODUCTION.md](./PRODUCTION.md) | Nguyên tắc vận hành production, smoke test, rollback và monitoring tối thiểu | 🔨 Baseline |
+| [BACKUP-RESTORE.md](./BACKUP-RESTORE.md) | Chính sách backup, RPO/RTO baseline và restore drill | 🔨 Baseline |
 
 ---
 
@@ -52,7 +54,7 @@ Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tư
 |------------|--------|------------|
 | **Dev** | Cấu hình local, Supabase local | ✅ Baseline Giai đoạn 0 |
 | **Staging** | Vercel + Supabase staging, smoke test | ✅ Baseline Giai đoạn 0 |
-| **Production** | Cấu hình production, monitoring, alert | ⬜ Chi tiết sắp tới |
+| **Production** | Cấu hình production, monitoring, alert | 🔨 Baseline |
 
 > Baseline xem tại `ENVIRONMENTS-CI.md`; tài liệu vận hành production chi tiết sẽ được bổ sung khi đủ nội dung.
 
