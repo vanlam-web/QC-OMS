@@ -1,7 +1,8 @@
 # KẾ HOẠCH PHÁT TRIỂN QC-OMS — FE + BE THEO TỪNG GIAI ĐOẠN
 
-> **Trạng thái:** ✅ Roadmap đã chốt; thiết kế kỹ thuật Giai đoạn 0 đã sẵn sàng
+> **Trạng thái:** ✅ Roadmap dài hạn đã chốt; thực thi hiện tại đi theo vertical slices 1A/1B/1C/2A/2B/2C/2D
 > **Ngày lập:** 2026-06-28
+> **Cập nhật:** 2026-07-01 theo MVP scope và trạng thái main hiện tại
 > **Mục tiêu:** Sau mỗi giai đoạn phải có một luồng người dùng hoàn chỉnh, chạy bằng Frontend và Backend thật trên môi trường staging.
 
 ---
@@ -25,6 +26,8 @@ Nguyên tắc triển khai:
 4. Mỗi giai đoạn phải deploy được lên staging và có kịch bản demo hoàn chỉnh.
 5. Business Rule chưa rõ phải được Owner chốt trước khi triển khai.
 6. Chức năng chưa hoàn thiện phải được ẩn bằng permission hoặc feature flag, không để trạng thái nửa hoạt động.
+7. Không mở scope ngoài [MVP-SCOPE](./01-VISION-TamNhin/03-MVP-SCOPE.md) nếu Owner chưa chốt lại.
+8. Có thể làm sớm foundation của giai đoạn sau nếu cần để hoàn tất luồng POS bán đứt, miễn là không mở thêm nghiệp vụ ngoài MVP.
 
 Giả định thời gian trong kế hoạch dành cho nhóm 2–3 developer. Nếu chỉ có một người phát triển, thời gian có thể tăng khoảng 1,5–2 lần.
 
@@ -53,6 +56,61 @@ PostgreSQL + Auth + Realtime + RLS
 
 ## 3. TỔNG QUAN ROADMAP
 
+### 3.1. Cách đọc roadmap sau khi chốt MVP ngày 2026-07-01
+
+Roadmap Phase 0-8 bên dưới là **roadmap logic dài hạn theo nhóm năng lực**, không còn là thứ tự commit/branch cứng.
+
+Từ Phase 1 trở đi, dự án đang thực thi theo các lát cắt nhỏ hơn:
+
+```text
+1A -> 1B -> 1C -> 2A -> 2B -> 2C -> 2D -> ...
+```
+
+Mỗi lát cắt vẫn theo nguyên tắc vertical slice: có UI/API/DB/test đủ để chạy một phần nghiệp vụ thật. Vì vậy một số foundation của Phase 4 hoặc Phase 6 trong roadmap logic đã được làm sớm để phục vụ POS bán đứt:
+
+- checkout transaction
+- inventory/finance foundation
+- production queue foundation
+- Sales Documents readonly
+
+Điều này không có nghĩa dự án bị "nhảy phase". Đây là điều chỉnh đúng theo MVP scope hiện tại:
+
+```text
+POS bán đứt -> hóa đơn -> trừ kho -> thu tiền/công nợ -> sổ quỹ -> đối soát -> báo cáo quản trị
+```
+
+Không mở scope ngoài MVP như Đặt hàng KiotViet, vận đơn/COD, kênh online, VAT/HĐĐT, HR/payroll hoặc campaign retail.
+
+### 3.2. Trạng thái main hiện tại
+
+Nguồn theo dõi chi tiết: [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
+
+| Lát cắt thực thi | Trạng thái | Ghi chú |
+|---|---|---|
+| Phase 1A | Đã merge | Foundation UI + catalog/pricing |
+| Phase 1B | Đã merge | Customer selection và customer pricing |
+| Phase 1C | Đã merge | Checkout transaction, inventory/finance foundation |
+| Phase 2A | Đã merge | POS direct checkout UI |
+| Phase 2B | Đã merge | Production queue/K02-D foundation |
+| Phase 2C | Đã merge | POS line discount handling UI/backend persistence |
+| Phase 2D | Đã merge | Sales Documents readonly list/detail |
+
+### 3.3. Mapping giữa roadmap logic và lát cắt đã làm
+
+| Roadmap logic | Nội dung roadmap gốc | Trạng thái/lát cắt thực tế |
+|---|---|---|
+| Phase 0 | Đăng nhập, phân quyền, POS Shell | Đã merge |
+| Phase 1 | Hàng hóa, khách hàng, bảng giá | Đã có foundation qua 1A/1B; PriceBook formula nâng cao chưa làm |
+| Phase 2 | Giỏ hàng và hóa đơn nháp | Đã có POS direct checkout UI; nháp production queue ở 2B |
+| Phase 3 | Báo giá và Bill Preview | Báo giá/bill nâng cao chưa hoàn tất; Sales Documents readonly đã làm sớm ở 2D |
+| Phase 4 | Thanh toán, kho cơ bản và công nợ | Checkout transaction, inventory/finance foundation đã làm sớm ở 1C/2A |
+| Phase 5 | Combo/BOM và quản lý vật tư | Chưa làm implementation sâu; chỉ có spec/ranh giới |
+| Phase 6 | Hàng đợi máy sản xuất realtime | Production queue foundation đã làm sớm ở 2B; ingestion/realtime đầy đủ còn phase sau |
+| Phase 7 | Bill nâng cao và hỗ trợ gửi khách | Chưa làm |
+| Phase 8 | Production và vận hành | Đang cập nhật dần theo Supabase Cloud/dev-staging; production hardening còn sau |
+
+### 3.4. Roadmap logic dài hạn
+
 | Giai đoạn | Kết quả sử dụng được | Thời gian dự kiến |
 |---|---|---|
 | 0 | Đăng nhập, phân quyền và POS Shell | 1–2 tuần |
@@ -61,11 +119,11 @@ PostgreSQL + Auth + Realtime + RLS
 | 3 | Báo giá và Bill Preview cơ bản | 1–2 tuần |
 | 4 | Thanh toán, kho cơ bản và công nợ | 3 tuần |
 | 5 | Combo/BOM và quản lý vật tư | 2–3 tuần |
-| 6 | Hàng đợi máy trạm Realtime | 2–3 tuần |
+| 6 | Hàng đợi máy sản xuất Realtime | 2–3 tuần |
 | 7 | Bill nâng cao và hỗ trợ gửi khách | 2 tuần |
 | 8 | Production, giám sát và khôi phục | 2 tuần |
 
-Mốc phát hành:
+Mốc phát hành logic ban đầu:
 
 - **MVP nội bộ:** Giai đoạn 0–4, khoảng 9–12 tuần.
 - **Pilot tại xưởng:** Giai đoạn 5–7, thêm khoảng 6–8 tuần.
@@ -241,7 +299,7 @@ Mốc phát hành:
 - Thiếu tồn xử lý đúng chính sách cảnh báo.
 - Mọi thao tác khui đều truy vết được.
 
-### Giai đoạn 6 — Hàng đợi máy trạm Realtime
+### Giai đoạn 6 — Hàng đợi máy sản xuất Realtime
 
 **Tính năng bàn giao:** Máy sản xuất hoặc trình mô phỏng gửi file; POS nhận realtime và đưa file vào đúng hóa đơn nháp.
 
@@ -255,7 +313,7 @@ Mốc phát hành:
 
 **Backend, Database và Integration**
 
-- Schema máy trạm, sự kiện và lịch sử hàng đợi.
+- Schema máy sản xuất, sự kiện và lịch sử hàng đợi.
 - Endpoint nhận thông báo từ máy.
 - Parser tên file theo đặc tả K02-D.
 - Atomic claim chống xử lý trùng.
