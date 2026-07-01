@@ -100,7 +100,7 @@ Giá 40 = Giá nền + 40,000/tấm
 Giá 35 = Giá nền + 35,000/tấm
 ```
 
-Khi giá nhập cuối hoặc giá vốn bình quân thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng có quyền phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
+Khi giá nhập cuối hoặc giá vốn bình quân thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
 
 Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, màn chi tiết bảng giá không được khóa thiết kế theo lưới export KiotViet. KiotViet chỉ dùng để import dữ liệu ban đầu và đối chiếu nhóm giá hiện có. Luồng chuẩn của QC-OMS cần ưu tiên:
 

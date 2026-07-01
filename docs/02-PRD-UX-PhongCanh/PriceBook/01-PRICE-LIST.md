@@ -116,7 +116,7 @@ Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook 
 - công thức có thể chọn nguồn `giá vốn bình quân` hoặc `giá vốn mới nhất`
 - công thức phải lưu được làm mặc định lâu dài cho nhóm hàng
 - khi giá vốn/giá nhập thay đổi, hệ thống tính lại giá theo công thức để tạo giá mới/giá đề xuất
-- giá POS chỉ đổi khi công thức được áp dụng theo chính sách đã cấu hình; mặc định nên có bước xem/duyệt trước khi cập nhật hàng loạt
+- giá POS chỉ đổi khi công thức được áp dụng theo chính sách đã cấu hình; mặc định nên có bước xem/xác nhận áp dụng trước khi cập nhật hàng loạt
 
 ## 7. Hướng thiết kế riêng cho QC-OMS
 

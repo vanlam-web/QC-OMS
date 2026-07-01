@@ -324,7 +324,7 @@ Tạo phiếu thu/chi thủ công.
   "counterparty_phone": "0964917315",
   "related_order_id": null,
   "related_customer_id": null,
-  "reason": "Chi phí giao hàng"
+  "reason": "Chi phí vật tư phụ"
 }
 ```
 

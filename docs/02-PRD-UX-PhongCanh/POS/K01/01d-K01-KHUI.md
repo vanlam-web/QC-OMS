@@ -17,7 +17,7 @@
 
 | Vai trò | Khi nào dùng |
 |---|---|
-| **Thu ngân** | Phát hiện vật tư giao hàng bị lỗi, cần ghi nhận hao hụt ngoài đơn |
+| **Thu ngân** | Phát hiện vật tư dùng cho đơn bị lỗi, cần ghi nhận hao hụt ngoài đơn |
 | **Thợ in / Thợ CNC** | Cuộn bạt bị chuột cắn, tấm alu bị cong vênh, led bị hỏng — cần khai báo thay thế |
 | **Quản lý kho** | Kiểm tra và xác nhận khui vật tư mới khi thợ báo hỏng |
 

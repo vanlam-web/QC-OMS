@@ -19,11 +19,11 @@
     ├── K01/                    ← Khối K01: Thanh đỉnh
     │   └── [01-K01-TOPBAR.md](./POS/K01/01-K01-TOPBAR.md)
     │
-    ├── K02/                    ← Khối K02: Giỏ hàng & Máy trạm
+    ├── K02/                    ← Khối K02: Giỏ hàng & Máy sản xuất
     │   ├── [01-K02-GIO-HANG.md](./POS/K02/01-K02-GIO-HANG.md)      ← Tổng quan & Logic tiếp nhận
     │   ├── [02-K02A-DONG-SP.md](./POS/K02/02-K02A-DONG-SP.md)       ← Dòng SP động + Bộ đếm tổng (K02-A & K02-C)
     │   ├── [03-K02B-GHI-CHU.md](./POS/K02/03-K02B-GHI-CHU.md)      ← Ghi chú đơn hàng tổng
-    │   └── [04-K02D-HANG-DOI.md](./POS/K02/04-K02D-HANG-DOI.md)   ← Hàng đợi máy trạm
+    │   └── [04-K02D-HANG-DOI.md](./POS/K02/04-K02D-HANG-DOI.md)   ← Hàng đợi máy sản xuất
     │
     └── K03/                    ← Khối K03: Đối tác & Sản phẩm
         ├── [01-K03A-DOI-TAC.md](./POS/K03/01-K03A-DOI-TAC.md)      ← Hồ sơ đối tác & Bộ lọc giá (K03-A)
@@ -82,7 +82,7 @@
 | K02-A: Dòng SP động | [POS/K02/02-K02A-DONG-SP.md](./POS/K02/02-K02A-DONG-SP.md) | 🔨 |
 | K02-B: Ghi chú đơn hàng | [POS/K02/03-K02B-GHI-CHU.md](./POS/K02/03-K02B-GHI-CHU.md) | 🔨 |
 | K02-C: Bộ đếm tổng | *(trong 02-K02A-DONG-SP.md)* | 🔨 |
-| K02-D: Hàng đợi máy trạm | [POS/K02/04-K02D-HANG-DOI.md](./POS/K02/04-K02D-HANG-DOI.md) | 🔨 |
+| K02-D: Hàng đợi máy sản xuất | [POS/K02/04-K02D-HANG-DOI.md](./POS/K02/04-K02D-HANG-DOI.md) | 🔨 |
 | K03-A: Hồ sơ đối tác | [POS/K03/01-K03A-DOI-TAC.md](./POS/K03/01-K03A-DOI-TAC.md) | 🔨 |
 | K03-B: Toast SĐT | [POS/K03/02-K03B-TOAST.md](./POS/K03/02-K03B-TOAST.md) | 🔨 |
 | K03-C: Lưới sản phẩm | [POS/K03/03-K03C-LUOI-SP.md](./POS/K03/03-K03C-LUOI-SP.md) | 🔨 |
