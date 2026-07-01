@@ -2,6 +2,9 @@
 
 Tài liệu này dùng để nối mạch giữa các session Codex.
 
+Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm tại
+[WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md). Mọi slice mới hoặc review PR nên đọc file đó trước để tránh quên nhịp làm việc.
+
 ## Trạng thái branch/worktree
 
 - Main working branch: `main`
