@@ -602,7 +602,7 @@ git commit -m "feat: add price formula api"
 - Modify: `supabase/functions/api/repositories/foundation-repository.ts`
 - Modify: `supabase/tests/functions/pricing_resolution_test.ts`
 
-- [ ] **Step 1: Write failing resolve tests**
+- [x] **Step 1: Write failing resolve tests**
 
 Add to `pricing_resolution_test.ts`:
 
@@ -637,7 +637,7 @@ Deno.test("price resolution uses formula mode over manual unit price", () => {
 });
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run:
 
@@ -647,7 +647,7 @@ npx deno test supabase/tests/functions/pricing_resolution_test.ts --allow-env --
 
 Expected: FAIL because `resolvePriceRows` does not accept formula rows.
 
-- [ ] **Step 3: Update resolver**
+- [x] **Step 3: Update resolver**
 
 Update `PriceRow` to include:
 
@@ -667,7 +667,7 @@ When `pricing_mode = 'formula'`, call `computeFormulaPrice` using product latest
 - `price_formula` if latest cost exists.
 - `price_formula_missing_cost_zero` if latest cost is missing.
 
-- [ ] **Step 4: Run resolver/function tests**
+- [x] **Step 4: Run resolver/function tests**
 
 Run:
 
@@ -678,7 +678,7 @@ npm run test:functions
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 ```bash
 git add supabase/functions/api/repositories/foundation-repository.ts supabase/tests/functions/pricing_resolution_test.ts

@@ -41,8 +41,16 @@ type DatabaseClient = SupabaseClient;
 
 interface PriceRow {
   product_id: string;
-  unit_price: number | string;
+  unit_price: number | string | null;
   price_list_id: string;
+  pricing_mode?: "manual" | "formula";
+  formula_rule_id?: string | null;
+}
+
+interface PriceFormulaRuleRow {
+  cost_formula: PriceFormulaCost;
+  profit_formula: PriceFormulaProfit;
+  price_list_adjustments: Record<string, PriceFormulaAdjustment>;
 }
 
 interface FormulaProductRow {
@@ -232,19 +240,34 @@ export function resolvePriceRows(input: {
   customerPriceListId: string | null;
   priceRows: PriceRow[];
   latestPurchaseCosts: ReadonlyMap<string, number>;
+  formulaRules?: ReadonlyMap<string, PriceFormulaRuleRow>;
 }): ResolvedPriceData[] {
   const customerPrices = new Map<string, ResolvedPriceData>();
   const defaultPrices = new Map<string, ResolvedPriceData>();
 
   for (const row of input.priceRows) {
+    const formulaPrice = resolveFormulaPrice(row, input.latestPurchaseCosts, input.formulaRules);
+    if (formulaPrice !== null) {
+      if (row.price_list_id === input.customerPriceListId) {
+        customerPrices.set(row.product_id, formulaPrice);
+      } else {
+        defaultPrices.set(row.product_id, {
+          ...formulaPrice,
+          price_source: formulaPrice.price_source,
+        });
+      }
+      continue;
+    }
+
     const unitPrice = Number(row.unit_price);
     if (row.price_list_id === input.customerPriceListId) {
+      const hasLatestPurchaseCost = input.latestPurchaseCosts.has(row.product_id);
       const latestPurchaseCost = input.latestPurchaseCosts.get(row.product_id);
       customerPrices.set(row.product_id, {
         product_id: row.product_id,
         unit_price: unitPrice === 0 ? latestPurchaseCost ?? 0 : unitPrice,
         price_source: unitPrice === 0
-          ? latestPurchaseCost === undefined
+          ? !hasLatestPurchaseCost
             ? "latest_purchase_cost_missing_zero"
             : "latest_purchase_cost"
           : "customer_group_price_list",
@@ -269,6 +292,35 @@ export function resolvePriceRows(input: {
       price_list_id: input.defaultPriceListId,
     }
   );
+}
+
+function resolveFormulaPrice(
+  row: PriceRow,
+  latestPurchaseCosts: ReadonlyMap<string, number>,
+  formulaRules: ReadonlyMap<string, PriceFormulaRuleRow> | undefined,
+): ResolvedPriceData | null {
+  if (row.pricing_mode !== "formula" || row.formula_rule_id === null || row.formula_rule_id === undefined) {
+    return null;
+  }
+  const rule = formulaRules?.get(row.formula_rule_id);
+  if (rule === undefined) {
+    return null;
+  }
+
+  const hasLatestPurchaseCost = latestPurchaseCosts.has(row.product_id);
+  const computed = computeFormulaPrice({
+    latestPurchaseCost: hasLatestPurchaseCost ? latestPurchaseCosts.get(row.product_id) ?? 0 : null,
+    costFormula: rule.cost_formula,
+    profitFormula: rule.profit_formula,
+    priceListAdjustment: rule.price_list_adjustments[row.price_list_id],
+  });
+
+  return {
+    product_id: row.product_id,
+    unit_price: computed.computed_price,
+    price_source: hasLatestPurchaseCost ? "price_formula" : "price_formula_missing_cost_zero",
+    price_list_id: row.price_list_id,
+  };
 }
 
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
@@ -825,7 +877,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       const productIds = [...new Set(input.productIds)];
       const { data: products, error: productsError } = await client
         .from("products")
-        .select("id")
+        .select("id, latest_purchase_cost")
         .eq("organization_id", input.organizationId)
         .eq("status", "active")
         .in("id", productIds);
@@ -833,6 +885,12 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const activeProductIds = new Set((products ?? []).map((product) => product.id));
       if (activeProductIds.size !== productIds.length) throw new Error("PRODUCT_NOT_FOUND");
+      const latestPurchaseCosts = new Map<string, number>();
+      for (const product of products ?? []) {
+        if (product.latest_purchase_cost !== null) {
+          latestPurchaseCosts.set(product.id, Number(product.latest_purchase_cost));
+        }
+      }
 
       let customerPriceListId: string | null = null;
       if (input.customerId !== undefined) {
@@ -858,18 +916,24 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data: priceRows, error: priceRowsError } = await client
         .from("price_list_items")
-        .select("product_id, unit_price, price_list_id")
+        .select("product_id, unit_price, price_list_id, pricing_mode, formula_rule_id")
         .eq("organization_id", input.organizationId)
         .in("price_list_id", listIds)
         .in("product_id", productIds);
       if (priceRowsError !== null) throw priceRowsError;
+      const formulaRules = await loadPriceFormulaRules(
+        client,
+        input.organizationId,
+        [...new Set((priceRows ?? []).map((row) => row.formula_rule_id).filter(isString))],
+      );
 
       return resolvePriceRows({
         productIds,
         defaultPriceListId: defaultPriceList.id,
         customerPriceListId,
         priceRows: priceRows ?? [],
-        latestPurchaseCosts: new Map(),
+        latestPurchaseCosts,
+        formulaRules,
       });
     },
     async checkoutOrder(input): Promise<CheckoutResultData> {
@@ -2326,6 +2390,30 @@ async function loadFormulaPriceItems(
     itemsByProduct.get(row.product_id)?.set(row.price_list_id, row);
   }
   return itemsByProduct;
+}
+
+async function loadPriceFormulaRules(
+  client: DatabaseClient,
+  organizationId: string,
+  formulaRuleIds: string[],
+): Promise<Map<string, PriceFormulaRuleRow>> {
+  if (formulaRuleIds.length === 0) return new Map();
+  const { data, error } = await client
+    .from("price_formula_rules")
+    .select("id, cost_formula, profit_formula, price_list_adjustments")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .in("id", formulaRuleIds);
+  if (error !== null) throw error;
+
+  return new Map((data ?? []).map((row) => [
+    row.id,
+    {
+      cost_formula: row.cost_formula as unknown as PriceFormulaCost,
+      profit_formula: row.profit_formula as unknown as PriceFormulaProfit,
+      price_list_adjustments: row.price_list_adjustments as Record<string, PriceFormulaAdjustment>,
+    },
+  ]));
 }
 
 function uniqueFormulaSelections(
