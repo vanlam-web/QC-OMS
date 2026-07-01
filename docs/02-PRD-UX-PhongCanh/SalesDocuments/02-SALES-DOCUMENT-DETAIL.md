@@ -169,8 +169,9 @@ Các thao tác trong mục này **chưa thuộc Phase 2D**. Phase 3A chỉ bật
 - Mở POS với nội dung báo giá như một nháp local trên máy đang thao tác.
 - Giữ giá snapshot mặc định; nếu giá hiện tại khác thì cảnh báo/gợi ý, không tự đổi giá.
 - Nếu sản phẩm inactive/missing, hiển thị cảnh báo và yêu cầu xử lý dòng trước checkout.
-- Khi checkout, tạo hóa đơn `HD...`, giữ `source_quote_id/source_quote_code` và đổi báo giá sang `converted`.
-- Không checkout nhiều lần từ cùng một báo giá đã `converted`.
+- Từ nháp này, bấm `[THANH TOÁN]` tạo hóa đơn `HD...` như checkout POS bình thường.
+- Từ nháp này, bấm `[BÁO GIÁ]` tạo báo giá mới độc lập.
+- Đóng nháp bằng `X` không ghi gì thêm; báo giá gốc giữ nguyên.
 
 ### 8.2. Sửa hóa đơn
 

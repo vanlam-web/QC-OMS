@@ -56,8 +56,7 @@ Không hiển thị công nợ, tiền khách trả, tiền thừa hoặc dữ l
 ## 4. Quy tắc dữ liệu
 
 - Mẫu báo giá dùng snapshot tại thời điểm lưu báo giá.
-- Nếu báo giá đã có revision, in đúng revision đang mở.
-- Nếu báo giá đã `converted`, vẫn in được để đối chiếu, nhưng phải hiển thị trạng thái đã chuyển hóa đơn nếu UI có vùng trạng thái.
+- Báo giá Phase 3A không có revision/converted; in đúng snapshot báo giá đang mở.
 - In/xem báo giá không làm thay đổi trạng thái báo giá.
 - In/xem báo giá không ghi sổ quỹ, công nợ, tồn kho hoặc doanh thu.
 
@@ -70,4 +69,3 @@ Không hiển thị công nợ, tiền khách trả, tiền thừa hoặc dữ l
 - In qua trình duyệt được ở mức cơ bản.
 - Không có cấu hình nhiều mẫu trong Phase 3B.
 - Không tự gửi báo giá cho khách trong Phase 3B.
-

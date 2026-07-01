@@ -285,8 +285,6 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `code` | `text` | ❌ | Mã chứng từ, ví dụ `BG000001`, `HD000001` |
 | `order_type` | `text` | ❌ | `quote` hoặc `invoice` |
 | `status` | `text` | ❌ | Trạng thái chứng từ |
-| `source_quote_id` | `uuid` | ✅ | FK → `public.orders.id`; hóa đơn sinh từ báo giá |
-| `source_quote_code` | `text` | ✅ | Mã báo giá nguồn để hiển thị/truy vết nhanh |
 | `base_code` | `text` | ❌ | Mã gốc của chuỗi chứng từ, ví dụ `HD000123` |
 | `revision_no` | `integer` | ❌ | Số lần sửa; bản gốc là `0`, bản sửa đầu là `1` |
 | `revised_from_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ cũ gần nhất nếu đây là bản sửa |
@@ -323,8 +321,6 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - `change_returned_amount >= 0`
 - `discount_amount <= subtotal_amount`
 - `total_amount = subtotal_amount - discount_amount`
-- `source_quote_id` nếu có phải trỏ tới `orders` cùng organization và `order_type = 'quote'`.
-- `source_quote_code` nếu có phải khớp mã báo giá nguồn tại thời điểm checkout.
 - `customer_snapshot` bắt buộc để giữ lịch sử ngay cả khi hồ sơ khách thay đổi.
 - `payment_status IN ('not_applicable', 'unpaid', 'partial', 'paid')`
 - Với `order_type = 'quote'`, `paid_amount = 0`, `debt_amount = 0`, `change_returned_amount = 0`, `payment_status = 'not_applicable'`.
@@ -344,9 +340,8 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 
 | order_type | status | Ý nghĩa |
 |---|---|---|
-| `quote` | `active` | Báo giá đang còn hiệu lực để mở lại/sửa/chuyển hóa đơn |
-| `quote` | `converted` | Báo giá đã được chuyển thành hóa đơn |
-| `quote` | `cancelled` | Báo giá đã hủy |
+| `quote` | `active` | Báo giá đã lưu, còn xem/mở lại được |
+| `quote` | `cancelled` | Future/optional nếu sau này có hủy báo giá thủ công |
 | `invoice` | `completed` | Hóa đơn bán hàng đã checkout thành công |
 | `invoice` | `cancelled` | Hóa đơn đã hủy/đảo theo nghiệp vụ tương ứng |
 
@@ -359,20 +354,20 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
 - Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
 
-### Quy tắc sửa báo giá
+### Quy tắc mở lại báo giá
 
 - Báo giá đã lưu không sửa đè snapshot cũ.
-- Khi mở lại báo giá, sửa và lưu lại thành báo giá, hệ thống tạo revision mới với `base_code` giữ nguyên và `revision_no` tăng.
-- Ví dụ: `BG000123`; sửa lần 1 tạo `BG000123.01`.
-- Bản quote cũ không bị xóa; nếu cần loại khỏi danh sách active thì chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và liên kết tới bản mới.
-- Checkout từ báo giá đổi báo giá nguồn sang `converted`; mặc định không checkout nhiều lần từ cùng một báo giá đã converted.
+- Khi mở lại báo giá, hệ thống chỉ trả snapshot để POS tạo nháp local.
+- Nếu nhân viên sửa nháp đó rồi lưu báo giá, hệ thống tạo `BG...` mới độc lập qua flow tạo báo giá bình thường.
+- Không tạo revision dạng `BG000123.01` cho báo giá trong Phase 3A.
+- Không đổi báo giá gốc sang `converted` khi thanh toán từ nháp mở lại.
+- Báo giá gốc vẫn `active` để tra cứu hoặc mở lại làm mẫu nội dung về sau.
 
 ### Index
 
 - `idx_orders_org_type_status` trên `(organization_id, order_type, status)`
 - `idx_orders_org_customer` trên `(organization_id, customer_id)`
 - `idx_orders_org_created_at` trên `(organization_id, created_at DESC)`
-- `idx_orders_source_quote` trên `(organization_id, source_quote_id)` với điều kiện `source_quote_id IS NOT NULL`
 - `idx_orders_org_base_revision` trên `(organization_id, base_code, revision_no)`
 - `idx_orders_revised_from` trên `(organization_id, revised_from_order_id)` với điều kiện `revised_from_order_id IS NOT NULL`
 - `idx_orders_replaced_by` trên `(organization_id, replaced_by_order_id)` với điều kiện `replaced_by_order_id IS NOT NULL`

@@ -520,16 +520,16 @@ Status: ⏭️ Sẵn sàng lập plan sau khi SoT được handoff
 - [ ] Mở lại báo giá vào POS draft local, không tạo server draft.
 - [ ] Giữ giá snapshot mặc định; cảnh báo nếu giá hiện tại khác.
 - [ ] Cảnh báo sản phẩm inactive/missing và yêu cầu xử lý trước checkout.
-- [ ] Lưu lại báo giá đã sửa bằng revision `BG...01`, không ghi đè snapshot cũ.
-- [ ] Checkout từ báo giá sang hóa đơn `HD...`, lưu `source_quote_id/source_quote_code`.
-- [ ] Sau checkout, báo giá chuyển `converted`; không checkout lặp từ cùng báo giá.
+- [ ] Từ nháp mở lại, bấm `BÁO GIÁ` tạo `BG...` mới độc lập, không revision/copy link.
+- [ ] Từ nháp mở lại, bấm `THANH TOÁN` tạo `HD...` như checkout POS bình thường.
+- [ ] Đóng nháp bằng `X` không ghi gì thêm; báo giá gốc giữ nguyên `active`.
 - [ ] Báo giá không tự hủy/hết hạn theo thời gian.
 
 ### Ngoài phạm vi Phase 3A
 
 - [ ] In/xem báo giá đơn giản bằng mẫu mặc định; tự gửi nếu cần.
 - [ ] Không làm hủy báo giá thủ công; báo giá không dùng nữa cứ để nguyên để tra cứu/dùng lại sau.
-- [ ] Sao chép báo giá cho khách khác là future: mở thành POS draft mới, lưu ra `BG...` mới độc lập, không phải revision.
+- [ ] Không làm nút/endpoint sao chép báo giá riêng.
 - [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
 - [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.
 

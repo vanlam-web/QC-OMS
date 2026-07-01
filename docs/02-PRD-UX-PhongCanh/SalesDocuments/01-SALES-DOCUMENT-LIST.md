@@ -45,7 +45,7 @@ Phase 3A kế tiếp triển khai:
 
 - lưu/list/detail báo giá `BG...` trong cùng danh sách chứng từ, không có module/menu báo giá riêng
 - mở lại báo giá tại POS thành nháp local
-- checkout từ báo giá sang hóa đơn `HD...`
+- từ nháp mở lại, lưu báo giá mới hoặc thanh toán hóa đơn như POS draft bình thường
 
 Chưa triển khai trong Phase 2D/3A:
 

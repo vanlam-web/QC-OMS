@@ -231,20 +231,21 @@ Chia lát cắt thực thi:
 - Nút `BÁO GIÁ`.
 - Danh sách và tìm kiếm báo giá.
 - Mở lại báo giá thành hóa đơn nháp.
+- Từ nháp mở lại, lưu `BG...` mới hoặc thanh toán `HD...` như nháp POS bình thường; đóng bằng `X` thì không ghi gì.
 - Xem/in báo giá bằng mẫu mặc định ở Phase 3B; chưa làm nhiều mẫu hoặc tự gửi.
 
 **Backend và Database**
 
 - Schema đơn hàng, dòng hàng và lịch sử trạng thái.
 - Sinh mã `BG...`.
-- API tạo, đọc, mở lại và tạo revision báo giá.
+- API tạo, đọc và mở lại báo giá thành POS draft local.
 - Lưu snapshot giá và thông tin hàng tại thời điểm báo giá.
 - Không phát sinh kho, tiền, công nợ hoặc doanh thu.
 
 **Điều kiện nghiệm thu**
 
 - Báo giá được lưu và mở lại chính xác.
-- Có thể sửa rồi lưu lại thành revision `BG...01`, không ghi đè snapshot cũ.
+- Có thể sửa nháp mở lại rồi lưu thành báo giá mới độc lập; không ghi đè snapshot cũ và không tạo revision `BG...01`.
 - Không xuất hiện stock movement hoặc cash transaction.
 
 ### Giai đoạn 4 — Thanh toán, kho cơ bản và công nợ
