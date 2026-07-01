@@ -221,13 +221,14 @@ Source of Truth đã tạo:
 - Bảo mật giữ mức nhẹ: xác thực lại khi xuất file nhạy cảm và 2FA cho quản trị/thiết bị lạ là hướng tốt, nhưng không bắt buộc làm rườm rà trong MVP đầu.
 - Audit log nên lọc theo nhân viên/tính năng/thời gian và ghi chi tiết tạo/sửa/hủy hóa đơn, phiếu thu/chi, nhập hàng, kiểm kho, xuất file và đổi cấu hình.
 - Chưa làm khóa sổ kiểu KiotViet trong MVP; báo cáo cuối ngày vẫn động, sửa chứng từ theo `MaCu.01` và audit log.
-- Không làm lịch xóa dữ liệu gian hàng trong UI vận hành thường ngày.
+- Không làm lịch xóa dữ liệu gian hàng trong UI vận hành thường ngày; không có tab lịch xóa/lịch sử xóa/thêm lịch như KiotViet.
 - Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
 - POS/thu nợ chỉ ghi nhận chuyển khoản vào tài khoản ngân hàng đã khai báo; không cần kết nối QR ting ting/bank partner.
 - Mẫu in là bill thường, không phải HĐĐT.
 - Bỏ giao hàng/COD/đối tác vận chuyển, QR partner/NAPAS/MoMo/ZaloPay, SMS/Zalo marketing provider, ngoại tệ/tỷ giá, VAT/thuế/HĐĐT, tích điểm/voucher/coupon/khuyến mại campaign, bảo hành/bảo trì retail, cân điện tử.
 - Bỏ barcode/POS scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail, thương hiệu riêng và vị trí giá/kệ/tủ khỏi MVP.
 - Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
+- Không làm cân điện tử vì QC-OMS không có nghiệp vụ bán/nhập/chuyển hàng theo cân.
 
 #### 3.3. Order draft và Order persistence
 

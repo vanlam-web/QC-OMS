@@ -424,7 +424,8 @@ Một số chi tiết đã thấy:
 - KiotViet có màn `Lịch xóa`/`Xóa dữ liệu gian hàng`, gồm lựa chọn xóa toàn bộ dữ liệu hoặc một số nhóm dữ liệu.
 - `Lịch sử thao tác` theo dõi thao tác nhân viên, có lọc nhân viên/tính năng/thời gian và ghi chi tiết các việc như tạo hóa đơn, tạo phiếu thu/chi, nhập hàng, xuất file công nợ.
 - `Khóa sổ` chặn chỉnh sửa giao dịch trước ngày khóa sổ hoặc đổi ngày giao dịch về trước thời điểm khóa.
-- `Xóa dữ liệu gian hàng` cho đặt lịch xóa dữ liệu cũ và nhận thông báo khi hoàn tất.
+- `Xóa dữ liệu gian hàng` cho đặt lịch xóa dữ liệu cũ và nhận thông báo khi hoàn tất; popup có tab `Lịch xóa`, `Lịch sử xóa`, trạng thái chưa có lịch sắp tới và nút `Thêm lịch`.
+- `Cân điện tử` là thiết lập thiết bị hỗ trợ bán hàng, nhập hàng và chuyển hàng theo cân.
 
 Quyết định QC-OMS:
 
@@ -446,7 +447,7 @@ Quyết định QC-OMS:
 - Không làm tích điểm, voucher, coupon, khuyến mại campaign trong MVP.
 - Không làm bảo hành/bảo trì retail.
 - Không làm mã vạch/POS scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail, thương hiệu riêng hoặc vị trí giá/kệ/tủ trong MVP.
-- Không làm cân điện tử.
+- Không làm cân điện tử vì QC-OMS không có nghiệp vụ bán/nhập/chuyển hàng theo cân.
 - Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
 - Giữ audit log đơn giản với bộ lọc nhân viên/tính năng/thời gian và chi tiết hành động quan trọng.
 - Chưa làm khóa sổ kiểu KiotViet trong MVP. Báo cáo cuối ngày vẫn là báo cáo động; sửa chứng từ theo quy tắc `MaCu.01` và audit log.

@@ -42,9 +42,9 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 | Tích điểm, voucher, coupon, khuyến mại campaign | Bỏ khỏi MVP |
 | Bảo hành/bảo trì/sửa chữa retail | Bỏ |
 | Thương hiệu/thuộc tính retail | Không tạo module riêng; nếu cần ghi trong tên/mã/nhóm hàng |
-| Xóa dữ liệu gian hàng theo lịch | Không làm UI thường. Nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt |
+| Xóa dữ liệu gian hàng theo lịch | Không làm UI thường. Không có lịch xóa/lịch sử xóa/thêm lịch trong sản phẩm vận hành |
 | Khóa sổ giao dịch kiểu KiotViet | Để sau. MVP ưu tiên báo cáo động và sửa chứng từ có lịch sử `MaCu.01` |
-| Cân điện tử | Bỏ hiện tại, vì xưởng chưa có nghiệp vụ cân bán hàng |
+| Cân điện tử | Bỏ hiện tại, vì xưởng không bán/nhập/chuyển hàng theo cân |
 
 ---
 
@@ -86,6 +86,7 @@ Quy tắc đơn giản hóa:
 - Audit log tối thiểu cần lọc theo nhân viên, tính năng và thời gian.
 - Audit log phải ghi rõ hành động chính như tạo/sửa/hủy hóa đơn, tạo phiếu thu/chi, nhập hàng, kiểm kho, xuất file và đổi cấu hình quan trọng.
 - MVP không khóa báo cáo cuối ngày thành số bất biến; nếu sau này cần khóa sổ, phải mở spec riêng để xử lý sửa chứng từ, kho, sổ quỹ và công nợ sau ngày khóa.
+- Nếu cần xóa/reset dữ liệu, xử lý bằng runbook kỹ thuật có backup và quyền đặc biệt, không phải tính năng người dùng bấm trong Settings.
 
 ---
 
@@ -96,7 +97,7 @@ Quy tắc đơn giản hóa:
 3. Admin quản lý được danh sách tài khoản ngân hàng từ Finance hoặc link nhanh trong Settings.
 4. Settings không hiển thị giao hàng/COD/online/VAT/HĐĐT/QR partner/ví điện tử/ngoại tệ.
 5. Các thay đổi cấu hình quan trọng có audit log.
-6. Không có thao tác xóa dữ liệu hàng loạt trong UI vận hành thường ngày.
+6. Không có thao tác xóa dữ liệu hàng loạt, đặt lịch xóa dữ liệu hoặc lịch sử xóa trong UI vận hành thường ngày.
 7. Settings hàng hóa không hiển thị barcode/POS scan, tự gợi ý hàng hóa, thuộc tính retail, thương hiệu, bảo hành hoặc cân điện tử trong MVP.
 8. Vai trò/preset nếu có chỉ là tick quyền nhanh, không thay permission cụ thể.
 9. Lịch sử thao tác xem được các hành động quan trọng và không cho sửa/xóa từ UI.
