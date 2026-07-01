@@ -5,6 +5,7 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 ## Trạng thái branch/worktree
 
 - Main working branch: `main`
+- Backend chính cho dev/staging hiện tại: Supabase Cloud. Các dòng `server shared-dev` bên dưới là lịch sử verification của phase đã merge, không phải hướng mặc định cho developer mới.
 - Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
 - Phase 1B đã merge vào `main`: PR #2
 - Phase 1C đã merge vào `main`: PR #4, merge commit `2b83df7`
@@ -516,16 +517,19 @@ cd /Users/vanlam/Documents/project/QC-OMS
 # Current main
 git switch main
 
-# Local Supabase
-npm run supabase:start
-npm run supabase:reset
-npm run test:db
-npm run test:functions
+# Dev thường: dùng .env.local trỏ Supabase Cloud dev/staging
+npm ci
+npm run dev
 
-# Frontend
+# Verification app/frontend
 npm test
 npm run typecheck
 npm run lint
 npm run build
-npm run dev
+
+# Optional local isolated Supabase, chỉ khi cần test DB/migration/RLS cô lập
+npm run supabase:start
+npm run supabase:reset
+npm run test:db
+npm run test:functions
 ```

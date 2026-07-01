@@ -1,27 +1,42 @@
-# Shared development server
+# Optional internal shared-dev server
 
-QC-OMS can be developed from many machines while all machines use the same
-internal Supabase/Postgres database.
+> **Trạng thái:** Legacy/optional fallback nội bộ. Không phải backend mặc định hiện tại.
+
+Backend chính cho dev/staging hiện tại là Supabase Cloud. Tài liệu này chỉ giữ lại cách chạy một Supabase local chung trong LAN/Tailscale khi cần phương án phụ, demo nội bộ, hoặc kiểm thử không muốn dùng Cloud.
+
+Developer mới không cần bật Docker, Supabase CLI, máy chủ LAN hoặc Tailscale nếu đã có `.env.local` trỏ tới Supabase Cloud dev/staging.
+
+## Khi nào dùng shared-dev LAN/Tailscale
+
+Dùng phương án này khi:
+
+- cần một database local chung cho nhiều máy trong nội bộ;
+- Supabase Cloud dev/staging tạm không dùng được;
+- cần thử nghiệm mạng nội bộ;
+- cần fallback nhanh trước khi có môi trường Cloud phù hợp.
+
+Không dùng phương án này làm mặc định cho dev thường.
 
 ## Model
 
 ```text
-Server Windows
+Internal Windows server
 - Runs Docker Desktop
-- Runs Supabase/Postgres
+- Runs Supabase/Postgres local
 - Optionally runs the shared web app on port 3000
 
 Developer machines
 - Install Git and Node.js 22
 - Clone this repository
 - Run the frontend only
-- Connect to Supabase/API on the server
+- Connect to Supabase/API on the internal server
 ```
 
-Developer machines do not need Docker Desktop or Supabase CLI unless they want
-their own isolated local database.
+Developer machines do not need Docker Desktop or Supabase CLI unless they want their own isolated local database.
 
-## Server addresses
+## Legacy/internal server addresses
+
+These addresses are environment-specific and may change.
 
 LAN:
 
@@ -41,7 +56,7 @@ API:      http://100.123.122.45:54321/functions/v1/api
 
 ## Server commands
 
-Run Supabase/Postgres on the server:
+Run Supabase/Postgres on the internal server:
 
 ```powershell
 cd "Y:\QC-OMS"
@@ -74,22 +89,22 @@ npm ci
 npm run dev
 ```
 
-By default the app points to the shared LAN server at `192.168.1.104`.
-The shared development anon key is built into the client defaults because it is
-the public Supabase local anon key, not the service role key.
-
-If a developer is remote through Tailscale, create `.env.local`:
+For LAN fallback, create `.env.local` with the internal LAN address:
 
 ```env
-VITE_SHARED_SERVER_HOST=100.123.122.45
+VITE_SUPABASE_URL=http://192.168.1.104:54321
+VITE_SUPABASE_ANON_KEY=<local-shared-dev-anon-key>
+VITE_API_BASE_URL=http://192.168.1.104:54321/functions/v1/api
+VITE_APP_ENV=shared-dev
+```
+
+For Tailscale fallback:
+
+```env
 VITE_SUPABASE_URL=http://100.123.122.45:54321
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+VITE_SUPABASE_ANON_KEY=<local-shared-dev-anon-key>
 VITE_API_BASE_URL=http://100.123.122.45:54321/functions/v1/api
 VITE_APP_ENV=shared-dev
 ```
 
-For LAN development, `.env.local` is only needed when overriding the default
-server IP or setting the shared Supabase anon key locally.
-
-Never commit `.env.local`, service role keys, passwords, access tokens, or
-refresh tokens.
+Never commit `.env.local`, service role keys, passwords, access tokens, refresh tokens, or real Cloud keys.

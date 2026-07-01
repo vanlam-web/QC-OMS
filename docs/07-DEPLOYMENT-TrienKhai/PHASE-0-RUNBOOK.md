@@ -1,6 +1,19 @@
 # Phase 0 Runbook
 
-## Local verification
+> **Trạng thái hiện tại:** backend chính cho dev/staging là Supabase Cloud. Docker/Supabase local chỉ dùng khi cần isolated local database/test.
+
+## Dev/staging verification with Supabase Cloud
+
+Tạo `.env.local` trỏ tới Supabase Cloud dev/staging project:
+
+```env
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<cloud-anon-key>
+VITE_API_BASE_URL=https://<project-ref>.supabase.co/functions/v1/api
+VITE_APP_ENV=staging
+```
+
+Kiểm tra app/frontend:
 
 ```bash
 npm ci
@@ -10,12 +23,24 @@ npm test
 npm run build
 ```
 
-After Docker Desktop is healthy:
+Kiểm tra Edge Function/API với Cloud cần dùng secret/CLI được cấp quyền theo quy trình deploy hiện tại. Không commit key thật vào repo.
+
+## Optional local isolated verification
+
+Chỉ dùng luồng này khi cần test database/migration/RLS/pgTAP cô lập hoặc khi không muốn tác động Supabase Cloud dev/staging.
+
+Yêu cầu Docker Desktop/Supabase CLI khỏe:
 
 ```bash
 npm run supabase:start
 npm run supabase:reset
 npm run test:functions
+```
+
+Nếu cần test DB:
+
+```bash
+npm run test:db
 ```
 
 Run E2E with externally supplied credentials:
@@ -34,4 +59,4 @@ The in-memory rate limiter is acceptable only for a single staging instance. Bef
 
 ## Current local blocker
 
-Docker Desktop was running locally, but Docker/Supabase local commands did not respond reliably. Restart Docker Desktop and rerun Supabase reset, pgTAP, function integration, and E2E checks before staging promotion.
+Docker Desktop/Supabase local có thể không ổn định trên một số máy. Đây không còn là blocker cho dev thường nếu Supabase Cloud dev/staging đang hoạt động. Chỉ cần xử lý Docker local khi task yêu cầu isolated DB/migration verification.
