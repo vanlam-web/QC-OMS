@@ -221,5 +221,15 @@ create trigger set_production_queue_items_updated_at
 before update on public.production_queue_items
 for each row execute function public.set_updated_at();
 
+alter table public.production_machines enable row level security;
+alter table public.production_queue_items enable row level security;
+alter table public.production_queue_events enable row level security;
+
+grant select, insert, update, delete on
+  public.production_machines,
+  public.production_queue_items,
+  public.production_queue_events
+to service_role;
+
 grant execute on function public.claim_production_queue_item_tx(uuid, uuid, uuid, text) to service_role;
 grant execute on function public.restore_production_queue_item_tx(uuid, uuid, uuid) to service_role;

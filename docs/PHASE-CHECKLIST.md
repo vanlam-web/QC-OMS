@@ -380,6 +380,8 @@ Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation
 - [x] Kho/tiền/công nợ chỉ phát sinh khi POS checkout lưu hóa đơn `HD...`.
 - [x] Production queue không tự tạo `orders`, `stock_movements`, payment receipts, cashbook, hoặc debt.
 - [x] Atomic claim bắt buộc để hai POS không xử lý trùng một queue item.
+- [x] Production pilot ưu tiên production agent/folder watcher hoặc legacy bridge đưa event vào queue.
+- [x] File free-form/unparseable vẫn phải vào queue để nhân viên sửa thủ công; lịch sử queue giữ 10 ngày ở DB trong phase ingestion sau.
 - [x] Guard MVP: không Orders/Đặt hàng, delivery/COD, kênh online, loyalty/campaign, HĐĐT/VAT/tax, HR/payroll/timesheet/commission, Purchase/Supplier, BOM deduction trong phase này.
 
 ### Đã hoàn thành trong branch
@@ -418,7 +420,16 @@ Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation
 - [x] Local `npm run build`
 - [x] Local `npx deno check supabase/functions/api/index.ts`
 - [ ] Local `npm run test:e2e` after cloud/local staging has Phase 2B migration + function.
-- [ ] Supabase Cloud staging migration/function deploy and API smoke.
+- [x] Supabase Cloud staging migration/function deploy and API smoke:
+  - [x] `npx supabase db push` applied `202607010001_production_queue.sql`
+  - [x] `npx supabase functions deploy api`
+  - [x] Remote grant/RLS applied for production queue tables after first smoke caught missing service role grants
+  - [x] `/functions/v1/api/v1/health` -> 200
+  - [x] login `admin@qc.local / 123456` -> OK
+  - [x] `/functions/v1/api/v1/me` -> 200, admin đủ 10 permissions
+  - [x] `GET /functions/v1/api/v1/production-queue` -> 200, seed queue count `1`
+  - [x] `POST /functions/v1/api/v1/production-queue/{id}/add-to-draft` -> 200, payload `DECAL-PP`, quantity `2`
+  - [x] Add-to-draft did not create order, stock movement, or cashbook entry
 
 ## Phase 2 — POS business UI
 
