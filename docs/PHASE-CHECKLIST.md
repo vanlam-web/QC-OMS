@@ -8,8 +8,10 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 - Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
 - Phase 1B đã merge vào `main`: PR #2
 - Phase 1C đã merge vào `main`: PR #4, merge commit `2b83df7`
-- Phase 2A working branch: `codex/phase-2a-pos-direct-checkout-ui`
+- Phase 2A đã merge vào `main`: PR #5, merge commit `cf82542`
 - Phase 2A plan: `docs/superpowers/plans/2026-07-01-phase-2a-pos-direct-checkout-ui.md`
+- Phase 2B working branch: `codex/phase-2b-production-queue-foundation`
+- Phase 2B plan: `docs/superpowers/plans/2026-07-01-phase-2b-production-queue-foundation.md`
 
 ## Phase 0 — Foundation
 
@@ -314,7 +316,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 2A — POS direct checkout UI
 
-Status: 🔨 Đang làm trên branch `codex/phase-2a-pos-direct-checkout-ui`
+Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -355,19 +357,82 @@ Status: 🔨 Đang làm trên branch `codex/phase-2a-pos-direct-checkout-ui`
 - [x] Local `npm run test:functions`: 34 passed
 - [x] Local `npx deno check supabase/functions/api/index.ts`
 - [x] Local `npm run test:e2e`: 2 passed
-- [ ] Server shared-dev verification trước merge.
+- [x] Supabase Cloud staging verification before merge:
+  - [x] `/v1/health` -> 200
+  - [x] `/v1/me` -> 200, admin đủ 10 permissions
+  - [x] `/v1/products` -> 200
+  - [x] `/v1/customers` -> 200
+  - [x] `/v1/finance/accounts` -> 200
+  - [x] `/v1/inventory/products` -> 200
+  - [x] `/v1/finance/cashbook` -> 200
+  - [x] `/v1/pricing/resolve` -> 200, `MICA-3MM` giá `120000`
+
+## Phase 2B — Production queue / K02-D foundation
+
+Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation`
+
+### Source of Truth đã sync vào plan
+
+- [x] Thuật ngữ đúng là `máy sản xuất`, không dùng `máy trạm` cho luồng file/lệnh K02-D.
+- [x] Channel/API/scope dùng `production_queue`, không dùng `workstation_queue`.
+- [x] K02-D chỉ đưa dữ liệu máy sản xuất vào hóa đơn nháp local.
+- [x] Nháp không trừ kho, không ghi tiền, không tạo doanh thu/công nợ.
+- [x] Kho/tiền/công nợ chỉ phát sinh khi POS checkout lưu hóa đơn `HD...`.
+- [x] Production queue không tự tạo `orders`, `stock_movements`, payment receipts, cashbook, hoặc debt.
+- [x] Atomic claim bắt buộc để hai POS không xử lý trùng một queue item.
+- [x] Guard MVP: không Orders/Đặt hàng, delivery/COD, kênh online, loyalty/campaign, HĐĐT/VAT/tax, HR/payroll/timesheet/commission, Purchase/Supplier, BOM deduction trong phase này.
+
+### Đã hoàn thành trong branch
+
+- [x] Sync production queue SoT docs và tạo implementation plan Phase 2B.
+- [x] Database foundation:
+  - [x] `production_machines`
+  - [x] `production_queue_items`
+  - [x] `production_queue_events`
+  - [x] `claim_production_queue_item_tx`
+  - [x] `restore_production_queue_item_tx`
+  - [x] seed `IN-BAT`, `IN-DECAL`, `CNC` và queue item simulator
+- [x] API foundation:
+  - [x] `GET /api/v1/production-queue`
+  - [x] `GET /api/v1/production-queue/history`
+  - [x] `POST /api/v1/production-queue/{id}/add-to-draft`
+  - [x] `POST /api/v1/production-queue/{id}/dismiss`
+  - [x] `POST /api/v1/production-queue/{id}/restore`
+- [x] POS K02-D panel:
+  - [x] list queued machine files
+  - [x] `[+]` calls add-to-draft and removes item from local queue list
+  - [x] payload becomes local cart line
+  - [x] customer from queue payload is selected for the draft
+  - [x] add-to-draft does not call checkout
+
+### Verification
+
+- [x] Local `npm run supabase:reset`
+- [x] Local `npm run test:db`: 8 files / 267 tests
+- [x] Local `npm run test:functions`: 38 passed
+- [x] Local targeted POS tests: 18 files / 51 tests
+- [x] Local `npm run typecheck`
+- [x] Local `git diff --check`
+- [x] Local `npm run lint`
+- [x] Local `npm test`: 18 files / 51 tests
+- [x] Local `npm run build`
+- [x] Local `npx deno check supabase/functions/api/index.ts`
+- [ ] Local `npm run test:e2e` after cloud/local staging has Phase 2B migration + function.
+- [ ] Supabase Cloud staging migration/function deploy and API smoke.
 
 ## Phase 2 — POS business UI
 
-Status: 🔨 Đang triển khai theo lát cắt Phase 2A
+Status: 🔨 Đang triển khai theo các lát cắt Phase 2A/2B
 
 - [x] Product quick grid cơ bản.
-- [ ] Cart lines.
-- [ ] Quantity/price/discount handling.
+- [x] Cart lines.
+- [x] Quantity/price handling.
 - [x] Customer search/create/select cơ bản trong branch Phase 1B.
-- [ ] Customer debt display.
-- [ ] Checkout/payment flow.
-- [ ] Receipt/bill preview.
+- [x] Customer debt display.
+- [x] Checkout/payment flow.
+- [x] Receipt/bill preview.
+- [x] K02-D production queue foundation.
+- [ ] Discount handling UI.
 
 ## Lệnh thường dùng
 

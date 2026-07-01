@@ -893,7 +893,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     },
     async dismissProductionQueueItem(input): Promise<ProductionQueueItemData | null> {
       const item = await claimProductionQueueItem(client, input.organizationId, input.queueItemId, input.actorUserId, "dismissed");
-      return item === null ? null : await hydrateProductionQueueItem(client, input.organizationId, item.id);
+      return item === null ? null : await hydrateProductionQueueItem(client, input.organizationId, String(item.id));
     },
     async restoreProductionQueueItem(input): Promise<ProductionQueueItemData | null> {
       const { data, error } = await client.rpc("restore_production_queue_item_tx", {
