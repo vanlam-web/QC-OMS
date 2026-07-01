@@ -1,7 +1,7 @@
 # ENVIRONMENTS & CI/CD — Nền tảng triển khai QC-OMS
 
-> **Trạng thái:** ✅ Chốt cho Giai đoạn 0
-> **Phạm vi:** Local, staging, production baseline và pipeline.
+> **Trạng thái:** ✅ Cập nhật theo quyết định Supabase Cloud backend chính
+> **Phạm vi:** Dev, staging, production baseline và pipeline.
 
 ---
 
@@ -9,14 +9,21 @@
 
 | Môi trường | Frontend | Backend/Database | Mục đích |
 |---|---|---|---|
-| Local | Vite dev server | Supabase Cloud dev/staging by default; Supabase local only for migration/isolation work | Phát triển hằng ngày và test tự động |
+| Dev thường | Vite dev server trên máy dev | Supabase Cloud staging/dev project | Phát triển hằng ngày, không bắt buộc Docker/máy chủ LAN |
+| Local isolated | Vite dev server | Supabase local Docker | Test migration/RLS/DB cô lập khi cần |
 | Preview | Vercel Preview | Không được tự động dùng production | Review UI theo Pull Request |
 | Staging | Vercel project/domain staging | Supabase project staging | Demo, E2E và Owner acceptance |
 | Production | Vercel project/domain production | Supabase project production | Vận hành thật |
 
 Staging và production phải dùng project, Database, Auth user, secret và URL riêng biệt.
 
-Preview mặc định dùng Backend staging chỉ khi thay đổi tương thích và dữ liệu test được cô lập. Thay đổi migration chưa deploy staging phải được test bằng Supabase local hoặc một môi trường preview được phê duyệt riêng.
+Supabase Cloud là hướng backend chính hiện tại cho dev/staging. Developer mới chỉ cần cấu hình `.env.local` trỏ tới Supabase Cloud dev/staging project đã được cấp quyền.
+
+LAN/Tailscale shared-dev server chỉ là phương án phụ/local fallback nội bộ khi cần chạy một Supabase local chung trong mạng. Không xem LAN/Tailscale là mặc định.
+
+Local Docker Supabase chỉ dùng khi cần isolated local database/test, ví dụ test migration, RLS, pgTAP hoặc làm việc offline. Không bắt buộc cho dev frontend/backend thường ngày.
+
+Preview mặc định dùng Backend staging chỉ khi thay đổi tương thích và dữ liệu test được cô lập. Thay đổi migration chưa deploy staging phải được test bằng Supabase Cloud staging/dev project, Supabase local isolated, hoặc một môi trường preview được phê duyệt riêng.
 
 ---
 
@@ -28,6 +35,17 @@ Frontend được phép có:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_API_BASE_URL`
 - `VITE_APP_ENV`
+
+Ví dụ `.env.local` cho Supabase Cloud dev/staging:
+
+```env
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<cloud-anon-key>
+VITE_API_BASE_URL=https://<project-ref>.supabase.co/functions/v1/api
+VITE_APP_ENV=staging
+```
+
+`VITE_APP_ENV` nên dùng một trong các giá trị dễ đọc như `development`, `staging`, `production`, hoặc `local-isolated` tùy môi trường đang trỏ tới.
 
 Backend secret gồm:
 
@@ -42,32 +60,51 @@ Quy tắc:
 - Không đặt Service Role Key trong biến Frontend hoặc Vercel client environment.
 - Repository chỉ chứa `.env.example`, không chứa giá trị thật.
 - Secret production chỉ người/quy trình deploy production được truy cập.
-- `VITE_API_BASE_URL` phải là Edge Functions root, ví dụ `https://<project>.supabase.co/functions/v1`. Không thêm `/api` vì client tự gọi `/api/v1/...`.
 
 ---
 
-## 3. LOCAL DEVELOPMENT
+## 3. DEV THƯỜNG VỚI SUPABASE CLOUD
 
 Yêu cầu công cụ:
 
 - Node.js bản LTS đang được dự án pin;
 - `npm`;
-- Supabase CLI và Docker chỉ bắt buộc khi chạy Supabase local/migration isolation.
+- `.env.local` trỏ tới Supabase Cloud dev/staging project.
 
-Luồng khởi động chuẩn hiện tại:
+Luồng khởi động chuẩn cho developer mới:
+
+```bash
+npm ci
+npm run dev
+```
+
+Sau đó đăng nhập bằng user test/staging được cấp. Không cần bật Docker, Supabase local, máy chủ LAN hoặc Tailscale để chạy dự án ở chế độ dev thường.
+
+## 4. LOCAL ISOLATED DEVELOPMENT
+
+Yêu cầu công cụ:
+
+- Node.js bản LTS đang được dự án pin;
+- `npm`;
+- Supabase CLI;
+- Docker runtime theo yêu cầu của Supabase local.
+
+Luồng này chỉ dùng khi cần database/test cô lập:
 
 ```text
 1. Cài dependency
-2. Tạo .env.local trỏ Supabase Cloud dev/staging
-3. Chạy Vite dev server
-4. Chạy smoke test đăng nhập
+2. Khởi động Supabase local
+3. Chạy migration + seed
+4. Chạy Edge Function API local
+5. Chạy Vite dev server
+6. Chạy smoke test đăng nhập
 ```
 
-Khi thay đổi migration, RLS, hoặc logic cần DB cô lập, dùng Supabase local như một operator/test path riêng: khởi động Supabase local, chạy migration + seed, chạy Edge Function API local, rồi smoke test.
+Các lệnh thực tế phải được đưa vào `package.json` khi scaffold code, tối thiểu gồm `dev`, `build`, `lint`, `typecheck`, `test`, `test:e2e` và nhóm lệnh Supabase local.
 
 ---
 
-## 4. BRANCH VÀ PROMOTION
+## 5. BRANCH VÀ PROMOTION
 
 | Sự kiện | Kết quả |
 |---|---|
@@ -80,7 +117,7 @@ Không build lại source khác khi promote từ staging sang production nếu p
 
 ---
 
-## 5. CI PIPELINE
+## 6. CI PIPELINE
 
 Mỗi Pull Request chạy tối thiểu:
 
@@ -104,7 +141,7 @@ Deploy staging/production thất bại nếu bước bắt buộc trước đó 
 
 ---
 
-## 6. DATABASE MIGRATION
+## 7. DATABASE MIGRATION
 
 - Migration được commit trong `supabase/migrations/` và chạy theo thứ tự.
 - Không sửa migration đã chạy trên staging/production; tạo migration mới để điều chỉnh.
@@ -115,7 +152,7 @@ Deploy staging/production thất bại nếu bước bắt buộc trước đó 
 
 ---
 
-## 7. CORS VÀ NETWORK
+## 8. CORS VÀ NETWORK
 
 - Local API chỉ cho origin local đã cấu hình.
 - Staging API chỉ cho domain staging/preview được phê duyệt.
@@ -125,7 +162,7 @@ Deploy staging/production thất bại nếu bước bắt buộc trước đó 
 
 ---
 
-## 8. LOG VÀ HEALTH
+## 9. LOG VÀ HEALTH
 
 Giai đoạn 0 thu thập tối thiểu:
 
@@ -141,18 +178,19 @@ Dashboard, retention và alert nâng cao hoàn thiện ở Giai đoạn 8.
 
 ---
 
-## 9. BACKUP VÀ RESTORE BASELINE
+## 10. BACKUP VÀ RESTORE BASELINE
 
 - Staging và production dùng khả năng backup phù hợp của Supabase project.
 - Trước production phải ghi nhận rõ lịch backup hiện có và người chịu trách nhiệm kiểm tra.
-- Restore drill đầy đủ, RPO và RTO được chốt ở Giai đoạn 8.
+- Restore drill, RPO và RTO baseline xem [BACKUP-RESTORE.md](./BACKUP-RESTORE.md); trước production thật cần xác nhận lại theo hạ tầng đang dùng.
 - Seed local/staging không được chạy tự động trên production.
 
 ---
 
-## 10. ĐIỀU KIỆN SẴN SÀNG GIAI ĐOẠN 0
+## 11. ĐIỀU KIỆN SẴN SÀNG GIAI ĐOẠN 0
 
-- Local có thể dựng từ repository sạch.
+- Dev thường có thể chạy từ repository sạch bằng Supabase Cloud dev/staging env.
+- Local isolated có thể dựng từ repository sạch khi cần test DB/migration.
 - Migration Foundation chạy thành công trên Database sạch.
 - Staging Frontend gọi đúng staging API/Database.
 - Không có production secret trong source hoặc Preview.

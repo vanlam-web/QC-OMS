@@ -15,12 +15,26 @@ Quan sát ngày `01/07/2026` trên trang `Hàng hóa`:
 - Các bộ lọc KiotViet gồm: nhóm hàng, tồn kho, dự kiến hết hàng, thời gian tạo, nhà cung cấp, thương hiệu, vị trí, loại hàng, bán trực tiếp, liên kết kênh bán, trạng thái hàng hóa.
 - Cột mặc định gồm: mã hàng, tên hàng, giá bán, giá vốn, tồn kho, khách đặt, thời gian tạo, dự kiến hết hàng.
 
+Export KiotViet ngày `2026-07-01` có `657` dòng:
+
+- `461` hàng hóa
+- `184` combo/đóng gói
+- `12` dịch vụ
+- `496` dòng đang kinh doanh
+- `161` dòng inactive/trống trạng thái
+- `57` dòng tồn âm
+- `189` dòng có `Hàng thành phần` dạng định mức vật tư
+
 Áp dụng cho QC-OMS:
 
 - Giữ bộ lọc trạng thái để xem được hàng ngưng bán trong module Hàng hóa.
 - Giữ `dự kiến hết hàng` ở mức cột cảnh báo tồn thấp nếu công thức đơn giản; có thể để sau nếu chưa có tốc độ bán ổn định.
+- Giữ đơn vị tính và nhóm hàng là dữ liệu nền.
 - Không tạo field/module riêng cho thương hiệu hoặc kênh bán trong MVP.
+- Không đưa barcode/QR scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail hoặc bảo hành/bảo trì vào MVP.
 - Nhà cung cấp/vị trí chỉ đưa vào sau khi Purchase/Warehouse location được chốt.
+- Tồn âm là dữ liệu thực tế nên danh sách/báo cáo cần hiển thị rõ để xử lý, không ẩn.
+- Cột `Hàng thành phần` xác nhận BOM/định mức là nghiệp vụ thật, nhưng import/schema BOM để phase riêng.
 
 ---
 
@@ -65,6 +79,8 @@ Màn này không thay thế POS bán hàng. Sản phẩm ngưng bán vẫn xem v
 
 Sau MVP có thể bổ sung nhà cung cấp và vị trí. Không tạo bộ lọc thương hiệu/kênh bán riêng trong MVP; nếu cần nhận diện thương hiệu thì ghi trong tên/mã/nhóm hàng.
 
+Không có bộ lọc barcode/thuộc tính retail/bảo hành trong MVP.
+
 ---
 
 ## 4. Cột bảng MVP
@@ -100,15 +116,17 @@ Search trong module này có thể tìm cả hàng ngưng bán nếu bộ lọc 
 
 ## 6. Thao tác chính
 
+Preset `Nhân viên nội bộ` trong MVP mặc định có đủ quyền cho các thao tác hàng hóa/kho thường ngày. Cột điều kiện dưới đây là guard kỹ thuật cho tài khoản hạn chế đặc biệt, không phải yêu cầu admin phải chia quyền nhỏ khi vận hành xưởng.
+
 | Thao tác | Điều kiện |
 |---|---|
-| Tạo mới hàng hóa | Có quyền quản lý danh mục/sản phẩm |
-| Import file | Có quyền quản lý danh mục/sản phẩm |
-| Xuất file | Có quyền xem/quản lý kho |
-| Sửa hàng hóa | Có quyền quản lý danh mục/sản phẩm |
-| Sửa tồn hàng thường | Có quyền quản lý kho; tự sinh phiếu kiểm kho |
+| Tạo mới hàng hóa | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Import file | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Xuất file | Nhân viên nội bộ/Quản trị; có thể yêu cầu xác thực lại nếu bật bảo vệ xuất file |
+| Sửa hàng hóa | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Sửa tồn hàng thường | Nhân viên nội bộ/Quản trị; tự sinh phiếu kiểm kho |
 | Mở tồn cuộn/tấm | Hàng thuộc loại tồn Cuộn hoặc Tấm |
-| Tạo phiếu kiểm kho | Có quyền quản lý kho |
+| Tạo phiếu kiểm kho | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý kho |
 
 ---
 

@@ -1,6 +1,6 @@
 # 01-CUSTOMER-LIST — Danh sách khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Khách hàng > Khách hàng`
 
 ---
@@ -40,6 +40,16 @@ Trang danh sách khách hàng giúp tìm, tạo, sửa nhanh và kiểm tra các
 | Tổng bán | Lọc khoảng tổng doanh thu |
 
 Tham khảo KiotViet có thêm loại khách, giới tính, sinh nhật, người tạo, giao dịch cuối, khu vực giao hàng và loại đối tác.
+
+Export KiotViet ngày `2026-07-01` có `528` khách hàng:
+
+- `503` khách không có SĐT
+- `25` khách có SĐT và không thấy SĐT trùng trong export
+- `367` khách không gán nhóm khách
+- các nhóm khách đang dùng là `25`, `26`, `30`, `35`, `40`
+- `78` khách có nợ hiện tại, tổng nợ khoảng `225,781,565`
+
+Các số này củng cố quyết định: SĐT không bắt buộc, nếu có thì unique; nhóm khách quyết định bảng giá; khách không nhóm dùng bảng giá chung.
 
 QC-OMS MVP lược bỏ:
 

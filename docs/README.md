@@ -39,6 +39,7 @@
 | [01-VISION-TamNhin/README.md](./01-VISION-TamNhin/README.md) | Mục lục tầm nhìn | ✅ |
 | [01-VISION-TamNhin/01-VISION.md](./01-VISION-TamNhin/01-VISION.md) | Vision, Mission, Giá trị cốt lõi | ✅ |
 | [01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md](./01-VISION-TamNhin/02-TARGET-STATE-QC-OMS.md) | Dich den cuoi cung: QC-OMS la he thong duy nhat thay QuanLyXuong cu | ✅ |
+| [01-VISION-TamNhin/03-MVP-SCOPE.md](./01-VISION-TamNhin/03-MVP-SCOPE.md) | Pham vi MVP hien tai: trong scope, ngoai scope va cac phan de sau | ✅ |
 | [01-VISION-TamNhin/_RULES.md](./01-VISION-TamNhin/_RULES.md) | Quy tắc layer 01 | ✅ |
 
 ---
@@ -56,6 +57,51 @@
 |---|---|---|
 | [02-PRD-UX-PhongCanh/POS/README.md](./02-PRD-UX-PhongCanh/POS/README.md) | Mục lục POS | ✅ |
 | [02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md](./02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md) | Bản đồ tổng thể màn hình POS | ✅ |
+
+#### Module Kho hàng & Hàng hóa
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Inventory/README.md](./02-PRD-UX-PhongCanh/Inventory/README.md) | Mục lục Kho hàng & Hàng hóa | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md](./02-PRD-UX-PhongCanh/Inventory/01-INVENTORY-LAYOUT.md) | Bố cục tổng thể module Kho/Hàng hóa | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md](./02-PRD-UX-PhongCanh/Inventory/02-PRODUCT-STOCK-LIST.md) | Danh sách hàng hóa, tồn kho, bộ lọc và thao tác chính | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md](./02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md) | Điều chỉnh tồn, hủy vật tư và lý do giảm tồn tối giản | 🔨 |
+
+#### Module Chứng từ bán hàng
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/SalesDocuments/README.md](./02-PRD-UX-PhongCanh/SalesDocuments/README.md) | Mục lục chứng từ bán hàng | 🔨 |
+| [02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md](./02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc và thao tác nhanh | 🔨 |
+| [02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ, sửa/hủy/in lại và lịch sử | 🔨 |
+
+#### Module Khách hàng
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Customers/README.md](./02-PRD-UX-PhongCanh/Customers/README.md) | Mục lục quản lý khách hàng | 🔨 |
+| [02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md](./02-PRD-UX-PhongCanh/Customers/01-CUSTOMER-LIST.md) | Danh sách khách hàng, bộ lọc và thao tác nhanh | 🔨 |
+| [02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md](./02-PRD-UX-PhongCanh/Customers/02-CUSTOMER-DETAIL.md) | Chi tiết khách hàng, nhóm giá, lịch sử bán và công nợ | 🔨 |
+
+#### Module Bảng giá
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/PriceBook/README.md](./02-PRD-UX-PhongCanh/PriceBook/README.md) | Mục lục quản lý bảng giá | 🔨 |
+| [02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md](./02-PRD-UX-PhongCanh/PriceBook/01-PRICE-LIST.md) | Danh sách bảng giá và nhóm khách sử dụng | 🔨 |
+| [02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md](./02-PRD-UX-PhongCanh/PriceBook/02-PRICE-LIST-DETAIL.md) | Chi tiết giá sản phẩm trong một bảng giá | 🔨 |
+
+#### Module Tài chính
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Finance/README.md](./02-PRD-UX-PhongCanh/Finance/README.md) | Mục lục Sổ quỹ, công nợ và đối soát | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/01-FINANCE-LAYOUT.md](./02-PRD-UX-PhongCanh/Finance/01-FINANCE-LAYOUT.md) | Bố cục tổng thể module Tài chính | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md](./02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md) | Sổ quỹ, số dư theo tiền mặt/tài khoản và phiếu thu/chi | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md](./02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md) | Công nợ khách hàng và thu nợ | 🔨 |
+| [02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md](./02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md) | Đối soát cuối ngày theo quỹ/tài khoản | 🔨 |
 
 #### K01 — Thanh đỉnh (Top Bar)
 
@@ -169,6 +215,8 @@
 |---|---|---|
 | [07-DEPLOYMENT-TrienKhai/README.md](./07-DEPLOYMENT-TrienKhai/README.md) | Mục lục Deployment | ✅ |
 | [07-DEPLOYMENT-TrienKhai/_RULES.md](./07-DEPLOYMENT-TrienKhai/_RULES.md) | Quy tắc layer 07 | ✅ |
+| [07-DEPLOYMENT-TrienKhai/PRODUCTION.md](./07-DEPLOYMENT-TrienKhai/PRODUCTION.md) | Vận hành production, smoke test, rollback và monitoring tối thiểu | 🔨 |
+| [07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md](./07-DEPLOYMENT-TrienKhai/BACKUP-RESTORE.md) | Backup, RPO/RTO baseline và restore drill | 🔨 |
 | [07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md](./07-DEPLOYMENT-TrienKhai/DEPLOYMENT_CONVENTIONS.md) | Quy ước triển khai & vận hành | ✅ |
 | [07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md](./07-DEPLOYMENT-TrienKhai/ENVIRONMENTS-CI.md) | Local, staging và CI/CD baseline | ✅ |
 | `07-DEPLOYMENT-TrienKhai/*/` | Chưa có deployment riêng cho từng domain | ⬜ |

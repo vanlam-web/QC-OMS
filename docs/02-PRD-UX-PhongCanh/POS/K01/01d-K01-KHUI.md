@@ -11,13 +11,13 @@
 
 **Vị trí:** Khu vực 3 trên Top Bar — nằm giữa thanh tab đa hóa đơn (Khu vực 2) và cụm tiện ích (Khu vực 4).
 
-**Tầm với:** Top Bar hiển thị **trên mọi màn hình** hệ thống POS — kể cả khi đang ở giỏ hàng, hàng đợi máy trạm, hay báo cáo kho. Nút `[🍾 KHUI VẬT TƯ]` luôn sẵn sàng thao tác.
+**Tầm với:** Top Bar hiển thị **trên mọi màn hình** hệ thống POS — kể cả khi đang ở giỏ hàng, hàng đợi máy sản xuất, hay báo cáo kho. Nút `[🍾 KHUI VẬT TƯ]` luôn sẵn sàng thao tác.
 
 **Người dùng mục tiêu:**
 
 | Vai trò | Khi nào dùng |
 |---|---|
-| **Thu ngân** | Phát hiện vật tư giao hàng bị lỗi, cần ghi nhận hao hụt ngoài đơn |
+| **Thu ngân** | Phát hiện vật tư dùng cho đơn bị lỗi, cần ghi nhận hao hụt ngoài đơn |
 | **Thợ in / Thợ CNC** | Cuộn bạt bị chuột cắn, tấm alu bị cong vênh, led bị hỏng — cần khai báo thay thế |
 | **Quản lý kho** | Kiểm tra và xác nhận khui vật tư mới khi thợ báo hỏng |
 
@@ -182,7 +182,7 @@ Nhấn nút `[🍾 KHUI VẬT TƯ]` trên Top Bar → Popup overlay hiện ra, c
 
 | | **Popup Khui Tự do (K01-D — file này)** | **Cảnh báo Khui động (K02-D)** |
 |---|---|---|
-| **Vị trí** | Top Bar — mọi màn hình, mọi lúc | Dòng file trong hàng đợi máy trạm |
+| **Vị trí** | Top Bar — mọi màn hình, mọi lúc | Dòng file trong hàng đợi máy sản xuất |
 | **Kích hoạt** | Thủ công — người dùng chủ động click | Tự động — hệ thống phát hiện thiếu vật tư |
 | **Trigger** | Click người dùng | `L_phôi > Chiều dài cuộn dở` hoặc không có tấm lỡ |
 | **Mục đích** | Ghi nhận vật tư hỏng/phanh, khai báo khui mới độc lập | Chặn lệnh in/CNC, bắt thợ khui đúng vật tư đang thiếu |

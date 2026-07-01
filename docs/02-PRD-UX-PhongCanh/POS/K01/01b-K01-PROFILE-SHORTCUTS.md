@@ -19,13 +19,13 @@ Nút **[🍾 KHUI VẬT TƯ]** thuộc Khu vực 3 và có Source of Truth riên
 
 ## II. CỤM TIỆN ÍCH HỒ SƠ & HỆ THỐNG
 
-Không dùng nút đồng bộ thủ công. Dữ liệu máy trạm được cập nhật tự động; cụm góc phải chỉ hiển thị trạng thái và các thao tác hỗ trợ.
+Không dùng nút đồng bộ thủ công. Dữ liệu máy sản xuất được cập nhật tự động; cụm góc phải chỉ hiển thị trạng thái và các thao tác hỗ trợ.
 
 ### Đèn báo trạng thái kết nối
 
 | Trạng thái | Màu | Ý nghĩa |
 |---|---|---|
-| Disconnected | 🔴 Đỏ | Mất kết nối Internet hoặc mất tín hiệu realtime → cảnh báo nhân viên hạn chế thao tác lệnh máy trạm |
+| Disconnected | 🔴 Đỏ | Mất kết nối Internet hoặc mất tín hiệu realtime → cảnh báo nhân viên hạn chế thao tác lệnh máy sản xuất |
 | Connecting / Retrying | 🟡 Vàng | Đang cố gắng kết nối lại |
 | Connected | 🟢 Xanh | Kết nối thông suốt — dữ liệu lệnh in/cắt tự động nhảy lên POS |
 

@@ -1,6 +1,27 @@
 # 02-SALES-DOCUMENT-DETAIL — Chi tiết chứng từ bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng
+> **Phase hiện tại:** Phase 2D readonly detail cho hóa đơn `HD...`
+
+---
+
+## 0. Ghi nhận từ KiotViet
+
+Quan sát hóa đơn `HD010985` ngày `30/06/2026`:
+
+- Chi tiết nằm ngay dưới dòng hóa đơn trong danh sách.
+- Tab `Thông tin` của KiotViet có khách hàng, mã hóa đơn, trạng thái, người tạo, người bán, ngày bán, kênh bán, bảng giá và chi nhánh.
+- Dòng hàng có mã hàng, tên hàng, số lượng, đơn giá, giá bán và thành tiền.
+- Một số dòng in/kích thước thể hiện ngay trong dòng hàng, ví dụ `2.5m x 3.3m x 1`, số lượng tính thành `8.25`.
+- Tổng cuối chứng từ gồm tổng tiền hàng, giảm giá hóa đơn, khách cần trả, khách đã trả.
+- Hóa đơn có thể `Hoàn thành` nhưng `Khách đã trả = 0`, nghĩa là chi tiết chứng từ phải thể hiện công nợ theo hóa đơn.
+
+Áp dụng cho QC-OMS:
+
+- Chi tiết chứng từ ưu tiên đọc nhanh ngay trong trang danh sách hoặc trang detail riêng đều được, miễn giữ đủ snapshot.
+- Kích thước/m2/mét tới phải là dữ liệu có cấu trúc trong dòng hàng, không chỉ là text trang trí.
+- `Bảng giá` và người bán phải lưu snapshot theo chứng từ.
+- QC-OMS không lưu/hiển thị kênh bán trong MVP vì chỉ có bán trực tiếp tại xưởng.
 
 ---
 
@@ -8,13 +29,30 @@
 
 Trang chi tiết giúp kiểm tra toàn bộ nội dung chứng từ đã lưu, gồm dữ liệu snapshot, thanh toán, công nợ, trừ kho và lịch sử sửa/hủy.
 
+Phase 2D hiện tại chỉ đọc dữ liệu đã có:
+
+- thông tin tổng quan hóa đơn
+- snapshot dòng hàng
+- tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có
+- stock movements liên quan nếu Backend trả về
+
+Chưa triển khai trong Phase 2D:
+
+- nút sửa hóa đơn
+- nút hủy hóa đơn
+- mở lại báo giá
+- in lại bill nếu Bill Preview/print flow chưa sẵn sàng
+- transaction đảo kho/tiền/công nợ
+
+Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation Phase 2D.
+
 ---
 
 ## 2. Bố cục
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ HD000123                          Hoàn thành        [In lại] [Sửa] [Hủy]     │
+│ HD000123                          Hoàn thành        [Readonly detail]        │
 │ Khách: KH000123 - Công ty A       Người bán: ...    Thời gian: ...          │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ [Tổng quan] [Dòng hàng] [Thanh toán & công nợ] [Kho] [Lịch sử]              │
@@ -33,6 +71,7 @@ Hiển thị:
 - Khách hàng snapshot tại thời điểm lưu.
 - Người bán/người tạo.
 - Bảng giá đã áp dụng.
+- Chi nhánh không hiển thị trong MVP vì hiện chỉ có một chi nhánh ngầm; chỉ bổ sung nếu sau này thật sự vận hành nhiều chi nhánh/kho.
 - Ghi chú đơn.
 - Tổng tiền hàng, giảm giá, khách cần trả, khách đã trả, còn nợ hoặc tiền thừa đã trả lại.
 
@@ -57,6 +96,7 @@ Mỗi dòng hiển thị dữ liệu snapshot tại thời điểm lưu:
 - Đơn vị bán.
 - Số lượng.
 - Kích thước, mét tới hoặc m2 nếu có.
+- Số lượng quy đổi tính tiền nếu dòng hàng phát sinh từ kích thước, ví dụ `2.5m x 3.3m x 1 = 8.25m2`.
 - Đơn giá đã áp dụng.
 - Nguồn giá: bảng giá chung, bảng giá nhóm, fallback hoặc giá sửa tay.
 - Thành tiền.
@@ -115,9 +155,13 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
+Phase 2D chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Các hành động mở lại/in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+
 ---
 
-## 8. Thao tác
+## 8. Thao tác Future Phase
+
+Các thao tác trong mục này **chưa thuộc Phase 2D**. Chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn và kiểm thử đủ cho tác động liên bảng.
 
 ### 8.1. Mở lại báo giá
 
@@ -132,6 +176,7 @@ Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú
 - Nhân viên sửa nội dung và xác nhận lại thanh toán.
 - Khi lưu, tạo chứng từ mới theo mã `MaCu.01`.
 - Chứng từ cũ chuyển **Đã hủy** với lý do sửa chứng từ.
+- Phải chạy trong transaction an toàn để đảo/ghi lại kho, sổ quỹ, công nợ và liên kết chứng từ.
 
 ### 8.3. Hủy hóa đơn
 
@@ -139,9 +184,9 @@ Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú
 - Hóa đơn không bị xóa vật lý.
 - Hệ thống ghi lịch sử hủy.
 - Tác động đảo kho, sổ quỹ và công nợ theo Business tương ứng.
+- Không cho hủy bằng cách sửa rời từng bảng hoặc xóa dữ liệu cũ.
 
 ### 8.4. In lại bill
 
 - Mở Bill Preview với dữ liệu snapshot của chứng từ.
 - Không làm thay đổi doanh thu, kho, sổ quỹ hoặc công nợ.
-

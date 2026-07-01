@@ -41,8 +41,11 @@ Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tư
 | File | Mô tả | Trạng thái |
 |------|--------|------------|
 | `DEPLOYMENT_CONVENTIONS.md` | Quy ước chung: Docker, CI/CD, Backup, Monitoring, DR | ✅ Hoàn tất |
-| [PHASE-0-RUNBOOK.md](./PHASE-0-RUNBOOK.md) | Runbook kiểm thử và vận hành Phase 0 | ✅ Hoàn tất |
-| [ENVIRONMENTS-CI.md](./ENVIRONMENTS-CI.md) | Local, staging, production baseline và CI/CD | ✅ Chốt Giai đoạn 0 |
+| `PHASE-0-RUNBOOK.md` | Runbook kiểm thử/vận hành Phase 0 theo hướng Supabase Cloud dev/staging | ✅ Cập nhật |
+| [ENVIRONMENTS-CI.md](./ENVIRONMENTS-CI.md) | Dev Cloud, local isolated, staging, production baseline và CI/CD | ✅ Cập nhật |
+| [SHARED-DEV-SERVER.md](./SHARED-DEV-SERVER.md) | Legacy/optional shared-dev LAN/Tailscale fallback | 🟡 Optional |
+| [PRODUCTION.md](./PRODUCTION.md) | Nguyên tắc vận hành production, smoke test, rollback và monitoring tối thiểu | 🔨 Baseline |
+| [BACKUP-RESTORE.md](./BACKUP-RESTORE.md) | Chính sách backup, RPO/RTO baseline và restore drill | 🔨 Baseline |
 
 ---
 
@@ -50,9 +53,10 @@ Thiết kế triển khai domain chỉ hoàn thiện khi Backend/Integration tư
 
 | Môi trường | Mô tả | Trạng thái |
 |------------|--------|------------|
-| **Dev** | Cấu hình local, Supabase local | ✅ Baseline Giai đoạn 0 |
+| **Dev** | Vite local trỏ Supabase Cloud dev/staging | ✅ Backend chính hiện tại |
+| **Local isolated** | Supabase local Docker khi cần test DB/migration cô lập | 🟡 Optional |
 | **Staging** | Vercel + Supabase staging, smoke test | ✅ Baseline Giai đoạn 0 |
-| **Production** | Cấu hình production, monitoring, alert | ⬜ Chi tiết sắp tới |
+| **Production** | Cấu hình production, monitoring, alert | 🔨 Baseline |
 
 > Baseline xem tại `ENVIRONMENTS-CI.md`; tài liệu vận hành production chi tiết sẽ được bổ sung khi đủ nội dung.
 

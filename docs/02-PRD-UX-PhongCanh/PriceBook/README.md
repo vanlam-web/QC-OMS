@@ -1,6 +1,6 @@
 # PriceBook — Quản lý bảng giá
 
-> **Trạng thái:** 🔨 Đang xây dựng  
+> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Bảng giá chung, bảng giá theo nhóm khách và giá sản phẩm trong từng bảng
 
 ---
@@ -36,4 +36,3 @@ Giá sửa tay theo khách + sản phẩm là lịch sử gợi ý trong POS, kh
 - Chiết khấu riêng ngoài bảng giá.
 - Công thức cập nhật giá hàng loạt kiểu nâng/xả giá theo phần trăm.
 - Lịch sử thay đổi giá chi tiết theo từng lần sửa.
-

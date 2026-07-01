@@ -78,6 +78,8 @@ Expected: PASS.
 
 Run `npm run lint`, `npm run typecheck`, `npm run test:functions`, `npm test`, `npm run build`, and `npx deno check supabase/functions/api/index.ts`.
 
-- [ ] **Step 2: Commit and open PR**
+- [x] **Step 2: Commit and open PR**
 
 Commit with `feat: add readonly sales documents module`, push, create PR, and deploy Edge Function to staging after merge.
+
+Completed: PR #8 was merged into `main` with merge commit `552db05`.

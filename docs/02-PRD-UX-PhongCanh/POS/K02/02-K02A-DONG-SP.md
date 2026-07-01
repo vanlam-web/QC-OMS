@@ -46,6 +46,8 @@
 - Combo Cấp 2: Hiển thị phẳng, **khoá tuyệt đối** — chỉ sửa SL.
 - Cơ chế lưu: `(•) Không lưu — Chỉ trừ kho` | `( ) Lưu Combo mới`
 
+> Ranh giới MVP: BOM được thêm/sửa ngay trong POS là định mức của dòng hàng. Chọn `Không lưu — Chỉ trừ kho` thì vẫn trừ kho theo BOM đó nhưng không tạo combo mới; chọn `Lưu Combo mới` thì lưu thành combo mới trong danh mục. Deep-scan combo lồng nhau để sau MVP.
+
 → [Chi tiết](./02a-K02A-SP-THUONG.md#trường-hợp-3-hàng-combo-/-định-mức-vật-tư-bom)
 
 ---
@@ -57,12 +59,12 @@
    - Hàng m² (Loại 1): luôn sinh dòng mới độc lập.
    - Hàng thường (Loại 2): cùng mã → cộng SL dòng cũ.
 3. **Khoá chết ô diện tích:** Ô `Tổng m²` là chỉ đọc, không cho gõ đè.
-4. **Trừ kho khi chốt đơn:** Mọi trường hợp đều trừ kho khi chốt đơn — kể cả Combo không lưu. *(Backend xử lý — chi tiết thuộc tầng Business)*
-5. **Tổng giá vật tư kho:** Máy tính realtime tổng (Đơn giá vật tư × SL từng dòng) trong khung BOM, giúp thu ngân đối chiếu biên lợi nhuận trước khi chốt đơn.
+4. **Trừ kho khi chốt đơn:** Hàng thường/m²/tấm trừ kho theo Business Inventory. Combo trừ kho theo BOM của dòng hàng, gồm BOM có sẵn hoặc BOM nhân viên vừa thêm/sửa trong POS. *(Backend xử lý — chi tiết thuộc tầng Business)*
+5. **Tổng giá vật tư kho:** Nếu có hiển thị thì chỉ là tham khảo theo cấu hình BOM hiện có, không phải lợi nhuận kế toán/chốt.
 6. **Đệ quy rút gọn — Combo Cấp 1 vs Cấp 2:**
    - **Combo Cấp 1:** Được mở khoang `[🛠️ Sửa BOM]`, chỉnh sửa đầy đủ vật tư chính/phụ.
    - **Combo Cấp 2:** Khoá tuyệt đối — hiển thị phẳng như hàng thường, chỉ cho sửa SL. Không hiện cấu trúc cây, không hiện nút Sửa BOM.
-7. **Deep-Scan khi thanh toán:** Khi chốt đơn chứa Combo Cấp 2, UI không hiển thị cây BOM con; Backend xử lý quét BOM gốc và trả trạng thái xử lý / lỗi nếu có.
+7. **Deep-Scan khi thanh toán:** Không bắt buộc cho combo lồng nhau trong MVP. Chỉ bật khi phase BOM sau này đã chốt cấu hình nhiều cấp, version và chống vòng lặp.
 8. **Quy đổi đơn vị:** POS vẫn hiển thị và thu tiền theo `m²`; quy đổi tồn kho thực tế do Backend xử lý.
 9. **Tấm lỡ khổ:** PRD chỉ hiển thị cảnh báo / lựa chọn thao tác nếu Backend xác định cần dùng tấm lỡ hoặc tấm nguyên.
 10. **Khui động tự do:** Nút `[🍾 KHUI VẬT TƯ]` nằm trên Top Bar hệ thống, độc lập với giỏ hàng POS. Dùng khi cuộn/tấm hỏng ngoài ý muốn hoặc cần khui độc lập không gắn đơn.

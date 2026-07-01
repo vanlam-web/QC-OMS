@@ -1,7 +1,7 @@
 # Production Queue Contract Draft
 
-> Ngay lap: 2026-07-01  
-> Trang thai: Draft dieu phoi, chua phai Source of Truth Database/Backend/Integration  
+> Ngay lap: 2026-07-01
+> Trang thai: Draft dieu phoi, chua phai Source of Truth Database/Backend/Integration
 > Nguon: PRD K02-D, Legacy QuanLyXuong, quyet dinh Owner ve may san xuat va ton kho.
 
 ---
@@ -47,7 +47,7 @@ Khong dung "may tram" de chi may san xuat. "May tram" chi nen dung cho POS/works
 
 ### Trong scope
 
-- Nhan event/file tu may san xuat hoac bridge tam thoi tu QuanLyXuong cu.
+- Nhan event/file tu may san xuat qua production agent moi.
 - Hien thi queue theo block may: In Bat, In Decal, CNC.
 - Realtime cap nhat badge va danh sach queue tren tat ca may POS.
 - `[+]` parse queue item va tao/bo sung hoa don nhap.
@@ -65,6 +65,29 @@ Khong dung "may tram" de chi may san xuat. "May tram" chi nen dung cho POS/works
 - Production Work Orders rieng.
 - Dashboard san xuat day du thay QuanLyXuong cu.
 
+### De xuat pilot
+
+Owner chot pilot uu tien lam **production agent moi**, khong mac dinh dua vao bridge cu.
+
+De giam thao tac va tranh ep nhan vien match file voi bill qua som, pilot di theo huong:
+
+```text
+Thu muc/file/log may san xuat
+  -> production agent moi doc du lieu
+  -> POST event vao QC-OMS
+  -> production queue hien tren POS
+  -> nhan vien bam [+] neu muon dua vao nhap
+```
+
+Ly do:
+
+- file co the dat ten bat ky va mot file co the co nhieu chi tiet
+- tao bill chua chac da san xuat
+- may san xuat chay khac bill van can doi soat, khong nen tu sua kho
+- agent cho phep doi parser ve sau ma khong doi POS
+
+Bridge tu QuanLyXuong cu chi la phuong an tham khao neu sau nay can lay lai du lieu cu, khong phai huong pilot mac dinh.
+
 ---
 
 ## 4. Queue item data shape de xuat
@@ -74,7 +97,7 @@ Khong dung "may tram" de chi may san xuat. "May tram" chi nen dung cho POS/works
   "id": "uuid",
   "organization_id": "uuid",
   "production_machine_code": "IN_BAT",
-  "source": "legacy_bridge | production_agent | manual_simulator",
+  "source": "production_agent | manual_simulator | legacy_bridge",
   "raw_file_name": "TTP_2D_120x50_x5",
   "received_at": "2026-07-01T10:30:00+07:00",
   "status": "queued",
@@ -131,7 +154,7 @@ Quy tac de giu:
 - File sai kich thuoc van hien trong queue, cho nhan vien sua kich thuoc dung de add vao draft.
 - Khong sua nguoc `raw_file_name`.
 
-Can chot sau:
+Can dac ta sau:
 
 - Co bat buoc filename theo format nay ngay tu pilot khong.
 - Khach/hang khong hop le thi bo qua am tham hay hien queue loi cho quan ly.
@@ -246,7 +269,7 @@ Frontend quyet dinh them vao nhap nao theo PRD K02-D:
 - khach chua co nhap: tao nhap local moi
 - khach co nhieu nhap: cho thu ngan chon
 
-Can chot sau khi backend lam that:
+Can dac ta sau khi backend lam that:
 
 - Neu frontend add line that bai sau khi backend da claim item thi rollback item ve `queued` hay cho restore thu cong.
 - Co can endpoint `release-claim` khong.
@@ -282,17 +305,17 @@ Neu may san xuat chay khac voi hoa don, phan lech chi vao bao cao doi soat/hao h
 1. Business: tao file Production Queue rule neu phase nay bat dau.
 2. Database: tao `production_machines`, `production_queue_items`, `production_queue_history` neu can.
 3. Backend: tao `PRODUCTION-QUEUE-API.md`.
-4. Integration: tao contract cho legacy bridge/agent moi gui event.
+4. Integration: tao contract cho production agent moi gui event.
 5. PRD K02-D cap nhat link sang Business/API khi co SoT.
 
 ---
 
 ## 12. Cau hoi con lai
 
-Khong can hoi Owner ngay neu chua implement phase nay, nhung can chot truoc khi code:
+Khong can hoi Owner ngay neu chua implement phase nay. De xuat mac dinh neu can code pilot:
 
-1. Pilot dung legacy bridge tu QuanLyXuong cu hay agent moi gui thang API?
-2. Parser filename co bat buoc theo format `KH_[HH_]daixrong(_xSL)?` khong, hay chap nhan file tu do va cho sua tay?
-3. Queue item loi khach/hang co hien cho thu ngan hay chi hien cho quan ly?
-4. Lich su 10 ngay luu DB that hay chi filter hien thi 10 ngay tren UI?
-5. Khi add-to-draft thanh cong nhung frontend local fail, restore thu cong co du an toan cho MVP khong?
+1. Pilot dung production agent moi gui API; legacy bridge chi la fallback/tham khao.
+2. Parser filename khong bat buoc tuyet doi; file tu do van vao queue, item khong parse du thi cho sua tay khi add vao draft.
+3. Queue item loi khach/hang hien cho thu ngan voi trang thai can sua, khong bo qua am tham.
+4. Lich su 10 ngay luu DB that de co restore/audit.
+5. Khi add-to-draft thanh cong nhung frontend local fail, restore thu cong tu lich su la du cho MVP.

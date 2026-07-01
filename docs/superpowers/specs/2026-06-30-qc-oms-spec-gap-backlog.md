@@ -1,7 +1,7 @@
 # QC-OMS Spec Gap Backlog — Draft
 
-> Ngày lập: 2026-06-30  
-> Trạng thái: Draft điều phối, không phải Source of Truth nghiệp vụ  
+> Ngày lập: 2026-06-30
+> Trạng thái: Draft điều phối, không phải Source of Truth nghiệp vụ
 > Mục tiêu: Ghi lại các phần đặc tả còn thiếu sau khi rà `docs/`, để ưu tiên viết tiếp mà không sửa chồng lên luồng implementation hiện tại.
 
 ---
@@ -174,6 +174,8 @@ Source of Truth đã tạo:
 - Trang Customers giữ các thông tin phục vụ bán hàng, bảng giá, gửi bill và công nợ.
 - Mã khách và tên khách là trọng tâm; SĐT không bắt buộc nhưng nếu có thì unique.
 - Không đưa giới tính, sinh nhật, tích điểm, khuyến mại tự động hoặc người phụ trách khách hàng vào MVP.
+- Export KiotViet ngày `2026-07-01` có `503/528` khách không có SĐT, xác nhận SĐT phải optional.
+- Nhóm khách thật đang dùng là `25`, `26`, `30`, `35`, `40`; khách không nhóm chiếm đa số nên bảng giá chung fallback là lõi.
 
 #### 3.2E. PriceBook — PRD-UX
 
@@ -189,6 +191,52 @@ Source of Truth đã tạo:
 - Bảng giá chung là fallback mặc định.
 - Bảng giá nhóm áp dụng qua nhóm khách; khách không gán nhóm dùng bảng giá chung.
 - Không đưa khuyến mại, công thức cập nhật giá hàng loạt hoặc chiết khấu riêng vào MVP.
+- Sau khi có Purchase/Supplier, PriceBook nâng cao có công thức giá theo nhóm hàng.
+- Công thức giá theo nhóm hàng có thể chọn nguồn giá vốn bình quân hoặc giá vốn mới nhất.
+- Công thức chỉ tạo giá đề xuất/cập nhật khi người dùng chủ động áp dụng, không tự đổi giá POS khi giá vốn thay đổi.
+- Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
+- Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
+- Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế công thức/luồng giá riêng theo nhóm hàng, giá vốn bình quân/giá vốn mới nhất và cách bán thực tế.
+- Owner chốt thêm: công thức giá cần 2 tầng gồm `giá nền trước lợi nhuận` và `giá bán theo từng bảng giá`; ví dụ Fomex 5mm lấy giá nhập cuối cộng vận chuyển, thuế/phí, hao hụt rồi cộng lợi nhuận riêng cho bảng `40/35/30/...`. Công thức phải lưu mặc định lâu dài theo nhóm hàng/sản phẩm và tính lại khi giá nhập/giá vốn thay đổi.
+
+#### 3.2F. Overview Dashboard — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/Overview/README.md`
+- `docs/02-PRD-UX-PhongCanh/Overview/01-DASHBOARD.md`
+
+Đã định hướng:
+
+- Dashboard là màn tóm tắt vận hành, không thay thế Reports.
+- Giữ doanh thu hôm nay, thực thu, công nợ mới, số hóa đơn, top hàng, top khách, doanh thu theo người bán, hoạt động gần đây và cảnh báo tồn/công nợ.
+- Không copy trả hàng, chấm công, vay vốn, widget marketing, COD/vận đơn/kênh online từ KiotViet.
+
+#### 3.2G. System Settings — PRD-UX
+
+Source of Truth đã tạo:
+
+- `docs/02-PRD-UX-PhongCanh/System/02-SYSTEM-SETTINGS.md`
+
+Đã định hướng từ KiotViet Settings audit:
+
+- Settings QC-OMS chỉ hiển thị cấu hình có dùng thật trong xưởng.
+- Giữ thông tin cửa hàng/xưởng, người dùng/quyền, chi nhánh nền, bảo mật cơ bản, tài khoản ngân hàng/tài khoản quỹ, mẫu bill thường và cấu hình nền hàng hóa như đơn vị tính/nhóm hàng.
+- Thông tin cửa hàng chỉ giữ tên, SĐT, địa chỉ và logo nếu cần cho bill/báo cáo; không cần URL/hạn dùng kiểu KiotViet trong Settings vận hành.
+- Chi nhánh MVP chỉ là một chi nhánh ngầm để phòng hờ dữ liệu; UI không cần hiện `Chi nhánh trung tâm`, bộ chọn chi nhánh hoặc tab quản lý chi nhánh. Chưa làm chuyển hàng/liên chi nhánh hoặc địa chỉ lấy hàng phức tạp.
+- Settings hàng hóa chỉ giữ đơn vị tính, nhóm hàng, giá vốn tham khảo và hướng BOM/định mức riêng của QC-OMS; không copy nguyên toggle KiotViet.
+- Vai trò/preset người dùng nếu có chỉ là tick quyền nhanh; authorization vẫn theo permission cụ thể.
+- Bảo mật giữ mức nhẹ: xác thực lại khi xuất file nhạy cảm và 2FA cho quản trị/thiết bị lạ là hướng tốt, nhưng không bắt buộc làm rườm rà trong MVP đầu.
+- Audit log nên lọc theo nhân viên/tính năng/thời gian và ghi chi tiết tạo/sửa/hủy hóa đơn, phiếu thu/chi, nhập hàng, kiểm kho, xuất file và đổi cấu hình.
+- Chưa làm khóa sổ kiểu KiotViet trong MVP; báo cáo cuối ngày vẫn động, sửa chứng từ theo `MaCu.01` và audit log.
+- Không làm lịch xóa dữ liệu gian hàng trong UI vận hành thường ngày; không có tab lịch xóa/lịch sử xóa/thêm lịch như KiotViet.
+- Sổ quỹ chỉ dùng tiền mặt và tài khoản ngân hàng; chưa làm ví điện tử.
+- POS/thu nợ chỉ ghi nhận chuyển khoản vào tài khoản ngân hàng đã khai báo; không cần kết nối QR ting ting/bank partner.
+- Mẫu in là bill thường, không phải HĐĐT.
+- Bỏ giao hàng/COD/đối tác vận chuyển, QR partner/NAPAS/MoMo/ZaloPay, SMS/Zalo marketing provider, ngoại tệ/tỷ giá, VAT/thuế/HĐĐT, tích điểm/voucher/coupon/khuyến mại campaign, bảo hành/bảo trì retail, cân điện tử.
+- Bỏ barcode/POS scan, tự động gợi ý thông tin hàng hóa, thuộc tính retail, thương hiệu riêng và vị trí giá/kệ/tủ khỏi MVP.
+- Không làm UI xóa dữ liệu hàng loạt/lịch xóa trong vận hành thường ngày; nếu cần reset dữ liệu phải là runbook kỹ thuật có backup và quyền đặc biệt.
+- Không làm cân điện tử vì QC-OMS không có nghiệp vụ bán/nhập/chuyển hàng theo cân.
 
 #### 3.3. Order draft và Order persistence
 
@@ -208,9 +256,8 @@ Source of Truth đã tạo/cập nhật:
 
 Còn cần chi tiết khi làm phase sửa/chứng từ nâng cao:
 
-- Quy tắc khóa hóa đơn cũ khi đang mở để sửa bởi nhiều máy POS.
-- UX xử lý xung đột nếu hai người cùng mở/sửa một chứng từ.
-- Chính sách đảo kho/đảo tiền/công nợ khi hủy hoặc sửa hóa đơn đã có phát sinh.
+- Chi tiết DB/API cho khóa mềm/version check khi nhiều máy POS cùng sửa một chứng từ.
+- Chi tiết bút toán đảo/bù kho, tiền và công nợ theo từng loại chứng từ.
 
 #### 3.4. Checkout API, payment, cashbook và debt allocation
 
@@ -235,7 +282,7 @@ Source of Truth đã tạo/cập nhật:
 
 Còn cần chi tiết khi làm phase sửa/hủy nâng cao:
 
-- Chính sách đảo hoặc tạo bút toán bù khi hủy hóa đơn đã phát sinh công nợ/phiếu thu.
+- Chi tiết kỹ thuật đảo hoặc tạo bút toán bù khi hủy hóa đơn đã phát sinh công nợ/phiếu thu.
 - UX cho sửa phiếu thu thủ công đã đối soát.
 - Error code chi tiết cho các tình huống checkout fail một phần nếu transaction backend không hoàn tất.
 
@@ -248,6 +295,7 @@ Còn cần chi tiết khi làm phase sửa/hủy nâng cao:
 Draft tham khảo từ export KiotViet:
 
 - `docs/superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md`
+- `docs/superpowers/specs/2026-07-01-kv-exports-products-customers-pricebook-draft.md`
 
 Source of Truth Business đã tạo:
 
@@ -269,18 +317,21 @@ Source of Truth kỹ thuật đã tạo:
 - Hàng đợi máy sản xuất vẫn được gửi thông báo vào POS để tạo hóa đơn nháp; nháp này chưa trừ kho cho tới khi chốt/lưu hóa đơn.
 - Dữ liệu máy sản xuất dùng để đối soát, không tự trừ kho trong MVP.
 - Mỗi sản phẩm có một đơn vị tồn chính; đơn vị bán phụ phải quy đổi.
+- Cần tách rõ `đơn vị`, `quy cách`, `cách bán` và `loại gia công`; không copy nguyên các chuỗi như `Khổ 91`, `Tấm CNC`, `Tấc CNC` thành đơn vị chuẩn.
 - Hàng cuộn quản lý theo từng cuộn vật lý, không sửa tổng tồn trực tiếp.
 - Hàng tấm quản lý theo tấm nguyên/tấm dở/tấm lỡ, không sửa tổng tồn trực tiếp.
 - Tấm lỡ dưới `0.3m2` mặc định bỏ; nhân viên có thể tạo/sửa thủ công nếu muốn giữ.
 - Kiểm kho có phiếu tạm/cân bằng/hủy; sửa tồn hàng thường ở Hàng hóa tự sinh phiếu kiểm kho đã cân bằng.
+- Export KiotViet ngày `2026-07-01` có `57` dòng tồn âm, xác nhận UI/báo cáo tồn âm là cần thiết.
+- Export cũng có `189` dòng `Hàng thành phần`, xác nhận BOM/định mức là dữ liệu thật nhưng vẫn để phase BOM riêng.
+- Owner chốt thêm: import tạm toàn bộ tồn KiotViet, sau đó chuẩn hóa dần cuộn/tấm thật bằng kiểm kho/khui vật tư; không cần đo lại toàn bộ kho trước khi dùng hệ thống.
 
 Rủi ro:
 
-- PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên chốt schema hoặc backend sâu cho BOM/máy sản xuất trước khi Owner chốt chính sách sản xuất chi tiết.
+- PRD có luồng khui vật tư và BOM khá giàu, Business Inventory mới chốt mức MVP. Không nên implement schema/backend sâu cho BOM/máy sản xuất cho tới khi phase đó bắt đầu, dù hướng nghiệp vụ BOM và production queue đã rõ hơn.
 
-Còn cần chốt/chi tiết sau MVP:
+Còn cần chi tiết sau MVP:
 
-- BOM/Combo MVP trừ vật tư con tới mức nào khi định mức chưa rõ.
 - Production queue và dữ liệu máy sản xuất được lưu/claim qua API nào.
 - Khi nào chuyển từ đối soát máy sản xuất sang cơ chế tự đề xuất/trừ kho nâng cao.
 
@@ -289,6 +340,7 @@ Còn cần chốt/chi tiết sau MVP:
 Draft tham khảo đã tạo:
 
 - `docs/superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`
+- `docs/superpowers/specs/2026-07-01-kv-exports-products-customers-pricebook-draft.md`
 
 Source of Truth cần bổ sung khi phase này bắt đầu:
 
@@ -296,21 +348,27 @@ Source of Truth cần bổ sung khi phase này bắt đầu:
 - Database BOM tables.
 - Backend validation chống vòng lặp BOM.
 
-Đã định hướng tạm thời:
+Đã chốt/định hướng:
 
-- Combo trong POS trước hết là dòng bán hàng có snapshot.
+- BOM là định mức vật tư.
+- Combo trong POS trước hết là dòng bán hàng có snapshot, nhưng nếu có BOM thì có thể trừ vật tư con.
 - Giá bán combo độc lập với tổng giá vật tư thành phần.
 - Nếu combo có BOM sẵn trong danh mục, trừ kho theo BOM đó khi chốt hóa đơn.
 - Nếu nhân viên thêm/sửa BOM ngay trong POS và chọn `Không lưu — Chỉ trừ kho`, BOM phát sinh là định mức của dòng hàng đó và vẫn dùng để trừ kho.
 - Nếu chọn `Lưu Combo mới`, lưu cấu trúc thành combo mới trong danh mục để dùng lại.
 - Không tự tạo SKU/combo mới nếu nhân viên không chọn lưu.
+- BOM có thể lồng nhiều cấp, ví dụ `khung sắt bắn bạt` gồm `in bạt` + `khung sắt`; phase BOM cần deep-scan để ra vật tư con cuối cùng.
+- Có thể sửa BOM.
+- Đề xuất mặc định: sửa BOM tạo version mới; hóa đơn/báo giá lưu snapshot BOM version đã dùng.
+- Đề xuất mặc định: deep-scan tối đa 5 cấp, backend chặn vòng lặp.
+- BOM thiếu cấu hình thì cảnh báo/flag nhưng không chặn checkout trong POS MVP.
+- Export KiotViet ngày `2026-07-01` xác nhận `189` dòng có `Hàng thành phần` theo định dạng `MaThanhPhan:SoLuong|...`; chỉ dùng định dạng này làm nguồn tạo draft BOM khi chuyển đổi, không dùng làm schema chính.
 
-Còn thiếu/chưa chốt:
+Còn cần đặc tả khi làm phase BOM:
 
-- BOM cấp 1/cấp 2 là cấu trúc bán hàng hay cấu trúc vật tư sản xuất.
-- Quy tắc chỉnh BOM trong đơn đã chốt: không lưu thì là BOM phát sinh dùng cho hóa đơn đó; có lưu thì tạo combo mới.
-- Cách tính giá bán combo so với tổng chi phí vật tư.
-- Cách deep-scan khi checkout và khi preview.
+- UI sửa BOM trong POS: dạng cây hay bảng phẳng có mở rộng.
+- API/schema cụ thể cho BOM version và order item BOM snapshot.
+- Cách hiển thị tổng chi phí vật tư tham khảo từ BOM.
 
 ---
 
@@ -322,10 +380,13 @@ Draft tham khảo KiotViet đã tạo:
 
 - `docs/superpowers/specs/2026-07-01-kv-purchase-supplier-draft.md`
 
-Định hướng:
+Đã chốt/định hướng:
 
-- Chưa đưa Purchase vào MVP nếu chưa chốt nhập kho vật lý theo cuộn/tấm.
-- Khi làm sau này nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
+- Purchase/Supplier có trong phạm vi dự án, nhưng sau POS MVP.
+- Khi làm nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
+- Nhập hàng cuộn/tấm phải nhập đúng vật thể mua vào: cuộn là cuộn, tấm là tấm/lô tấm; không mua `m2` cho hàng cuộn/tấm.
+- Giá vốn từ phiếu nhập phải lưu lại để báo cáo và làm dữ liệu cho công thức/gợi ý bảng giá sau này.
+- Công thức bảng giá theo nhóm hàng có thể lấy giá vốn bình quân hoặc giá vốn mới nhất.
 - Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
 
 Quan sát KiotViet cập nhật ngày `2026-07-01`:
@@ -337,14 +398,13 @@ Quan sát KiotViet cập nhật ngày `2026-07-01`:
 - `Mua dịch vụ` giống phiếu chi/công nợ đối tác; chưa cần module riêng nếu Sổ quỹ có phiếu chi đủ loại chi/người nhận/tài khoản tiền.
 - `Hóa đơn đầu vào` đang yêu cầu kết nối Cơ quan Thuế, thuộc phạm vi HĐĐT/thuế đã loại khỏi MVP.
 - `Báo cáo nhà cung cấp` phụ thuộc Purchase/Supplier, để sau khi module nhập hàng được chốt.
-- Vì vậy Purchase/NCC là nghiệp vụ có dữ liệu thật, nhưng vẫn nên để sau MVP bán hàng cho tới khi nhập tồn vật lý cuộn/tấm được chốt.
+- Vì vậy Purchase/NCC là nghiệp vụ có dữ liệu thật và đã được Owner giữ trong phạm vi dự án, nhưng vẫn nên để sau MVP bán hàng để thiết kế đúng tồn vật lý cuộn/tấm, giá vốn và công nợ NCC.
 
-Owner cần chốt:
+Khi vào phase Purchase cần đặc tả tiếp:
 
-- Có cần quản lý nhà cung cấp ngay phase đầu không.
-- Nhập cuộn/tấm có tạo object tồn vật lý ngay lúc nhập hàng không.
-- Có cần công nợ nhà cung cấp trong MVP không.
-- Giá vốn dùng phương pháp nào.
+- Phân bổ tiền trả NCC theo phiếu nhập cũ nhất hay chọn phiếu cụ thể.
+- Phương pháp giá vốn cho báo cáo lợi nhuận chuẩn: nhập cuối, bình quân, FIFO hoặc theo object vật lý. Lưu ý phần PriceBook đã chốt được chọn bình quân hoặc mới nhất để gợi ý giá.
+- Mua dịch vụ có tiếp tục là phiếu chi hay cần mở rộng thành công nợ đối tác.
 
 #### 3.7B. MVP Scope lock
 
@@ -355,10 +415,17 @@ Source of Truth đã tạo:
 Đã chốt:
 
 - QC-OMS MVP là bán đứt tại xưởng, không copy các module KiotViet không dùng.
-- Không làm Đặt hàng KiotViet, vận đơn, COD, bán online, HĐĐT/VAT, thương hiệu retail, điểm thưởng, chấm công/lương/hoa hồng.
+- Không làm Đặt hàng KiotViet, vận đơn, COD, bán online, HĐĐT/VAT, thương hiệu retail, điểm thưởng, chấm công/lương/hoa hồng trong QC-OMS hiện tại.
+- KiotViet `Bán online` là đa kênh/TMĐT/MXH gồm Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA; bỏ khỏi MVP.
+- KiotViet `LoyaltyOnboarding` là onboarding bán hàng/giữ chân khách trên Zalo; bỏ khỏi MVP, QC-OMS chỉ hỗ trợ mở/copy bill để nhân viên tự gửi.
+- KiotViet `Thuế & Kế toán` là hồ sơ kê khai thuế/sổ kế toán/tờ khai thuế cho hộ kinh doanh; không làm trong QC-OMS hiện tại cùng HĐĐT/VAT/thuế.
+- KiotViet `Khuyến mại` có dữ liệu thật dạng giá theo số lượng mua cho một số vật tư; không làm module Campaign riêng, nếu cần sau này thì xem như PriceBook quantity tier.
 - KiotViet có danh sách 5 nhân viên thật, nhưng các trường mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh chỉ để tham khảo; QC-OMS giữ scope tài khoản/quyền/người thao tác.
+- KiotViet có bảng chấm công, bảng lương, bảng hoa hồng và thiết lập nhân viên; `Bảng lương` có 23 bảng nhưng giá trị lương đều `0`, `Hoa hồng` không có kết quả phù hợp. Tiếp tục bỏ HR/payroll/commission khỏi MVP.
+- Báo cáo nhân viên nếu cần chỉ là doanh thu theo người bán trong Reports, không phải module lương/hoa hồng.
 - Báo giá chỉ là bản giá, không giữ hàng, không trừ kho, không tạo tiền/công nợ/doanh thu.
-- Purchase/Supplier, giá vốn/lợi nhuận đầy đủ, máy sản xuất tự trừ kho và gửi tin tự động để sau MVP.
+- Purchase/Supplier, giá vốn/lợi nhuận đầy đủ và BOM nhiều cấp là hướng dự án sau POS MVP.
+- Máy sản xuất tự trừ kho và gửi tin tự động để sau MVP.
 
 Ý nghĩa với implement:
 
@@ -373,9 +440,16 @@ Draft tham khảo KiotViet đã tạo:
 Định hướng:
 
 - Báo cáo cuối ngày là báo cáo nên ưu tiên đầu tiên sau Finance/đối soát.
+- Báo cáo cuối ngày là báo cáo động; khi dữ liệu chứng từ được sửa hợp lệ, số báo cáo thay đổi theo.
+- Không khóa/chốt báo cáo cuối ngày thành bản bất biến trong QC-OMS hiện tại.
 - Báo cáo/phân tích vẫn cần đầy đủ cho quản trị xưởng: bán hàng, khách hàng, công nợ, hàng hóa/tồn kho và tài chính.
+- Đã bổ sung PRD `Reports/06-CUSTOMER-REPORT.md` cho khách cũ/mới/lẻ, khách quay lại và top khách.
 - Báo cáo hàng hóa của QC-OMS phải nhìn được tồn vật lý cuộn/tấm.
 - Bỏ kênh bán, VAT/HĐĐT và thương hiệu/thuộc tính retail khỏi báo cáo QC-OMS.
+- Bỏ nhân khẩu học khách hàng kiểu retail như tuổi, giới tính, tỉnh thành khỏi báo cáo QC-OMS hiện tại.
+- Báo cáo nhân viên KiotViet chỉ giữ góc nhìn người bán trong Báo cáo bán hàng; không mở báo cáo HR/KPI/hoa hồng.
+- Báo cáo đặt hàng KiotViet không làm vì QC-OMS không có Đặt hàng/giao hàng/vận đơn.
+- Báo cáo nhà cung cấp để sau Purchase/Supplier.
 - Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 
@@ -385,19 +459,17 @@ Draft tham khảo KiotViet đã tạo:
 
 - `docs/superpowers/specs/2026-07-01-kv-inventory-adjustments-returns-draft.md`
 
-Định hướng:
+Định hướng đã cập nhật:
 
-- Xuất hủy chỉ giữ nếu Owner cần kiểm soát vật tư bỏ/hỏng; nếu giữ thì làm tối giản như điều chỉnh giảm tồn/hủy vật tư.
-- Xuất dùng nội bộ chưa cần module riêng; có thể là một lý do của điều chỉnh giảm tồn.
-- Trả hàng nhập để sau Purchase/Supplier.
-- Trả hàng bán tiếp tục không thuộc MVP; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
+- Không tạo module riêng cho Xuất hủy hoặc Xuất dùng nội bộ trong QC-OMS hiện tại.
+- Vật tư bỏ/hỏng xử lý bằng điều chỉnh tồn tối giản có log.
+- Tấm lỡ dưới `0.3m2` mặc định bỏ, không sinh phiếu hủy riêng; nếu cần kiểm tra thì ghi audit nhẹ theo thao tác nguồn.
+- Nếu mảnh nhỏ tận dụng được, nhân viên có thể giữ lại/tạo tấm lỡ thủ công.
+- Trả hàng nhập không làm trong lát cắt Purchase đầu tiên; chỉ xem lại nếu thực tế phát sinh.
+- Trả hàng bán tiếp tục không thuộc QC-OMS hiện tại; hóa đơn sai xử lý bằng sửa chứng từ `MaCu.01`.
 - Các màn Xuất dùng nội bộ, Xuất hủy, Trả hàng nhập và Trả hàng bán đã được kiểm tra dài hạn `01/07/2016 - 01/07/2026` và vẫn không có giao dịch phù hợp; vì vậy càng nên xếp vào bỏ/để sau.
 
-Owner cần chốt:
-
-- Có cần phiếu hủy vật tư riêng trong MVP không.
-- Tấm lỡ dưới `0.3m2` mặc định bỏ có cần sinh lịch sử hủy không.
-- Dùng nội bộ có cần theo dõi ngay không.
+Không còn câu hỏi Owner cần chốt ngay ở mục này; khi implementation làm tới Inventory Adjustment thì viết chi tiết API/DB theo hướng trên.
 
 #### 3.10. Hàng đợi máy sản xuất và Integration máy sản xuất
 
@@ -419,10 +491,10 @@ Source of Truth cần tạo/bổ sung khi phase này bắt đầu:
 - Queue phải có atomic claim để hai POS không xử lý trùng một thông báo.
 - Channel realtime dự kiến là `production_queue`, không dùng thuật ngữ `workstation_queue`.
 - Parser filename dự kiến theo PRD K02-D: `KH_[HH_]daixrong(_xSL)?(_ghichu)?`.
+- Pilot dùng production agent mới gửi API event vào QC-OMS. Legacy bridge chỉ là fallback/tham khảo, không phải hướng mặc định.
 
-Owner/Technical cần chốt:
+Technical cần đặc tả:
 
-- Máy sản xuất gửi qua folder watcher, API, webhook, hay manual simulator trước.
 - Dữ liệu khách/hàng/kích thước trong tên file có format bắt buộc nào.
 - Queue item lỗi khách/hàng có hiện cho thu ngân hay chỉ hiện cho quản lý.
 - Khi add-to-draft claim thành công nhưng frontend local draft fail, restore thủ công có đủ cho MVP không.
@@ -444,6 +516,8 @@ Source of Truth cần tạo sau khi phase này bắt đầu:
 Đã định hướng:
 
 - Bill lấy dữ liệu từ snapshot chứng từ, không lấy lại bảng giá/tên hàng/khách hiện tại.
+- KiotViet `Mẫu in` có nhiều nhóm chứng từ; QC-OMS chỉ giữ báo giá, hóa đơn/bill bán hàng, phiếu thu và phiếu chi trong scope hiện tại.
+- Không làm mẫu đặt hàng, giao hàng, trả hàng, đổi trả hàng, chuyển hàng, đặt hàng nhập, nhập hàng hoặc trả hàng nhập cho tới khi có phase nghiệp vụ tương ứng.
 - MVP chỉ hỗ trợ in browser, sinh ảnh bill và mở đúng nơi gửi.
 - Nhân viên tự kiểm tra, dán ảnh và bấm gửi.
 - Không tự động gửi Zalo/Facebook, không lưu lịch sử gửi bill và không rollback chứng từ nếu gửi lỗi.
@@ -513,9 +587,8 @@ Khuyến nghị cho luồng hiện tại:
 Còn cần Owner quyết định ở các phase sau:
 
 - Nháp hóa đơn lưu server từ Phase 2 hay chỉ LocalStorage cho tới khi báo giá/thanh toán.
-- Cơ chế máy sản xuất gửi event trong pilot: file watcher, API, webhook hoặc simulator.
-- Nhập hàng/NCC có nằm trong MVP không, hay để sau khi Inventory vật lý ổn định.
-- Báo cáo cuối ngày có cần chốt/khóa lịch sử hay chỉ là báo cáo động.
+- Phương pháp giá vốn chính thức khi Purchase/Supplier bắt đầu.
+- Chi tiết contract production agent mới nếu bắt đầu phase máy sản xuất.
 
 Đã chốt và cần giữ:
 

@@ -5,17 +5,22 @@ Tài liệu này dùng để nối mạch giữa các session Codex.
 ## Trạng thái branch/worktree
 
 - Main working branch: `main`
+- Backend chính cho dev/staging hiện tại: Supabase Cloud. Các dòng `server shared-dev` bên dưới là lịch sử verification của phase đã merge, không phải hướng mặc định cho developer mới.
 - Phase 1A đã merge vào `main`: PR #1, merge commit `b503e98`
 - Phase 1B đã merge vào `main`: PR #2
 - Phase 1C đã merge vào `main`: PR #4, merge commit `2b83df7`
 - Phase 2A đã merge vào `main`: PR #5, merge commit `cf82542`
 - Phase 2A plan: `docs/superpowers/plans/2026-07-01-phase-2a-pos-direct-checkout-ui.md`
-- Phase 2B working branch: `codex/phase-2b-production-queue-foundation`
+- Phase 2B đã merge vào `main`: PR #6, merge commit `80b521e`
 - Phase 2B plan: `docs/superpowers/plans/2026-07-01-phase-2b-production-queue-foundation.md`
+- Phase 2C đã merge vào `main`: PR #7, merge commit `1d7a6f5`
+- Phase 2C plan: `docs/superpowers/plans/2026-07-01-phase-2c-pos-discount-ui.md`
+- Phase 2D đã merge vào `main`: PR #8, merge commit `552db05`
+- Phase 2D plan: `docs/superpowers/plans/2026-07-01-phase-2d-sales-documents-readonly.md`
 
 ## Phase 0 — Foundation
 
-Status: ✅ Hoàn thành và đã merge vào `tai_lieu_v1`
+Status: ✅ Hoàn thành và đã merge vào `main`
 
 ### Đã hoàn thành
 
@@ -369,7 +374,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ## Phase 2B — Production queue / K02-D foundation
 
-Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation`
+Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -431,9 +436,59 @@ Status: 🔨 Đang làm trên branch `codex/phase-2b-production-queue-foundation
   - [x] `POST /functions/v1/api/v1/production-queue/{id}/add-to-draft` -> 200, payload `DECAL-PP`, quantity `2`
   - [x] Add-to-draft did not create order, stock movement, or cashbook entry
 
+## Phase 2C — POS line discount handling
+
+Status: ✅ Hoàn thành, đã merge vào `main`
+
+### Phạm vi Phase 2C
+
+- [x] Discount handling UI cho từng dòng POS.
+- [x] Chỉ user có `perm.apply_discount` được sửa chiết khấu ở tầng kỹ thuật; preset nhân viên nội bộ MVP mặc định nên có quyền này.
+- [x] POS summary tính subtotal, discount và payable total.
+- [x] Checkout payload gửi `items[].discount_amount`.
+- [x] Backend checkout transaction validate và persist line/order discount.
+- [x] Không mở promotion, loyalty, campaign, tax hoặc online-channel scope.
+
+### Verification đã ghi trong plan
+
+- [x] Targeted POS UI tests PASS.
+- [x] Backend DB/function tests PASS.
+- [x] `npm run lint`
+- [x] `npm run typecheck`
+- [x] `npm test`
+- [x] `npm run build`
+- [x] PR #7 merged into `main`.
+
+## Phase 2D — Sales Documents readonly module
+
+Status: ✅ Hoàn thành, đã merge vào `main`
+
+### Phạm vi Phase 2D
+
+- [x] Readonly Sales Documents module cho hóa đơn `HD...`.
+- [x] Backend list/detail API:
+  - [x] `GET /api/v1/sales-documents`
+  - [x] `GET /api/v1/sales-documents/{id}`
+- [x] Exact document-code search không bị kẹt bởi default date filters.
+- [x] Detail hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements.
+- [x] Frontend dashboard entry, route, list page và readonly detail view.
+- [x] Không implement edit/cancel/print/returns/delivery/tax trong phase này.
+
+### Verification đã ghi trong plan
+
+- [x] Sales Documents API tests PASS.
+- [x] Sales Documents UI tests PASS.
+- [x] `npm run lint`
+- [x] `npm run typecheck`
+- [x] `npm run test:functions`
+- [x] `npm test`
+- [x] `npm run build`
+- [x] `npx deno check supabase/functions/api/index.ts`
+- [x] PR #8 merged into `main`.
+
 ## Phase 2 — POS business UI
 
-Status: 🔨 Đang triển khai theo các lát cắt Phase 2A/2B
+Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 
 - [x] Product quick grid cơ bản.
 - [x] Cart lines.
@@ -443,7 +498,15 @@ Status: 🔨 Đang triển khai theo các lát cắt Phase 2A/2B
 - [x] Checkout/payment flow.
 - [x] Receipt/bill preview.
 - [x] K02-D production queue foundation.
-- [ ] Discount handling UI.
+- [x] Discount handling UI/backend persistence.
+- [x] Sales Documents readonly list/detail.
+
+### Còn lại sau Phase 2D
+
+- Không có working branch Phase 2 tiếp theo đang được checklist này theo dõi.
+- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
+- Các phần vẫn nằm ngoài scope hiện tại: delivery/COD, kênh online, tax/HĐĐT.
+- Không mở rộng scope mới từ checklist này.
 
 ## Lệnh thường dùng
 
@@ -451,19 +514,22 @@ Status: 🔨 Đang triển khai theo các lát cắt Phase 2A/2B
 # Main branch
 cd /Users/vanlam/Documents/project/QC-OMS
 
-# Phase 1C plan sync branch
-git switch codex/phase-1c-plan-sync
+# Current main
+git switch main
 
-# Local Supabase
-npm run supabase:start
-npm run supabase:reset
-npm run test:db
-npm run test:functions
+# Dev thường: dùng .env.local trỏ Supabase Cloud dev/staging
+npm ci
+npm run dev
 
-# Frontend
+# Verification app/frontend
 npm test
 npm run typecheck
 npm run lint
 npm run build
-npm run dev
+
+# Optional local isolated Supabase, chỉ khi cần test DB/migration/RLS cô lập
+npm run supabase:start
+npm run supabase:reset
+npm run test:db
+npm run test:functions
 ```

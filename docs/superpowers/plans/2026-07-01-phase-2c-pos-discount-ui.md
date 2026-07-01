@@ -76,6 +76,8 @@ Expected: PASS.
 
 Run: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
 
-- [ ] **Step 2: Commit and prepare PR**
+- [x] **Step 2: Commit and prepare PR**
 
 Commit with message `feat: add pos line discount handling`, then push branch and open PR.
+
+Completed: PR #7 was merged into `main` with merge commit `1d7a6f5`.

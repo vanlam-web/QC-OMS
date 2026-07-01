@@ -1,7 +1,7 @@
 # Implementation Sync — Sales, Inventory, Finance Specs
 
-> Ngày: 2026-06-30  
-> Trạng thái: Handoff note cho luồng implementation  
+> Ngày: 2026-06-30
+> Trạng thái: Handoff note cho luồng implementation
 > Phạm vi: Các đặc tả đã bổ sung sau backlog gap ban đầu. File này không thay thế Source of Truth; implement phải đọc các file SoT được liệt kê.
 
 ---
