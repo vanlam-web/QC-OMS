@@ -224,14 +224,14 @@ Chia lát cắt thực thi:
 | Lát cắt | Phạm vi |
 |---|---|
 | Phase 3A | Lưu/list/detail báo giá `BG...`, mở lại vào POS draft local, checkout sang `HD...` |
-| Phase 3B/future | Bill Preview/in báo giá và gửi báo giá nếu Owner chốt |
+| Phase 3B/future | Xem/in báo giá đơn giản bằng mẫu mặc định; gửi thủ công |
 
 **Frontend**
 
 - Nút `BÁO GIÁ`.
 - Danh sách và tìm kiếm báo giá.
 - Mở lại báo giá thành hóa đơn nháp.
-- Bill Preview và in bill báo giá để Phase 3B/future nếu print flow chưa đủ SoT.
+- Xem/in báo giá bằng mẫu mặc định ở Phase 3B; chưa làm nhiều mẫu hoặc tự gửi.
 
 **Backend và Database**
 

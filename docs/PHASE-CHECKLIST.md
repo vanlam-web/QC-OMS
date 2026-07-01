@@ -505,7 +505,7 @@ Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 
 - Không có working branch Phase 2 tiếp theo đang được checklist này theo dõi.
 - Phase kế tiếp theo roadmap hiện tại: Phase 3A báo giá `BG...` + mở lại vào POS draft local.
-- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, bill preview/in báo giá Phase 3B, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
+- Các phần chưa làm nhưng có thể cần phase riêng nếu Owner quyết định: sửa/hủy/in chứng từ bán hàng, in báo giá đơn giản Phase 3B, production ingestion tự động, PriceBook formula nâng cao hoặc Purchase/Supplier.
 - Các phần vẫn nằm ngoài scope hiện tại: delivery/COD, kênh online, tax/HĐĐT.
 - Không mở rộng scope mới từ checklist này.
 
@@ -526,7 +526,7 @@ Status: ⏭️ Sẵn sàng lập plan sau khi SoT được handoff
 
 ### Ngoài phạm vi Phase 3A
 
-- [ ] Bill Preview/in báo giá hoặc gửi báo giá tự động.
+- [ ] In/xem báo giá đơn giản bằng mẫu mặc định; tự gửi nếu cần.
 - [ ] Hủy báo giá thủ công nếu chưa cần workflow.
 - [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
 - [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.

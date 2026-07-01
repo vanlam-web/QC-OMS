@@ -37,6 +37,7 @@ Phase 2D không biến SalesDocuments thành module quản lý đầy đủ. Nó
 | [01-SALES-DOCUMENT-LIST.md](./01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc, cột, thao tác nhanh |
 | [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ readonly hiện tại; mô tả sửa/hủy/in lại là future phase |
 | [03-QUOTE-PHASE-3A.md](./03-QUOTE-PHASE-3A.md) | Ranh giới Phase 3A cho báo giá `BG...` và mở lại vào POS draft |
+| [04-QUOTE-PRINT-PHASE-3B.md](./04-QUOTE-PRINT-PHASE-3B.md) | Phase 3B in/xem báo giá đơn giản bằng mẫu mặc định |
 
 ---
 

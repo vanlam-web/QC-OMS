@@ -75,7 +75,7 @@ Không bao gồm trong Phase 3A:
 - tạo production job/lệnh sản xuất
 - delivery/COD/kênh bán/VAT/HĐĐT
 
-Bill Preview/in báo giá tách sang Phase 3B hoặc phase riêng sau khi mẫu bill/print flow được chốt.
+Bill Preview/in báo giá tách sang Phase 3B. Owner đã chốt Phase 3B làm đơn giản trước: một mẫu báo giá mặc định để xem/in/gửi thủ công, chưa làm nhiều mẫu bill hoặc tự gửi.
 
 ### BR-QUOTE-01: Báo giá vẫn lưu trong đơn hàng
 
