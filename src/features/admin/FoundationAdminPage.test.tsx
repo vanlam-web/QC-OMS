@@ -22,6 +22,11 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
     listPermissions: vi.fn(async () => [
       { code: 'perm.manage_users' as const, module: 'administration', description: 'Manage users' },
       { code: 'perm.create_order' as const, module: 'sales', description: 'Create sales orders' },
+      { code: 'perm.apply_discount' as const, module: 'sales', description: 'Apply discounts' },
+      { code: 'perm.edit_price_book' as const, module: 'catalog', description: 'Edit price book' },
+      { code: 'perm.manage_inventory' as const, module: 'inventory', description: 'Manage inventory' },
+      { code: 'perm.manage_finance' as const, module: 'finance', description: 'Manage finance' },
+      { code: 'perm.view_shift_report' as const, module: 'reports', description: 'View reports' },
     ]),
     createUser: vi.fn(async () => ({
       id: 'u-2',
@@ -125,7 +130,14 @@ it('filters, creates, disables, and updates permissions for users', async () => 
     email: 'cashier@example.test',
     password: 'Password123!',
     display_name: 'Cashier',
-    permissions: ['perm.create_order'],
+    permissions: [
+      'perm.create_order',
+      'perm.apply_discount',
+      'perm.edit_price_book',
+      'perm.manage_inventory',
+      'perm.manage_finance',
+      'perm.view_shift_report',
+    ],
   })
 
   await userEvent.click(screen.getByRole('button', { name: 'Khóa' }))

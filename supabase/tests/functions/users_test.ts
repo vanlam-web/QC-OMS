@@ -65,6 +65,11 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
     listPermissions: () =>
       Promise.resolve([
         { code: "perm.create_order", module: "sales", description: "Create sales orders" },
+        { code: "perm.apply_discount", module: "sales", description: "Apply discounts" },
+        { code: "perm.edit_price_book", module: "catalog", description: "Edit price book" },
+        { code: "perm.manage_inventory", module: "inventory", description: "Manage inventory" },
+        { code: "perm.manage_finance", module: "finance", description: "Manage finance" },
+        { code: "perm.view_shift_report", module: "reports", description: "View reports" },
       ]),
     ...overrides,
   } as unknown as FoundationRepository;
@@ -119,6 +124,29 @@ Deno.test("user and permission route matrix works for manage_users", async () =>
     })).status,
     200,
   );
+});
+
+Deno.test("create user defaults to internal staff MVP operational permissions when omitted", async () => {
+  const response = await call("/api/v1/users", {
+    method: "POST",
+    body: JSON.stringify({
+      email: "operator@example.test",
+      password: "password123",
+      display_name: "Operator",
+    }),
+  });
+  const responseBody = await response.json();
+  const created = responseBody.data as UserListItem;
+
+  assertEquals(response.status, 201);
+  assertEquals(created.permissions, [
+    "perm.create_order",
+    "perm.apply_discount",
+    "perm.edit_price_book",
+    "perm.manage_inventory",
+    "perm.manage_finance",
+    "perm.view_shift_report",
+  ]);
 });
 
 Deno.test("user admin validates input and maps final admin conflict", async () => {
