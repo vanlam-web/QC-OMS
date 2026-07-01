@@ -328,6 +328,12 @@ Draft tham khảo KiotViet đã tạo:
 - Khi làm sau này nên tách nhà cung cấp, phiếu nhập hàng và công nợ nhà cung cấp.
 - Mua dịch vụ có thể đi qua phiếu chi Sổ quỹ trước, chưa cần module riêng.
 
+Quan sát KiotViet cập nhật ngày `2026-07-01`:
+
+- Bộ lọc `Tháng này` của màn `Nhập hàng` trống vì đầu tháng mới.
+- Mở rộng `01/07/2016 - 01/07/2026` thấy `626 giao dịch`, tổng `Cần trả NCC` khoảng `2,048,849,460`.
+- Vì vậy Purchase/NCC là nghiệp vụ có dữ liệu thật, nhưng vẫn nên để sau MVP bán hàng cho tới khi nhập tồn vật lý cuộn/tấm được chốt.
+
 Owner cần chốt:
 
 - Có cần quản lý nhà cung cấp ngay phase đầu không.

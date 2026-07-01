@@ -50,9 +50,28 @@ Quan sát thêm ngày `01/07/2026`:
 
 - Bộ lọc mặc định `Tháng này` không có phiếu nhập.
 - Sau khi bấm `vào đây`, KiotViet đổi khoảng thời gian sang `01/07/2016 - 01/07/2026`.
-- Màn vẫn không tìm thấy phiếu nhập hàng phù hợp.
+- Màn hiển thị `626 giao dịch`.
+- Tổng `Cần trả NCC` trên danh sách khoảng `2,048,849,460`.
+- Các phiếu gần nhất có mã `PN...`, ví dụ `PN000668`, `PN000667`, trạng thái `Đã nhập hàng`.
+- Dữ liệu thực tế có nhiều nhà cung cấp như `A Thanh Huế (In bao)`, `Shoper`, `Thiệp cưới Đông Hà`, `toàn led`, `In Offset SG`, `Thịnh Hồng Nguyên`, `Chị giao`.
 
-Kết luận: không dùng màn `Nhập hàng` KiotViet làm căn cứ làm MVP ngay. Nếu QC-OMS làm Purchase sau này, phải thiết kế theo tồn vật lý cuộn/tấm của xưởng, không copy dữ liệu nhập hàng KiotViet.
+Form tạo phiếu nhập trong KiotViet có:
+
+- Tìm hàng hóa theo mã hoặc tên.
+- Dòng hàng gồm mã hàng, tên hàng, ĐVT, số lượng, đơn giá, giảm giá, thành tiền.
+- Thêm sản phẩm từ file Excel.
+- Chọn chi nhánh/kho.
+- Thời gian nhập.
+- Tìm/chọn nhà cung cấp.
+- Mã phiếu nhập tự động.
+- Mã đặt hàng nhập.
+- Trạng thái `Phiếu tạm`.
+- Số hóa đơn đầu vào.
+- Tổng tiền hàng, giảm giá, cần trả nhà cung cấp.
+- Ghi chú.
+- Hành động `Lưu tạm` và `Hoàn thành`.
+
+Kết luận: nhập hàng là nghiệp vụ có dữ liệu thật, nhưng vẫn chưa nên bê nguyên luồng KiotViet vào MVP bán hàng. Nếu QC-OMS làm Purchase sau này, phải thiết kế theo tồn vật lý cuộn/tấm của xưởng, không copy cách quản lý tổng số lượng/m2 của KiotViet.
 
 ### 2.3. Mua dịch vụ
 
@@ -74,7 +93,7 @@ MVP hiện tại chưa nên làm đầy đủ module mua hàng vì:
 - Xưởng cần chốt trước cách nhập tồn cuộn/tấm theo vật lý.
 - Nhập hàng có thể làm thay đổi tồn, giá vốn, công nợ NCC và sổ quỹ cùng lúc.
 - Nếu làm vội theo KiotViet, dễ quay về quản lý tổng m2 thay vì quản lý từng cuộn/tấm đúng mục tiêu QC-OMS.
-- KiotViet có hồ sơ NCC và tổng mua/nợ, nhưng màn nhập hàng không có giao dịch dài hạn để copy luồng thao tác thực tế.
+- KiotViet có hồ sơ NCC, tổng mua/nợ và nhiều phiếu nhập thật, nhưng luồng nhập của QC-OMS cần khác KiotViet ở điểm cốt lõi: phiếu nhập phải tạo tồn vật lý theo cuộn/tấm nếu hàng đó thuộc nhóm quản lý vật lý.
 
 ### 3.2. Khi làm, nên tách thành 3 phần
 
@@ -134,6 +153,14 @@ Phiếu nhập tối thiểu:
 - Trạng thái: Phiếu tạm, Đã nhập, Đã hủy.
 
 Với hàng cuộn/tấm, dòng nhập phải tạo object tồn vật lý tương ứng, không chỉ cộng tổng m2.
+
+Quy tắc gợi ý theo loại hàng:
+
+- Hàng thường: nhập số lượng như KiotViet, tăng tồn tổng.
+- Hàng cuộn: mỗi cuộn nhập vào phải có object riêng, gồm khổ, chiều dài ban đầu, m2 ban đầu, số còn lại và trạng thái cuộn.
+- Hàng tấm: nhập theo từng tấm hoặc lô tấm cùng kích thước; hệ thống tạo tồn tấm/tấm lỡ theo cấu hình nhập.
+- Giá nhập gắn vào object/lô vật lý để làm tham khảo giá vốn sau này.
+- Không dùng phiếu nhập để tự sửa tồn tổng cuộn/tấm bằng tay; sửa sai tồn vật lý đi qua kiểm kho/điều chỉnh tồn.
 
 ### Supplier Payables
 
