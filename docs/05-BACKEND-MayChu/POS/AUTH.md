@@ -22,9 +22,11 @@ Quy tắc:
 - Các permission nhỏ vẫn tồn tại để backend bảo vệ endpoint và mở rộng sau này.
 - Không tạo rule nghiệp vụ phức tạp chỉ vì một permission nhỏ, ví dụ `perm.apply_discount`, nếu Owner chưa chốt kiểm soát riêng.
 - UI không nên chia cắt trải nghiệm của nhân viên nội bộ bằng quá nhiều trạng thái thiếu quyền.
+- Không dùng thiếu quyền như trạng thái vận hành bình thường cho các thao tác hằng ngày trong MVP.
 - Chỉ tách quyền mạnh trong MVP cho:
   - quản lý user/quyền;
   - cấu hình hệ thống;
+  - hủy/sửa chứng từ đã chốt hoặc thao tác phá hủy nếu cần kiểm soát riêng;
   - tài chính nhạy cảm nếu Owner chốt sau.
 
 Nói cách khác: hệ thống vẫn kiểm tra permission, nhưng seed/preset tài khoản nội bộ phải cấp đủ quyền vận hành để người dùng không bị kẹt trong luồng POS/kho/tài chính thường ngày.
@@ -80,6 +82,16 @@ Chọn preset hoặc tick thủ công:
 | `perm.manage_users` | Tạo / sửa / xóa tài khoản | Trang Quản lý tài khoản |
 
 > Danh sách trên là **khởi điểm kỹ thuật**. Trong MVP, seed/default user nội bộ nên có hầu hết quyền vận hành chính. Khi phát triển thêm khối chức năng mới, có thể bổ sung mã quyền tương ứng vào bảng seed, nhưng không mặc định biến mỗi mã quyền thành một rào cản vận hành riêng nếu chưa có nhu cầu thực tế.
+
+Preset khuyến nghị:
+
+| Preset | Quyền vận hành |
+|---|---|
+| Chủ xưởng/Quản trị | Toàn bộ quyền active, gồm quản lý user/quyền và cấu hình hệ thống |
+| Nhân viên nội bộ | POS/bán hàng, giảm giá thủ công, xem chứng từ, xem khách hàng/bảng giá/kho/công nợ cơ bản, thao tác kho/tài chính thường ngày trong MVP |
+| Hạn chế đặc biệt | Chỉ dùng khi thật sự cần giới hạn tài khoản thuê ngoài/thử việc; admin tự bỏ tick thủ công |
+
+Nếu sau này cần tách `Kế toán/Kho`, preset này chỉ nên dùng để gom nhanh quyền finance/inventory, không biến thành ma trận role phức tạp.
 
 ---
 

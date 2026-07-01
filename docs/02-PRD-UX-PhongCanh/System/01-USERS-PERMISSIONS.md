@@ -21,7 +21,8 @@ Quyết định MVP 2026-07-01:
 - Vận hành xưởng nhỏ/nội bộ không chia nhỏ quyền quá mức.
 - Nhân viên nội bộ mặc định nên được cấp preset đủ quyền thao tác chính của MVP.
 - UI không nên làm trải nghiệm bị chia cắt bởi thiếu các quyền nhỏ như `perm.apply_discount`, trừ khi Owner đã chốt kiểm soát riêng.
-- Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống và có thể là tài chính nhạy cảm nếu Owner chốt sau.
+- Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống, hủy/sửa chứng từ đã chốt nếu cần, và có thể là tài chính nhạy cảm nếu Owner chốt sau.
+- Trạng thái "không có quyền" không phải luồng bình thường của nhân viên nội bộ MVP; chủ yếu dành cho tài khoản hạn chế đặc biệt hoặc truy cập nhầm vùng quản trị.
 
 Ghi chú từ KiotViet audit ngày `2026-07-01`:
 
@@ -122,7 +123,7 @@ Hiển thị permission theo nhóm:
 
 | Nhóm | Ví dụ quyền |
 |---|---|
-| POS | tạo hóa đơn, sửa hóa đơn đã chốt, áp bảng giá/chiết khấu |
+| POS | tạo hóa đơn, áp bảng giá/chiết khấu, sửa/hủy chứng từ đã chốt nếu Owner tách quyền riêng |
 | Hàng hóa/Kho | quản lý hàng hóa, kiểm kho, điều chỉnh vật tư |
 | Tài chính | sổ quỹ, thu nợ, phiếu thu/chi, đối soát |
 | Bảng giá | sửa bảng giá |
@@ -136,7 +137,8 @@ Trong MVP, preset khuyến nghị đơn giản hơn:
 | Preset | Mục đích | Quy tắc |
 |---|---|---|
 | Chủ xưởng/Quản trị | Toàn quyền, quản lý user/quyền/cấu hình | Có toàn bộ quyền active |
-| Nhân viên nội bộ | Dùng hằng ngày tại xưởng | Có đủ quyền POS, khách hàng, bảng giá, hàng hóa/kho, kiểm kho, tài chính/công nợ/sổ quỹ và chứng từ trong MVP |
+| Nhân viên nội bộ | Dùng hằng ngày tại xưởng | Có đủ quyền POS, giảm giá thủ công, xem chứng từ, khách hàng, bảng giá, hàng hóa/kho, kiểm kho, công nợ cơ bản, sổ quỹ và thao tác finance/inventory thường ngày trong MVP |
+| Kế toán/Kho | Chỉ tạo nếu vận hành thật sự cần tách | Preset tùy chọn, gom nhanh quyền finance/inventory; không bắt buộc trong MVP |
 | Hạn chế đặc biệt | Tài khoản thuê ngoài/thử việc | Admin tự bỏ tick quyền không muốn cấp |
 
 Các permission nhỏ như `perm.apply_discount`, `perm.manage_inventory`, `perm.edit_price_book` vẫn có thể tồn tại để backend kiểm soát và mở rộng sau này, nhưng MVP không dùng chúng để tạo trải nghiệm vận hành quá rời rạc cho nhân viên nội bộ.

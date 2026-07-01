@@ -1,6 +1,7 @@
 # 02-SALES-DOCUMENT-DETAIL — Chi tiết chứng từ bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng
+> **Phase hiện tại:** Phase 2D readonly detail cho hóa đơn `HD...`
 
 ---
 
@@ -28,13 +29,30 @@ Quan sát hóa đơn `HD010985` ngày `30/06/2026`:
 
 Trang chi tiết giúp kiểm tra toàn bộ nội dung chứng từ đã lưu, gồm dữ liệu snapshot, thanh toán, công nợ, trừ kho và lịch sử sửa/hủy.
 
+Phase 2D hiện tại chỉ đọc dữ liệu đã có:
+
+- thông tin tổng quan hóa đơn
+- snapshot dòng hàng
+- tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có
+- stock movements liên quan nếu Backend trả về
+
+Chưa triển khai trong Phase 2D:
+
+- nút sửa hóa đơn
+- nút hủy hóa đơn
+- mở lại báo giá
+- in lại bill nếu Bill Preview/print flow chưa sẵn sàng
+- transaction đảo kho/tiền/công nợ
+
+Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation Phase 2D.
+
 ---
 
 ## 2. Bố cục
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ HD000123                          Hoàn thành        [In lại] [Sửa] [Hủy]     │
+│ HD000123                          Hoàn thành        [Readonly detail]        │
 │ Khách: KH000123 - Công ty A       Người bán: ...    Thời gian: ...          │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ [Tổng quan] [Dòng hàng] [Thanh toán & công nợ] [Kho] [Lịch sử]              │
@@ -137,9 +155,13 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
+Phase 2D chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Các hành động mở lại/in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+
 ---
 
-## 8. Thao tác
+## 8. Thao tác Future Phase
+
+Các thao tác trong mục này **chưa thuộc Phase 2D**. Chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn và kiểm thử đủ cho tác động liên bảng.
 
 ### 8.1. Mở lại báo giá
 
@@ -154,6 +176,7 @@ Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú
 - Nhân viên sửa nội dung và xác nhận lại thanh toán.
 - Khi lưu, tạo chứng từ mới theo mã `MaCu.01`.
 - Chứng từ cũ chuyển **Đã hủy** với lý do sửa chứng từ.
+- Phải chạy trong transaction an toàn để đảo/ghi lại kho, sổ quỹ, công nợ và liên kết chứng từ.
 
 ### 8.3. Hủy hóa đơn
 
@@ -161,6 +184,7 @@ Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú
 - Hóa đơn không bị xóa vật lý.
 - Hệ thống ghi lịch sử hủy.
 - Tác động đảo kho, sổ quỹ và công nợ theo Business tương ứng.
+- Không cho hủy bằng cách sửa rời từng bảng hoặc xóa dữ liệu cũ.
 
 ### 8.4. In lại bill
 

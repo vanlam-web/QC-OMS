@@ -25,7 +25,7 @@ Nguyên tắc triển khai:
 3. Backend là nguồn validation và tính toán cuối cùng cho dữ liệu nghiệp vụ.
 4. Mỗi giai đoạn phải deploy được lên staging và có kịch bản demo hoàn chỉnh.
 5. Business Rule chưa rõ phải được Owner chốt trước khi triển khai.
-6. Chức năng chưa hoàn thiện phải được ẩn bằng permission hoặc feature flag, không để trạng thái nửa hoạt động.
+6. Chức năng chưa hoàn thiện phải được ẩn bằng feature flag hoặc permission kỹ thuật, không để trạng thái nửa hoạt động; riêng nghiệp vụ MVP đã mở thì preset nhân viên nội bộ phải đủ quyền thao tác chính, không chia cắt luồng hằng ngày bằng quá nhiều permission nhỏ.
 7. Không mở scope ngoài [MVP-SCOPE](./01-VISION-TamNhin/03-MVP-SCOPE.md) nếu Owner chưa chốt lại.
 8. Có thể làm sớm foundation của giai đoạn sau nếu cần để hoàn tất luồng POS bán đứt, miễn là không mở thêm nghiệp vụ ngoài MVP.
 
@@ -136,13 +136,13 @@ Mốc phát hành logic ban đầu:
 
 ### Giai đoạn 0 — Nền tảng và đăng nhập
 
-**Tính năng bàn giao:** Người dùng đăng nhập, vào màn hình POS theo quyền và đăng xuất an toàn.
+**Tính năng bàn giao:** Người dùng đăng nhập, vào màn hình POS theo preset quyền MVP và đăng xuất an toàn.
 
 **Frontend**
 
 - Khởi tạo React, TypeScript, Vite và Tailwind CSS.
 - Trang đăng nhập, POS Shell và routing.
-- Route guard và trang `Không có quyền truy cập`.
+- Route guard và trang `Không có quyền truy cập` cho tài khoản hạn chế đặc biệt hoặc truy cập nhầm vùng quản trị.
 - Hiển thị tài khoản, mã máy trạm và trạng thái kết nối.
 
 **Backend và Database**
@@ -156,7 +156,7 @@ Mốc phát hành logic ban đầu:
 **Điều kiện nghiệm thu**
 
 - Đăng nhập thành công và thất bại đúng hành vi.
-- Tài khoản thiếu quyền không truy cập được POS.
+- Tài khoản nội bộ mặc định truy cập được POS; tài khoản hạn chế đặc biệt thiếu quyền thì không truy cập được POS.
 - Refresh không làm mất phiên hợp lệ.
 - Có staging URL và pipeline build/test/deploy.
 
@@ -205,7 +205,7 @@ Mốc phát hành logic ban đầu:
 - Endpoint tính và validation giỏ hàng.
 - Phân loại sản phẩm theo đơn vị tính.
 - Tính hàng thường và hàng m² theo Business Rule hiện hành.
-- Kiểm tra giá, kích thước và quyền sửa giá.
+- Kiểm tra giá, kích thước và permission kỹ thuật; preset nội bộ MVP mặc định có quyền giảm giá/sửa giá thủ công nếu Owner chưa chốt kiểm soát riêng.
 
 **Điều kiện nghiệm thu**
 

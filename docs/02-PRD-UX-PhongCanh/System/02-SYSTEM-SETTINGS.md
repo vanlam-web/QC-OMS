@@ -26,6 +26,12 @@ Mục tiêu là đủ dùng cho xưởng quảng cáo Văn Lâm, không bê nguy
 | Hàng hóa nền | Đơn vị tính, nhóm hàng, phương pháp giá vốn tham khảo, cấu hình sản xuất/BOM sau MVP | Chi tiết nằm ở Inventory/PriceBook/BOM |
 | Lịch sử thao tác | Xem audit log thao tác quan trọng | Không cho sửa/xóa log từ UI thường |
 
+Nguyên tắc phân quyền MVP:
+
+- Settings là nhóm nhạy cảm, chỉ `Chủ xưởng/Quản trị` hoặc tài khoản được cấp rõ mới vào.
+- Preset nhân viên nội bộ đủ quyền thao tác POS/kho/tài chính thường ngày không đồng nghĩa được sửa cấu hình hệ thống.
+- Các permission nhỏ vẫn có thể tồn tại ở nền kỹ thuật, nhưng UI Settings không nên khuyến khích chia quá nhiều vai nếu xưởng chưa cần.
+
 ---
 
 ## 3. Nhóm Thiết Lập Loại Khỏi QC-OMS Hiện Tại

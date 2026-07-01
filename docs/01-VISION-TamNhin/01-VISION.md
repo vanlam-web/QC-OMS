@@ -12,7 +12,7 @@
 
 ## 👥 2. PHÂN QUYỀN BỘ MÁY (ROLES)
 
-> **Cập nhật MVP 2026-07-01:** QC-OMS vẫn giữ nền tảng permission-based access control để an toàn kỹ thuật và mở rộng sau này. Tuy nhiên trong MVP xưởng nhỏ/nội bộ, nhân viên nội bộ mặc định nên có đủ quyền thao tác chính để tránh vận hành bị chia cắt quá sớm. Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống và các thao tác tài chính nhạy cảm nếu Owner chốt sau.
+> **Cập nhật MVP 2026-07-01:** QC-OMS vẫn giữ nền tảng permission-based access control để an toàn kỹ thuật và mở rộng sau này. Tuy nhiên trong MVP xưởng nhỏ/nội bộ, nhân viên nội bộ mặc định nên có đủ quyền thao tác chính để tránh vận hành bị chia cắt quá sớm. Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống, hủy/sửa chứng từ đã chốt nếu cần, và các thao tác tài chính nhạy cảm nếu Owner chốt sau.
 
 ### Bảng vai trò mặc định (Default Roles)
 
@@ -31,7 +31,7 @@ Nguyên tắc MVP:
 - Permission nhỏ vẫn có thể tồn tại trong DB/API để bảo vệ backend.
 - Tài khoản nội bộ mặc định dùng preset đủ quyền thao tác chính.
 - UI không nên ẩn/chặn quá nhiều thao tác thường ngày chỉ vì thiếu một quyền nhỏ.
-- Quyền quản lý user/quyền và cấu hình hệ thống phải tách riêng.
+- Quyền quản lý user/quyền, cấu hình hệ thống và hủy/sửa chứng từ đã chốt nếu cần phải tách riêng.
 - Quyền tài chính nhạy cảm có thể tách riêng nếu Owner chốt, nhưng chưa làm phức tạp ở MVP.
 
 **Use case:** Tài khoản tùy biến phục vụ riêng cho nhân sự đặc thù như Kế toán thuê ngoài, Cộng tác viên thiết kế, hoặc Thợ học việc.

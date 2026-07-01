@@ -116,15 +116,17 @@ Search trong module này có thể tìm cả hàng ngưng bán nếu bộ lọc 
 
 ## 6. Thao tác chính
 
+Preset `Nhân viên nội bộ` trong MVP mặc định có đủ quyền cho các thao tác hàng hóa/kho thường ngày. Cột điều kiện dưới đây là guard kỹ thuật cho tài khoản hạn chế đặc biệt, không phải yêu cầu admin phải chia quyền nhỏ khi vận hành xưởng.
+
 | Thao tác | Điều kiện |
 |---|---|
-| Tạo mới hàng hóa | Có quyền quản lý danh mục/sản phẩm |
-| Import file | Có quyền quản lý danh mục/sản phẩm |
-| Xuất file | Có quyền xem/quản lý kho |
-| Sửa hàng hóa | Có quyền quản lý danh mục/sản phẩm |
-| Sửa tồn hàng thường | Có quyền quản lý kho; tự sinh phiếu kiểm kho |
+| Tạo mới hàng hóa | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Import file | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Xuất file | Nhân viên nội bộ/Quản trị; có thể yêu cầu xác thực lại nếu bật bảo vệ xuất file |
+| Sửa hàng hóa | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý danh mục/sản phẩm |
+| Sửa tồn hàng thường | Nhân viên nội bộ/Quản trị; tự sinh phiếu kiểm kho |
 | Mở tồn cuộn/tấm | Hàng thuộc loại tồn Cuộn hoặc Tấm |
-| Tạo phiếu kiểm kho | Có quyền quản lý kho |
+| Tạo phiếu kiểm kho | Nhân viên nội bộ/Quản trị; tài khoản hạn chế cần quyền quản lý kho |
 
 ---
 

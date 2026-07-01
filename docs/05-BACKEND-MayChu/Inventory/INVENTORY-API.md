@@ -49,6 +49,13 @@ X-Request-Id: <client-generated-id>   # không bắt buộc
 
 Backend phải scope mọi dữ liệu theo organization của actor.
 
+Ghi chú MVP:
+
+- Các permission trong bảng trên là guard kỹ thuật ở API, không phải ma trận vai trò chi tiết cho vận hành thường ngày.
+- Preset `Nhân viên nội bộ` nên có đủ quyền xem hàng hóa/kho, kiểm kho, cuộn/tấm và thao tác inventory thường ngày trong MVP.
+- Chỉ dùng tài khoản hạn chế đặc biệt nếu thật sự cần ẩn thao tác kho khỏi một người dùng cụ thể.
+- Không thêm approval nhiều bước cho kiểm kho/điều chỉnh tồn trong MVP; thay đổi phải có chứng từ, audit và lịch sử stock movement.
+
 ---
 
 ## 3. Inventory summary

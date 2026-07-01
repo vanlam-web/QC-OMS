@@ -1,17 +1,32 @@
-# SalesDocuments — Quản lý chứng từ bán hàng
+# SalesDocuments — Chứng từ bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng  
-> **Phạm vi:** Danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS
+> **Phase hiện tại:** Phase 2D đã merge chỉ có readonly danh sách + chi tiết hóa đơn
+> **Phạm vi dài hạn:** Danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS
 
 ---
 
 ## 1. Mục đích
 
-Module này dùng để tra cứu, in lại, mở lại báo giá, sửa/hủy hóa đơn và kiểm tra lịch sử chứng từ bán hàng.
+Module này dùng để tra cứu và kiểm tra lịch sử chứng từ bán hàng.
 
 POS là nơi tạo/chốt đơn. SalesDocuments là nơi quản lý chứng từ đã lưu.
 
 Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản giá trước khi bán, không phải đơn đặt hàng, không giữ hàng, không giao hàng và không tạo công nợ/kho/tiền.
+
+## 1.1. Trạng thái triển khai
+
+| Nhóm năng lực | Trạng thái | Ghi chú |
+|---|---|---|
+| Danh sách chứng từ | ✅ Phase 2D | Readonly list cho hóa đơn `HD...`, có tìm kiếm mã chứng từ |
+| Chi tiết chứng từ | ✅ Phase 2D | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements |
+| In lại bill | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
+| Mở lại báo giá | ⏭️ Future phase | Chưa nằm trong Phase 2D |
+| Sửa hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
+| Hủy hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
+| Đảo kho/tiền/công nợ | ⏭️ Future phase | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |
+
+Phase 2D không biến SalesDocuments thành module quản lý đầy đủ. Nó chỉ giúp xem lại chứng từ đã phát sinh để đối chiếu.
 
 ---
 
@@ -20,7 +35,7 @@ Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản gi
 | File | Nội dung |
 |---|---|
 | [01-SALES-DOCUMENT-LIST.md](./01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc, cột, thao tác nhanh |
-| [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ, sửa/hủy/in lại, liên kết kho/tiền/công nợ |
+| [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ readonly hiện tại; mô tả sửa/hủy/in lại là future phase |
 
 ---
 

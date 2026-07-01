@@ -51,6 +51,13 @@ X-Request-Id: <client-generated-id>   # không bắt buộc
 
 Backend phải scope mọi dữ liệu theo organization của actor.
 
+Ghi chú MVP:
+
+- Các permission trong bảng trên là guard kỹ thuật ở API, không phải đề xuất chia nhỏ vận hành hằng ngày.
+- Preset `Nhân viên nội bộ` nên có đủ quyền xem sổ quỹ, công nợ cơ bản, phiếu thu từ POS/thu nợ và các thao tác finance thường ngày đã nằm trong MVP.
+- Chỉ nên tách mạnh `perm.manage_finance` cho tài khoản hạn chế đặc biệt hoặc khi Owner chốt finance nhạy cảm cần kiểm soát riêng.
+- Không có approval nhiều bước cho phiếu thu/chi MVP; người có quyền tài chính tạo phiếu thì ghi sổ theo rule trong `CASHBOOK.md`.
+
 ---
 
 ## 3. Finance accounts

@@ -15,7 +15,7 @@
 - Thay đổi permission phải có audit log append-only.
 - Không dùng role cứng làm nguồn authorization.
 - MVP vận hành theo hướng đơn giản: permission system vẫn tồn tại, nhưng tài khoản nội bộ mặc định nên được seed/cấp preset đủ quyền thao tác chính.
-- Không dùng permission nhỏ để tạo rào cản vận hành quá nhiều trong MVP; chỉ tách mạnh cho quản lý user/quyền, cấu hình hệ thống và tài chính nhạy cảm nếu Owner chốt.
+- Không dùng permission nhỏ để tạo rào cản vận hành quá nhiều trong MVP; chỉ tách mạnh cho quản lý user/quyền, cấu hình hệ thống, hủy/sửa chứng từ đã chốt nếu cần và tài chính nhạy cảm nếu Owner chốt.
 
 ---
 

@@ -50,6 +50,8 @@ X-Request-Id: <client-generated-id>   # không bắt buộc
 | Sửa hóa đơn đã chốt | `perm.edit_order_locked` |
 | Khóa/mở khóa hóa đơn cũ để sửa | `perm.edit_order_locked` |
 
+Ghi chú MVP: `perm.create_order` và các quyền thao tác POS thường ngày phải nằm trong preset `Nhân viên nội bộ`. `perm.edit_order_locked` là guard kỹ thuật cho luồng sửa/hủy chứng từ đã chốt bằng bản mới `MaCu.01`; nếu Owner muốn kiểm soát mạnh hơn, tách ở preset hoặc yêu cầu xác nhận lại, không thêm approval nhiều bước trong MVP.
+
 ---
 
 ## 3. Cart validation
