@@ -155,6 +155,8 @@ KiotViet có:
 - Đối tác giao hàng như GHN/GHTK, tổng đơn hàng, COD, phí giao hàng và đối soát giao hàng.
 - Vận đơn có trạng thái giao hàng, đối tác giao hàng, thời gian tạo/hoàn thành, khu vực giao hàng, COD, mã hóa đơn và khách hàng.
 - Bán online/Zalo/Website thuộc nhóm kênh bán riêng.
+- `Bán online` là màn đa kênh/TMĐT/MXH: Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA.
+- `Website bán hàng`/KiotVietWeb có dashboard website, thống kê lượt truy cập/người truy cập, chỉnh sửa giao diện, banner, video hướng dẫn, thiết lập ẩn hiện hàng hóa và sắp xếp nhóm/danh mục nổi bật.
 
 Quyết định QC-OMS:
 
@@ -162,7 +164,9 @@ Quyết định QC-OMS:
 - Không bán hàng online.
 - Không bán giao hàng/COD.
 - Không làm `Đặt hàng` kiểu KiotViet; chỉ có bán đứt qua POS/checkout.
-- Địa chỉ nhận hàng, đối tác giao hàng, trạng thái giao hàng, COD và kênh bán không nằm trong MVP.
+- Không làm website bán hàng, đồng bộ sàn TMĐT, MXH/Zalo OA hoặc quản lý đơn online trong QC-OMS hiện tại.
+- Không có kênh bán, trạng thái đồng bộ kênh, tồn online, chỉnh giao diện website, banner website hoặc báo cáo lượt truy cập trong QC-OMS.
+- Địa chỉ nhận hàng, đối tác giao hàng, trạng thái giao hàng, COD và kênh bán không nằm trong phạm vi hiện tại.
 
 ### 4.3c. Thuế & Kế toán / Hóa đơn điện tử
 

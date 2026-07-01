@@ -45,8 +45,8 @@ Nhung man hinh KiotViet khong co du lieu thuc te, it dung, hoac thuoc retail/onl
 | Dat hang KiotViet | Khong lam trong QC-OMS hien tai. QC-OMS chi ban dut; bao gia khong phai don dat hang |
 | Giao hang/van don | Khong lam van don, doi tac giao hang, trang thai giao hang, khu vuc giao hang |
 | COD/ban giao hang | Khong lam COD, phi giao hang, doi soat giao hang |
-| Ban online | Khong lam website/Zalo shop/kenh ban online trong QC-OMS hien tai |
-| Ban da kenh/TMDT/MXH | Khong ket noi Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA trong QC-OMS hien tai |
+| Ban online | Khong lam website ban hang, Zalo shop, don online, thong ke truy cap website trong QC-OMS hien tai |
+| Ban da kenh/TMDT/MXH | Khong ket noi/dong bo Shopee, Tiktok Shop, Lazada, Tiki, Facebook, Instagram, Zalo OA trong QC-OMS hien tai |
 | Tra hang ban | Khong lam trong QC-OMS hien tai; hoa don sai xu ly bang sua chung tu `MaCu.01` va huy chung tu cu |
 | Tra hang nhap | Khong lam trong lat cat Purchase dau tien; chi xem lai neu sau nay thuc te phat sinh |
 | Hoa don dien tu/VAT/thue | Khong phat hanh/quan ly HĐĐT, khong tinh VAT/thue ke toan trong QC-OMS hien tai |
