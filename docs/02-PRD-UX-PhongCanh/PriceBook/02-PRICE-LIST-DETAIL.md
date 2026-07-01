@@ -81,15 +81,26 @@ Nếu người dùng thoát trang khi còn dòng giá chưa lưu, UI phải cả
 
 Nếu một sản phẩm có giá bằng `0`, POS vẫn dùng đúng giá `0` nếu đó là giá được khai báo. Trường hợp muốn fallback về bảng giá chung phải để dòng giá trống/không khai báo, không dùng `0` làm tín hiệu fallback.
 
-Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng. Công thức có thể lấy `giá vốn bình quân` hoặc `giá vốn mới nhất`, sau đó áp dụng hệ số lợi nhuận, chi phí hoặc quy tắc riêng của nhóm hàng. Công thức chỉ tạo giá đề xuất hoặc cập nhật khi người dùng chủ động lưu; hệ thống không tự đổi giá bán chỉ vì giá vốn mới phát sinh.
+Sau khi có dữ liệu giá vốn, màn này có thể có thao tác cập nhật/gợi ý giá từ công thức theo nhóm hàng. Công thức có thể lấy `giá vốn bình quân` hoặc `giá nhập cuối`, sau đó tính qua nhiều bước chi phí, hao hụt và lợi nhuận riêng cho từng bảng giá. Công thức lưu được làm mặc định lâu dài theo nhóm hàng/sản phẩm.
 
 Ví dụ hướng công thức:
 
 ```text
-Giá đề xuất = nguồn giá vốn theo nhóm hàng * hệ số + chi phí cộng thêm
+Giá nền = Giá nhập cuối + vận chuyển + thuế/phí + hao hụt
+Giá bảng 40 = Giá nền + lợi nhuận bảng 40
+Giá bảng 35 = Giá nền + lợi nhuận bảng 35
 ```
 
-Trong đó `nguồn giá vốn` có thể là bình quân hoặc mới nhất tùy cấu hình nhóm hàng.
+Ví dụ:
+
+```text
+Fomex 5mm:
+Giá nền = Giá nhập cuối * (1 + 10% vận chuyển + 8% thuế/phí + 10% hao hụt)
+Giá 40 = Giá nền + 40,000/tấm
+Giá 35 = Giá nền + 35,000/tấm
+```
+
+Khi giá nhập cuối hoặc giá vốn bình quân thay đổi, hệ thống tính lại giá theo công thức và hiển thị chênh lệch. Mặc định người dùng có quyền phải bấm áp dụng thì giá đã lưu trong bảng giá mới thay đổi; POS chỉ dùng giá đã lưu.
 
 Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, màn chi tiết bảng giá không được khóa thiết kế theo lưới export KiotViet. KiotViet chỉ dùng để import dữ liệu ban đầu và đối chiếu nhóm giá hiện có. Luồng chuẩn của QC-OMS cần ưu tiên:
 
@@ -98,6 +109,7 @@ Vì Owner đã xác nhận cách giá của KiotViet chưa đúng mong muốn, m
 - có nút tính/gợi ý lại giá theo công thức khi Owner chủ động dùng
 - phân biệt rõ giá đã lưu và giá đề xuất chưa áp dụng
 - giữ lịch sử thay đổi giá để biết ai sửa và sửa lúc nào
+- xem được công thức nào đang áp dụng cho dòng/nhóm hàng và giá mới sinh ra từ nguồn giá nào
 
 ---
 

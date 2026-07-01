@@ -197,6 +197,7 @@ Source of Truth đã tạo:
 - Export KiotViet ngày `2026-07-01` xác nhận các bảng giá nhóm thật đang là `25`, `26`, `30`, `35`, `40`, khớp nhóm khách trong export khách hàng.
 - Giá `0` trong export không tự đồng nghĩa với thiếu giá; fallback chỉ xảy ra khi dòng giá không tồn tại/để trống theo schema QC-OMS.
 - Owner chốt thêm: cách giá của KiotViet chưa đúng mong muốn, QC-OMS chỉ dùng KiotViet để import dữ liệu ban đầu; PriceBook nâng cao cần thiết kế công thức/luồng giá riêng theo nhóm hàng, giá vốn bình quân/giá vốn mới nhất và cách bán thực tế.
+- Owner chốt thêm: công thức giá cần 2 tầng gồm `giá nền trước lợi nhuận` và `giá bán theo từng bảng giá`; ví dụ Fomex 5mm lấy giá nhập cuối cộng vận chuyển, thuế/phí, hao hụt rồi cộng lợi nhuận riêng cho bảng `40/35/30/...`. Công thức phải lưu mặc định lâu dài theo nhóm hàng/sản phẩm và tính lại khi giá nhập/giá vốn thay đổi.
 
 #### 3.2F. Overview Dashboard — PRD-UX
 

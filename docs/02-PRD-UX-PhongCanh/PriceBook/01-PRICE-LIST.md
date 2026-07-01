@@ -114,8 +114,9 @@ Công thức giá theo nhóm hàng là hướng cần giữ cho phase PriceBook 
 
 - mỗi nhóm hàng có thể có công thức riêng
 - công thức có thể chọn nguồn `giá vốn bình quân` hoặc `giá vốn mới nhất`
-- công thức chỉ tạo giá đề xuất/cập nhật hàng loạt khi người dùng chủ động áp dụng
-- không tự đổi giá POS nếu chỉ có phiếu nhập mới làm thay đổi giá vốn
+- công thức phải lưu được làm mặc định lâu dài cho nhóm hàng
+- khi giá vốn/giá nhập thay đổi, hệ thống tính lại giá theo công thức để tạo giá mới/giá đề xuất
+- giá POS chỉ đổi khi công thức được áp dụng theo chính sách đã cấu hình; mặc định nên có bước xem/duyệt trước khi cập nhật hàng loạt
 
 ## 7. Hướng thiết kế riêng cho QC-OMS
 
@@ -136,9 +137,101 @@ Nguyên tắc đề xuất:
 - Giá vốn từ nhập hàng là dữ liệu tham khảo cho công thức, không phải giá bán.
 - Nếu nhân viên sửa giá trên POS, lịch sử giá theo khách + sản phẩm được lưu để gợi ý lần sau, không cập nhật ngược bảng giá.
 
-Phần còn cần bàn/chốt trước khi implement PriceBook nâng cao:
+## 8. Công thức giá 2 tầng
+
+QC-OMS chốt hướng công thức giá rộng hơn KiotViet. KiotViet chỉ cho kiểu:
+
+```text
+Giá mới = Giá hiện tại +/- số tiền hoặc %
+```
+
+QC-OMS cần công thức nhiều bước, lưu mặc định theo nhóm hàng/sản phẩm để dùng lâu dài.
+
+### Tầng 1: Giá nền trước lợi nhuận
+
+Giá nền là giá đã cộng các chi phí cần thiết trước khi tính lợi nhuận bán hàng.
+
+Ví dụ nhóm hàng `Fomex`:
+
+```text
+Giá nền = Giá nhập cuối
+        + 10% vận chuyển
+        + 8% thuế/phí
+        + 10% hao hụt
+```
+
+Có thể viết gọn:
+
+```text
+Giá nền = Giá nhập cuối * (1 + 10% + 8% + 10%)
+```
+
+Nguồn giá đầu vào có thể chọn:
+
+- `giá nhập cuối`
+- `giá vốn bình quân`
+- sau này có thể thêm nguồn khác nếu Purchase/Inventory đủ dữ liệu
+
+### Tầng 2: Giá bán theo bảng giá
+
+Từ giá nền, mỗi bảng giá/nhóm khách có thể cộng lợi nhuận riêng.
+
+Ví dụ:
+
+```text
+Giá 40 = Giá nền + 40,000/tấm
+Giá 35 = Giá nền + 35,000/tấm
+Giá 30 = Giá nền + 30,000/tấm
+```
+
+Hoặc:
+
+```text
+Giá 40 = Giá nền * 1.25
+Giá 35 = Giá nền * 1.20
+Giá 30 = Giá nền * 1.15
+```
+
+Một công thức có thể áp dụng cho:
+
+- cả nhóm hàng, ví dụ `Fomex 5mm`
+- một nhóm hàng cha, ví dụ `Fomex`
+- một số sản phẩm được chọn thủ công
+- một bảng giá cụ thể hoặc tất cả bảng giá nhóm
+
+### Tự cập nhật khi giá nhập thay đổi
+
+Khi phiếu nhập làm thay đổi `giá nhập cuối` hoặc `giá vốn bình quân`, hệ thống phải tính lại được giá theo công thức đang lưu.
+
+Mặc định an toàn:
+
+- hệ thống tạo danh sách giá mới/giá đề xuất
+- Owner hoặc người có quyền xem chênh lệch và bấm áp dụng
+- POS chỉ dùng giá mới sau khi bảng giá đã được cập nhật
+
+Sau này có thể cho phép một số nhóm hàng tự áp dụng nếu Owner bật rõ chính sách đó.
+
+### Làm tròn
+
+Công thức cần hỗ trợ làm tròn giá sau cùng:
+
+- làm tròn lên theo `1,000`
+- làm tròn lên theo `5,000`
+- làm tròn lên theo `10,000`
+- không làm tròn
+
+### Trạng thái chốt
+
+Đã chốt:
+
+- PriceBook QC-OMS phải hỗ trợ công thức giá nhiều bước, không chỉ cộng/trừ như KiotViet.
+- Công thức lưu mặc định theo nhóm hàng/sản phẩm để dùng lâu dài.
+- Công thức có tầng giá nền trước lợi nhuận và tầng giá bán theo bảng giá.
+- Giá nhập/giá vốn thay đổi thì hệ thống tính lại được giá theo công thức.
+- Mặc định không đổi POS âm thầm; phải có giá đề xuất/chênh lệch và thao tác áp dụng, trừ khi sau này Owner bật tự áp dụng cho nhóm hàng cụ thể.
+
+Còn cần bàn/chốt trước khi implement PriceBook nâng cao:
 
 - nhóm hàng nào cần công thức riêng
 - công thức tối thiểu cho từng nhóm hàng chính
-- có cần làm tròn giá theo bậc 1.000/5.000/10.000 hay không
-- khi công thức ra giá mới, áp dụng ngay cho cả bảng hay chỉ tạo danh sách đề xuất để Owner duyệt
+- từng bảng giá `25/26/30/35/40` dùng cộng tiền cố định, cộng %, hay kết hợp cả hai
