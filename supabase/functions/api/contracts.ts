@@ -252,6 +252,34 @@ export interface StocktakeData {
   note: string | null;
 }
 
+export interface ProductionQueueItemData {
+  id: string;
+  production_machine: { id: string; code: string; name: string };
+  raw_file_name: string;
+  received_at: string;
+  status: "queued" | "added_to_draft" | "dismissed";
+  parse_status: "pending" | "ok" | "error";
+  parse_error: string | null;
+  parsed: Record<string, unknown>;
+}
+
+export interface ProductionQueueDraftPayloadData {
+  queue_item_id: string;
+  customer: { id: string; code: string; name: string } | null;
+  draft_line: {
+    product_id: string;
+    product_code: string;
+    product_name: string;
+    unit_name: string;
+    sell_method: SellMethod;
+    width_m: number | null;
+    height_m: number | null;
+    linear_m: number | null;
+    quantity: number;
+    source: "production_queue";
+  };
+}
+
 export interface CurrentUserData {
   user: { id: string; email: string; display_name: string };
   organization: { id: string; code: string; name: string };
@@ -494,4 +522,29 @@ export interface FoundationRepository {
     actualQty: number;
     reason: string;
   }): Promise<StocktakeData>;
+  listProductionQueue(input: {
+    organizationId: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: ProductionQueueItemData[]; total: number }>;
+  listProductionQueueHistory(input: {
+    organizationId: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: ProductionQueueItemData[]; total: number }>;
+  addProductionQueueItemToDraft(input: {
+    organizationId: string;
+    actorUserId: string;
+    queueItemId: string;
+  }): Promise<ProductionQueueDraftPayloadData | null>;
+  dismissProductionQueueItem(input: {
+    organizationId: string;
+    actorUserId: string;
+    queueItemId: string;
+  }): Promise<ProductionQueueItemData | null>;
+  restoreProductionQueueItem(input: {
+    organizationId: string;
+    actorUserId: string;
+    queueItemId: string;
+  }): Promise<ProductionQueueItemData | null>;
 }

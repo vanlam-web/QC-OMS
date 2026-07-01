@@ -22,6 +22,8 @@ import type {
   PaymentReceiptDetailData,
   PriceListData,
   ProductData,
+  ProductionQueueDraftPayloadData,
+  ProductionQueueItemData,
   ReconciliationData,
   ResolvedPriceData,
   StockMovementData,
@@ -855,7 +857,183 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         note: data.note === null ? null : String(data.note),
       };
     },
+    async listProductionQueue(input): Promise<{ items: ProductionQueueItemData[]; total: number }> {
+      const { data, error, count } = await client
+        .from("production_queue_items")
+        .select(
+          "id, raw_file_name, received_at, status, parse_status, parse_error, parsed_payload, production_machines(id, code, name)",
+          { count: "exact" },
+        )
+        .eq("organization_id", input.organizationId)
+        .eq("status", "queued")
+        .order("received_at", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(toProductionQueueItemData), total: count ?? 0 };
+    },
+    async listProductionQueueHistory(input): Promise<{ items: ProductionQueueItemData[]; total: number }> {
+      const { data, error, count } = await client
+        .from("production_queue_items")
+        .select(
+          "id, raw_file_name, received_at, status, parse_status, parse_error, parsed_payload, production_machines(id, code, name)",
+          { count: "exact" },
+        )
+        .eq("organization_id", input.organizationId)
+        .neq("status", "queued")
+        .order("handled_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(toProductionQueueItemData), total: count ?? 0 };
+    },
+    async addProductionQueueItemToDraft(input): Promise<ProductionQueueDraftPayloadData | null> {
+      const item = await claimProductionQueueItem(client, input.organizationId, input.queueItemId, input.actorUserId, "added_to_draft");
+      return item === null ? null : await toProductionQueueDraftPayload(client, input.organizationId, item);
+    },
+    async dismissProductionQueueItem(input): Promise<ProductionQueueItemData | null> {
+      const item = await claimProductionQueueItem(client, input.organizationId, input.queueItemId, input.actorUserId, "dismissed");
+      return item === null ? null : await hydrateProductionQueueItem(client, input.organizationId, item.id);
+    },
+    async restoreProductionQueueItem(input): Promise<ProductionQueueItemData | null> {
+      const { data, error } = await client.rpc("restore_production_queue_item_tx", {
+        p_organization_id: input.organizationId,
+        p_queue_item_id: input.queueItemId,
+        p_actor_user_id: input.actorUserId,
+      });
+      if (error !== null) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!isRecord(row)) return null;
+      return await hydrateProductionQueueItem(client, input.organizationId, String(row.id));
+    },
   };
+}
+
+async function claimProductionQueueItem(
+  client: DatabaseClient,
+  organizationId: string,
+  queueItemId: string,
+  actorUserId: string,
+  targetStatus: "added_to_draft" | "dismissed",
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await client.rpc("claim_production_queue_item_tx", {
+    p_organization_id: organizationId,
+    p_queue_item_id: queueItemId,
+    p_actor_user_id: actorUserId,
+    p_target_status: targetStatus,
+  });
+  if (error !== null) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return isRecord(row) ? row : null;
+}
+
+async function hydrateProductionQueueItem(
+  client: DatabaseClient,
+  organizationId: string,
+  queueItemId: string,
+): Promise<ProductionQueueItemData | null> {
+  const { data, error } = await client
+    .from("production_queue_items")
+    .select(
+      "id, raw_file_name, received_at, status, parse_status, parse_error, parsed_payload, production_machines(id, code, name)",
+    )
+    .eq("id", queueItemId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data === null ? null : toProductionQueueItemData(data);
+}
+
+async function toProductionQueueDraftPayload(
+  client: DatabaseClient,
+  organizationId: string,
+  item: Record<string, unknown>,
+): Promise<ProductionQueueDraftPayloadData> {
+  const parsed = isRecord(item.parsed_payload) ? item.parsed_payload : {};
+  const productCode = String(parsed.product_code ?? "");
+  if (productCode.length === 0) throw new Error("PRODUCTION_QUEUE_PRODUCT_CODE_REQUIRED");
+
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id, code, name, unit_name, sell_method")
+    .eq("organization_id", organizationId)
+    .eq("code", productCode)
+    .eq("status", "active")
+    .maybeSingle();
+  if (productError !== null) throw productError;
+  if (product === null) throw new Error("PRODUCT_NOT_FOUND");
+
+  const customerCode = typeof parsed.customer_code === "string" ? parsed.customer_code.trim() : "";
+  const customer = customerCode.length === 0 ? null : await loadCustomerByCode(client, organizationId, customerCode);
+  const widthM = numberFromPayload(parsed.width_m) ?? cmToMeters(parsed.width_cm);
+  const heightM = numberFromPayload(parsed.height_m) ?? cmToMeters(parsed.height_cm);
+  const linearM = numberFromPayload(parsed.linear_m);
+  const quantity = numberFromPayload(parsed.quantity) ?? 1;
+
+  return {
+    queue_item_id: String(item.id),
+    customer,
+    draft_line: {
+      product_id: product.id,
+      product_code: product.code,
+      product_name: product.name,
+      unit_name: product.unit_name,
+      sell_method: product.sell_method,
+      width_m: widthM,
+      height_m: heightM,
+      linear_m: linearM,
+      quantity,
+      source: "production_queue",
+    },
+  };
+}
+
+function toProductionQueueItemData(row: Record<string, unknown>): ProductionQueueItemData {
+  const machine = Array.isArray(row.production_machines) ? row.production_machines[0] : row.production_machines;
+  const machineRecord = isRecord(machine) ? machine : {};
+  return {
+    id: String(row.id),
+    production_machine: {
+      id: String(machineRecord.id ?? ""),
+      code: String(machineRecord.code ?? ""),
+      name: String(machineRecord.name ?? ""),
+    },
+    raw_file_name: String(row.raw_file_name),
+    received_at: String(row.received_at),
+    status: String(row.status) as "queued" | "added_to_draft" | "dismissed",
+    parse_status: String(row.parse_status) as "pending" | "ok" | "error",
+    parse_error: row.parse_error === null ? null : String(row.parse_error ?? ""),
+    parsed: isRecord(row.parsed_payload) ? row.parsed_payload : {},
+  };
+}
+
+async function loadCustomerByCode(
+  client: DatabaseClient,
+  organizationId: string,
+  customerCode: string,
+): Promise<{ id: string; code: string; name: string } | null> {
+  const { data, error } = await client
+    .from("customers")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .eq("code", customerCode)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data;
+}
+
+function numberFromPayload(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function cmToMeters(value: unknown): number | null {
+  const centimeters = numberFromPayload(value);
+  return centimeters === null ? null : centimeters / 100;
 }
 
 async function nextCustomerCode(client: DatabaseClient, organizationId: string): Promise<string> {
