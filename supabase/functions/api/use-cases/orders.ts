@@ -1,4 +1,4 @@
-import type { CheckoutResultData, FoundationRepository, PermissionCode } from "../contracts.ts";
+import type { CheckoutResultData, FoundationRepository, PermissionCode, QuoteReopenPayloadData, QuoteSummaryData } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 
 export interface OrderContext {
@@ -17,6 +17,7 @@ export async function checkoutOrder(
   if (payloadHasDiscount(payload)) {
     requireAnyPermission(context, ["perm.apply_discount"]);
   }
+  await assertReopenedQuoteCanCheckout(repository, context, payload);
 
   try {
     return await repository.checkoutOrder({
@@ -24,6 +25,77 @@ export async function checkoutOrder(
       actorUserId: context.actorUserId,
       payload,
     });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function saveQuote(
+  repository: FoundationRepository,
+  context: OrderContext,
+  body: unknown,
+): Promise<QuoteSummaryData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const payload = parseQuotePayload(body);
+  if (payloadHasDiscount(payload)) {
+    requireAnyPermission(context, ["perm.apply_discount"]);
+  }
+
+  try {
+    return await repository.saveQuote({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function reviseQuote(
+  repository: FoundationRepository,
+  context: OrderContext,
+  quoteId: string,
+  body: unknown,
+): Promise<QuoteSummaryData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+  const payload = parseQuotePayload(body);
+  if (payloadHasDiscount(payload)) {
+    requireAnyPermission(context, ["perm.apply_discount"]);
+  }
+
+  try {
+    return await repository.reviseQuote({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      quoteId,
+      payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function getQuoteReopenPayload(
+  repository: FoundationRepository,
+  context: OrderContext,
+  quoteId: string,
+): Promise<QuoteReopenPayloadData> {
+  requireAnyPermission(context, ["perm.create_order"]);
+
+  try {
+    const payload = await repository.getQuoteReopenPayload({
+      organizationId: context.organizationId,
+      quoteId,
+    });
+    if (payload === null) {
+      throw new ApiError({
+        status: 404,
+        code: "RESOURCE_NOT_FOUND",
+        message: "The requested resource was not found.",
+      });
+    }
+    return payload;
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -93,6 +165,14 @@ function parseCheckoutPayload(body: unknown): Record<string, unknown> {
   return payload;
 }
 
+function parseQuotePayload(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) throw validationError();
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (items.length === 0) throw validationError();
+  for (const item of items) parseCheckoutItem(item);
+  return { ...body };
+}
+
 function parseCheckoutItem(value: unknown): void {
   if (!isRecord(value)) throw validationError();
   if (!isNonEmptyString(value.product_id)) throw validationError();
@@ -108,6 +188,33 @@ function payloadHasDiscount(payload: Record<string, unknown>): boolean {
   return items.some((item) =>
     isRecord(item) && typeof item.discount_amount === "number" && item.discount_amount > 0
   );
+}
+
+async function assertReopenedQuoteCanCheckout(
+  repository: FoundationRepository,
+  context: OrderContext,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  if (!isNonEmptyString(payload.source_quote_id)) return;
+
+  const reopenPayload = await repository.getQuoteReopenPayload({
+    organizationId: context.organizationId,
+    quoteId: payload.source_quote_id,
+  });
+  if (reopenPayload === null) return;
+
+  const hasBlockingLine = reopenPayload.items.some((item) =>
+    item.warnings.some((warning) =>
+      warning.code === "PRODUCT_INACTIVE" || warning.code === "PRODUCT_MISSING"
+    )
+  );
+  if (!hasBlockingLine) return;
+
+  throw new ApiError({
+    status: 409,
+    code: "QUOTE_REOPEN_BLOCKED",
+    message: "Quote has unresolved product lines.",
+  });
 }
 
 function parseRevisionPayload(body: unknown): Record<string, unknown> {

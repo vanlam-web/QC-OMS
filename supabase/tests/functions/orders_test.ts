@@ -4,6 +4,8 @@ import type {
   CurrentUserRecord,
   FoundationRepository,
   PermissionCode,
+  QuoteReopenPayloadData,
+  QuoteSummaryData,
   UserListItem,
 } from "../../functions/api/contracts.ts";
 import type { AuthClient } from "../../functions/api/middleware/auth.ts";
@@ -61,6 +63,53 @@ function checkoutResult(overrides: Partial<CheckoutResultData> = {}): CheckoutRe
   };
 }
 
+function quoteSummary(overrides: Partial<QuoteSummaryData> = {}): QuoteSummaryData {
+  return {
+    id: "quote-1",
+    code: "BG000001",
+    order_type: "quote",
+    status: "active",
+    total_amount: 170000,
+    ...overrides,
+  };
+}
+
+function quoteReopenPayload(overrides: Partial<QuoteReopenPayloadData> = {}): QuoteReopenPayloadData {
+  return {
+    quote: {
+      id: "quote-1",
+      code: "BG000001",
+      status: "active",
+      source_quote_id: "quote-1",
+      source_quote_code: "BG000001",
+    },
+    customer: {
+      customer_id: null,
+      snapshot: { code: null, name: "Khach le", phone: null },
+      warnings: [],
+    },
+    price_list: {
+      price_list_id: null,
+      snapshot: { code: null, name: null },
+      warnings: [],
+    },
+    items: [{
+      order_item_id: "quote-item-1",
+      product_id: "p-1",
+      product_snapshot: { code: "PVC", name: "PVC 5mm", unit_name: "tam", sell_method: "quantity" },
+      quantity: 1,
+      unit_price: 180000,
+      discount_amount: 10000,
+      price_source: "manual",
+      note: null,
+      warnings: [],
+    }],
+    summary: { subtotal_amount: 180000, discount_amount: 10000, total_amount: 170000 },
+    note: null,
+    ...overrides,
+  };
+}
+
 function repo(
   permissions: PermissionCode[],
   overrides: Record<string, unknown> = {},
@@ -104,6 +153,9 @@ function repo(
     },
     updateCustomerGroup: () => Promise.resolve(null),
     checkoutOrder: () => Promise.resolve(checkoutResult()),
+    saveQuote: () => Promise.resolve(quoteSummary()),
+    reviseQuote: () => Promise.resolve(quoteSummary({ id: "quote-2", code: "BG000001.01" })),
+    getQuoteReopenPayload: () => Promise.resolve(quoteReopenPayload()),
     reviseInvoice: () => Promise.resolve({ order_id: "order-1", status: "not_implemented" }),
     ...overrides,
   };
@@ -272,6 +324,139 @@ Deno.test("checkout can return inventory warnings without blocking success", asy
   const data = (await body(response)).data as CheckoutResultData;
   assertEquals(response.status, 201);
   assertEquals(data.inventory_warnings.length, 1);
+});
+
+Deno.test("quote routes save and reopen active quote with create_order", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const saveResponse = await call(
+    "/api/v1/orders/quotes",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{
+          product_id: "p-1",
+          quantity: 1,
+          unit_price: 180000,
+          discount_amount: 0,
+          price_source: "manual",
+        }],
+        note: "Bao gia phase 3A",
+      }),
+    },
+    repo(["perm.create_order"], {
+      saveQuote: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve(quoteSummary());
+      },
+    }),
+  );
+
+  const saveBody = await body(saveResponse);
+  assertEquals(saveResponse.status, 201);
+  assertEquals((saveBody.data as QuoteSummaryData).code, "BG000001");
+  assertEquals(receivedInputs[0].organizationId, organizationId);
+  assertEquals(receivedInputs[0].actorUserId, actorId);
+
+  const reopenResponse = await call(
+    "/api/v1/orders/quotes/quote-1/reopen-payload",
+    { method: "GET" },
+    repo(["perm.create_order"], {
+      getQuoteReopenPayload: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve(quoteReopenPayload());
+      },
+    }),
+  );
+
+  assertEquals(reopenResponse.status, 200);
+  assertEquals(((await body(reopenResponse)).data as QuoteReopenPayloadData).quote.source_quote_code, "BG000001");
+});
+
+Deno.test("quote revision creates new quote and uses create_order guard", async () => {
+  const denied = await call(
+    "/api/v1/orders/quotes/quote-1/revisions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{ product_id: "p-1", quantity: 1, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
+      }),
+    },
+    repo([]),
+  );
+
+  assertEquals(denied.status, 403);
+
+  const response = await call(
+    "/api/v1/orders/quotes/quote-1/revisions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{ product_id: "p-1", quantity: 2, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
+      }),
+    },
+    repo(["perm.create_order"]),
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(((await body(response)).data as QuoteSummaryData).code, "BG000001.01");
+});
+
+Deno.test("quote save with discount requires apply_discount", async () => {
+  const payload = {
+    items: [{
+      product_id: "p-1",
+      quantity: 1,
+      unit_price: 180000,
+      discount_amount: 10000,
+      price_source: "manual",
+    }],
+  };
+
+  const denied = await call(
+    "/api/v1/orders/quotes",
+    { method: "POST", body: JSON.stringify(payload) },
+    repo(["perm.create_order"]),
+  );
+
+  assertEquals(denied.status, 403);
+
+  const allowed = await call(
+    "/api/v1/orders/quotes",
+    { method: "POST", body: JSON.stringify(payload) },
+    repo(["perm.create_order", "perm.apply_discount"]),
+  );
+
+  assertEquals(allowed.status, 201);
+});
+
+Deno.test("checkout from quote maps unresolved inactive or missing lines to QUOTE_REOPEN_BLOCKED", async () => {
+  const response = await call(
+    "/api/v1/orders/checkout",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        source_quote_id: "quote-1",
+        items: [{ product_id: "p-1", quantity: 1, unit_price: 180000, discount_amount: 0, price_source: "manual" }],
+        payment: { cash_amount: 180000, bank_amount: 0, old_debt_payment_amount: 0 },
+      }),
+    },
+    repo(["perm.create_order"], {
+      getQuoteReopenPayload: () =>
+        Promise.resolve(quoteReopenPayload({
+          items: [{
+            ...quoteReopenPayload().items[0],
+            warnings: [{ code: "PRODUCT_INACTIVE", message: "San pham ngung ban" }],
+          }],
+        })),
+      checkoutOrder: () => {
+        throw new Error("checkout should be blocked before transaction");
+      },
+    }),
+  );
+
+  const responseBody = await body(response);
+  assertEquals(response.status, 409);
+  assertEquals((responseBody.error as { code: string }).code, "QUOTE_REOPEN_BLOCKED");
 });
 
 Deno.test("invoice revise requires edit_order_locked and revision_reason", async () => {

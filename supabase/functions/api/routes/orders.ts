@@ -2,7 +2,7 @@ import type { FoundationRepository } from "../contracts.ts";
 import { ApiError, successResponse } from "../http.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
-import { checkoutOrder, reviseInvoice } from "../use-cases/orders.ts";
+import { checkoutOrder, getQuoteReopenPayload, reviseInvoice, reviseQuote, saveQuote } from "../use-cases/orders.ts";
 
 export interface OrderRouteDependencies {
   auth: AuthClient;
@@ -37,6 +37,31 @@ export async function handleOrders(
   if (url.pathname === "/api/v1/orders/checkout" && request.method === "POST") {
     return successResponse(
       await checkoutOrder(dependencies.repository, context, await request.json()),
+      traceId,
+      { status: 201 },
+    );
+  }
+
+  if (url.pathname === "/api/v1/orders/quotes" && request.method === "POST") {
+    return successResponse(
+      await saveQuote(dependencies.repository, context, await request.json()),
+      traceId,
+      { status: 201 },
+    );
+  }
+
+  const reopenMatch = url.pathname.match(/^\/api\/v1\/orders\/quotes\/([^/]+)\/reopen-payload$/);
+  if (reopenMatch !== null && request.method === "GET") {
+    return successResponse(
+      await getQuoteReopenPayload(dependencies.repository, context, reopenMatch[1]),
+      traceId,
+    );
+  }
+
+  const revisionMatch = url.pathname.match(/^\/api\/v1\/orders\/quotes\/([^/]+)\/revisions$/);
+  if (revisionMatch !== null && request.method === "POST") {
+    return successResponse(
+      await reviseQuote(dependencies.repository, context, revisionMatch[1], await request.json()),
       traceId,
       { status: 201 },
     );
