@@ -528,7 +528,7 @@ Status: ⏭️ Sẵn sàng lập plan sau khi SoT được handoff
 ### Ngoài phạm vi Phase 3A
 
 - [ ] In/xem báo giá đơn giản bằng mẫu mặc định; tự gửi nếu cần.
-- [ ] Hủy báo giá thủ công nếu chưa cần workflow.
+- [ ] Không làm hủy báo giá thủ công; báo giá không dùng nữa cứ để nguyên để tra cứu/dùng lại sau.
 - [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
 - [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.
 

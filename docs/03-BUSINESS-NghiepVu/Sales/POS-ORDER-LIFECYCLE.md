@@ -78,6 +78,7 @@ Không bao gồm trong Phase 3A:
 - gửi báo giá tự động
 - menu/module báo giá riêng ngoài danh sách chứng từ
 - tự hủy/hết hạn báo giá theo thời gian
+- hủy báo giá thủ công
 - giữ hàng
 - trừ kho
 - ghi tiền, công nợ hoặc doanh thu
@@ -162,11 +163,13 @@ Trạng thái báo giá MVP:
 |---|---|---|
 | `active` | Báo giá còn mở lại/checkout được | Phase 3A |
 | `converted` | Đã checkout thành hóa đơn `HD...` | Phase 3A |
-| `cancelled` | Đã hủy thủ công hoặc bị thay bằng revision mới | Future/optional |
+| `cancelled` | Đã hủy do revision hoặc future phase nếu sau này cần | Future/optional |
 
 Không dùng `sent/accepted/expired` làm state nghiệp vụ trong MVP. Gửi cho khách là thao tác ngoài hệ thống hoặc thuộc bill/send phase sau; khách đồng ý được thể hiện bằng checkout thành hóa đơn.
 
 MVP không có tự hết hạn báo giá. Nếu sau này cần hạn hiệu lực, chỉ hiển thị/cảnh báo trước; không tự hủy báo giá nếu Owner chưa chốt lại.
+
+Nếu khách không làm nữa, không cần thao tác hủy báo giá trong Phase 3A. Báo giá không phát sinh kho/tiền/công nợ nên để nguyên không ảnh hưởng gì; về sau có thể dùng lại làm mẫu tạo báo giá tương tự cho khách khác nếu mở chức năng sao chép.
 
 ### BR-QUOTE-07: Sửa báo giá dùng revision, không ghi đè snapshot cũ
 

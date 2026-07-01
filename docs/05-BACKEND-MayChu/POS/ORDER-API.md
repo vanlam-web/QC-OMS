@@ -24,7 +24,7 @@ Trạng thái implementation hiện tại:
 
 - Đã có foundation checkout/hóa đơn và Sales Documents readonly theo các phase đã merge.
 - Phase 3A kế tiếp chỉ gồm lưu/list/detail/reopen báo giá và checkout sang hóa đơn.
-- Bill Preview/in báo giá, hủy báo giá thủ công, sửa/hủy hóa đơn đã chốt và đảo kho/tiền/công nợ là năng lực future phase. Chỉ bật khi có transaction an toàn, rule nghiệp vụ rõ và test đủ cho các bảng liên quan.
+- Bill Preview/in báo giá, sao chép báo giá, sửa/hủy hóa đơn đã chốt và đảo kho/tiền/công nợ là năng lực future phase. Chỉ bật khi có transaction an toàn, rule nghiệp vụ rõ và test đủ cho các bảng liên quan.
 
 Không bao gồm:
 
@@ -346,17 +346,11 @@ Workflow:
 
 Không ghi đè snapshot báo giá cũ.
 
-### `POST /orders/quotes/{id}/cancel`
+### Không có endpoint hủy báo giá trong Phase 3A
 
-Hủy báo giá.
+Owner chốt: nếu khách không làm nữa thì không cần thao tác gì, để báo giá ở danh sách để tra cứu hoặc sau này dùng lại làm mẫu báo giá tương tự.
 
-**Permission:** `perm.create_order`
-
-Future/optional, không bắt buộc trong Phase 3A.
-
-Chỉ cho hủy báo giá `status = active` nếu endpoint này được bật.
-
-Hủy báo giá không xóa dữ liệu, chỉ đổi `status = cancelled` và ghi `order_status_history`.
+Phase 3A không tạo route hủy báo giá thủ công.
 
 ---
 
@@ -637,7 +631,6 @@ Backend nên log:
 
 - tạo báo giá
 - tạo revision báo giá
-- hủy báo giá
 - chuyển báo giá thành hóa đơn
 - checkout hóa đơn thành công/thất bại
 - sửa hóa đơn tạo bản mới

@@ -29,7 +29,7 @@ Không gồm:
 - gửi báo giá tự động
 - module/menu báo giá riêng ngoài chứng từ bán hàng
 - tự hủy/hết hạn báo giá theo thời gian
-- hủy báo giá thủ công nếu chưa cần cho workflow
+- hủy báo giá thủ công
 - sửa/hủy hóa đơn
 - giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá
 
@@ -152,6 +152,24 @@ Báo giá không giữ hàng và không tạo sản xuất; nếu khách đồng
 
 ---
 
+## 6.1. Báo giá không dùng nữa
+
+Nếu khách không làm nữa, Phase 3A không cần thao tác gì.
+
+Quy tắc:
+
+- không tự hủy
+- không bắt nhân viên bấm hủy
+- không xóa báo giá
+- không ảnh hưởng kho/tiền/công nợ/doanh thu
+- báo giá cũ vẫn nằm trong danh sách để tra cứu
+
+Lý do: báo giá không phát sinh dữ liệu liên kết nên để nguyên không gây ảnh hưởng nghiệp vụ. Sau này có thể dùng lại nội dung báo giá cũ để tạo báo giá tương tự cho khách khác nếu mở chức năng sao chép.
+
+Sao chép/dùng lại báo giá cho khách khác là future phase, không bắt buộc trong Phase 3A.
+
+---
+
 ## 7. Acceptance Criteria Phase 3A
 
 - Lưu báo giá tạo mã `BG...`, trạng thái `active`, không tạo stock/cash/debt/revenue.
@@ -165,3 +183,4 @@ Báo giá không giữ hàng và không tạo sản xuất; nếu khách đồng
 - Checkout từ báo giá tạo `HD...`, lưu `source_quote_id/source_quote_code`, đổi quote sang `converted` trong cùng transaction.
 - Báo giá đã `converted` không checkout lại và không tạo revision trong Phase 3A.
 - Báo giá không tự hết hạn/hủy theo thời gian.
+- Phase 3A không có nút hủy báo giá thủ công.
