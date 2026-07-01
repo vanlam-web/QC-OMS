@@ -15,6 +15,13 @@ QC-OMS dùng permission-based access control:
 - mỗi tài khoản được tick các quyền cụ thể
 - backend vẫn kiểm tra quyền trên mọi API
 
+Ghi chú từ KiotViet audit ngày `2026-07-01`:
+
+- KiotViet có `Danh sách nhân viên` với 5 nhân viên thật trong tài khoản đang rà.
+- Các cột chính gồm mã nhân viên, mã chấm công, tên nhân viên, SĐT, CMND/CCCD, nợ và tạm ứng, ghi chú.
+- Có bộ lọc trạng thái đang làm việc/đã nghỉ, phòng ban, chức danh.
+- QC-OMS chỉ lấy phần cần cho đăng nhập, quyền và ghi nhận người thao tác. Không copy các trường HR/kế toán nhân sự như mã chấm công, CMND/CCCD, nợ/tạm ứng, phòng ban/chức danh nếu chưa có nghiệp vụ rõ.
+
 ---
 
 ## 2. Bố cục
@@ -145,11 +152,15 @@ Một nhân viên có thể đăng nhập ở máy khác nếu có quyền. Máy
 ## 8. Ngoài Scope Hiện Tại
 
 - Chấm công.
+- Mã chấm công.
 - Lịch làm việc.
 - Bảng lương.
 - Hoa hồng.
 - KPI/hiệu suất nhân sự sâu.
 - Phân ca nhân viên.
+- CMND/CCCD nhân viên.
+- Nợ/tạm ứng nhân viên.
+- Phòng ban/chức danh như module HR riêng.
 - Role cứng làm nguồn authorization.
 
 Doanh thu theo nhân viên nếu cần nằm trong Reports, không phải module lương/hoa hồng.
@@ -168,4 +179,3 @@ Doanh thu theo nhân viên nếu cần nằm trong Reports, không phải module
 ---
 
 ← [Quay về System README](./README.md)
-
