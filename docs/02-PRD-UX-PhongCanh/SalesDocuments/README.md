@@ -21,7 +21,8 @@ Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản gi
 | Danh sách chứng từ | ✅ Phase 2D | Readonly list cho hóa đơn `HD...`, có tìm kiếm mã chứng từ |
 | Chi tiết chứng từ | ✅ Phase 2D | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements |
 | Báo giá trong danh sách chứng từ | ⏭️ Phase 3A kế tiếp | `BG...` sinh từ POS draft, xem bằng bộ lọc Báo giá, mở lại vào POS draft local, checkout sang `HD...` |
-| In lại bill/in báo giá | ⏭️ Phase 3B/future | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
+| In báo giá đơn giản | ⏭️ Phase 3B | Một mẫu mặc định, browser print, không PDF backend/tự gửi |
+| In lại bill hóa đơn/nhiều mẫu bill | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow nâng cao được chốt và implement |
 | Sửa hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
 | Hủy hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
 | Đảo kho/tiền/công nợ | ⏭️ Future phase | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |

@@ -527,11 +527,30 @@ Status: ⏭️ Sẵn sàng lập plan sau khi SoT được handoff
 
 ### Ngoài phạm vi Phase 3A
 
-- [ ] In/xem báo giá đơn giản bằng mẫu mặc định; tự gửi nếu cần.
+- [ ] In/xem báo giá đơn giản bằng mẫu mặc định; gửi thủ công ngoài hệ thống nếu cần.
 - [ ] Không làm hủy báo giá thủ công; báo giá không dùng nữa cứ để nguyên để tra cứu/dùng lại sau.
 - [ ] Không làm nút/endpoint sao chép báo giá riêng.
 - [ ] Giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá.
 - [ ] Sửa/hủy hóa đơn và đảo kho/tiền/công nợ.
+
+## Phase 3B — Simple quote print
+
+Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
+
+### Phạm vi dự kiến
+
+- [ ] Từ chi tiết báo giá `BG...`, mở preview mẫu báo giá mặc định.
+- [ ] Dùng snapshot báo giá đã lưu; không tự resolve lại giá/danh mục hiện tại.
+- [ ] Hiển thị cửa hàng, mã/ngày báo giá, nhân viên, khách hàng snapshot, dòng hàng, kích thước/m2/mét tới, chiết khấu, tổng tiền và ghi chú.
+- [ ] In bằng trình duyệt/browser print, có CSS print ẩn nav/sidebar/button.
+- [ ] Không làm thay đổi trạng thái báo giá và không phát sinh kho/tiền/công nợ/doanh thu.
+
+### Ngoài phạm vi Phase 3B
+
+- [ ] Export PDF/ảnh ở backend.
+- [ ] Nhiều mẫu bill/báo giá tùy biến.
+- [ ] Tự gửi Zalo/Facebook/email hoặc lưu lịch sử gửi.
+- [ ] In lại hóa đơn/bill nâng cao nếu chưa có Bill Preview riêng.
 
 ## Lệnh thường dùng
 

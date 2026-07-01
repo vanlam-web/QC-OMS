@@ -224,7 +224,8 @@ Chia lát cắt thực thi:
 | Lát cắt | Phạm vi |
 |---|---|
 | Phase 3A | POS draft rẽ nhánh lưu báo giá `BG...`; xem bằng filter Báo giá trong chứng từ; mở lại POS draft local và checkout sang `HD...` |
-| Phase 3B/future | Xem/in báo giá đơn giản bằng mẫu mặc định; gửi thủ công |
+| Phase 3B | Xem/in báo giá đơn giản bằng mẫu mặc định, browser print, gửi thủ công ngoài hệ thống |
+| Future bill system | Nhiều mẫu bill, export PDF/ảnh, gửi tự động/bán tự động, lịch sử gửi |
 
 **Frontend**
 
@@ -232,7 +233,7 @@ Chia lát cắt thực thi:
 - Danh sách và tìm kiếm báo giá.
 - Mở lại báo giá thành hóa đơn nháp.
 - Từ nháp mở lại, lưu `BG...` mới hoặc thanh toán `HD...` như nháp POS bình thường; đóng bằng `X` thì không ghi gì.
-- Xem/in báo giá bằng mẫu mặc định ở Phase 3B; chưa làm nhiều mẫu hoặc tự gửi.
+- Xem/in báo giá bằng mẫu mặc định ở Phase 3B; chưa làm nhiều mẫu, export backend hoặc tự gửi.
 
 **Backend và Database**
 
@@ -247,6 +248,12 @@ Chia lát cắt thực thi:
 - Báo giá được lưu và mở lại chính xác.
 - Có thể sửa nháp mở lại rồi lưu thành báo giá mới độc lập; không ghi đè snapshot cũ và không tạo revision `BG...01`.
 - Không xuất hiện stock movement hoặc cash transaction.
+
+**Phase 3B điều kiện nghiệm thu bổ sung**
+
+- Từ chi tiết `BG...`, mở được preview báo giá mặc định.
+- In bằng trình duyệt được ở mức cơ bản.
+- Không thêm schema/log/API PDF nếu chưa cần.
 
 ### Giai đoạn 4 — Thanh toán, kho cơ bản và công nợ
 

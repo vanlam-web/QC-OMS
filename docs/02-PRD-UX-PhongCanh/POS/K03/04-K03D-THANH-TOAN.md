@@ -148,7 +148,9 @@ Nhân viên bấm [THANH TOÁN] (F9)
 
 ## V. BILL PREVIEW / PRINT POPUP
 
-- Phase 3A chưa mở Bill Preview cho báo giá; phần này là Phase 3B/future nếu chưa có print flow.
+- Phase 3A chưa mở Bill Preview cho báo giá.
+- Phase 3B báo giá chỉ làm mẫu mặc định + in bằng trình duyệt, không làm nhiều mẫu bill/export backend/tự gửi.
+- Các rule nhiều mẫu bill và gửi ảnh bên dưới là hướng future cho Bill Preview nâng cao, không phải scope Phase 3B.
 - Sau khi hóa đơn được lưu thành công, hệ thống có thể mở **Bill Preview / Print Popup** theo phase checkout/bill đã được implement.
 - Popup này hiển thị bản xem trước bill giống giao diện in của trình duyệt.
 - Nhân viên có thể in hoặc hủy in.
