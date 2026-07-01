@@ -44,7 +44,12 @@ export interface CustomerListResponse {
 export interface ResolvedPrice {
   product_id: string
   unit_price: number
-  price_source: 'default_price_list' | 'customer_group_price_list' | 'fallback_default_price_list'
+  price_source:
+    | 'default_price_list'
+    | 'customer_group_price_list'
+    | 'fallback_default_price_list'
+    | 'latest_purchase_cost'
+    | 'latest_purchase_cost_missing_zero'
   price_list_id: string
 }
 
