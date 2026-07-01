@@ -1796,7 +1796,7 @@ async function loadSalesDocumentItems(
 ): Promise<SalesDocumentDetailData["items"]> {
   const { data, error } = await client
     .from("order_items")
-    .select("id, line_no, product_id, product_snapshot, quantity, unit_price, line_subtotal_amount, discount_amount, line_total, price_source, note")
+    .select("id, line_no, product_id, product_snapshot, quantity, width_m, height_m, linear_m, unit_price, line_subtotal_amount, discount_amount, line_total, price_source, note")
     .eq("organization_id", organizationId)
     .eq("order_id", orderId)
     .order("line_no", { ascending: true });
@@ -1814,6 +1814,9 @@ async function loadSalesDocumentItems(
         sell_method: String(snapshot.sell_method ?? "quantity") as SalesDocumentDetailData["items"][number]["product"]["sell_method"],
       },
       quantity: Number(row.quantity),
+      width_m: row.width_m === null ? null : Number(row.width_m),
+      height_m: row.height_m === null ? null : Number(row.height_m),
+      linear_m: row.linear_m === null ? null : Number(row.linear_m),
       unit_price: Number(row.unit_price),
       line_subtotal_amount: Number(row.line_subtotal_amount),
       discount_amount: Number(row.discount_amount),

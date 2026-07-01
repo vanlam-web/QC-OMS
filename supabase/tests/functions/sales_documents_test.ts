@@ -58,6 +58,9 @@ const documentDetail: SalesDocumentDetailData = {
       line_no: 1,
       product: { id: "product-1", code: "DECAL-PP", name: "Decal PP", unit_name: "m²", sell_method: "area_m2" },
       quantity: 2,
+      width_m: 2.5,
+      height_m: 3.3,
+      linear_m: null,
       unit_price: 90000,
       line_subtotal_amount: 180000,
       discount_amount: 30000,
@@ -182,6 +185,9 @@ Deno.test("sales document detail returns snapshots, payments, debt and stock mov
   assertEquals(response.status, 200);
   assertEquals(data.code, "HD010985");
   assertEquals(data.items[0].product.code, "DECAL-PP");
+  assertEquals(data.items[0].width_m, 2.5);
+  assertEquals(data.items[0].height_m, 3.3);
+  assertEquals(data.items[0].linear_m, null);
   assertEquals(data.items[0].note, "2.5m x 3.3m x 1 = 8.25m2");
   assertEquals(data.debt_entries[0].amount_delta, 150000);
   assertEquals(data.stock_movements[0].movement_type, "sale_deduction");
