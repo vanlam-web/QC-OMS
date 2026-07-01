@@ -8,6 +8,7 @@ export interface CheckoutCartLine {
   height_m?: number
   linear_m?: number
   unitPrice: number
+  discountAmount?: number
   priceSource: string
   isManualPrice: boolean
   recentPrices?: Array<{ unitPrice: number; soldAt: string; orderCode: string }>
@@ -30,6 +31,7 @@ export interface CheckoutInput {
     product_id: string
     quantity: number
     unit_price: number
+    discount_amount?: number
     price_source: string
     note?: string
   }>

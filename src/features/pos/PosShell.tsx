@@ -38,6 +38,7 @@ export function PosShell({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
 
   useEffect(() => {
     let active = true
@@ -65,11 +66,11 @@ export function PosShell({
             if (line.isManualPrice) return line
             const resolved = priceResult.items.find((price) => price.product_id === line.product.id)
             if (resolved === undefined) return line
-            return {
+            return clampLineDiscount({
               ...line,
               unitPrice: resolved.unit_price,
               priceSource: resolved.price_source,
-            }
+            })
           }),
         )
       } catch (cause) {
@@ -98,6 +99,7 @@ export function PosShell({
         unitPrice,
         priceSource,
         isManualPrice: false,
+        discountAmount: 0,
       },
     ])
   }
@@ -105,7 +107,9 @@ export function PosShell({
   function updateLineQuantity(lineId: string, quantity: number) {
     setCartLines((current) =>
       current.map((line) =>
-        line.id === lineId ? { ...line, quantity: Math.max(quantity, 0) } : line,
+        line.id === lineId
+          ? clampLineDiscount({ ...line, quantity: Math.max(quantity, 0) })
+          : line,
       ),
     )
   }
@@ -120,6 +124,16 @@ export function PosShell({
               priceSource: 'manual',
               isManualPrice: true,
             }
+          : line,
+      ).map((line) => (line.id === lineId ? clampLineDiscount(line) : line)),
+    )
+  }
+
+  function updateLineDiscount(lineId: string, discountAmount: number) {
+    setCartLines((current) =>
+      current.map((line) =>
+        line.id === lineId
+          ? clampLineDiscount({ ...line, discountAmount: Math.max(discountAmount, 0) })
           : line,
       ),
     )
@@ -167,6 +181,7 @@ export function PosShell({
         unitPrice: resolvedPrice?.unit_price ?? 0,
         priceSource: resolvedPrice?.price_source ?? 'default_price_list',
         isManualPrice: false,
+        discountAmount: 0,
         note: 'Từ hàng đợi máy sản xuất',
       },
     ])
@@ -206,6 +221,7 @@ export function PosShell({
                 <th>Đơn vị</th>
                 <th>SL</th>
                 <th>Giá</th>
+                {canApplyDiscount ? <th>Giảm</th> : null}
                 <th>Thành tiền</th>
                 <th>Nguồn giá</th>
                 <th></th>
@@ -243,7 +259,21 @@ export function PosShell({
                       }
                     />
                   </td>
-                  <td>{(line.quantity * line.unitPrice).toLocaleString('vi-VN')}</td>
+                  {canApplyDiscount ? (
+                    <td>
+                      <input
+                        aria-label={`Giảm ${line.product.name}`}
+                        inputMode="numeric"
+                        min="0"
+                        type="number"
+                        value={line.discountAmount ?? 0}
+                        onChange={(event) =>
+                          updateLineDiscount(line.id, readPositiveNumber(event.target.value))
+                        }
+                      />
+                    </td>
+                  ) : null}
+                  <td>{lineTotal(line).toLocaleString('vi-VN')}</td>
                   <td>{line.isManualPrice ? 'Giá sửa tay' : 'Giá tự động'}</td>
                   <td>
                     <button type="button" onClick={() => removeLine(line.id)}>
@@ -277,4 +307,19 @@ export function PosShell({
 function readPositiveNumber(value: string): number {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+function lineSubtotal(line: CheckoutCartLine): number {
+  return Math.round(line.quantity * line.unitPrice)
+}
+
+function lineTotal(line: CheckoutCartLine): number {
+  return lineSubtotal(line) - Math.min(line.discountAmount ?? 0, lineSubtotal(line))
+}
+
+function clampLineDiscount(line: CheckoutCartLine): CheckoutCartLine {
+  return {
+    ...line,
+    discountAmount: Math.min(line.discountAmount ?? 0, lineSubtotal(line)),
+  }
 }

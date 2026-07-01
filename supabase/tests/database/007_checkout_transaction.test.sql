@@ -1,6 +1,6 @@
 begin;
 
-select plan(24);
+select plan(28);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -117,6 +117,56 @@ select is(
   ),
   1,
   'cash checkout creates one cashbook entry'
+);
+
+insert into checkout_results (name, result)
+values (
+  'line_discount',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 180000,
+          'discount_amount', 30000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 150000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (select subtotal_amount from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'line_discount')::uuid)),
+  180000::numeric,
+  'discount checkout stores subtotal before discount'
+);
+
+select is(
+  (select discount_amount from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'line_discount')::uuid)),
+  30000::numeric,
+  'discount checkout stores invoice discount'
+);
+
+select is(
+  (select total_amount from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'line_discount')::uuid)),
+  150000::numeric,
+  'discount checkout stores payable total after discount'
+);
+
+select is(
+  (select line_total from public.order_items where order_id = ((select result->>'order_id' from checkout_results where name = 'line_discount')::uuid)),
+  150000::numeric,
+  'discount checkout stores line total after discount'
 );
 
 insert into checkout_results (name, result)
@@ -402,8 +452,8 @@ select throws_ok(
 
 select is(
   (select count(*)::integer from public.orders where order_type = 'invoice' and status = 'completed'),
-  6,
-  'successful checkout attempts leave six completed invoices'
+  7,
+  'successful checkout attempts leave seven completed invoices'
 );
 
 select * from finish();
