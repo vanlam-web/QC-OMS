@@ -14,6 +14,7 @@
 | `POS/AUTH.md` | Permission-based Access Control | ✅ Nền tảng Giai đoạn 0 |
 | `POS/TOAST-API.md` | API xử lý Toast SĐT (K03-B) | ✅ Hoàn tất |
 | `Inventory/INVENTORY-API.md` | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 Một phần |
+| `Production/PRODUCTION-RECONCILIATION-API.md` | API đối soát máy sản xuất với hóa đơn, read-only | 🔨 Một phần |
 | `Finance/FINANCE-API.md` | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 Một phần |
 | `Purchase/PURCHASE-API.md` | API nhà cung cấp, phiếu nhập, post nhập hàng và trả tiền NCC | 🔨 Một phần |
 | `BOM/BOM-API.md` | API BOM version, validate/deep-scan và snapshot cho checkout | 🔨 Một phần |
@@ -30,7 +31,7 @@
 | **Finance** | API công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát đã có một phần | 🔨 Một phần |
 | **Purchase** | API NCC, phiếu nhập, tăng tồn vật lý, công nợ NCC và sổ quỹ chi | 🔨 Một phần |
 | **BOM** | API định mức vật tư, version, deep-scan và snapshot chứng từ | 🔨 Một phần |
-| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore | ⬜ Chưa có |
+| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore và đối soát read-only | 🔨 Một phần |
 
 ---
 

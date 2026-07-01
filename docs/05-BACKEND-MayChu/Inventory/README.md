@@ -10,6 +10,8 @@
 |---|---|---|
 | [INVENTORY-API.md](./INVENTORY-API.md) | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | Business/Database Inventory 2026-06-30 |
 
+Đối soát máy sản xuất có API riêng tại [../Production/PRODUCTION-RECONCILIATION-API.md](../Production/PRODUCTION-RECONCILIATION-API.md) vì nguồn dữ liệu nằm giữa Production Queue và Sales Documents, không phải stock movement chính thức.
+
 ---
 
 ## Tham chiếu

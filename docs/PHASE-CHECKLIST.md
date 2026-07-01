@@ -624,9 +624,13 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
    - Có thể đi cùng Purchase/Supplier hoặc tách nhỏ trước nếu cần nền dữ liệu.
 
 4. **Production reconciliation read-only**
-   - Mức sẵn sàng: trung bình.
-   - Lý do: SoT đã chốt máy sản xuất chỉ để đối soát, không tự trừ kho MVP.
-   - Chưa nên làm ingestion phức tạp/matching file-bill tự động nếu Owner chưa yêu cầu.
+   - Mức sẵn sàng: cao nếu làm read-only aggregate report.
+   - Lý do: SoT đã chốt máy sản xuất chỉ để đối soát, không tự trừ kho MVP; Phase 2B đã có production queue data.
+   - Scope gợi ý:
+     - list tổng hợp theo ngày/máy/khách/hàng/kích thước
+     - tổng `m2 máy`, `m2 bill`, `lệch m2`, file lỗi parse
+     - detail drawer hai cột: file máy và dòng hóa đơn
+   - Không làm ingestion phức tạp, confirm-match, tự tạo hóa đơn hoặc tự trừ kho.
 
 ### Chưa nên mở nếu chưa chốt thêm
 

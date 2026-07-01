@@ -14,6 +14,7 @@
 | [03-ROLL-SHEET-OBJECTS.md](./03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [04-STOCKTAKE.md](./04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
 | [05-INVENTORY-ADJUSTMENTS.md](./05-INVENTORY-ADJUSTMENTS.md) | Hủy/điều chỉnh vật tư tối giản, tấm lỡ bỏ/giữ lại | 🔨 |
+| [06-PRODUCTION-RECONCILIATION.md](./06-PRODUCTION-RECONCILIATION.md) | Đối soát máy sản xuất với hóa đơn, read-only, không tự trừ kho | 🔨 |
 
 ---
 
