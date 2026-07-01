@@ -43,7 +43,7 @@ Phase 2D hiện tại chỉ triển khai:
 
 Phase 3A kế tiếp triển khai:
 
-- lưu/list/detail báo giá `BG...`
+- lưu/list/detail báo giá `BG...` trong cùng danh sách chứng từ, không có module/menu báo giá riêng
 - mở lại báo giá tại POS thành nháp local
 - checkout từ báo giá sang hóa đơn `HD...`
 
@@ -60,6 +60,7 @@ QC-OMS chỉ làm luồng **bán đứt**:
 - không có đơn giao hàng/vận đơn/COD
 - không có bán hàng online hoặc kênh bán
 - báo giá chỉ là bản giá gửi khách, không giữ hàng, không trừ kho, không phát sinh sản xuất, tiền hoặc công nợ
+- báo giá không tự hủy/hết hạn theo thời gian
 
 ---
 

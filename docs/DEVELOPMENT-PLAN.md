@@ -223,7 +223,7 @@ Chia lát cắt thực thi:
 
 | Lát cắt | Phạm vi |
 |---|---|
-| Phase 3A | Lưu/list/detail báo giá `BG...`, mở lại vào POS draft local, checkout sang `HD...` |
+| Phase 3A | POS draft rẽ nhánh lưu báo giá `BG...`; xem bằng filter Báo giá trong chứng từ; mở lại POS draft local và checkout sang `HD...` |
 | Phase 3B/future | Xem/in báo giá đơn giản bằng mẫu mặc định; gửi thủ công |
 
 **Frontend**

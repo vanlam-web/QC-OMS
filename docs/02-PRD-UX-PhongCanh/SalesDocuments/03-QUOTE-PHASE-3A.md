@@ -1,4 +1,4 @@
-# 03-QUOTE-PHASE-3A — Báo giá BG và mở lại vào POS
+# 03-QUOTE-PHASE-3A — Báo giá BG từ đơn nháp POS
 
 > **Trạng thái:** Source of Truth cho Phase 3A
 > **Business:** [POS-ORDER-LIFECYCLE.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md#4-quy-tắc-báo-giá)
@@ -7,18 +7,28 @@
 
 ## 1. Phạm vi Phase 3A
 
-Phase 3A gồm:
+Phase 3A làm báo giá như một nhánh đơn giản từ đơn nháp POS:
 
-- lưu báo giá từ POS với mã `BG...`
-- danh sách báo giá trong Sales Documents
-- chi tiết báo giá readonly
-- mở lại báo giá vào POS như nháp local
+```text
+POS draft
+  -> bấm Thanh toán: tạo hóa đơn HD...
+  -> bấm Lưu báo giá: tạo báo giá BG...
+```
+
+Phạm vi gồm:
+
+- lưu báo giá từ POS draft với mã `BG...`
+- hiển thị báo giá trong danh sách chứng từ/hóa đơn bằng bộ lọc `Báo giá`
+- chi tiết báo giá readonly trong màn chứng từ
+- bấm báo giá để mở lại vào POS như nháp local
 - checkout từ nháp mở lại thành hóa đơn `HD...`
 
 Không gồm:
 
 - Bill Preview/in báo giá
 - gửi báo giá tự động
+- module/menu báo giá riêng ngoài chứng từ bán hàng
+- tự hủy/hết hạn báo giá theo thời gian
 - hủy báo giá thủ công nếu chưa cần cho workflow
 - sửa/hủy hóa đơn
 - giữ hàng, trừ kho, công nợ, doanh thu hoặc sổ quỹ khi chỉ lưu báo giá
@@ -26,6 +36,14 @@ Không gồm:
 ---
 
 ## 2. Lưu báo giá tại POS
+
+Trong POS draft, nút `[BÁO GIÁ]` là lựa chọn thay thế cho `[THANH TOÁN]`.
+
+```text
+Đơn nháp đang nhập
+  -> [BÁO GIÁ] lưu BG...
+  -> [THANH TOÁN] lưu HD...
+```
 
 Nút `[BÁO GIÁ]` lưu giỏ hàng hiện tại thành chứng từ `BG...`.
 
@@ -41,7 +59,9 @@ Báo giá có thể lưu với khách lẻ nếu chưa chọn khách.
 
 ## 3. Danh sách và chi tiết báo giá
 
-Sales Documents hiển thị báo giá cùng nhóm chứng từ bán hàng.
+Không có menu/mục báo giá riêng trong MVP.
+
+Sales Documents/danh sách hóa đơn-chứng từ hiển thị báo giá cùng nhóm chứng từ bán hàng. Người dùng xem báo giá bằng bộ lọc loại chứng từ `Báo giá`.
 
 Bộ lọc cần hỗ trợ:
 
@@ -66,7 +86,9 @@ Chi tiết báo giá hiển thị snapshot:
 
 ## 4. Mở lại vào POS draft
 
-Khi bấm `Mở tại POS`:
+Khi người dùng nhấp vào một báo giá trong danh sách chứng từ, màn chi tiết báo giá có thao tác `Tạo hóa đơn` hoặc `Mở tại POS`.
+
+Khi bấm thao tác đó:
 
 1. hệ thống tải snapshot báo giá
 2. tạo một tab/nháp POS local trên máy hiện tại
@@ -74,7 +96,7 @@ Khi bấm `Mở tại POS`:
 4. giữ nguyên đơn giá snapshot mặc định
 5. hiển thị cảnh báo nếu giá/sản phẩm hiện tại khác snapshot
 
-Không tạo server draft trong Phase 3A.
+Không tạo server draft trong Phase 3A. POS chỉ nhận lại snapshot báo giá thành một nháp local để nhân viên kiểm tra/sửa lần cuối.
 
 ### 4.1. Cảnh báo khi mở lại
 
@@ -112,6 +134,8 @@ Phase 3A chỉ cần audit tối thiểu: ai tạo, lúc nào, trạng thái và
 
 Nếu báo giá gốc đã `converted`, không tạo revision từ báo giá đó trong Phase 3A. Nhân viên phải tạo báo giá/đơn mới để tránh làm mơ hồ hóa đơn đã sinh từ bản báo giá nào.
 
+Nếu muốn thao tác gọn hơn ở UI, Phase 3A có thể ẩn nút `Lưu lại báo giá` sau khi mở từ báo giá và chỉ ưu tiên `Thanh toán`. Rule revision vẫn là chuẩn nếu sau này cho lưu lại bản báo giá đã sửa.
+
 ---
 
 ## 6. Checkout từ báo giá
@@ -132,6 +156,7 @@ Báo giá không giữ hàng và không tạo sản xuất; nếu khách đồng
 
 - Lưu báo giá tạo mã `BG...`, trạng thái `active`, không tạo stock/cash/debt/revenue.
 - Sales Documents tìm được báo giá theo mã exact dù filter thời gian mặc định đang che kết quả.
+- Không có menu/module báo giá riêng; báo giá nằm trong danh sách chứng từ với bộ lọc `Báo giá`.
 - Chi tiết báo giá hiển thị snapshot, không tự cập nhật theo danh mục/bảng giá hiện tại.
 - Mở lại báo giá tạo POS draft local, không tạo bản ghi server draft.
 - Reopen giữ giá snapshot mặc định và trả cảnh báo nếu giá hiện tại khác.
@@ -139,3 +164,4 @@ Báo giá không giữ hàng và không tạo sản xuất; nếu khách đồng
 - Lưu lại báo giá đã sửa tạo revision `BG...01`, không ghi đè báo giá cũ.
 - Checkout từ báo giá tạo `HD...`, lưu `source_quote_id/source_quote_code`, đổi quote sang `converted` trong cùng transaction.
 - Báo giá đã `converted` không checkout lại và không tạo revision trong Phase 3A.
+- Báo giá không tự hết hạn/hủy theo thời gian.
