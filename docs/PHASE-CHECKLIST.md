@@ -585,6 +585,54 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 - [ ] Phạm vi áp dụng/thời gian hiệu lực kiểu KiotViet.
 - [ ] Product group schema/UI/filter (`product_groups`, `products.product_group_id`) trong formula MVP đầu.
 
+## Implementation-ready queue
+
+Status: 🔄 Dùng để hai luồng làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
+
+Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ SoT hoặc gần đủ SoT để implement có thể chuẩn bị plan khi xong việc đang làm.
+
+### Đang làm / ưu tiên hiện tại
+
+1. **PriceBook formula MVP**
+   - Trạng thái: implement đang làm trên branch `codex/pricebook-formula-mvp`.
+   - SoT đã đủ cho slice đầu: formula structured, manual/formula price cell, latest purchase cost admin field, không product group filter.
+   - Nếu phát sinh blocker mới, implement gửi câu hỏi cụ thể sang spec.
+
+### Có thể làm tiếp sau PriceBook formula
+
+1. **Phase 3B — Simple quote print**
+   - Mức sẵn sàng: cao.
+   - Lý do: SoT đã rõ, scope nhỏ, chủ yếu frontend print view từ snapshot báo giá.
+   - Không cần schema mới, không PDF backend, không gửi tự động.
+   - Phù hợp làm ngay nếu Owner muốn có đầu ra nhìn thấy nhanh sau PriceBook formula.
+
+2. **Purchase/Supplier foundation**
+   - Mức sẵn sàng: trung bình-cao.
+   - Lý do: SoT đã có cho NCC, phiếu nhập, công nợ NCC, nhập cuộn/tấm vật lý, cập nhật `latest_purchase_cost`.
+   - Nên chia nhỏ:
+     - supplier list/detail + linked customer
+     - purchase receipt draft/list/detail
+     - post receipt tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
+   - Cần implement đánh giá kỹ vì chạm Inventory/Finance nhiều hơn Phase 3B.
+
+3. **Supplier/customer link**
+   - Mức sẵn sàng: cao nếu làm như lát cắt nhỏ.
+   - Lý do: SoT đã chốt `linked_customer_id`; NCC có thể đồng thời là khách hàng.
+   - Có thể đi cùng Purchase/Supplier hoặc tách nhỏ trước nếu cần nền dữ liệu.
+
+4. **Production reconciliation read-only**
+   - Mức sẵn sàng: trung bình.
+   - Lý do: SoT đã chốt máy sản xuất chỉ để đối soát, không tự trừ kho MVP.
+   - Chưa nên làm ingestion phức tạp/matching file-bill tự động nếu Owner chưa yêu cầu.
+
+### Chưa nên mở nếu chưa chốt thêm
+
+- Sửa/hủy hóa đơn có đảo kho/tiền/công nợ.
+- Product group schema/UI/filter cho PriceBook formula.
+- Purchase return/trả hàng nhập.
+- Máy sản xuất tự động trừ kho hoặc tự match file với bill.
+- HĐĐT/VAT, delivery/COD, kênh online.
+
 ## Lệnh thường dùng
 
 ```bash
