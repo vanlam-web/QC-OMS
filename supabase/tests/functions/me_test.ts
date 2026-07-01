@@ -31,7 +31,7 @@ function createAuthClient(): AuthClient {
 
 function createRepository(record: CurrentUserRecord | null): FoundationRepository {
   return {
-    getCurrentUser(input) {
+    getCurrentUser(input: Parameters<FoundationRepository["getCurrentUser"]>[0]) {
       assertEquals(input.userId, userId);
       return Promise.resolve(record);
     },
@@ -50,7 +50,7 @@ function createRepository(record: CurrentUserRecord | null): FoundationRepositor
     updateUser: () => Promise.resolve(null),
     replaceUserPermissions: () => Promise.resolve(null),
     listPermissions: () => Promise.resolve([]),
-  };
+  } as unknown as FoundationRepository;
 }
 
 function activeRecord(overrides: Partial<CurrentUserRecord> = {}): CurrentUserRecord {

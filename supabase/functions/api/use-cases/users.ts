@@ -3,6 +3,15 @@ import { ApiError } from "../http.ts";
 import type { WorkstationContext } from "./workstations.ts";
 import { requireManageUsers } from "./workstations.ts";
 
+const internalStaffDefaultPermissions: PermissionCode[] = [
+  "perm.create_order",
+  "perm.apply_discount",
+  "perm.edit_price_book",
+  "perm.manage_inventory",
+  "perm.manage_finance",
+  "perm.view_shift_report",
+];
+
 export function parseListUsers(url: URL): {
   search?: string;
   status?: "active" | "inactive";
@@ -128,7 +137,9 @@ function parseCreateUser(body: unknown): {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
   const displayName = typeof body.display_name === "string" ? body.display_name.trim() : "";
-  const permissions = parsePermissionArray(body.permissions);
+  const permissions = "permissions" in body
+    ? parsePermissionArray(body.permissions)
+    : [...internalStaffDefaultPermissions];
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || password.length < 8 || password.length > 128 || displayName.length < 1 || displayName.length > 100) {
     throw validationError();
   }

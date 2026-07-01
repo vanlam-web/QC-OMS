@@ -23,6 +23,16 @@ grant select on
   public.user_permissions
 to authenticated;
 
+grant usage on schema public to service_role;
+grant select, insert, update, delete on
+  public.organizations,
+  public.profiles,
+  public.workstations,
+  public.permissions,
+  public.user_permissions,
+  public.permission_audit_logs
+to service_role;
+
 create policy "authenticated can read own organization"
 on public.organizations
 for select

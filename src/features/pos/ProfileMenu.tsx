@@ -3,14 +3,16 @@ import type { PermissionCode } from '../users/types'
 
 export function ProfileMenu({
   displayName,
-  workstationCode,
   permissions,
   onSignOut,
+  onOpenAdmin,
+  onOpenDashboard,
 }: {
   displayName: string
-  workstationCode: string
   permissions: PermissionCode[]
   onSignOut: () => void
+  onOpenAdmin: () => void
+  onOpenDashboard: () => void
 }) {
   const [open, setOpen] = useState(false)
   const id = useId()
@@ -35,12 +37,19 @@ export function ProfileMenu({
   return (
     <div ref={ref} className="profile-menu">
       <button aria-controls={id} aria-expanded={open} onClick={() => setOpen((value) => !value)} type="button">
-        👤 {displayName} / {workstationCode}
+        👤 {displayName}
       </button>
       {open ? (
         <div id={id} role="menu">
+          <button role="menuitem" onClick={onOpenDashboard} type="button">
+            Trang chủ
+          </button>
           {permissions.includes('perm.view_shift_report') ? <button role="menuitem">Báo cáo ca</button> : null}
-          {permissions.includes('perm.access_admin_panel') ? <button role="menuitem">Quản trị</button> : null}
+          {permissions.includes('perm.access_admin_panel') ? (
+            <button role="menuitem" onClick={onOpenAdmin} type="button">
+              Quản trị
+            </button>
+          ) : null}
           <button role="menuitem" onClick={onSignOut} type="button">
             Đăng xuất
           </button>

@@ -1,21 +1,26 @@
 import { FormEvent, useState } from 'react'
-import { useAuthService } from './AuthProvider'
+import { useAuthService } from './auth-context'
+import { formatApiError } from '../../lib/api/error-message'
 
 export function LoginPage() {
   const auth = useAuthService()
-  const [email, setEmail] = useState('')
+  const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (login.trim().length === 0 || password.length === 0) {
+      setError('Vui lòng nhập tài khoản và mật khẩu.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
-      await auth.signIn(email, password)
-    } catch {
-      setError('Đăng nhập không thành công.')
+      await auth.signIn(normalizeLogin(login), password)
+    } catch (cause) {
+      setError(formatApiError(cause, 'Đăng nhập không thành công.'))
     } finally {
       setSubmitting(false)
     }
@@ -23,11 +28,11 @@ export function LoginPage() {
 
   return (
     <main className="auth-shell">
-      <form aria-label="Đăng nhập" onSubmit={submit}>
+      <form aria-label="Đăng nhập" noValidate onSubmit={submit}>
         <h1>QC-OMS</h1>
         <label>
-          Email
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+          Tài khoản
+          <input value={login} onChange={(event) => setLogin(event.target.value)} />
         </label>
         <label>
           Mật khẩu
@@ -44,4 +49,9 @@ export function LoginPage() {
       </form>
     </main>
   )
+}
+
+function normalizeLogin(value: string) {
+  const login = value.trim().toLowerCase()
+  return login.includes('@') ? login : `${login}@qc.local`
 }

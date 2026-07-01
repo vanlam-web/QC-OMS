@@ -1,6 +1,6 @@
 import { createApiClient } from './client'
 
-it('sends bearer token, workstation id, and request id', async () => {
+it('sends bearer token and request id without workstation coupling', async () => {
   const calls: [RequestInfo | URL, RequestInit | undefined][] = []
   const fetchSpy: typeof fetch = async (input, init) => {
     calls.push([input, init])
@@ -11,7 +11,6 @@ it('sends bearer token, workstation id, and request id', async () => {
   const client = createApiClient({
     baseUrl: 'https://api.test',
     getAccessToken: async () => 'token-123',
-    getWorkstationId: () => 'ws-1',
     fetch: fetchSpy as typeof fetch,
   })
 
@@ -19,7 +18,7 @@ it('sends bearer token, workstation id, and request id', async () => {
   const request = calls[0][1] as RequestInit
   const headers = request.headers as Headers
   expect(headers.get('authorization')).toBe('Bearer token-123')
-  expect(headers.get('x-workstation-id')).toBe('ws-1')
+  expect(headers.has('x-workstation-id')).toBe(false)
   expect(headers.get('x-request-id')).toMatch(/[0-9a-f-]{36}/)
 })
 
@@ -45,4 +44,19 @@ it('throws typed API errors preserving metadata', async () => {
     traceId: 'trace-err',
     fields: { email: ['bad'] },
   })
+})
+
+it('rejects base URLs that already include the API route prefix', async () => {
+  expect(() =>
+    createApiClient({
+      baseUrl: 'https://example.supabase.co/functions/v1/api',
+      getAccessToken: async () => null,
+      fetch: (async () =>
+        new Response(JSON.stringify({ success: true, data: {}, trace_id: 'trace' }), {
+          status: 200,
+        })) as typeof fetch,
+    }),
+  ).toThrow(
+    'VITE_API_BASE_URL must not include /api because client requests already include /api/v1',
+  )
 })

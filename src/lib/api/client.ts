@@ -16,12 +16,12 @@ export class ApiError extends Error {
 export interface ApiClientOptions {
   baseUrl: string
   getAccessToken: () => Promise<string | null>
-  getWorkstationId?: () => string | null
   fetch?: typeof fetch
 }
 
 export function createApiClient(options: ApiClientOptions) {
   const fetcher = options.fetch ?? fetch
+  const baseUrl = normalizeApiBaseUrl(options.baseUrl)
 
   return {
     async request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -35,12 +35,7 @@ export function createApiClient(options: ApiClientOptions) {
         headers.set('authorization', `Bearer ${accessToken}`)
       }
 
-      const workstationId = options.getWorkstationId?.()
-      if (workstationId) {
-        headers.set('x-workstation-id', workstationId)
-      }
-
-      const response = await fetcher(`${options.baseUrl}${path}`, { ...init, headers })
+      const response = await fetcher(`${baseUrl}${path}`, { ...init, headers })
       const body = (await response.json()) as ApiEnvelope<T>
 
       if (!body.success) {
@@ -56,4 +51,14 @@ export function createApiClient(options: ApiClientOptions) {
       return body.data
     },
   }
+}
+
+function normalizeApiBaseUrl(baseUrl: string) {
+  const normalized = baseUrl.replace(/\/+$/, '')
+
+  if (normalized.endsWith('/api') || normalized.endsWith('/api/v1')) {
+    throw new Error('VITE_API_BASE_URL must not include /api because client requests already include /api/v1')
+  }
+
+  return normalized
 }

@@ -1,0 +1,60 @@
+import type { CurrentUserData } from '../../lib/api/types'
+import { canOpenModule, phaseOneModules } from '../navigation/module-boundaries'
+
+export function DashboardPage({
+  currentUser,
+  onOpenPos,
+  onOpenAdmin,
+  onOpenCatalog,
+  onOpenSalesDocuments,
+  onSignOut,
+}: {
+  currentUser: CurrentUserData
+  onOpenPos: () => void
+  onOpenAdmin: () => void
+  onOpenCatalog: () => void
+  onOpenSalesDocuments: () => void
+  onSignOut: () => void
+}) {
+  const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
+
+  function openModule(moduleId: string) {
+    if (moduleId === 'pos') onOpenPos()
+    if (moduleId === 'price-book') onOpenCatalog()
+    if (moduleId === 'sales-documents') onOpenSalesDocuments()
+  }
+
+  return (
+    <main className="dashboard-shell">
+      <header className="dashboard-header">
+        <div>
+          <h1>QC-OMS</h1>
+          <p>{currentUser.user.display_name}</p>
+        </div>
+        <button type="button" onClick={onSignOut}>
+          Đăng xuất
+        </button>
+      </header>
+
+      <section aria-label="Module hệ thống" className="module-grid">
+        {phaseOneModules.map((module) => {
+          const enabled = canOpenModule(currentUser, module)
+          const implemented = module.id === 'pos' || module.id === 'price-book' || module.id === 'sales-documents'
+          return (
+            <button
+              disabled={!enabled || !implemented}
+              key={module.id}
+              type="button"
+              onClick={() => openModule(module.id)}
+            >
+              {module.label}
+            </button>
+          )
+        })}
+        <button disabled={!canAdmin} type="button" onClick={onOpenAdmin}>
+          Quản trị
+        </button>
+      </section>
+    </main>
+  )
+}
