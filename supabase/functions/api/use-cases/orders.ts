@@ -14,6 +14,9 @@ export async function checkoutOrder(
 ): Promise<CheckoutResultData> {
   requireAnyPermission(context, ["perm.create_order"]);
   const payload = parseCheckoutPayload(body);
+  if (payloadHasDiscount(payload)) {
+    requireAnyPermission(context, ["perm.apply_discount"]);
+  }
 
   try {
     return await repository.checkoutOrder({
@@ -98,6 +101,13 @@ function parseCheckoutItem(value: unknown): void {
   const discountAmount = parseMoney(value.discount_amount ?? 0);
   if (discountAmount > Math.round(quantity * unitPrice)) throw validationError();
   if (!isNonEmptyString(value.price_source)) throw validationError();
+}
+
+function payloadHasDiscount(payload: Record<string, unknown>): boolean {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  return items.some((item) =>
+    isRecord(item) && typeof item.discount_amount === "number" && item.discount_amount > 0
+  );
 }
 
 function parseRevisionPayload(body: unknown): Record<string, unknown> {

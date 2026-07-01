@@ -221,6 +221,36 @@ Deno.test("checkout validates line discount cannot exceed line subtotal", async 
   assertEquals(((await body(response)).error as { code: string }).code, "VALIDATION_ERROR");
 });
 
+Deno.test("checkout requires apply_discount permission when line discount is submitted", async () => {
+  const payload = {
+    items: [{
+      product_id: "p-1",
+      quantity: 1,
+      unit_price: 180000,
+      discount_amount: 30000,
+      price_source: "default_price_list",
+    }],
+    payment: { cash_amount: 150000, bank_amount: 0, old_debt_payment_amount: 0 },
+  };
+
+  const denied = await call(
+    "/api/v1/orders/checkout",
+    { method: "POST", body: JSON.stringify(payload) },
+    repo(["perm.create_order"]),
+  );
+
+  assertEquals(denied.status, 403);
+  assertEquals(((await body(denied)).error as { code: string }).code, "PERMISSION_DENIED");
+
+  const allowed = await call(
+    "/api/v1/orders/checkout",
+    { method: "POST", body: JSON.stringify(payload) },
+    repo(["perm.create_order", "perm.apply_discount"]),
+  );
+
+  assertEquals(allowed.status, 201);
+});
+
 Deno.test("checkout can return inventory warnings without blocking success", async () => {
   const response = await call(
     "/api/v1/orders/checkout",
