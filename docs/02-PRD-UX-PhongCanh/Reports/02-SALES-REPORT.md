@@ -1,7 +1,7 @@
 # 02-SALES-REPORT — Báo cáo bán hàng
 
 > **Trạng thái:** 🔨 Đang xây dựng  
-> **Tham khảo:** KiotViet `Báo cáo > Bán hàng`, đã lược bỏ kênh bán/VAT/trả hàng
+> **Tham khảo:** KiotViet `Báo cáo > Bán hàng`, `Báo cáo > Nhân viên`, đã lược bỏ kênh bán/VAT/trả hàng/HR
 
 ---
 
@@ -65,6 +65,8 @@ Sau MVP có thể bổ sung:
 
 Doanh thu theo nhân viên chỉ là góc nhìn báo cáo bán hàng theo người chốt hóa đơn. Không dùng báo cáo này để mở module hoa hồng, bảng lương hoặc KPI nhân sự trong MVP.
 
+KiotViet có `Báo cáo nhân viên` riêng với mối quan tâm bán hàng và bộ lọc người bán/kênh bán. QC-OMS không tách màn này trong scope hiện tại; nếu cần xem theo người bán thì dùng bộ lọc/biểu đồ tại Báo cáo bán hàng.
+
 ---
 
 ## 5. Bảng chi tiết hóa đơn
@@ -112,6 +114,7 @@ Không có top theo kênh bán hoặc thương hiệu.
 5. Bấm mã hóa đơn mở chi tiết chứng từ.
 6. Không có bộ lọc/cột kênh bán, COD, HĐĐT hoặc trả hàng.
 7. Nếu hiển thị lợi nhuận gộp, UI phải ghi rõ là tham khảo khi giá vốn chưa chốt đầy đủ.
+8. Không có báo cáo nhân viên riêng phục vụ lương, hoa hồng hoặc KPI.
 
 ---
 

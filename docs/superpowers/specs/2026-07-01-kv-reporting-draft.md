@@ -82,6 +82,37 @@ KiotViet có báo cáo kênh bán hàng:
 
 QC-OMS không làm báo cáo kênh bán trong scope hiện tại vì đã chốt không bán online/đa kênh/TMĐT/MXH.
 
+### 2.7. Báo cáo nhà cung cấp
+
+KiotViet có báo cáo nhà cung cấp:
+
+- Kiểu hiển thị biểu đồ/báo cáo.
+- Mối quan tâm mặc định: `Nhập hàng`.
+- Bộ lọc thời gian.
+- Tìm nhà cung cấp theo mã, tên, số điện thoại.
+
+QC-OMS chỉ làm báo cáo nhà cung cấp sau khi module Purchase/Supplier có dữ liệu thật trong hệ thống. Không đưa vào MVP POS/Reports đầu tiên.
+
+### 2.8. Báo cáo nhân viên
+
+KiotViet có báo cáo nhân viên:
+
+- Kiểu hiển thị biểu đồ/báo cáo.
+- Mối quan tâm mặc định: `Bán hàng`.
+- Bộ lọc thời gian, người bán, kênh bán.
+
+QC-OMS chỉ giữ góc nhìn doanh thu/số hóa đơn theo người bán trong Báo cáo bán hàng. Không tạo module báo cáo nhân viên riêng phục vụ lương, hoa hồng hoặc KPI trong scope hiện tại.
+
+### 2.9. Báo cáo đặt hàng
+
+KiotViet có báo cáo đặt hàng:
+
+- Mối quan tâm hàng hóa.
+- Lọc thời gian đặt hàng, thời gian giao hàng, trạng thái, nhóm khách, khách hàng, hàng hóa, loại hàng, thương hiệu, nhóm hàng, nhân viên.
+- Có tùy chọn gộp hàng hóa cùng loại.
+
+QC-OMS không làm báo cáo đặt hàng vì Owner đã chốt không dùng Đặt hàng KiotViet, giao hàng/vận đơn/COD. Báo giá `BG...` chỉ là snapshot giá, không phải đơn đặt hàng và không tạo doanh thu/kho/công nợ.
+
 ---
 
 ## 3. Đề xuất báo cáo QC-OMS theo thứ tự
@@ -131,6 +162,8 @@ Nội dung cần có:
 Không có báo cáo theo kênh bán vì QC-OMS chỉ quản lý bán hàng nội bộ của xưởng trong MVP.
 
 Các chỉ số giá vốn/lợi nhuận gộp chỉ hiển thị dạng tham khảo khi dữ liệu giá vốn đủ. Không gọi là lợi nhuận kế toán chuẩn cho tới khi Purchase, giá vốn và chi phí sản xuất được chốt.
+
+Không tạo báo cáo nhân viên riêng cho HR/KPI. Nếu cần xem theo người bán thì dùng bộ lọc/biểu đồ trong Báo cáo bán hàng.
 
 ### 3.3. Báo cáo hàng hóa/tồn kho
 
@@ -190,6 +223,20 @@ Nội dung cần có:
 
 Không tạo báo cáo khách trả trước trong MVP vì hệ thống không tạo công nợ âm.
 
+### 3.6. Báo cáo nhà cung cấp
+
+Chỉ làm sau Purchase/Supplier.
+
+Nội dung khi phase đó bắt đầu:
+
+- tổng mua theo NCC
+- công nợ NCC còn phải trả
+- phiếu nhập theo NCC
+- top NCC theo tổng mua
+- lịch sử chi/trả NCC
+
+Không đưa báo cáo NCC vào MVP bán hàng vì dữ liệu Purchase chưa thuộc lát cắt đầu tiên.
+
 ---
 
 ## 4. Quyết định hiện tại / giả định để làm tiếp
@@ -219,6 +266,9 @@ Các điểm để sau:
 - Báo cáo theo kênh bán nói chung.
 - Báo cáo VAT/HĐĐT/thuế kế toán.
 - Báo cáo trả hàng.
+- Báo cáo đặt hàng KiotViet.
+- Báo cáo nhân viên riêng kiểu HR/KPI/hoa hồng.
+- Báo cáo nhà cung cấp trước khi Purchase/Supplier được làm.
 - Báo cáo lợi nhuận chuẩn kế toán.
 - Báo cáo theo thương hiệu/thuộc tính như retail.
 - Báo cáo nhân khẩu học khách hàng như tuổi, giới tính, tỉnh thành.

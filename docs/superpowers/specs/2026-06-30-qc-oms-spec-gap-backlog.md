@@ -395,6 +395,9 @@ Draft tham khảo KiotViet đã tạo:
 - Báo cáo hàng hóa của QC-OMS phải nhìn được tồn vật lý cuộn/tấm.
 - Bỏ kênh bán, VAT/HĐĐT và thương hiệu/thuộc tính retail khỏi báo cáo QC-OMS.
 - Bỏ nhân khẩu học khách hàng kiểu retail như tuổi, giới tính, tỉnh thành khỏi báo cáo QC-OMS hiện tại.
+- Báo cáo nhân viên KiotViet chỉ giữ góc nhìn người bán trong Báo cáo bán hàng; không mở báo cáo HR/KPI/hoa hồng.
+- Báo cáo đặt hàng KiotViet không làm vì QC-OMS không có Đặt hàng/giao hàng/vận đơn.
+- Báo cáo nhà cung cấp để sau Purchase/Supplier.
 - Thương hiệu nếu cần thì ghi trong tên hàng/mã hàng/nhóm hàng, không tạo field báo cáo riêng.
 - Chưa gọi là lợi nhuận chuẩn nếu chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 
