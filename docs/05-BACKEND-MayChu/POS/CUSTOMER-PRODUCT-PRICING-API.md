@@ -295,7 +295,8 @@ Tạo sản phẩm/dịch vụ.
   "name": "Mica 3mm",
   "status": "active",
   "unit_name": "m",
-  "sell_method": "linear_m"
+  "sell_method": "linear_m",
+  "latest_purchase_cost": 120000
 }
 ```
 
@@ -305,6 +306,8 @@ Tạo sản phẩm/dịch vụ.
 - `code` không trùng trong organization.
 - `status` thuộc `active | inactive`.
 - `sell_method` thuộc `quantity | area_m2 | linear_m | sheet | combo`.
+- `latest_purchase_cost` được phép null/bỏ trống; nếu có thì phải `>= 0`.
+- Trước Purchase receipt hoàn chỉnh, `latest_purchase_cost` là field admin-controlled để PriceBook formula chạy được; không phải giá vốn kế toán.
 
 ### `PATCH /products/{id}`
 
@@ -312,7 +315,9 @@ Cập nhật sản phẩm/dịch vụ.
 
 **Permission:** `perm.edit_price_book`
 
-Cho phép sửa `code`, `name`, `status`, `unit_name`, `sell_method`.
+Cho phép sửa `code`, `name`, `status`, `unit_name`, `sell_method`, `latest_purchase_cost`.
+
+Nếu cập nhật `latest_purchase_cost`, backend lưu `latest_purchase_cost_at` và audit metadata tối thiểu actor/thời gian.
 
 Không xóa vật lý sản phẩm đã có lịch sử; ngưng bán dùng `status = inactive`.
 
@@ -414,10 +419,10 @@ Xem trước việc gắn công thức cho một bộ lọc sản phẩm.
 {
   "name": "Fomex 5mm",
   "product_filter": {
-    "group_id": "uuid",
     "name_contains": "5mm",
     "code_contains": "F5",
-    "sell_method": "sheet"
+    "sell_method": "sheet",
+    "status": "active"
   },
   "cost_formula": {
     "type": "amount_plus_percent",
@@ -467,6 +472,8 @@ Xem trước việc gắn công thức cho một bộ lọc sản phẩm.
 **Rules:**
 
 - Không ghi dữ liệu khi preview.
+- Slice đầu chỉ hỗ trợ filter hiện có: `name_contains`, `code_contains`, `sell_method`, `status = active`.
+- `group_id`/nhóm hàng chưa thuộc PriceBook formula MVP vì chưa có schema `product_groups`.
 - `latest_purchase_cost` null thì tính như `0`, không warning/block.
 - Giá cuối làm tròn lên `1,000đ` ở backend.
 - Backend validate tiers lợi nhuận: chặn overlap rõ ràng; gap được phép, không match tier thì lợi nhuận `0`.

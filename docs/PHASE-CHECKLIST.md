@@ -560,9 +560,11 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 
 - [ ] Chỉ dùng `giá nhập cuối` làm nguồn tính giá; không dùng giá vốn bình quân trong PriceBook MVP.
 - [ ] `giá nhập cuối` đọc từ `products.latest_purchase_cost`; trước Purchase receipt hoàn chỉnh có thể lấy từ import/admin edit, sau này receipt `posted` cập nhật.
+- [ ] Product admin/API cho phép `perm.edit_price_book` nhập/sửa `latest_purchase_cost` tạm thời, có audit metadata tối thiểu.
 - [ ] Tạo bảng giá chỉ cần tên; không có phạm vi áp dụng hoặc thời gian hiệu lực.
 - [ ] Lưới giá có cột cố định `Mã hàng`, `Tên hàng`, `Giá nhập cuối`.
 - [ ] Các cột bảng giá lấy dynamic từ `price_lists` đang active; không hard-code chỉ `25/26/30/35/40`.
+- [ ] Formula filter slice đầu chỉ dùng field hiện có: tên chứa, mã chứa, `sell_method`, `status = active`; chưa làm `product_groups/group_id`.
 - [ ] Cột `Chi phí`: chọn giá cố định hoặc công thức `+ số tiền + % giá nhập cuối`.
 - [ ] Cột `Lợi nhuận`: chọn giá cố định hoặc công thức điều kiện theo giá nhập cuối.
 - [ ] Cột bảng giá chỉ cộng/trừ số tiền hoặc phần trăm.
@@ -581,6 +583,7 @@ Status: ⏭️ Đã có SoT nghiệp vụ, chờ Owner chọn thứ tự sau Quo
 - [ ] Chọn nguồn giá vốn bình quân.
 - [ ] Điều kiện phức tạp ở cột bảng giá.
 - [ ] Phạm vi áp dụng/thời gian hiệu lực kiểu KiotViet.
+- [ ] Product group schema/UI/filter (`product_groups`, `products.product_group_id`) trong formula MVP đầu.
 
 ## Lệnh thường dùng
 

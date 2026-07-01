@@ -18,9 +18,12 @@
 | `email` | Nullable |
 | `address` | Nullable |
 | `tax_code` | Nullable, text nội bộ |
+| `linked_customer_id` | Nullable FK `customers.id`; dùng khi NCC cũng là khách hàng |
 | `notes` | Nullable |
 | `status` | `active`, `inactive` |
 | `created_at`, `updated_at` | Audit |
+
+`linked_customer_id` không được tự suy luận cứng theo số điện thoại. Người dùng hoặc migration chỉ gắn khi chắc chắn cùng một đối tác.
 
 ### `purchase_receipts`
 

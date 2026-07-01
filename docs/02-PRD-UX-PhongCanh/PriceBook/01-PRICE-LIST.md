@@ -253,18 +253,21 @@ Người dùng có thể lọc sản phẩm rồi bấm `Tạo công thức cho 
 
 | Điều kiện | Khuyến nghị |
 |---|---|
-| Nhóm hàng | Điều kiện chính |
-| Tên hàng chứa từ khóa | Điều kiện phụ, dùng để lọc nhanh theo cách nhân viên quen tìm |
-| Mã hàng chứa từ khóa | Điều kiện phụ, dùng khi mã hàng đã có quy ước rõ |
-| Đơn vị/cách bán | Điều kiện phụ |
+| Tên hàng chứa từ khóa | Điều kiện chính trong slice đầu vì code hiện đã có `name` |
+| Mã hàng chứa từ khóa | Điều kiện chính/phụ trong slice đầu vì code hiện đã có `code` |
+| Đơn vị/cách bán | Điều kiện phụ trong slice đầu, dùng `sell_method` hiện có |
+| Trạng thái hàng | Slice đầu chỉ áp dụng mặc định cho hàng active |
+| Nhóm hàng | Future sau khi có schema `product_groups`/`products.product_group_id` |
 
-Không nên gán công thức chỉ bằng tên hoặc mã nếu có thể gắn nhóm hàng. Ví dụ lọc tên chứa `fom 5mm` dùng được, nhưng nên kết hợp với nhóm hàng `Fomex` để tránh bắt nhầm sản phẩm.
+Trong PriceBook formula MVP đầu tiên, chưa implement product group schema/UI/filter để tránh mở rộng scope. Backend nên reject `group_id` nếu client gửi lên, hoặc bỏ qua trường này nếu đang đọc dữ liệu cũ. Khi có module nhóm hàng chuẩn, `Nhóm hàng` sẽ trở lại là điều kiện chính.
+
+Vì chưa có nhóm hàng, người dùng nên đặt filter đủ hẹp bằng `Tên chứa`, `Mã chứa`, `sell_method` và chỉ áp dụng sau khi xem preview. Ví dụ `Tên chứa: Fomex`, `Mã chứa: F5`, `sell_method: sheet`.
 
 Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
 
 1. Công thức gắn trực tiếp cho sản phẩm.
-2. Công thức theo nhóm hàng + điều kiện phụ.
-3. Công thức mặc định của nhóm hàng.
+2. Công thức có nhiều điều kiện cụ thể hơn: mã + tên + cách bán.
+3. Công thức có ít điều kiện hơn: chỉ tên hoặc chỉ mã.
 4. Không có công thức thì giữ giá đã lưu/nhập tay.
 
 ### Nguồn `giá nhập cuối`
@@ -272,6 +275,8 @@ Quy tắc ưu tiên nếu nhiều công thức cùng khớp một sản phẩm:
 Trong phase PriceBook formula đầu tiên, `giá nhập cuối` là snapshot trên sản phẩm, lấy từ dữ liệu import/KiotViet hoặc cập nhật thủ công có kiểm soát trong màn Hàng hóa/PriceBook admin. Đây là `latest_purchase_cost`, không phải giá vốn kế toán.
 
 Khi module Purchase receipt hoàn chỉnh, phiếu nhập `posted` sẽ là nguồn chính cập nhật `latest_purchase_cost`. Nếu sản phẩm chưa có `latest_purchase_cost`, công thức tính với giá nhập cuối `0` và không cần cảnh báo/block.
+
+PriceBook formula MVP cần cho phép Owner/admin nhập hoặc sửa `latest_purchase_cost` thủ công trên Product admin/API, dùng `perm.edit_price_book` và audit metadata tối thiểu. Nếu không có field này, công thức trước Purchase sẽ gần như luôn ra `0`, không đủ dùng.
 
 Không dùng dữ liệu mock trong production. Nếu cần dữ liệu tạm để thử formula, dùng import hoặc thao tác admin cập nhật `latest_purchase_cost` rõ ràng.
 
@@ -281,7 +286,8 @@ PriceBook formula MVP phải lưu công thức có cấu trúc, không chỉ tí
 
 Tối thiểu cần lưu:
 
-- điều kiện lọc sản phẩm: nhóm hàng, tên chứa, mã chứa, đơn vị/cách bán nếu có
+- điều kiện lọc sản phẩm slice đầu: tên chứa, mã chứa, đơn vị/cách bán, trạng thái active
+- nhóm hàng là future sau khi có schema product group
 - cấu hình `Chi phí`
 - cấu hình `Lợi nhuận`
 - điều chỉnh theo từng `price_list_id`

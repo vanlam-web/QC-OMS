@@ -50,6 +50,7 @@ Quy tắc:
 - Nếu có SĐT, phải chuẩn hóa và không trùng khách khác.
 - Khi đổi nhóm khách, lần bán sau dùng bảng giá của nhóm mới.
 - Nếu khách đang mở ở POS, POS sẽ cập nhật giá tự động cho các dòng chưa sửa giá thủ công sau khi hồ sơ được lưu và đồng bộ.
+- Nếu khách hàng này cũng là nhà cung cấp, hiển thị liên kết tới hồ sơ NCC tương ứng để đối soát hai chiều. MVP cho liên kết thủ công, không tự gộp theo số điện thoại/tên.
 
 ---
 

@@ -16,6 +16,13 @@ QC-OMS tham khảo KiotViet nhưng đơn giản hơn:
 
 Mục tiêu thao tác là nhập đúng hàng thật mua vào, đặc biệt là cuộn/tấm vật lý.
 
+Ghi nhận từ KiotViet:
+
+- `Nhà cung cấp` có tìm theo mã/tên/số điện thoại, cột mã NCC, tên, điện thoại, email, nợ hiện tại, tổng mua.
+- `Nhập hàng` có danh sách phiếu theo mã phiếu, thời gian, mã NCC, nhà cung cấp, cần trả NCC, trạng thái.
+- Form nhập hàng có tìm hàng theo mã/tên, chọn/tạo nhanh NCC, mã phiếu tự động, số hóa đơn/chứng từ đầu vào dạng text, dòng hàng gồm số lượng, đơn giá, giảm giá, thành tiền.
+- QC-OMS giữ các phần này, nhưng bỏ đặt hàng nhập, trả hàng nhập, VAT/HĐĐT và hiệu lực phức tạp trong lát cắt đầu.
+
 ---
 
 ## 2. Danh sách nhà cung cấp
@@ -25,7 +32,7 @@ Mục tiêu thao tác là nhập đúng hàng thật mua vào, đặc biệt là
 - tìm theo mã, tên, số điện thoại
 - trạng thái: tất cả/đang hoạt động/ngừng hoạt động
 - nợ hiện tại: khoảng từ/tới
-- tổng mua: khoảng từ/tới
+- tổng mua: khoảng từ/tới và khoảng thời gian nếu cần
 
 ### Cột mặc định
 
@@ -34,11 +41,14 @@ Mục tiêu thao tác là nhập đúng hàng thật mua vào, đặc biệt là
 | Mã NCC | Click mở chi tiết |
 | Tên NCC | Bắt buộc |
 | Điện thoại | Có thể trống |
+| Email | Có thể trống |
 | Nợ cần trả hiện tại | Tổng hợp từ công nợ NCC |
 | Tổng mua | Tổng phiếu nhập posted |
 | Trạng thái | Active/inactive |
 
 Không cần nhóm NCC ở lát cắt đầu tiên nếu chưa có nghiệp vụ phân nhóm rõ.
+
+Nếu `Nợ cần trả hiện tại < 0`, UI không mặc định hiểu là trả trước NCC. Trong nghiệp vụ QC-OMS, NCC có thể đồng thời là khách hàng; số âm là tín hiệu cần đối soát với hồ sơ khách hàng liên kết.
 
 ---
 
@@ -54,6 +64,8 @@ Tab tối thiểu:
 
 Không có tab hóa đơn điện tử/thuế.
 
+Nếu NCC cũng là khách hàng, tab Thông tin hiển thị liên kết tới hồ sơ khách hàng tương ứng. MVP chỉ cần liên kết thủ công/chọn khách hàng có sẵn; không bắt buộc tự động gộp theo số điện thoại.
+
 ---
 
 ## 4. Danh sách phiếu nhập
@@ -64,6 +76,8 @@ Không có tab hóa đơn điện tử/thuế.
 - thời gian nhập
 - trạng thái: phiếu tạm, đã nhập, đã hủy
 - người nhập/người tạo
+
+Nếu người dùng nhập đúng mã phiếu như `PN000673`, kết quả tìm kiếm phải ưu tiên tìm chính xác và không bị mất do bộ lọc tháng hiện tại.
 
 ### Cột mặc định
 
@@ -99,6 +113,7 @@ Không có tab hóa đơn điện tử/thuế.
 - đơn vị mua
 - số lượng
 - đơn giá
+- giảm giá dòng nếu có
 - thành tiền
 
 ### Dòng hàng cuộn
@@ -137,6 +152,8 @@ Form hiển thị:
 
 MVP ưu tiên một phương thức thanh toán cho một lần trả để thao tác gọn.
 
+Nếu thao tác trả NCC làm số dư âm, hệ thống không mở workflow trả trước riêng trong MVP. UI hiển thị số âm để đối soát, và nếu NCC có liên kết khách hàng thì nhân viên có thể kiểm tra khoản khách còn nợ ở hồ sơ khách hàng.
+
 ---
 
 ## 7. Hành động
@@ -144,7 +161,7 @@ MVP ưu tiên một phương thức thanh toán cho một lần trả để thao
 | Hành động | Quy tắc |
 |---|---|
 | Lưu tạm | Tạo draft, chưa tăng tồn/công nợ/sổ quỹ |
-| Hoàn thành/Nhập hàng | Posted, tăng tồn và ghi công nợ/sổ quỹ |
+| Hoàn thành/Nhập hàng | Posted, tăng tồn, cập nhật `giá nhập cuối`, ghi công nợ/sổ quỹ |
 | Hủy | Với phiếu posted phải dùng bút toán đảo/an toàn, không xóa vật lý |
 | Sửa phiếu posted | Future hoặc dùng quy tắc sửa chứng từ `MaCu.01`; không sửa phá dữ liệu |
 
@@ -160,4 +177,3 @@ Không hiển thị menu/chức năng trong lát cắt đầu tiên:
 - trả hàng nhập
 - hóa đơn đầu vào điện tử
 - báo cáo NCC nâng cao
-

@@ -21,9 +21,20 @@
 | `POST` | `/v1/purchase/receipts/{id}/cancel` | Hủy phiếu |
 | `POST` | `/v1/suppliers/{id}/payments` | Trả tiền NCC |
 
+## 2. Supplier/customer link
+
+Hồ sơ NCC có thể liên kết tới khách hàng khi cùng một đối tác vừa mua vừa bán với xưởng.
+
+Quy tắc API:
+
+- `POST/PATCH /v1/suppliers` nhận tùy chọn `linked_customer_id`.
+- `linked_customer_id` phải thuộc cùng organization nếu có.
+- Backend không tự gộp NCC và khách hàng theo số điện thoại/tên.
+- Nếu công nợ NCC âm, API giữ số âm và trả thêm thông tin khách hàng liên kết nếu có để UI đối soát; không tự chuyển thành trả trước NCC.
+
 ---
 
-## 2. Transaction khi post phiếu nhập
+## 3. Transaction khi post phiếu nhập
 
 `POST /v1/purchase/receipts/{id}/post` phải chạy trong transaction:
 
@@ -41,7 +52,7 @@ Nếu bất kỳ bước nào lỗi, rollback toàn bộ.
 
 ---
 
-## 3. Search và filter
+## 4. Search và filter
 
 Danh sách phiếu nhập cần hỗ trợ:
 
@@ -55,11 +66,10 @@ Nếu search exact mã phiếu, backend nên bỏ qua/widen date filter mặc đ
 
 ---
 
-## 4. Không làm trong API đầu tiên
+## 5. Không làm trong API đầu tiên
 
 - đặt hàng nhập
 - trả hàng nhập
 - tích hợp hóa đơn điện tử/thuế
 - nhiều phương thức thanh toán trong một lần trả NCC
 - báo cáo NCC nâng cao
-

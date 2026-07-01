@@ -212,7 +212,7 @@ Lưu công thức PriceBook có cấu trúc để các ô giá theo công thức
 | `id` | `uuid` | ❌ | Khóa chính |
 | `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
 | `name` | `text` | ❌ | Tên dễ hiểu, ví dụ `Fomex 5mm` |
-| `product_filter` | `jsonb` | ❌ | Điều kiện lọc: nhóm hàng, tên chứa, mã chứa, sell_method/unit nếu có |
+| `product_filter` | `jsonb` | ❌ | Điều kiện lọc slice đầu: tên chứa, mã chứa, sell_method/unit, status active; nhóm hàng để future |
 | `cost_formula` | `jsonb` | ❌ | Cấu hình `Chi phí`: fixed amount hoặc amount + percent |
 | `profit_formula` | `jsonb` | ❌ | Cấu hình `Lợi nhuận`: fixed amount hoặc tiers theo `latest_purchase_cost` |
 | `price_list_adjustments` | `jsonb` | ❌ | Điều chỉnh theo từng `price_list_id`: +/- amount hoặc +/- percent |
@@ -226,6 +226,7 @@ Lưu công thức PriceBook có cấu trúc để các ô giá theo công thức
 
 - Không lưu công thức dạng text tự do.
 - Backend phải validate structured JSON trước khi lưu.
+- `product_filter` slice đầu không hỗ trợ `group_id` vì chưa có `product_groups/products.product_group_id`.
 - `price_list_adjustments` tham chiếu các bảng giá cùng organization.
 - Tiers lợi nhuận được evaluate theo thứ tự; backend chặn overlap rõ ràng, gap được phép và lợi nhuận mặc định `0` nếu không có tier khớp.
 - Giá cuối làm tròn lên `1,000đ`; backend phải có test cho rule rounding.
@@ -249,8 +250,9 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 | `status` | `text` | ❌ | `active` hoặc `inactive` |
 | `unit_name` | `text` | ❌ | Tên đơn vị hiển thị, ví dụ `m²`, `m`, `cái`, `bộ` |
 | `sell_method` | `text` | ❌ | Cách tính bán: `quantity`, `area_m2`, `linear_m`, `sheet`, `combo` |
-| `latest_purchase_cost` | `numeric(12,0)` | ✅ | Giá nhập cuối dùng cho PriceBook formula; không phải giá vốn kế toán |
+| `latest_purchase_cost` | `numeric(12,0)` | ✅ | Giá nhập cuối dùng cho PriceBook formula; không phải giá vốn kế toán; cho phép admin cập nhật tạm trước Purchase |
 | `latest_purchase_cost_at` | `timestamptz` | ✅ | Thời điểm nguồn giá nhập cuối được cập nhật |
+| `latest_purchase_cost_updated_by` | `uuid` | ✅ | User cập nhật thủ công/import gần nhất nếu có |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
 
@@ -275,7 +277,7 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 - `sell_method = 'linear_m'` dùng cho sản phẩm bán theo mét tới; `unit_price` trong `price_list_items` là giá cho `1 m tới`.
 - `Cuộn` không phải đơn vị bán trực tiếp trên POS Phase 1.
 - Quản lý tồn theo cuộn/tấm/lot thuộc Inventory, không nằm trong bảng này.
-- Trước khi Purchase receipt hoàn chỉnh, `latest_purchase_cost` có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát. Khi Purchase receipt `posted` đã có, receipt là nguồn chính cập nhật trường này.
+- Trước khi Purchase receipt hoàn chỉnh, `latest_purchase_cost` có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát qua Product admin/API. Khi Purchase receipt `posted` đã có, receipt là nguồn chính cập nhật trường này.
 
 ---
 

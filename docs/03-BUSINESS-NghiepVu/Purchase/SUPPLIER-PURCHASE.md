@@ -28,10 +28,13 @@ Thông tin tối thiểu:
 | Email | Không bắt buộc |
 | Địa chỉ | Không bắt buộc |
 | Mã số thuế | Không bắt buộc; chỉ lưu nội bộ, không mở luồng thuế/HĐĐT |
+| Khách hàng liên kết | Không bắt buộc; dùng khi cùng một đối tác vừa là NCC vừa là khách hàng |
 | Ghi chú | Không bắt buộc |
 | Trạng thái | `active`, `inactive` |
 
 Số điện thoại NCC không chốt unique trong MVP. Nếu sau này cần chống trùng NCC, hệ thống nên cảnh báo mềm thay vì chặn cứng.
+
+NCC và khách hàng là hai vai trò nghiệp vụ khác nhau nhưng có thể liên kết cùng một đối tác. MVP không tự gộp hồ sơ theo số điện thoại/tên để tránh sai dữ liệu; người dùng chọn liên kết thủ công khi biết chắc đó là cùng một bên.
 
 ### BR-PUR-02: Tổng mua và công nợ NCC
 
@@ -45,6 +48,8 @@ Danh sách NCC cần hiển thị tối thiểu:
 - trạng thái
 
 `Nợ cần trả hiện tại` và `Tổng mua` là số tổng hợp từ phiếu nhập, phiếu chi/trả NCC và các điều chỉnh hợp lệ; không nhập tay trực tiếp trên hồ sơ NCC.
+
+Nếu `Nợ cần trả hiện tại < 0`, không mặc định hiểu là NCC được trả trước. Với QC-OMS, trường hợp thường gặp là đối tác đó cũng là khách hàng và còn khoản phải thu ở phía khách hàng. UI/API cần giữ số âm để đối soát và hiển thị liên kết khách hàng nếu có, nhưng không mở workflow trả trước NCC riêng trong MVP.
 
 ---
 
