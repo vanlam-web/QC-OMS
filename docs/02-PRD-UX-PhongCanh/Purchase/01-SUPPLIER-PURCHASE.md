@@ -233,3 +233,37 @@ P2 đủ nhỏ nếu chỉ làm hàng thường:
 Chưa post tồn/kế toán nếu P3 chưa làm. Draft chỉ là dữ liệu nháp server.
 
 P2 dùng kho mặc định. Quy tắc có cho sửa mã `PN...` khi draft hay không cần tham khảo KiotViet trước khi chốt.
+
+### 9.3. Supplier payment P5 implement-ready sau KiotViet audit
+
+P5 là hướng ưu tiên sau P3, nhưng cần Spec tham khảo KiotViet trước khi handoff về mã chứng từ và vị trí UI.
+
+Quyết định Owner đã chốt:
+
+- trả tiền NCC sau phiếu nhập bằng cách chọn phiếu nhập cụ thể
+- cho trả một phần
+- không cho trả thừa trong P5
+- một lần trả dùng tiền mặt hoặc chuyển khoản
+- nếu chuyển khoản, chọn một tài khoản ngân hàng từ danh sách tài khoản đang có
+
+P5 không làm:
+
+- trả nhiều tài khoản trong một lần
+- tự phân bổ cứng vào phiếu nợ cũ nhất
+- tự cấn trừ với khách hàng liên kết
+- workflow trả trước NCC
+
+Spec cần tham khảo KiotViet trước handoff:
+
+- mã chứng từ/phiếu chi trả NCC
+- thao tác trả NCC nằm ở chi tiết NCC, chi tiết phiếu nhập, hay cả hai
+
+### 9.4. Roll/sheet purchase P4 chốt nền
+
+P4 chưa handoff cho tới khi Spec làm rõ object/lot model, nhưng Owner đã chốt nền:
+
+- cuộn hỗ trợ cả nhiều cuộn cùng thông số và từng cuộn khác chiều dài
+- không cần mã từng cuộn rườm rà trong MVP
+- tấm chủ yếu nhập cùng kích thước nhiều tấm; sau này có thể phát sinh vật tư khác kích thước
+- không cần mã từng tấm
+- giá mua tấm thường theo tấm
