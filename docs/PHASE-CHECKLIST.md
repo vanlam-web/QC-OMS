@@ -633,8 +633,8 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
      - P1 supplier list/detail + linked customer: ✅ merged PR #23
      - P2 purchase receipt draft/list/detail cho hàng thường: ✅ merged PR #24
      - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`: ✅ merged PR #26
+     - P5 supplier payments sau phiếu nhập: ✅ merged PR #30
      - P4 roll/sheet purchase objects sau khi Inventory object model đủ rõ
-     - P5 supplier payments sau phiếu nhập
    - Cần implement đánh giá kỹ vì chạm Inventory/Finance nhiều hơn Phase 3B.
 
 3. **Supplier/customer link**

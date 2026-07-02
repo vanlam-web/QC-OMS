@@ -254,14 +254,15 @@ Hai luong khong tu quyet neu gap mot trong cac truong hop:
 
 ## 5. Trang thai va queue hien tai
 
-Trang thai sau PR #26:
+Trang thai sau PR #30:
 
 - Da merge P1 Supplier foundation: PR #23, merge commit `ad19559`.
 - Da merge P2 Purchase receipt draft/list/detail: PR #24, merge commit `0239061`.
 - Da merge P3 Post purchase receipt normal items: PR #26, merge commit `2c87a6e`.
-- Slice tiep theo Owner da chon: P5 Supplier payable/payment foundation.
 - Da merge Owner P5/P4 decision docs: PR #28, merge commit `0516a52`.
 - Da tham khao KiotViet cho P5 ngay 2026-07-02: thanh toan NCC dung ma dang `PCPN...`, chi tiet phieu nhap co `Lich su thanh toan`, chi tiet NCC tab `No can tra nha cung cap` co action `Thanh toan`.
+- Da merge P5 Supplier payments: PR #30, merge commit `afba242`.
+- Slice tiep theo: P4 Roll/sheet purchase objects, nhung Spec phai doc Inventory object/lot model hien co truoc khi handoff.
 
 Queue Purchase/Supplier uu tien:
 
@@ -290,7 +291,7 @@ Queue Purchase/Supplier uu tien:
    - Neu tra ngay, tao phieu chi/so quy trong transaction post.
    - Chuyen khoan uu tien STK/tai khoan ngan hang dung gan nhat, co lua chon tai khoan mac dinh hoac tai khoan khac.
 
-3. **P5 Supplier payable/payment foundation** — next after KiotViet audit
+3. **P5 Supplier payable/payment foundation** — done, merged PR #30
    - Tra tien NCC sau phieu nhap.
    - Nguoi dung chon phieu nhap cu the de tra.
    - Cho tra mot phan.
@@ -301,7 +302,7 @@ Queue Purchase/Supplier uu tien:
    - UI co duong tra tu chi tiet NCC va chi tiet phieu nhap posted con no; ca hai mo cung mot form tra NCC bat buoc chon phieu nhap cu the.
    - Chi tiet phieu nhap posted co lich su thanh toan NCC toi thieu.
 
-4. **P4 Roll/sheet purchase objects** — needs Owner/Spec detail before handoff
+4. **P4 Roll/sheet purchase objects** — next, needs Spec object/lot audit before handoff
    - Nhap cuon/tam theo vat ly.
    - Can chot form nhap, object/lot model, cach phan bo gia von.
    - Da chot nen: cuon ho tro cung thong so va khac chieu dai; khong can ma tung cuon ruom ra.
