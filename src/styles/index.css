@@ -853,6 +853,112 @@ select {
   color: #4b5563;
 }
 
+.suppliers-shell {
+  min-height: 100vh;
+  background: #f6f7f9;
+  padding: 1rem;
+}
+
+.suppliers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.suppliers-header h1,
+.suppliers-header p {
+  margin: 0;
+}
+
+.suppliers-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.suppliers-panel {
+  border: 1px solid #d9dee7;
+  border-radius: 0.5rem;
+  background: white;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.suppliers-filter {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(10rem, auto) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.supplier-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.supplier-form header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.supplier-form h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.suppliers-filter label,
+.supplier-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.suppliers-filter input,
+.suppliers-filter select,
+.supplier-form input,
+.supplier-form select,
+.supplier-form textarea {
+  min-height: 2.25rem;
+  border: 1px solid #c9d1dd;
+  border-radius: 0.375rem;
+  padding: 0 0.5rem;
+}
+
+.supplier-form textarea {
+  min-height: 4.5rem;
+  padding: 0.5rem;
+  resize: vertical;
+}
+
+.suppliers-header button,
+.suppliers-panel button {
+  min-height: 2.25rem;
+  border: 1px solid #1f2937;
+  border-radius: 0.375rem;
+  background: #1f2937;
+  color: white;
+  padding: 0 0.75rem;
+}
+
+.suppliers-panel table {
+  width: 100%;
+  min-width: 58rem;
+  border-collapse: collapse;
+}
+
+.suppliers-panel th,
+.suppliers-panel td {
+  border-bottom: 1px solid #edf0f4;
+  padding: 0.625rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
 @media print {
   body {
     background: white;

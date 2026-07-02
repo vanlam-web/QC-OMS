@@ -252,7 +252,7 @@ export async function listCustomers(
   context: CatalogContext,
   url: URL,
 ): Promise<CustomerListResponse> {
-  requireAnyPermission(context, ["perm.create_order"]);
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
   const { search, page, pageSize } = parseCustomerList(url);
   const result = await repository.listCustomers({
     organizationId: context.organizationId,

@@ -76,6 +76,22 @@ export interface CustomerData {
   customer_group: { id: string; code: string; name: string } | null;
 }
 
+export interface SupplierData {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  tax_code: string | null;
+  linked_customer_id: string | null;
+  linked_customer: { id: string; code: string; name: string } | null;
+  notes: string | null;
+  status: "active" | "inactive";
+  current_payable_amount: number;
+  total_purchase_amount: number;
+}
+
 export interface ResolvedPriceData {
   product_id: string;
   unit_price: number;
@@ -560,6 +576,42 @@ export interface FoundationRepository {
     page: number;
     pageSize: number;
   }): Promise<{ items: CustomerData[]; total: number }>;
+  listSuppliers(input: {
+    organizationId: string;
+    search?: string;
+    status: "active" | "inactive" | "all";
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: SupplierData[]; total: number }>;
+  getSupplier(input: {
+    organizationId: string;
+    id: string;
+  }): Promise<SupplierData | null>;
+  createSupplier(input: {
+    organizationId: string;
+    code?: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    taxCode?: string;
+    linkedCustomerId?: string | null;
+    notes?: string;
+    status?: "active" | "inactive";
+  }): Promise<SupplierData>;
+  updateSupplier(input: {
+    organizationId: string;
+    id: string;
+    code?: string;
+    name?: string;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+    taxCode?: string | null;
+    linkedCustomerId?: string | null;
+    notes?: string | null;
+    status?: "active" | "inactive";
+  }): Promise<SupplierData | null>;
   createCustomer(input: {
     organizationId: string;
     code?: string;
