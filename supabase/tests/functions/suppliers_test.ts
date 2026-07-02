@@ -209,3 +209,112 @@ Deno.test("supplier routes surface missing linked customer as validation error",
   const body = await response.json() as { error: { code: string } };
   assertEquals(body.error.code, "VALIDATION_ERROR");
 });
+
+Deno.test("supplier payable receipts route returns selected-payment candidates", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.manage_inventory"], {
+    listSupplierPayableReceipts: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({
+        items: [
+          {
+            id: "receipt-1",
+            code: "PN000673",
+            supplier_document_no: "HD-NCC-001",
+            received_at: "2026-07-02T03:00:00.000Z",
+            payable_amount: 300000,
+            paid_amount: 0,
+            remaining_amount: 300000,
+            paid_after_post_amount: 50000,
+            outstanding_amount: 250000,
+          },
+        ],
+      });
+    },
+  });
+
+  const response = await call("/api/v1/suppliers/supplier-1/payable-receipts", { method: "GET" }, repository);
+
+  assertEquals(response.status, 200);
+  assertEquals(captured, { organizationId, supplierId: "supplier-1" });
+  const body = await data(response) as { items: Array<{ code: string; outstanding_amount: number }> };
+  assertEquals(body.items[0].code, "PN000673");
+  assertEquals(body.items[0].outstanding_amount, 250000);
+});
+
+Deno.test("supplier payment route maps explicit receipt allocations", async () => {
+  let captured: Record<string, unknown> = {};
+  const repository = repo(["perm.manage_inventory"], {
+    paySupplier: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({
+        supplier_payment_id: "payment-1",
+        code: "PCPN000001",
+        amount: 250000,
+        cashbook_voucher_id: "voucher-1",
+      });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/suppliers/supplier-1/payments",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        payment_method: "bank_transfer",
+        finance_account_id: "account-1",
+        paid_at: "2026-07-02T14:00:00+07:00",
+        note: "Thanh toán NCC",
+        allocations: [
+          { purchase_receipt_id: "receipt-1", amount: 150000 },
+          { purchase_receipt_id: "receipt-2", amount: 100000 },
+        ],
+      }),
+    },
+    repository,
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(captured.organizationId, organizationId);
+  assertEquals(captured.actorUserId, actorId);
+  assertEquals(captured.supplierId, "supplier-1");
+  assertEquals(captured.paymentMethod, "bank_transfer");
+  assertEquals(captured.financeAccountId, "account-1");
+  assertEquals(captured.paidAt, "2026-07-02T14:00:00+07:00");
+  assertEquals(captured.note, "Thanh toán NCC");
+  assertEquals(captured.allocations, [
+    { purchaseReceiptId: "receipt-1", amount: 150000 },
+    { purchaseReceiptId: "receipt-2", amount: 100000 },
+  ]);
+  assertEquals(await data(response), {
+    supplier_payment_id: "payment-1",
+    code: "PCPN000001",
+    amount: 250000,
+    cashbook_voucher_id: "voucher-1",
+  });
+});
+
+Deno.test("supplier payment route rejects duplicate selected receipts before repository call", async () => {
+  const response = await call(
+    "/api/v1/suppliers/supplier-1/payments",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        payment_method: "cash",
+        allocations: [
+          { purchase_receipt_id: "receipt-1", amount: 10000 },
+          { purchase_receipt_id: "receipt-1", amount: 20000 },
+        ],
+      }),
+    },
+    repo(["perm.manage_inventory"], {
+      paySupplier: () => {
+        throw new Error("repository should not be called for duplicate receipt allocations");
+      },
+    }),
+  );
+
+  assertEquals(response.status, 400);
+  const body = await response.json() as { error: { code: string } };
+  assertEquals(body.error.code, "VALIDATION_ERROR");
+});

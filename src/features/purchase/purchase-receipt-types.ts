@@ -26,6 +26,16 @@ export interface PurchaseReceiptItem {
   line_amount: number
 }
 
+export interface PurchaseReceiptSupplierPayment {
+  id: string
+  code: string
+  paid_at: string
+  created_by: string
+  payment_method: 'cash' | 'bank_transfer'
+  status: 'posted' | 'cancelled'
+  amount: number
+}
+
 export interface PurchaseReceipt {
   id: string
   code: string
@@ -44,6 +54,7 @@ export interface PurchaseReceipt {
   created_at: string
   updated_at: string
   items: PurchaseReceiptItem[]
+  supplier_payments: PurchaseReceiptSupplierPayment[]
 }
 
 export interface PurchaseReceiptListResponse {
@@ -90,6 +101,20 @@ export interface PurchaseReceiptPostResult {
   status: 'posted'
   posted_at: string
   cashbook_voucher_id: string | null
+}
+
+export interface PurchaseReceiptSupplierPaymentInput {
+  payment_method: 'cash' | 'bank_transfer'
+  finance_account_id?: string
+  note?: string
+  allocations: Array<{ purchase_receipt_id: string; amount: number }>
+}
+
+export interface PurchaseReceiptSupplierPaymentResult {
+  supplier_payment_id: string
+  code: string
+  amount: number
+  cashbook_voucher_id: string
 }
 
 export interface PurchaseReceiptInputItem {

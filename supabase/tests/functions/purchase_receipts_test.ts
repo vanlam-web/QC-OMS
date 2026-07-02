@@ -61,6 +61,7 @@ const receipt: PurchaseReceiptData = {
       line_amount: 190000,
     },
   ],
+  supplier_payments: [],
 };
 
 function repo(
@@ -244,6 +245,45 @@ Deno.test("purchase receipt detail returns draft lines", async () => {
   assertEquals(response.status, 200);
   const body = await data(response) as PurchaseReceiptData;
   assertEquals(body.items[0].line_amount, 190000);
+});
+
+Deno.test("posted purchase receipt detail includes supplier payment history", async () => {
+  const postedReceipt = {
+    ...receipt,
+    status: "posted",
+    supplier_payments: [
+      {
+        id: "payment-1",
+        code: "PCPN000001",
+        paid_at: "2026-07-02T07:00:00.000Z",
+        created_by: actorId,
+        payment_method: "cash",
+        status: "posted",
+        amount: 50000,
+      },
+    ],
+  } as unknown as PurchaseReceiptData;
+  const response = await call(
+    "/api/v1/purchase/receipts/receipt-1",
+    { method: "GET" },
+    repo(["perm.manage_inventory"], {
+      getPurchaseReceipt: () => Promise.resolve(postedReceipt),
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  const body = await data(response) as PurchaseReceiptData & {
+    supplier_payments: Array<{ code: string; amount: number }>;
+  };
+  assertEquals(body.supplier_payments[0], {
+    id: "payment-1",
+    code: "PCPN000001",
+    paid_at: "2026-07-02T07:00:00.000Z",
+    created_by: actorId,
+    payment_method: "cash",
+    status: "posted",
+    amount: 50000,
+  });
 });
 
 Deno.test("purchase receipt routes reject duplicate products before repository call", async () => {

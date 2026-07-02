@@ -105,6 +105,16 @@ export interface PurchaseReceiptItemData {
   line_amount: number;
 }
 
+export interface SupplierPaymentHistoryData {
+  id: string;
+  code: string;
+  paid_at: string;
+  created_by: string;
+  payment_method: "cash" | "bank_transfer";
+  status: "posted" | "cancelled";
+  amount: number;
+}
+
 export interface PurchaseReceiptData {
   id: string;
   code: string;
@@ -123,6 +133,7 @@ export interface PurchaseReceiptData {
   created_at: string;
   updated_at: string;
   items: PurchaseReceiptItemData[];
+  supplier_payments: SupplierPaymentHistoryData[];
 }
 
 export interface PurchaseReceiptPostResult {
@@ -130,6 +141,25 @@ export interface PurchaseReceiptPostResult {
   status: "posted";
   posted_at: string;
   cashbook_voucher_id: string | null;
+}
+
+export interface SupplierPayableReceiptData {
+  id: string;
+  code: string;
+  supplier_document_no: string | null;
+  received_at: string;
+  payable_amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+  paid_after_post_amount: number;
+  outstanding_amount: number;
+}
+
+export interface SupplierPaymentResultData {
+  supplier_payment_id: string;
+  code: string;
+  amount: number;
+  cashbook_voucher_id: string;
 }
 
 export interface ResolvedPriceData {
@@ -652,6 +682,20 @@ export interface FoundationRepository {
     notes?: string | null;
     status?: "active" | "inactive";
   }): Promise<SupplierData | null>;
+  listSupplierPayableReceipts(input: {
+    organizationId: string;
+    supplierId: string;
+  }): Promise<{ items: SupplierPayableReceiptData[] }>;
+  paySupplier(input: {
+    organizationId: string;
+    actorUserId: string;
+    supplierId: string;
+    paymentMethod: "cash" | "bank_transfer";
+    financeAccountId?: string;
+    paidAt?: string;
+    note?: string;
+    allocations: Array<{ purchaseReceiptId: string; amount: number }>;
+  }): Promise<SupplierPaymentResultData>;
   listPurchaseReceipts(input: {
     organizationId: string;
     search?: string;

@@ -7,8 +7,10 @@ import {
   createSupplier,
   getPurchaseReceipt,
   getSupplier,
+  listSupplierPayableReceipts,
   listPurchaseReceipts,
   listSuppliers,
+  paySupplier,
   postPurchaseReceipt,
   updatePurchaseReceipt,
   updateSupplier,
@@ -95,6 +97,29 @@ export async function handlePurchase(
     if (request.method === "POST") {
       return successResponse(
         await createSupplier(dependencies.repository, context, await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Method not allowed." });
+  }
+
+  const supplierPayableReceiptsMatch = url.pathname.match(/^\/api\/v1\/suppliers\/([^/]+)\/payable-receipts$/);
+  if (supplierPayableReceiptsMatch !== null) {
+    if (request.method === "GET") {
+      return successResponse(
+        await listSupplierPayableReceipts(dependencies.repository, context, supplierPayableReceiptsMatch[1]),
+        traceId,
+      );
+    }
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Method not allowed." });
+  }
+
+  const supplierPaymentsMatch = url.pathname.match(/^\/api\/v1\/suppliers\/([^/]+)\/payments$/);
+  if (supplierPaymentsMatch !== null) {
+    if (request.method === "POST") {
+      return successResponse(
+        await paySupplier(dependencies.repository, context, supplierPaymentsMatch[1], await request.json()),
         traceId,
         { status: 201 },
       );

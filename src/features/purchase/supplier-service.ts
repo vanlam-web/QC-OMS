@@ -1,6 +1,15 @@
 import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
-import type { Supplier, SupplierCustomerListResponse, SupplierListResponse, SupplierStatus } from './types'
+import type {
+  Supplier,
+  SupplierCustomerListResponse,
+  SupplierFinanceAccountListResponse,
+  SupplierListResponse,
+  SupplierPayableReceiptListResponse,
+  SupplierPaymentInput,
+  SupplierPaymentResult,
+  SupplierStatus,
+} from './types'
 
 export interface SupplierApiRequester {
   request<T>(path: string, init?: RequestInit): Promise<T>
@@ -44,6 +53,14 @@ export function createSupplierService(api: SupplierApiRequester) {
       const query = params.toString()
       return api.request<SupplierCustomerListResponse>(`/api/v1/customers${query ? `?${query}` : ''}`)
     },
+    listPayableReceipts: (supplierId: string) =>
+      api.request<SupplierPayableReceiptListResponse>(`/api/v1/suppliers/${supplierId}/payable-receipts`),
+    listFinanceAccounts: () => api.request<SupplierFinanceAccountListResponse>('/api/v1/finance/accounts?is_active=true'),
+    paySupplier: (supplierId: string, input: SupplierPaymentInput) =>
+      api.request<SupplierPaymentResult>(`/api/v1/suppliers/${supplierId}/payments`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
   }
 }
 

@@ -895,6 +895,64 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       const [supplier] = await attachSupplierPurchaseTotals(client, input.organizationId, [toSupplierData(data)]);
       return supplier;
     },
+    async listSupplierPayableReceipts(input) {
+      const { data, error } = await client
+        .from("purchase_receipts")
+        .select("id, code, supplier_document_no, received_at, payable_amount, paid_amount, remaining_amount")
+        .eq("organization_id", input.organizationId)
+        .eq("supplier_id", input.supplierId)
+        .eq("status", "posted")
+        .order("received_at", { ascending: false });
+      if (error !== null) throw error;
+
+      const receiptIds = (data ?? []).map((row) => row.id);
+      const paidByReceipt = await supplierPaymentAllocatedByReceipt(client, input.organizationId, receiptIds);
+      return {
+        items: (data ?? []).flatMap((row) => {
+          const paidAfterPost = paidByReceipt.get(row.id) ?? 0;
+          const outstanding = Number(row.remaining_amount) - paidAfterPost;
+          if (outstanding <= 0) return [];
+          return [{
+            id: row.id,
+            code: row.code,
+            supplier_document_no: row.supplier_document_no,
+            received_at: row.received_at,
+            payable_amount: Number(row.payable_amount),
+            paid_amount: Number(row.paid_amount),
+            remaining_amount: Number(row.remaining_amount),
+            paid_after_post_amount: paidAfterPost,
+            outstanding_amount: outstanding,
+          }];
+        }),
+      };
+    },
+    async paySupplier(input) {
+      const payload: Record<string, unknown> = {
+        payment_method: input.paymentMethod,
+        allocations: input.allocations.map((allocation) => ({
+          purchase_receipt_id: allocation.purchaseReceiptId,
+          amount: allocation.amount,
+        })),
+      };
+      if (input.financeAccountId !== undefined) payload.finance_account_id = input.financeAccountId;
+      if (input.paidAt !== undefined) payload.paid_at = input.paidAt;
+      if (input.note !== undefined) payload.note = input.note;
+
+      const { data, error } = await client.rpc("pay_supplier_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_supplier_id: input.supplierId,
+        p_payload: payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("SUPPLIER_PAYMENT_RESULT_INVALID");
+      return {
+        supplier_payment_id: String(data.supplier_payment_id),
+        code: String(data.code),
+        amount: Number(data.amount),
+        cashbook_voucher_id: String(data.cashbook_voucher_id),
+      };
+    },
     async listPurchaseReceipts(input): Promise<{ items: PurchaseReceiptData[]; total: number }> {
       let query = client
         .from("purchase_receipts")
@@ -941,7 +999,11 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .maybeSingle();
       if (error !== null) throw error;
       if (data === null) return null;
-      const [receipt] = await attachPurchaseReceiptItems(client, input.organizationId, [toPurchaseReceiptHeaderData(data)]);
+      const [receipt] = await attachPurchaseReceiptSupplierPayments(
+        client,
+        input.organizationId,
+        await attachPurchaseReceiptItems(client, input.organizationId, [toPurchaseReceiptHeaderData(data)]),
+      );
       return receipt;
     },
     async createPurchaseReceipt(input): Promise<PurchaseReceiptData> {
@@ -1760,18 +1822,32 @@ async function attachSupplierPurchaseTotals(
   const supplierIds = suppliers.map((supplier) => supplier.id);
   const { data, error } = await client
     .from("purchase_receipts")
-    .select("supplier_id, payable_amount, remaining_amount")
+    .select("id, supplier_id, payable_amount, remaining_amount")
     .eq("organization_id", organizationId)
     .eq("status", "posted")
     .in("supplier_id", supplierIds);
   if (error !== null) throw error;
 
+  const receiptSupplierById = new Map<string, string>();
   const totalsBySupplier = new Map<string, { totalPurchase: number; currentPayable: number }>();
   for (const row of data ?? []) {
+    receiptSupplierById.set(row.id, row.supplier_id);
     const current = totalsBySupplier.get(row.supplier_id) ?? { totalPurchase: 0, currentPayable: 0 };
     totalsBySupplier.set(row.supplier_id, {
       totalPurchase: current.totalPurchase + Number(row.payable_amount),
       currentPayable: current.currentPayable + Number(row.remaining_amount),
+    });
+  }
+
+  const paidByReceipt = await supplierPaymentAllocatedByReceipt(client, organizationId, [...receiptSupplierById.keys()]);
+  for (const [receiptId, paidAmount] of paidByReceipt) {
+    const supplierId = receiptSupplierById.get(receiptId);
+    if (supplierId === undefined) continue;
+    const current = totalsBySupplier.get(supplierId);
+    if (current === undefined) continue;
+    totalsBySupplier.set(supplierId, {
+      ...current,
+      currentPayable: current.currentPayable - paidAmount,
     });
   }
 
@@ -1823,6 +1899,7 @@ function toPurchaseReceiptHeaderData(row: {
     created_at: row.created_at,
     updated_at: row.updated_at,
     items: [],
+    supplier_payments: [],
   };
 }
 
@@ -1860,6 +1937,67 @@ async function attachPurchaseReceiptItems(
   }
 
   return receipts.map((receipt) => ({ ...receipt, items: itemsByReceipt.get(receipt.id) ?? [] }));
+}
+
+async function attachPurchaseReceiptSupplierPayments(
+  client: DatabaseClient,
+  organizationId: string,
+  receipts: PurchaseReceiptData[],
+): Promise<PurchaseReceiptData[]> {
+  if (receipts.length === 0) return receipts;
+  const receiptIds = receipts.map((receipt) => receipt.id);
+  const { data, error } = await client
+    .from("supplier_payment_allocations")
+    .select("purchase_receipt_id, allocated_amount, supplier_payments(id, code, paid_at, created_by, payment_method, status)")
+    .eq("organization_id", organizationId)
+    .in("purchase_receipt_id", receiptIds)
+    .order("created_at", { ascending: false });
+  if (error !== null) throw error;
+
+  const paymentsByReceipt = new Map<string, PurchaseReceiptData["supplier_payments"]>();
+  for (const row of data ?? []) {
+    const payment = Array.isArray(row.supplier_payments) ? row.supplier_payments[0] : row.supplier_payments;
+    if (payment === null || payment === undefined) continue;
+    paymentsByReceipt.set(row.purchase_receipt_id, [
+      ...(paymentsByReceipt.get(row.purchase_receipt_id) ?? []),
+      {
+        id: payment.id,
+        code: payment.code,
+        paid_at: payment.paid_at,
+        created_by: payment.created_by,
+        payment_method: payment.payment_method as "cash" | "bank_transfer",
+        status: payment.status as "posted" | "cancelled",
+        amount: Number(row.allocated_amount),
+      },
+    ]);
+  }
+
+  return receipts.map((receipt) => ({
+    ...receipt,
+    supplier_payments: paymentsByReceipt.get(receipt.id) ?? [],
+  }));
+}
+
+async function supplierPaymentAllocatedByReceipt(
+  client: DatabaseClient,
+  organizationId: string,
+  receiptIds: string[],
+): Promise<Map<string, number>> {
+  const paidByReceipt = new Map<string, number>();
+  if (receiptIds.length === 0) return paidByReceipt;
+
+  const { data, error } = await client
+    .from("supplier_payment_allocations")
+    .select("purchase_receipt_id, allocated_amount, supplier_payments!inner(status)")
+    .eq("organization_id", organizationId)
+    .in("purchase_receipt_id", receiptIds)
+    .eq("supplier_payments.status", "posted");
+  if (error !== null) throw error;
+
+  for (const row of data ?? []) {
+    paidByReceipt.set(row.purchase_receipt_id, (paidByReceipt.get(row.purchase_receipt_id) ?? 0) + Number(row.allocated_amount));
+  }
+  return paidByReceipt;
 }
 
 function purchaseReceiptPayload(input: {
