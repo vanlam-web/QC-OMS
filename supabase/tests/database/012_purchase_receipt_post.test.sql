@@ -344,14 +344,14 @@ select throws_ok(
        '{}'::jsonb
      ) $$,
   '22023',
-  'purchase receipt contains non-normal item',
-  'roll and sheet receipt items are rejected in P3'
+  'purchase item inventory shape does not match product settings',
+  'shape mismatch is rejected before physical purchase side effects'
 );
 
 select results_eq(
   $$ select status from public.purchase_receipts where supplier_document_no = 'HD-NCC-P3-ROLL' $$,
   $$ values ('draft'::text) $$,
-  'roll rejection leaves receipt draft'
+  'shape mismatch rejection leaves receipt draft'
 );
 
 select * from finish();

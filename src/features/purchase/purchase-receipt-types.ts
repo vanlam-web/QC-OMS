@@ -11,7 +11,25 @@ export interface PurchaseReceiptProduct {
   sell_method: 'quantity' | 'area_m2' | 'linear_m' | 'sheet' | 'combo'
   latest_purchase_cost: number | null
   latest_purchase_cost_at: string | null
+  inventory_shape: 'normal' | 'roll' | 'sheet'
 }
+
+export interface RollPhysicalPayload {
+  rolls: {
+    width_m: number
+    lengths_m: number[]
+  }
+}
+
+export interface SheetPhysicalPayload {
+  sheet_groups: Array<{
+    width_m: number
+    length_m: number
+    quantity: number
+  }>
+}
+
+export type PurchasePhysicalPayload = RollPhysicalPayload | SheetPhysicalPayload
 
 export interface PurchaseReceiptItem {
   id: string
@@ -24,6 +42,7 @@ export interface PurchaseReceiptItem {
   unit_cost: number
   discount_amount: number
   line_amount: number
+  physical_payload: PurchasePhysicalPayload | null
 }
 
 export interface PurchaseReceiptSupplierPayment {
@@ -119,10 +138,12 @@ export interface PurchaseReceiptSupplierPaymentResult {
 
 export interface PurchaseReceiptInputItem {
   product_id: string
+  inventory_shape: 'normal' | 'roll' | 'sheet'
   unit_name: string
   quantity: number
   unit_cost: number
   discount_amount: number
+  physical_payload: PurchasePhysicalPayload | null
 }
 
 export interface PurchaseReceiptInput {

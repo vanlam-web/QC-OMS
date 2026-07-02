@@ -1,6 +1,8 @@
 import type {
   FoundationRepository,
+  JsonValue,
   PermissionCode,
+  PurchasePhysicalPayloadData,
   PurchaseReceiptData,
   PurchaseReceiptPostResult,
   SupplierData,
@@ -346,10 +348,12 @@ function parsePurchaseReceiptCreate(body: unknown): {
   paidAmount: number;
   items: Array<{
     productId: string;
+    inventoryShape?: "normal" | "roll" | "sheet";
     unitName: string;
     quantity: number;
     unitCost: number;
     discountAmount: number;
+    physicalPayload?: PurchasePhysicalPayloadData | null;
   }>;
 } {
   if (!isRecord(body)) throw validationError();
@@ -404,10 +408,12 @@ function parsePurchaseReceiptUpdate(body: unknown): {
     paidAmount?: number;
     items?: Array<{
       productId: string;
+      inventoryShape?: "normal" | "roll" | "sheet";
       unitName: string;
       quantity: number;
       unitCost: number;
       discountAmount: number;
+      physicalPayload?: PurchasePhysicalPayloadData | null;
     }>;
   } = {};
   if ("code" in body) input.code = normalizeCode(body.code);
@@ -490,10 +496,12 @@ function parseSupplierPaymentAllocations(value: unknown): Array<{ purchaseReceip
 
 function parsePurchaseReceiptItems(value: unknown): Array<{
   productId: string;
+  inventoryShape?: "normal" | "roll" | "sheet";
   unitName: string;
   quantity: number;
   unitCost: number;
   discountAmount: number;
+  physicalPayload?: PurchasePhysicalPayloadData | null;
 }> {
   if (!Array.isArray(value) || value.length === 0 || value.length > 200) throw validationError();
   const seen = new Set<string>();
@@ -502,14 +510,46 @@ function parsePurchaseReceiptItems(value: unknown): Array<{
     const productId = parseRequiredId(item.product_id);
     if (seen.has(productId)) throw validationError();
     seen.add(productId);
-    return {
+    const parsed: {
+      productId: string;
+      inventoryShape?: "normal" | "roll" | "sheet";
+      unitName: string;
+      quantity: number;
+      unitCost: number;
+      discountAmount: number;
+      physicalPayload?: PurchasePhysicalPayloadData | null;
+    } = {
       productId,
       unitName: normalizeText(item.unit_name, 30),
       quantity: parsePositiveQuantity(item.quantity),
       unitCost: parseNonNegativeAmount(item.unit_cost),
       discountAmount: parseNonNegativeAmount(item.discount_amount ?? 0),
     };
+    if ("inventory_shape" in item) parsed.inventoryShape = parseInventoryShape(item.inventory_shape);
+    if ("physical_payload" in item) parsed.physicalPayload = parseOptionalObjectPayload(item.physical_payload);
+    return parsed;
   });
+}
+
+function parseInventoryShape(value: unknown): "normal" | "roll" | "sheet" {
+  if (value !== "normal" && value !== "roll" && value !== "sheet") throw validationError();
+  return value;
+}
+
+function parseOptionalObjectPayload(value: unknown): PurchasePhysicalPayloadData | null {
+  if (value === null || value === undefined) return null;
+  if (!isJsonValue(value) || !isRecord(value)) throw validationError();
+  return value as PurchasePhysicalPayloadData;
+}
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null) return true;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return Number.isFinite(value as number) || typeof value !== "number";
+  }
+  if (Array.isArray(value)) return value.every(isJsonValue);
+  if (isRecord(value)) return Object.values(value).every(isJsonValue);
+  return false;
 }
 
 function normalizeCode(value: unknown): string {

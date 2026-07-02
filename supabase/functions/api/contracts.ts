@@ -1,6 +1,7 @@
 export type PermissionCode = `perm.${string}`;
 export type ProductStatus = "active" | "inactive";
 export type SellMethod = "quantity" | "area_m2" | "linear_m" | "sheet" | "combo";
+export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type PriceSource =
   | "default_price_list"
   | "customer_group_price_list"
@@ -49,6 +50,7 @@ export interface ProductData {
   sell_method: SellMethod;
   latest_purchase_cost: number | null;
   latest_purchase_cost_at: string | null;
+  inventory_shape?: "normal" | "roll" | "sheet";
 }
 
 export interface PriceListData {
@@ -103,7 +105,10 @@ export interface PurchaseReceiptItemData {
   unit_cost: number;
   discount_amount: number;
   line_amount: number;
+  physical_payload: PurchasePhysicalPayloadData | null;
 }
+
+export type PurchasePhysicalPayloadData = { [key: string]: JsonValue };
 
 export interface SupplierPaymentHistoryData {
   id: string;
@@ -721,10 +726,12 @@ export interface FoundationRepository {
     paidAmount: number;
     items: Array<{
       productId: string;
+      inventoryShape?: "normal" | "roll" | "sheet";
       unitName: string;
       quantity: number;
       unitCost: number;
       discountAmount: number;
+      physicalPayload?: PurchasePhysicalPayloadData | null;
     }>;
   }): Promise<PurchaseReceiptData>;
   updatePurchaseReceipt(input: {
@@ -740,10 +747,12 @@ export interface FoundationRepository {
     paidAmount?: number;
     items?: Array<{
       productId: string;
+      inventoryShape?: "normal" | "roll" | "sheet";
       unitName: string;
       quantity: number;
       unitCost: number;
       discountAmount: number;
+      physicalPayload?: PurchasePhysicalPayloadData | null;
     }>;
   }): Promise<PurchaseReceiptData | null>;
   postPurchaseReceipt(input: {
