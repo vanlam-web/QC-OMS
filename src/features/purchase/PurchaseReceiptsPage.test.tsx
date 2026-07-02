@@ -77,19 +77,44 @@ const receipt = {
   ],
 }
 
+const postedReceipt = {
+  ...receipt,
+  id: 'receipt-posted',
+  code: 'PN000674',
+  status: 'posted' as const,
+}
+
 function makeService(overrides: Partial<PurchaseReceiptService> = {}): PurchaseReceiptService {
   return {
     listReceipts: vi.fn(async () => ({ items: [receipt], page: 1, page_size: 20, total: 1 })),
     getReceipt: vi.fn(async () => receipt),
     createReceipt: vi.fn(async () => receipt),
     updateReceipt: vi.fn(async () => ({ ...receipt, notes: 'Đã sửa' })),
+    postReceipt: vi.fn(async () => ({
+      purchase_receipt_id: 'receipt-1',
+      status: 'posted' as const,
+      posted_at: '2026-07-02T03:00:00.000Z',
+      cashbook_voucher_id: 'voucher-1',
+    })),
     listSuppliers: vi.fn(async () => ({ items: suppliers, page: 1, page_size: 20, total: 1 })),
     listProducts: vi.fn(async () => ({ items: products, page: 1, page_size: 20, total: 2 })),
+    listFinanceAccounts: vi.fn(async () => ({
+      items: [
+        {
+          id: 'bank-1',
+          code: 'VCB',
+          name: 'Vietcombank',
+          account_type: 'bank' as const,
+          is_default_cash: false,
+          is_active: true,
+        },
+      ],
+    })),
     ...overrides,
   }
 }
 
-it('lists draft purchase receipts with totals and disabled post action', async () => {
+it('lists draft purchase receipts with totals and opens post action for draft detail', async () => {
   const service = makeService()
 
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
@@ -100,7 +125,9 @@ it('lists draft purchase receipts with totals and disabled post action', async (
   expect(within(table).getByText('NCC000031 - Nguyễn Phong')).toBeInTheDocument()
   expect(within(table).getByText('180.000 ₫')).toBeInTheDocument()
   expect(within(table).getByText('130.000 ₫')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Hoàn thành P3' })).toBeDisabled()
+  expect(screen.queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Sửa PN000673' }))
+  expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
 })
 
 it('filters purchase receipts by search status and dates', async () => {
@@ -136,6 +163,7 @@ it('creates a draft receipt for normal items with computed totals shown locally'
   await userEvent.type(within(form).getByLabelText('Thời gian nhập'), '2026-07-01T10:00')
   await userEvent.type(within(form).getByLabelText('Số chứng từ NCC'), 'HD-NCC-001')
   await userEvent.selectOptions(within(form).getByLabelText('Sản phẩm dòng 1'), 'product-1')
+  expect(within(form).getByLabelText('Đơn vị dòng 1')).toHaveAttribute('readonly')
   await userEvent.clear(within(form).getByLabelText('Số lượng dòng 1'))
   await userEvent.type(within(form).getByLabelText('Số lượng dòng 1'), '2')
   await userEvent.clear(within(form).getByLabelText('Đơn giá dòng 1'))
@@ -186,4 +214,46 @@ it('opens a draft receipt for editing and saves updated lines', async () => {
 
   expect(service.getReceipt).toHaveBeenCalledWith('receipt-1')
   expect(service.updateReceipt).toHaveBeenCalledWith('receipt-1', expect.objectContaining({ notes: 'Đã sửa' }))
+})
+
+it('opens posted receipts as view-only details', async () => {
+  const service = makeService({
+    listReceipts: vi.fn(async () => ({ items: [postedReceipt], page: 1, page_size: 20, total: 1 })),
+    getReceipt: vi.fn(async () => postedReceipt),
+  })
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Xem PN000674' }))
+  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+
+  expect(within(form).getByRole('heading', { name: 'Xem phiếu nhập' })).toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: 'Lưu draft phiếu nhập' })).not.toBeInTheDocument()
+  expect(within(form).getByLabelText('Nhà cung cấp')).toBeDisabled()
+})
+
+it('warns on low purchase cost and posts with a selected bank account', async () => {
+  const lowCostReceipt = {
+    ...receipt,
+    items: [{ ...receipt.items[0], unit_cost: 80000, line_amount: 150000 }],
+  }
+  const service = makeService({
+    getReceipt: vi.fn(async () => lowCostReceipt),
+  })
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Sửa PN000673' }))
+  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+
+  expect(within(form).getByText(/thấp hơn giá nhập cuối/i)).toBeInTheDocument()
+  await userEvent.selectOptions(within(form).getByLabelText('Phương thức trả ngay'), 'bank_transfer')
+  await userEvent.selectOptions(within(form).getByLabelText('Tài khoản chuyển khoản'), 'bank-1')
+  await userEvent.click(within(form).getByRole('button', { name: 'Hoàn thành nhập hàng' }))
+
+  expect(service.postReceipt).toHaveBeenCalledWith('receipt-1', {
+    payment_method: 'bank_transfer',
+    finance_account_id: 'bank-1',
+  })
 })

@@ -2,9 +2,12 @@ import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   PurchaseReceipt,
+  PurchaseReceiptFinanceAccountListResponse,
   PurchaseReceiptInput,
   PurchaseReceiptListResponse,
   PurchaseReceiptProductListResponse,
+  PurchaseReceiptPostInput,
+  PurchaseReceiptPostResult,
   PurchaseReceiptSupplierListResponse,
   PurchaseReceiptStatus,
 } from './purchase-receipt-types'
@@ -42,8 +45,15 @@ export function createPurchaseReceiptService(api: PurchaseReceiptApiRequester) {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
+    postReceipt: (id: string, input: PurchaseReceiptPostInput) =>
+      api.request<PurchaseReceiptPostResult>(`/api/v1/purchase/receipts/${id}/post`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
     listSuppliers: () => api.request<PurchaseReceiptSupplierListResponse>('/api/v1/suppliers?status=active'),
     listProducts: () => api.request<PurchaseReceiptProductListResponse>('/api/v1/products?status=active'),
+    listFinanceAccounts: () =>
+      api.request<PurchaseReceiptFinanceAccountListResponse>('/api/v1/finance/accounts?is_active=true'),
   }
 }
 

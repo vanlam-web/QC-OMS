@@ -9,6 +9,7 @@ import {
   getSupplier,
   listPurchaseReceipts,
   listSuppliers,
+  postPurchaseReceipt,
   updatePurchaseReceipt,
   updateSupplier,
 } from "../use-cases/purchase.ts";
@@ -56,7 +57,21 @@ export async function handlePurchase(
 
   const purchaseReceiptActionMatch = url.pathname.match(/^\/api\/v1\/purchase\/receipts\/([^/]+)\/(post|cancel)$/);
   if (purchaseReceiptActionMatch !== null) {
-    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Purchase receipt action is not enabled in P2." });
+    if (request.method !== "POST") {
+      throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Method not allowed." });
+    }
+    if (purchaseReceiptActionMatch[2] === "post") {
+      return successResponse(
+        await postPurchaseReceipt(
+          dependencies.repository,
+          context,
+          purchaseReceiptActionMatch[1],
+          await request.json().catch(() => ({})),
+        ),
+        traceId,
+      );
+    }
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Purchase receipt cancel is not enabled in P3." });
   }
 
   const purchaseReceiptMatch = url.pathname.match(/^\/api\/v1\/purchase\/receipts\/([^/]+)$/);
