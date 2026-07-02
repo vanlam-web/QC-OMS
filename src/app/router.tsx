@@ -19,6 +19,7 @@ import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPa
 import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
+import { AppShell } from '../components/ui-shell/AppShell'
 
 export function AppRoutes() {
   return (
@@ -55,16 +56,19 @@ function DashboardRoute() {
   if (!currentUser) return <Navigate to="/login" replace />
 
   return (
-    <DashboardPage
-      currentUser={currentUser}
-      onOpenPos={() => navigate('/pos')}
-      onOpenAdmin={() => navigate('/admin')}
-      onOpenCatalog={() => navigate('/products')}
-      onOpenSalesDocuments={() => navigate('/sales-documents')}
-      onOpenSuppliers={() => navigate('/suppliers')}
-      onOpenPurchaseReceipts={() => navigate('/purchase/receipts')}
-      onSignOut={() => void signOut()}
-    />
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <DashboardPage
+        currentUser={currentUser}
+        onOpenPos={() => navigate('/pos')}
+        onOpenAdmin={() => navigate('/admin')}
+        onOpenCatalog={() => navigate('/products')}
+        onOpenSalesDocuments={() => navigate('/sales-documents')}
+        onOpenSuppliers={() => navigate('/suppliers')}
+        onOpenPurchaseReceipts={() => navigate('/purchase/receipts')}
+        onSignOut={() => void signOut()}
+        showSignOut={false}
+      />
+    </AppShell>
   )
 }
 
@@ -95,7 +99,7 @@ function PosRoute() {
 }
 
 function AdminRoute() {
-  const { currentUser, initialized, getAccessToken } = useAuth()
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserFoundationService(getAccessToken), [getAccessToken])
 
@@ -105,11 +109,15 @@ function AdminRoute() {
     return <Navigate to="/forbidden" replace />
   }
 
-  return <FoundationAdminPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <FoundationAdminPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
 }
 
 function CatalogRoute() {
-  const { currentUser, initialized, getAccessToken } = useAuth()
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
@@ -119,11 +127,15 @@ function CatalogRoute() {
     return <Navigate to="/forbidden" replace />
   }
 
-  return <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
 }
 
 function SuppliersRoute() {
-  const { currentUser, initialized, getAccessToken } = useAuth()
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserSupplierService(getAccessToken), [getAccessToken])
 
@@ -133,11 +145,15 @@ function SuppliersRoute() {
     return <Navigate to="/forbidden" replace />
   }
 
-  return <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
 }
 
 function PurchaseReceiptsRoute() {
-  const { currentUser, initialized, getAccessToken } = useAuth()
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserPurchaseReceiptService(getAccessToken), [getAccessToken])
 
@@ -147,11 +163,15 @@ function PurchaseReceiptsRoute() {
     return <Navigate to="/forbidden" replace />
   }
 
-  return <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
 }
 
 function SalesDocumentsRoute() {
-  const { currentUser, initialized, getAccessToken } = useAuth()
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
   const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
@@ -166,16 +186,18 @@ function SalesDocumentsRoute() {
   }
 
   return (
-    <SalesDocumentsPage
-      service={service}
-      orderService={orderService}
-      onOpenDashboard={() => navigate('/dashboard')}
-      onOpenQuoteInPos={(payload) => {
-        saveQuoteReopenPayload(payload)
-        navigate('/pos')
-      }}
-      onOpenQuotePrint={(documentId) => navigate(`/sales-documents/${documentId}/quote-print`)}
-    />
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <SalesDocumentsPage
+        service={service}
+        orderService={orderService}
+        onOpenDashboard={() => navigate('/dashboard')}
+        onOpenQuoteInPos={(payload) => {
+          saveQuoteReopenPayload(payload)
+          navigate('/pos')
+        }}
+        onOpenQuotePrint={(documentId) => navigate(`/sales-documents/${documentId}/quote-print`)}
+      />
+    </AppShell>
   )
 }
 

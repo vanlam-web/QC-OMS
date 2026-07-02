@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
+import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -208,7 +209,7 @@ export function SuppliersPage({
           <h1>Nhà cung cấp</h1>
           <p>Quản lý hồ sơ NCC, liên kết khách hàng và trạng thái nhập hàng</p>
         </div>
-        <button type="button" onClick={onOpenDashboard}>
+        <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
           Trang chủ
         </button>
       </header>
@@ -231,16 +232,16 @@ export function SuppliersPage({
                 <option value="all">Tất cả</option>
               </select>
             </label>
-            <button type="submit">Lọc</button>
+            <button className="button button-secondary" type="submit">Lọc</button>
           </form>
 
           {suppliers ? (
             <>
               <p>{total} nhà cung cấp</p>
               {suppliers.length === 0 ? (
-                <div className="empty-state">
+                <EmptyState>
                   <p>Chưa có nhà cung cấp phù hợp bộ lọc.</p>
-                </div>
+                </EmptyState>
               ) : (
                 <table>
                   <thead>
@@ -263,20 +264,24 @@ export function SuppliersPage({
                         <td>{supplier.name}</td>
                         <td>{supplier.phone ?? '-'}</td>
                         <td>{supplier.email ?? '-'}</td>
-                        <td>{money(supplier.current_payable_amount)}</td>
-                        <td>{money(supplier.total_purchase_amount)}</td>
+                        <td><MoneyText value={supplier.current_payable_amount} /></td>
+                        <td><MoneyText value={supplier.total_purchase_amount} /></td>
                         <td>
                           {supplier.linked_customer
                             ? `${supplier.linked_customer.code} - ${supplier.linked_customer.name}`
                             : '-'}
                         </td>
-                        <td>{supplier.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}</td>
                         <td>
-                          <button type="button" onClick={() => void openSupplier(supplier)}>
+                          <StatusChip tone={supplier.status === 'active' ? 'success' : 'neutral'}>
+                            {supplier.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                          </StatusChip>
+                        </td>
+                        <td>
+                          <button className="button button-secondary" type="button" onClick={() => void openSupplier(supplier)}>
                             Sửa {supplier.code}
                           </button>
                           {supplier.current_payable_amount > 0 ? (
-                            <button type="button" onClick={() => void openSupplierPayment(supplier)}>
+                            <button className="button button-primary" type="button" onClick={() => void openSupplierPayment(supplier)}>
                               Thanh toán {supplier.code}
                             </button>
                           ) : null}
@@ -295,7 +300,7 @@ export function SuppliersPage({
             <form noValidate aria-label="Thanh toán nhà cung cấp" className="supplier-form" onSubmit={saveSupplierPayment}>
               <header>
                 <h2>Thanh toán {paymentSupplier.code}</h2>
-                <button type="button" onClick={() => setPaymentSupplier(null)}>
+                <button className="button button-ghost" type="button" onClick={() => setPaymentSupplier(null)}>
                   Đóng
                 </button>
               </header>
@@ -348,7 +353,7 @@ export function SuppliersPage({
                 Ghi chú thanh toán
                 <textarea value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} />
               </label>
-              <button disabled={paying || payableReceipts.length === 0} type="submit">
+              <button className="button button-primary" disabled={paying || payableReceipts.length === 0} type="submit">
                 Lưu thanh toán NCC
               </button>
             </form>
@@ -357,7 +362,7 @@ export function SuppliersPage({
             <header>
               <h2>{editingId ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</h2>
               {editingId ? (
-                <button type="button" onClick={resetForm}>
+                <button className="button button-secondary" type="button" onClick={resetForm}>
                   Tạo mới
                 </button>
               ) : null}
@@ -426,7 +431,7 @@ export function SuppliersPage({
                 <option value="inactive">Ngừng hoạt động</option>
               </select>
             </label>
-            <button disabled={saving} type="submit">
+            <button className="button button-primary" disabled={saving} type="submit">
               Lưu nhà cung cấp
             </button>
           </form>
