@@ -2,7 +2,16 @@ import type { FoundationRepository } from "../contracts.ts";
 import { ApiError, successResponse } from "../http.ts";
 import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
-import { createSupplier, getSupplier, listSuppliers, updateSupplier } from "../use-cases/purchase.ts";
+import {
+  createPurchaseReceipt,
+  createSupplier,
+  getPurchaseReceipt,
+  getSupplier,
+  listPurchaseReceipts,
+  listSuppliers,
+  updatePurchaseReceipt,
+  updateSupplier,
+} from "../use-cases/purchase.ts";
 
 export interface PurchaseRouteDependencies {
   auth: AuthClient;
@@ -26,9 +35,43 @@ export async function handlePurchase(
 
   const context = {
     organizationId: currentUser.organization.id,
+    actorUserId: currentUser.user.id,
     permissions: currentUser.permissions,
   };
   const url = new URL(request.url);
+
+  if (url.pathname === "/api/v1/purchase/receipts") {
+    if (request.method === "GET") {
+      return successResponse(await listPurchaseReceipts(dependencies.repository, context, url), traceId);
+    }
+    if (request.method === "POST") {
+      return successResponse(
+        await createPurchaseReceipt(dependencies.repository, context, await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Method not allowed." });
+  }
+
+  const purchaseReceiptActionMatch = url.pathname.match(/^\/api\/v1\/purchase\/receipts\/([^/]+)\/(post|cancel)$/);
+  if (purchaseReceiptActionMatch !== null) {
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Purchase receipt action is not enabled in P2." });
+  }
+
+  const purchaseReceiptMatch = url.pathname.match(/^\/api\/v1\/purchase\/receipts\/([^/]+)$/);
+  if (purchaseReceiptMatch !== null) {
+    if (request.method === "GET") {
+      return successResponse(await getPurchaseReceipt(dependencies.repository, context, purchaseReceiptMatch[1]), traceId);
+    }
+    if (request.method === "PATCH") {
+      return successResponse(
+        await updatePurchaseReceipt(dependencies.repository, context, purchaseReceiptMatch[1], await request.json()),
+        traceId,
+      );
+    }
+    throw new ApiError({ status: 405, code: "METHOD_NOT_ALLOWED", message: "Method not allowed." });
+  }
 
   if (url.pathname === "/api/v1/suppliers") {
     if (request.method === "GET") {

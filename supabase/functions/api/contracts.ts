@@ -92,6 +92,39 @@ export interface SupplierData {
   total_purchase_amount: number;
 }
 
+export interface PurchaseReceiptItemData {
+  id: string;
+  product_id: string;
+  product: { id: string; code: string; name: string };
+  line_no: number;
+  inventory_shape: "normal" | "roll" | "sheet";
+  unit_name_snapshot: string;
+  quantity: number;
+  unit_cost: number;
+  discount_amount: number;
+  line_amount: number;
+}
+
+export interface PurchaseReceiptData {
+  id: string;
+  code: string;
+  supplier_id: string;
+  supplier: { id: string; code: string; name: string };
+  received_at: string;
+  status: "draft" | "posted" | "cancelled";
+  supplier_document_no: string | null;
+  subtotal_amount: number;
+  discount_amount: number;
+  payable_amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  items: PurchaseReceiptItemData[];
+}
+
 export interface ResolvedPriceData {
   product_id: string;
   unit_price: number;
@@ -612,6 +645,56 @@ export interface FoundationRepository {
     notes?: string | null;
     status?: "active" | "inactive";
   }): Promise<SupplierData | null>;
+  listPurchaseReceipts(input: {
+    organizationId: string;
+    search?: string;
+    status: "draft" | "posted" | "cancelled" | "all";
+    dateFrom?: string;
+    dateTo?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: PurchaseReceiptData[]; total: number }>;
+  getPurchaseReceipt(input: {
+    organizationId: string;
+    id: string;
+  }): Promise<PurchaseReceiptData | null>;
+  createPurchaseReceipt(input: {
+    organizationId: string;
+    actorUserId: string;
+    code?: string;
+    supplierId: string;
+    receivedAt: string;
+    supplierDocumentNo?: string;
+    notes?: string;
+    discountAmount: number;
+    paidAmount: number;
+    items: Array<{
+      productId: string;
+      unitName: string;
+      quantity: number;
+      unitCost: number;
+      discountAmount: number;
+    }>;
+  }): Promise<PurchaseReceiptData>;
+  updatePurchaseReceipt(input: {
+    organizationId: string;
+    actorUserId: string;
+    id: string;
+    code?: string;
+    supplierId?: string;
+    receivedAt?: string;
+    supplierDocumentNo?: string | null;
+    notes?: string | null;
+    discountAmount?: number;
+    paidAmount?: number;
+    items?: Array<{
+      productId: string;
+      unitName: string;
+      quantity: number;
+      unitCost: number;
+      discountAmount: number;
+    }>;
+  }): Promise<PurchaseReceiptData | null>;
   createCustomer(input: {
     organizationId: string;
     code?: string;

@@ -186,7 +186,12 @@ export function routeRequest(
     });
   }
 
-  if (url.pathname === "/api/v1/suppliers" || url.pathname.startsWith("/api/v1/suppliers/")) {
+  if (
+    url.pathname === "/api/v1/suppliers" ||
+    url.pathname.startsWith("/api/v1/suppliers/") ||
+    url.pathname === "/api/v1/purchase/receipts" ||
+    url.pathname.startsWith("/api/v1/purchase/receipts/")
+  ) {
     if (options.auth === undefined || options.repository === undefined) {
       throw new ApiError({
         status: 500,

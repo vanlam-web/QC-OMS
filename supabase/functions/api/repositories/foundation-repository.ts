@@ -25,6 +25,7 @@ import type {
   ProductData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
+  PurchaseReceiptData,
   QuoteReopenPayloadData,
   QuoteSummaryData,
   ReconciliationData,
@@ -888,6 +889,105 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return data === null ? null : toSupplierData(data);
     },
+    async listPurchaseReceipts(input): Promise<{ items: PurchaseReceiptData[]; total: number }> {
+      let query = client
+        .from("purchase_receipts")
+        .select(
+          "id, code, supplier_id, received_at, status, supplier_document_no, subtotal_amount, discount_amount, payable_amount, paid_amount, remaining_amount, notes, created_by, created_at, updated_at, suppliers(id, code, name)",
+          { count: "exact" },
+        )
+        .eq("organization_id", input.organizationId)
+        .order("received_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      const exactCodeSearch = input.search !== undefined && /^PN[0-9]+$/i.test(input.search);
+      if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        if (exactCodeSearch) {
+          query = query.ilike("code", input.search);
+        } else {
+          const { data: matchingSuppliers, error: supplierSearchError } = await client
+            .from("suppliers")
+            .select("id")
+            .eq("organization_id", input.organizationId)
+            .or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+          if (supplierSearchError !== null) throw supplierSearchError;
+          const supplierIds = (matchingSuppliers ?? []).map((supplier) => supplier.id);
+          const supplierFilter = supplierIds.length > 0 ? `,supplier_id.in.(${supplierIds.join(",")})` : "";
+          query = query.or(`code.ilike.%${search}%,supplier_document_no.ilike.%${search}%${supplierFilter}`);
+        }
+      }
+      if (!exactCodeSearch && input.dateFrom !== undefined) query = query.gte("received_at", input.dateFrom);
+      if (!exactCodeSearch && input.dateTo !== undefined) query = query.lte("received_at", input.dateTo);
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      const items = await attachPurchaseReceiptItems(client, input.organizationId, (data ?? []).map(toPurchaseReceiptHeaderData));
+      return { items, total: count ?? 0 };
+    },
+    async getPurchaseReceipt(input): Promise<PurchaseReceiptData | null> {
+      const { data, error } = await client
+        .from("purchase_receipts")
+        .select("id, code, supplier_id, received_at, status, supplier_document_no, subtotal_amount, discount_amount, payable_amount, paid_amount, remaining_amount, notes, created_by, created_at, updated_at, suppliers(id, code, name)")
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      if (data === null) return null;
+      const [receipt] = await attachPurchaseReceiptItems(client, input.organizationId, [toPurchaseReceiptHeaderData(data)]);
+      return receipt;
+    },
+    async createPurchaseReceipt(input): Promise<PurchaseReceiptData> {
+      const payload = purchaseReceiptPayload({
+        code: input.code,
+        supplierId: input.supplierId,
+        receivedAt: input.receivedAt,
+        supplierDocumentNo: input.supplierDocumentNo,
+        notes: input.notes,
+        discountAmount: input.discountAmount,
+        paidAmount: input.paidAmount,
+        items: input.items,
+      });
+      const { data, error } = await client.rpc("save_purchase_receipt_draft_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_receipt_id: null,
+        p_payload: payload,
+      });
+      if (error !== null) throw error;
+      const receipt = await this.getPurchaseReceipt({ organizationId: input.organizationId, id: String(data) });
+      if (receipt === null) throw new Error("PURCHASE_RECEIPT_NOT_FOUND");
+      return receipt;
+    },
+    async updatePurchaseReceipt(input): Promise<PurchaseReceiptData | null> {
+      const current = await this.getPurchaseReceipt({ organizationId: input.organizationId, id: input.id });
+      if (current === null) return null;
+      const payload = purchaseReceiptPayload({
+        code: input.code ?? current.code,
+        supplierId: input.supplierId ?? current.supplier_id,
+        receivedAt: input.receivedAt ?? current.received_at,
+        supplierDocumentNo: input.supplierDocumentNo === undefined ? current.supplier_document_no ?? undefined : input.supplierDocumentNo ?? undefined,
+        notes: input.notes === undefined ? current.notes ?? undefined : input.notes ?? undefined,
+        discountAmount: input.discountAmount ?? current.discount_amount,
+        paidAmount: input.paidAmount ?? current.paid_amount,
+        items: input.items ?? current.items.map((item) => ({
+          productId: item.product_id,
+          unitName: item.unit_name_snapshot,
+          quantity: item.quantity,
+          unitCost: item.unit_cost,
+          discountAmount: item.discount_amount,
+        })),
+      });
+      const { data, error } = await client.rpc("save_purchase_receipt_draft_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_receipt_id: input.id,
+        p_payload: payload,
+      });
+      if (error !== null) throw error;
+      return await this.getPurchaseReceipt({ organizationId: input.organizationId, id: String(data) });
+    },
     async listCustomerGroups(input): Promise<CustomerGroupData[]> {
       let query = client
         .from("customer_groups")
@@ -1621,6 +1721,116 @@ function toSupplierData(row: {
     status: row.status,
     current_payable_amount: 0,
     total_purchase_amount: 0,
+  };
+}
+
+function toPurchaseReceiptHeaderData(row: {
+  id: string;
+  code: string;
+  supplier_id: string;
+  received_at: string;
+  status: "draft" | "posted" | "cancelled";
+  supplier_document_no: string | null;
+  subtotal_amount: number | string;
+  discount_amount: number | string;
+  payable_amount: number | string;
+  paid_amount: number | string;
+  remaining_amount: number | string;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  suppliers?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
+}): PurchaseReceiptData {
+  const supplier = Array.isArray(row.suppliers) ? row.suppliers[0] : row.suppliers;
+  return {
+    id: row.id,
+    code: row.code,
+    supplier_id: row.supplier_id,
+    supplier: supplier ?? { id: row.supplier_id, code: "", name: "" },
+    received_at: row.received_at,
+    status: row.status,
+    supplier_document_no: row.supplier_document_no,
+    subtotal_amount: Number(row.subtotal_amount),
+    discount_amount: Number(row.discount_amount),
+    payable_amount: Number(row.payable_amount),
+    paid_amount: Number(row.paid_amount),
+    remaining_amount: Number(row.remaining_amount),
+    notes: row.notes,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    items: [],
+  };
+}
+
+async function attachPurchaseReceiptItems(
+  client: DatabaseClient,
+  organizationId: string,
+  receipts: PurchaseReceiptData[],
+): Promise<PurchaseReceiptData[]> {
+  if (receipts.length === 0) return receipts;
+  const receiptIds = receipts.map((receipt) => receipt.id);
+  const { data, error } = await client
+    .from("purchase_receipt_items")
+    .select("id, purchase_receipt_id, product_id, line_no, inventory_shape, unit_name_snapshot, quantity, unit_cost, discount_amount, line_amount, products(id, code, name)")
+    .eq("organization_id", organizationId)
+    .in("purchase_receipt_id", receiptIds)
+    .order("line_no", { ascending: true });
+  if (error !== null) throw error;
+
+  const itemsByReceipt = new Map<string, PurchaseReceiptData["items"]>();
+  for (const row of data ?? []) {
+    const product = Array.isArray(row.products) ? row.products[0] : row.products;
+    const item = {
+      id: row.id,
+      product_id: row.product_id,
+      product: product ?? { id: row.product_id, code: "", name: "" },
+      line_no: Number(row.line_no),
+      inventory_shape: row.inventory_shape as "normal" | "roll" | "sheet",
+      unit_name_snapshot: row.unit_name_snapshot,
+      quantity: Number(row.quantity),
+      unit_cost: Number(row.unit_cost),
+      discount_amount: Number(row.discount_amount),
+      line_amount: Number(row.line_amount),
+    };
+    itemsByReceipt.set(row.purchase_receipt_id, [...(itemsByReceipt.get(row.purchase_receipt_id) ?? []), item]);
+  }
+
+  return receipts.map((receipt) => ({ ...receipt, items: itemsByReceipt.get(receipt.id) ?? [] }));
+}
+
+function purchaseReceiptPayload(input: {
+  code?: string;
+  supplierId: string;
+  receivedAt: string;
+  supplierDocumentNo?: string | null;
+  notes?: string | null;
+  discountAmount: number;
+  paidAmount: number;
+  items: Array<{
+    productId: string;
+    unitName: string;
+    quantity: number;
+    unitCost: number;
+    discountAmount: number;
+  }>;
+}): Record<string, unknown> {
+  return {
+    code: input.code,
+    supplier_id: input.supplierId,
+    received_at: input.receivedAt,
+    supplier_document_no: input.supplierDocumentNo,
+    notes: input.notes,
+    discount_amount: input.discountAmount,
+    paid_amount: input.paidAmount,
+    items: input.items.map((item) => ({
+      product_id: item.productId,
+      unit_name: item.unitName,
+      quantity: item.quantity,
+      unit_cost: item.unitCost,
+      discount_amount: item.discountAmount,
+    })),
   };
 }
 

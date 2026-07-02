@@ -1,14 +1,22 @@
-import type { FoundationRepository, PermissionCode, SupplierData } from "../contracts.ts";
+import type { FoundationRepository, PermissionCode, PurchaseReceiptData, SupplierData } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 import { requireAnyPermission } from "./catalog.ts";
 
 export interface PurchaseContext {
   organizationId: string;
+  actorUserId: string;
   permissions: readonly PermissionCode[];
 }
 
 export interface SupplierListResponse {
   items: SupplierData[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface PurchaseReceiptListResponse {
+  items: PurchaseReceiptData[];
   page: number;
   page_size: number;
   total: number;
@@ -74,6 +82,77 @@ export async function updateSupplier(
   }
 }
 
+export async function listPurchaseReceipts(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  url: URL,
+): Promise<PurchaseReceiptListResponse> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const { search, status, dateFrom, dateTo, page, pageSize } = parsePurchaseReceiptList(url);
+  const result = await repository.listPurchaseReceipts({
+    organizationId: context.organizationId,
+    search,
+    status,
+    dateFrom,
+    dateTo,
+    page,
+    pageSize,
+  });
+  return { items: result.items, page, page_size: pageSize, total: result.total };
+}
+
+export async function getPurchaseReceipt(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  id: string,
+): Promise<PurchaseReceiptData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const row = await repository.getPurchaseReceipt({ organizationId: context.organizationId, id });
+  if (row === null) throw notFound();
+  return row;
+}
+
+export async function createPurchaseReceipt(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  body: unknown,
+): Promise<PurchaseReceiptData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const input = parsePurchaseReceiptCreate(body);
+  try {
+    return await repository.createPurchaseReceipt({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      ...input,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function updatePurchaseReceipt(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  id: string,
+  body: unknown,
+): Promise<PurchaseReceiptData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const input = parsePurchaseReceiptUpdate(body);
+  try {
+    const row = await repository.updatePurchaseReceipt({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      id,
+      ...input,
+    });
+    if (row === null) throw notFound();
+    return row;
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
 function parseSupplierList(url: URL): {
   search?: string;
   status: "active" | "inactive" | "all";
@@ -89,6 +168,29 @@ function parseSupplierList(url: URL): {
   }
   if (search !== undefined && search.length > 100) throw validationError();
   return { search: search || undefined, status, page, pageSize };
+}
+
+function parsePurchaseReceiptList(url: URL): {
+  search?: string;
+  status: "draft" | "posted" | "cancelled" | "all";
+  dateFrom?: string;
+  dateTo?: string;
+  page: number;
+  pageSize: number;
+} {
+  const search = url.searchParams.get("q")?.trim() || url.searchParams.get("search")?.trim();
+  const status = parsePurchaseReceiptListStatus(url.searchParams.get("status") ?? "draft");
+  const dateFrom = url.searchParams.get("date_from")?.trim() || undefined;
+  const dateTo = url.searchParams.get("date_to")?.trim() || undefined;
+  const page = Number(url.searchParams.get("page") ?? "1");
+  const pageSize = Number(url.searchParams.get("page_size") ?? "20");
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    throw validationError();
+  }
+  if (search !== undefined && search.length > 100) throw validationError();
+  if (dateFrom !== undefined && Number.isNaN(Date.parse(dateFrom))) throw validationError();
+  if (dateTo !== undefined && Number.isNaN(Date.parse(dateTo))) throw validationError();
+  return { search: search || undefined, status, dateFrom, dateTo, page, pageSize };
 }
 
 function parseSupplierCreate(body: unknown): {
@@ -173,6 +275,116 @@ function parseSupplierUpdate(body: unknown): {
   return input;
 }
 
+function parsePurchaseReceiptCreate(body: unknown): {
+  code?: string;
+  supplierId: string;
+  receivedAt: string;
+  supplierDocumentNo?: string;
+  notes?: string;
+  discountAmount: number;
+  paidAmount: number;
+  items: Array<{
+    productId: string;
+    unitName: string;
+    quantity: number;
+    unitCost: number;
+    discountAmount: number;
+  }>;
+} {
+  if (!isRecord(body)) throw validationError();
+  const input = {
+    supplierId: parseRequiredId(body.supplier_id),
+    receivedAt: parseRequiredDate(body.received_at),
+    discountAmount: parseNonNegativeAmount(body.discount_amount ?? 0),
+    paidAmount: parseNonNegativeAmount(body.paid_amount ?? 0),
+    items: parsePurchaseReceiptItems(body.items),
+  };
+  const optional: {
+    code?: string;
+    supplierDocumentNo?: string;
+    notes?: string;
+  } = {};
+  if ("code" in body && body.code !== null && body.code !== undefined && String(body.code).trim() !== "") {
+    optional.code = normalizeCode(body.code);
+  }
+  if ("supplier_document_no" in body && body.supplier_document_no !== null && body.supplier_document_no !== undefined && String(body.supplier_document_no).trim() !== "") {
+    optional.supplierDocumentNo = normalizeText(body.supplier_document_no, 100);
+  }
+  if ("notes" in body && body.notes !== null && body.notes !== undefined && String(body.notes).trim() !== "") {
+    optional.notes = normalizeText(body.notes, 1000);
+  }
+  return { ...input, ...optional };
+}
+
+function parsePurchaseReceiptUpdate(body: unknown): {
+  code?: string;
+  supplierId?: string;
+  receivedAt?: string;
+  supplierDocumentNo?: string | null;
+  notes?: string | null;
+  discountAmount?: number;
+  paidAmount?: number;
+  items?: Array<{
+    productId: string;
+    unitName: string;
+    quantity: number;
+    unitCost: number;
+    discountAmount: number;
+  }>;
+} {
+  if (!isRecord(body)) throw validationError();
+  const input: {
+    code?: string;
+    supplierId?: string;
+    receivedAt?: string;
+    supplierDocumentNo?: string | null;
+    notes?: string | null;
+    discountAmount?: number;
+    paidAmount?: number;
+    items?: Array<{
+      productId: string;
+      unitName: string;
+      quantity: number;
+      unitCost: number;
+      discountAmount: number;
+    }>;
+  } = {};
+  if ("code" in body) input.code = normalizeCode(body.code);
+  if ("supplier_id" in body) input.supplierId = parseRequiredId(body.supplier_id);
+  if ("received_at" in body) input.receivedAt = parseRequiredDate(body.received_at);
+  if ("supplier_document_no" in body) input.supplierDocumentNo = parseOptionalText(body.supplier_document_no, 100);
+  if ("notes" in body) input.notes = parseOptionalText(body.notes, 1000);
+  if ("discount_amount" in body) input.discountAmount = parseNonNegativeAmount(body.discount_amount);
+  if ("paid_amount" in body) input.paidAmount = parseNonNegativeAmount(body.paid_amount);
+  if ("items" in body) input.items = parsePurchaseReceiptItems(body.items);
+  if (Object.keys(input).length === 0) throw validationError();
+  return input;
+}
+
+function parsePurchaseReceiptItems(value: unknown): Array<{
+  productId: string;
+  unitName: string;
+  quantity: number;
+  unitCost: number;
+  discountAmount: number;
+}> {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 200) throw validationError();
+  const seen = new Set<string>();
+  return value.map((item) => {
+    if (!isRecord(item)) throw validationError();
+    const productId = parseRequiredId(item.product_id);
+    if (seen.has(productId)) throw validationError();
+    seen.add(productId);
+    return {
+      productId,
+      unitName: normalizeText(item.unit_name, 30),
+      quantity: parsePositiveQuantity(item.quantity),
+      unitCost: parseNonNegativeAmount(item.unit_cost),
+      discountAmount: parseNonNegativeAmount(item.discount_amount ?? 0),
+    };
+  });
+}
+
 function normalizeCode(value: unknown): string {
   if (typeof value !== "string") throw validationError();
   const code = value.trim().toUpperCase();
@@ -198,6 +410,28 @@ function parseOptionalId(value: unknown): string | null {
   return value.trim();
 }
 
+function parseRequiredId(value: unknown): string {
+  if (typeof value !== "string" || value.trim().length === 0) throw validationError();
+  return value.trim();
+}
+
+function parseRequiredDate(value: unknown): string {
+  if (typeof value !== "string" || value.trim().length === 0 || Number.isNaN(Date.parse(value))) throw validationError();
+  return value.trim();
+}
+
+function parsePositiveQuantity(value: unknown): number {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) throw validationError();
+  return amount;
+}
+
+function parseNonNegativeAmount(value: unknown): number {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) throw validationError();
+  return amount;
+}
+
 function parseSupplierStatus(value: unknown): "active" | "inactive" {
   if (value !== "active" && value !== "inactive") throw validationError();
   return value;
@@ -205,6 +439,11 @@ function parseSupplierStatus(value: unknown): "active" | "inactive" {
 
 function parseSupplierListStatus(value: string): "active" | "inactive" | "all" {
   if (value !== "active" && value !== "inactive" && value !== "all") throw validationError();
+  return value;
+}
+
+function parsePurchaseReceiptListStatus(value: string): "draft" | "posted" | "cancelled" | "all" {
+  if (value !== "draft" && value !== "posted" && value !== "cancelled" && value !== "all") throw validationError();
   return value;
 }
 
@@ -232,6 +471,9 @@ function mapRepositoryError(cause: unknown): ApiError {
     return validationError();
   }
   if (isRecord(cause) && cause.code === "23514") {
+    return validationError();
+  }
+  if (isRecord(cause) && cause.code === "22023") {
     return validationError();
   }
   return new ApiError({ status: 500, code: "INTERNAL_ERROR", message: "An internal error occurred." });

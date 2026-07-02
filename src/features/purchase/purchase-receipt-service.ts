@@ -1,0 +1,59 @@
+import { createApiClient } from '../../lib/api/client'
+import { runtimeConfig } from '../../lib/config/runtime'
+import type {
+  PurchaseReceipt,
+  PurchaseReceiptInput,
+  PurchaseReceiptListResponse,
+  PurchaseReceiptProductListResponse,
+  PurchaseReceiptSupplierListResponse,
+  PurchaseReceiptStatus,
+} from './purchase-receipt-types'
+
+export interface PurchaseReceiptApiRequester {
+  request<T>(path: string, init?: RequestInit): Promise<T>
+}
+
+export function createPurchaseReceiptService(api: PurchaseReceiptApiRequester) {
+  return {
+    listReceipts: (
+      input: {
+        search?: string
+        status?: PurchaseReceiptStatus | 'all'
+        date_from?: string
+        date_to?: string
+      } = {},
+    ) => {
+      const params = new URLSearchParams()
+      if (input.search) params.set('q', input.search)
+      if (input.status) params.set('status', input.status)
+      if (input.date_from) params.set('date_from', input.date_from)
+      if (input.date_to) params.set('date_to', input.date_to)
+      const query = params.toString()
+      return api.request<PurchaseReceiptListResponse>(`/api/v1/purchase/receipts${query ? `?${query}` : ''}`)
+    },
+    getReceipt: (id: string) => api.request<PurchaseReceipt>(`/api/v1/purchase/receipts/${id}`),
+    createReceipt: (input: PurchaseReceiptInput) =>
+      api.request<PurchaseReceipt>('/api/v1/purchase/receipts', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    updateReceipt: (id: string, input: PurchaseReceiptInput) =>
+      api.request<PurchaseReceipt>(`/api/v1/purchase/receipts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    listSuppliers: () => api.request<PurchaseReceiptSupplierListResponse>('/api/v1/suppliers?status=active'),
+    listProducts: () => api.request<PurchaseReceiptProductListResponse>('/api/v1/products?status=active'),
+  }
+}
+
+export type PurchaseReceiptService = ReturnType<typeof createPurchaseReceiptService>
+
+export function createBrowserPurchaseReceiptService(getAccessToken: () => Promise<string | null>) {
+  return createPurchaseReceiptService(
+    createApiClient({
+      baseUrl: runtimeConfig.apiBaseUrl,
+      getAccessToken,
+    }),
+  )
+}
