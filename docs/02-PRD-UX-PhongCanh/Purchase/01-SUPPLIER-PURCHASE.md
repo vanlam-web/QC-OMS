@@ -258,10 +258,19 @@ P5 không làm:
 
 ### 9.4. Roll/sheet purchase P4 chốt nền
 
-P4 chưa handoff cho tới khi Spec làm rõ object/lot model, nhưng Owner đã chốt nền:
+P4 đã được Spec audit code 2026-07-02 và có thể handoff implement sau docs sync. UI không bắt người dùng nhập/quản lý mã từng cuộn/tấm; mã vật lý nếu DB cần sẽ do backend tự sinh.
 
 - cuộn hỗ trợ cả nhiều cuộn cùng thông số và từng cuộn khác chiều dài
 - không cần mã từng cuộn rườm rà trong MVP
 - tấm chủ yếu nhập cùng kích thước nhiều tấm; sau này có thể phát sinh vật tư khác kích thước
 - không cần mã từng tấm
 - giá mua tấm thường theo tấm
+
+UX P4:
+
+- Với sản phẩm `roll`, dòng nhập có mode nhanh:
+  - cùng thông số: `số cuộn`, `khổ rộng`, `chiều dài mỗi cuộn`
+  - khác chiều dài: `khổ rộng`, danh sách `chiều dài từng cuộn`
+- Với sản phẩm `sheet`, dòng nhập có `dài`, `rộng`, `số tấm`; nếu cần nhiều nhóm kích thước, cho thêm nhóm kích thước trong cùng dòng sản phẩm.
+- UI hiển thị diện tích quy đổi để người dùng kiểm tra tiền/giá vốn, nhưng không cho nhập mua bằng tổng `m2` thay cho object vật lý.
+- Chi tiết phiếu posted hiển thị tóm tắt object đã tạo: số cuộn/tấm, kích thước, tổng diện tích; không cần lộ danh sách mã kỹ thuật nếu không cần đối soát.

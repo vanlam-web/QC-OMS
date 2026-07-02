@@ -302,9 +302,13 @@ Queue Purchase/Supplier uu tien:
    - UI co duong tra tu chi tiet NCC va chi tiet phieu nhap posted con no; ca hai mo cung mot form tra NCC bat buoc chon phieu nhap cu the.
    - Chi tiet phieu nhap posted co lich su thanh toan NCC toi thieu.
 
-4. **P4 Roll/sheet purchase objects** — next, needs Spec object/lot audit before handoff
+4. **P4 Roll/sheet purchase objects** — next, implement-ready after docs sync
    - Nhap cuon/tam theo vat ly.
-   - Can chot form nhap, object/lot model, cach phan bo gia von.
+   - Spec audit code 2026-07-02: dung bang `inventory_rolls` va `inventory_sheets` hien co, khong tao lot model moi trong P4 neu chua can.
+   - Backend tu sinh ma ky thuat cho roll/sheet; UI khong bat nguoi dung quan ly ma tung cuon/tam.
+   - Roll: tao mot `inventory_rolls` row moi cho moi cuon vat ly, tu batch cung thong so hoac danh sach chieu dai.
+   - Sheet: MVP tao mot `inventory_sheets` row moi cho moi tam vat ly; nhap nhanh theo nhom kich thuoc/so tam.
+   - Stock movement P4 phai gan `inventory_object_type` va object id tuong ung.
    - Da chot nen: cuon ho tro cung thong so va khac chieu dai; khong can ma tung cuon ruom ra.
    - Da chot nen: tam chu yeu cung kich thuoc, khong can ma tung tam, gia mua thuong theo tam.
 

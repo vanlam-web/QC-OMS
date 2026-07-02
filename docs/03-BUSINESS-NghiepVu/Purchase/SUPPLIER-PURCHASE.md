@@ -361,6 +361,30 @@ Quyết định Owner 2026-07-02 cho P4:
 - Tấm: không cần mã từng tấm.
 - Giá mua tấm: thường theo tấm.
 
+Spec audit code 2026-07-02:
+
+- Inventory hiện đã có bảng vật lý `inventory_rolls` và `inventory_sheets`, cùng `stock_movements.inventory_object_type`, `inventory_roll_id`, `inventory_sheet_id`.
+- `purchase_receipt_items` đã có `inventory_shape` và `physical_payload`; P2/P3 hiện mới lưu/post `normal`.
+- P4 không tạo model lot mới nếu chưa cần. P4 nối phiếu nhập vào object vật lý hiện có.
+- Dù DB có cột `code` cho roll/sheet, UI P4 không bắt người dùng nhập/quản lý mã từng cuộn/tấm. Backend tự sinh mã kỹ thuật để thỏa unique constraint và phục vụ trace/debug.
+- Cuộn nhập theo object: mỗi cuộn tạo một row `inventory_rolls`, có `width_m`, `initial_length_m`, `remaining_length_m`, `initial_area_m2`, `remaining_area_m2`, `status = available`.
+- Nếu nhiều cuộn cùng thông số, UI cho nhập nhanh `số cuộn x khổ x chiều dài`; backend bung ra nhiều roll object.
+- Nếu nhiều cuộn khác chiều dài, UI cho nhập danh sách chiều dài; backend tạo một roll object cho mỗi chiều dài.
+- Tấm nhập theo số lượng tấm: MVP tạo một row `inventory_sheets` cho mỗi tấm vật lý, `sheet_kind = full`, `status = available`; mã tấm là mã tự sinh ẩn.
+- Nếu nhập tấm nhiều nhóm kích thước trong cùng sản phẩm, dùng `physical_payload.sheet_groups[]` để giữ các nhóm kích thước/số lượng; không cần tạo nhiều dòng trùng sản phẩm trong cùng phiếu vì schema P2 đang unique `(purchase_receipt_id, product_id)`.
+- Giá vốn: `purchase_receipt_items.unit_cost` là đơn giá nhập của đơn vị mua; P4 phải lưu đủ metadata trong `physical_payload` để sau này đối chiếu unit cost theo cuộn/tấm. Không thêm phương pháp giá vốn nâng cao trong P4.
+- Stock movement khi post P4 phải gắn object id: roll dùng `inventory_object_type = roll`, `inventory_roll_id`; sheet dùng `inventory_object_type = sheet`, `inventory_sheet_id`.
+
+P4 implement-ready acceptance:
+
+- Draft cho phép dòng `roll`/`sheet` với `physical_payload` hợp lệ.
+- Post một phiếu có roll/sheet tạo object vật lý và stock movement trong cùng transaction.
+- Roll/sheet object rollback nếu post lỗi sau khi tạo một phần.
+- Backend vẫn reject nếu `inventory_shape` của item không khớp `product_inventory_settings.inventory_shape`.
+- Không cho nhập roll/sheet bằng tổng `m2` trừ khi đó chỉ là số tính toán hiển thị; nguồn tồn vật lý là object.
+- Không bắt người dùng nhập mã từng cuộn/tấm.
+- P4 không làm xuất/trừ cuộn/tấm khi bán, tối ưu cắt, remnant nâng cao, hủy/sửa posted.
+
 ### Slice P5 — Supplier payments
 
 Phạm vi:
