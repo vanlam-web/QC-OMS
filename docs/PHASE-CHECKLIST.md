@@ -30,6 +30,7 @@ Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm t
 - Quote print Phase 3B đã merge vào `main`: PR #22, merge commit `2c5e067`
 - Purchase/Supplier P1 Supplier foundation đã merge vào `main`: PR #23, merge commit `ad19559`
 - Purchase/Supplier P2 purchase receipt draft/list/detail đã merge vào `main`: PR #24, merge commit `0239061`
+- Purchase/Supplier P3 post purchase receipt normal items đã merge vào `main`: PR #26, merge commit `2c87a6e`
 
 ## Phase 0 — Foundation
 
@@ -631,7 +632,7 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
    - Nên chia nhỏ:
      - P1 supplier list/detail + linked customer: ✅ merged PR #23
      - P2 purchase receipt draft/list/detail cho hàng thường: ✅ merged PR #24
-     - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
+     - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`: ✅ merged PR #26
      - P4 roll/sheet purchase objects sau khi Inventory object model đủ rõ
      - P5 supplier payments sau phiếu nhập
    - Cần implement đánh giá kỹ vì chạm Inventory/Finance nhiều hơn Phase 3B.

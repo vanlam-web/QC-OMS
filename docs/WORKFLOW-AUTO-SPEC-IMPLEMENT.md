@@ -254,11 +254,12 @@ Hai luong khong tu quyet neu gap mot trong cac truong hop:
 
 ## 5. Trang thai va queue hien tai
 
-Trang thai sau PR #24:
+Trang thai sau PR #26:
 
 - Da merge P1 Supplier foundation: PR #23, merge commit `ad19559`.
 - Da merge P2 Purchase receipt draft/list/detail: PR #24, merge commit `0239061`.
-- Slice tiep theo theo queue da chot: P3 Post purchase receipt normal items.
+- Da merge P3 Post purchase receipt normal items: PR #26, merge commit `2c87a6e`.
+- Slice tiep theo can Owner/Spec chot them truoc khi giao: P4 roll/sheet purchase objects hoac P5 supplier payments.
 
 Queue Purchase/Supplier uu tien:
 
@@ -273,7 +274,7 @@ Queue Purchase/Supplier uu tien:
    - Co the nhap `paid_amount` de tinh con phai tra, nhung draft khong tao side effect so quy.
    - Quy tac sua ma `PN...` khi draft can check KiotViet truoc khi chot.
 
-2. **P3 Post purchase receipt normal items** — next
+2. **P3 Post purchase receipt normal items** — done, merged PR #26
    - Co stock movement.
    - Co latest purchase cost.
    - Co supplier payable neu SoT da chot.
@@ -287,10 +288,15 @@ Queue Purchase/Supplier uu tien:
    - Neu tra ngay, tao phieu chi/so quy trong transaction post.
    - Chuyen khoan uu tien STK/tai khoan ngan hang dung gan nhat, co lua chon tai khoan mac dinh hoac tai khoan khac.
 
-3. **P4 Supplier payable/payment foundation**
-   - Chi lam sau khi P3 duoc nghiem thu.
+3. **P4 Roll/sheet purchase objects** — needs Owner/Spec detail before handoff
+   - Nhap cuon/tam theo vat ly.
+   - Can chot form nhap, object/lot model, cach phan bo gia von.
 
-4. **Production reconciliation readonly**
+4. **P5 Supplier payable/payment foundation** — needs Owner/Spec detail before handoff
+   - Tra tien NCC sau phieu nhap.
+   - Can chot UX chon phieu no, mac dinh tra no cu nhat, va quy tac tra thua.
+
+5. **Production reconciliation readonly**
    - Chi doi soat doc-only.
    - Khong tu tru kho tu du lieu may san xuat neu Owner chua chot.
 
