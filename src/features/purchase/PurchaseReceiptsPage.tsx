@@ -14,6 +14,7 @@ import type {
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
 import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -52,6 +53,22 @@ function statusText(status: PurchaseReceiptStatus) {
   if (status === 'draft') return 'Phiếu tạm'
   if (status === 'posted') return 'Đã nhập'
   return 'Đã hủy'
+}
+
+function localDateString(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+
+function currentMonthRange() {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return { from: localDateString(firstDay), to: localDateString(lastDay) }
+}
+
+function isExactPurchaseReceiptCode(value: string) {
+  return /^PN\d+/i.test(value.trim())
 }
 
 function lineAmount(line: PurchaseReceiptInput['items'][number]) {
@@ -119,6 +136,7 @@ export function PurchaseReceiptsPage({
   const [status, setStatus] = useState<PurchaseReceiptStatus | 'all'>('draft')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [activePreset, setActivePreset] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
   const [selectedReceipt, setSelectedReceipt] = useState<PurchaseReceipt | null>(null)
@@ -217,12 +235,53 @@ export function PurchaseReceiptsPage({
 
   async function filterReceipts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (isExactPurchaseReceiptCode(search)) {
+      setStatus('all')
+      setDateFrom('')
+      setDateTo('')
+      setActivePreset(null)
+      await loadReceipts({ search: search.trim(), status: 'all' })
+      return
+    }
     await loadReceipts({
       search: search.trim() || undefined,
       status,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
     })
+  }
+
+  async function applyReceiptFilters(next: {
+    search?: string
+    status?: PurchaseReceiptStatus | 'all'
+    dateFrom?: string
+    dateTo?: string
+    preset?: string | null
+  }) {
+    const nextSearch = next.search ?? search
+    const nextStatus = next.status ?? status
+    const nextDateFrom = next.dateFrom ?? dateFrom
+    const nextDateTo = next.dateTo ?? dateTo
+    setSearch(nextSearch)
+    setStatus(nextStatus)
+    setDateFrom(nextDateFrom)
+    setDateTo(nextDateTo)
+    setActivePreset(next.preset ?? null)
+    await loadReceipts({
+      search: nextSearch.trim() || undefined,
+      status: nextStatus,
+      date_from: nextDateFrom || undefined,
+      date_to: nextDateTo || undefined,
+    })
+  }
+
+  async function resetReceiptFilters() {
+    setSearch('')
+    setStatus('draft')
+    setDateFrom('')
+    setDateTo('')
+    setActivePreset(null)
+    await loadReceipts({ status: 'draft' })
   }
 
   async function openReceipt(receipt: PurchaseReceipt) {
@@ -419,6 +478,111 @@ export function PurchaseReceiptsPage({
     setSupplierPaymentFinanceAccountId('')
   }
 
+  const today = localDateString(new Date())
+  const monthRange = currentMonthRange()
+  const receiptFilterPresets: FilterPreset[] = [
+    {
+      id: 'draft',
+      label: 'Draft cần xử lý',
+      active: activePreset === 'Draft cần xử lý' || (search.trim() === '' && status === 'draft' && dateFrom === '' && dateTo === ''),
+      onSelect: () => void applyReceiptFilters({ search: '', status: 'draft', dateFrom: '', dateTo: '', preset: 'Draft cần xử lý' }),
+    },
+    {
+      id: 'posted-today',
+      label: 'Đã nhập hôm nay',
+      active: activePreset === 'Đã nhập hôm nay',
+      onSelect: () =>
+        void applyReceiptFilters({
+          search: '',
+          status: 'posted',
+          dateFrom: today,
+          dateTo: today,
+          preset: 'Đã nhập hôm nay',
+        }),
+    },
+    {
+      id: 'this-month',
+      label: 'Tháng này',
+      active: activePreset === 'Tháng này',
+      onSelect: () =>
+        void applyReceiptFilters({
+          search: '',
+          status: 'all',
+          dateFrom: monthRange.from,
+          dateTo: monthRange.to,
+          preset: 'Tháng này',
+        }),
+    },
+    {
+      id: 'all',
+      label: 'Tất cả',
+      active: activePreset === 'Tất cả',
+      onSelect: () => void applyReceiptFilters({ search: '', status: 'all', dateFrom: '', dateTo: '', preset: 'Tất cả' }),
+    },
+    {
+      id: 'outstanding',
+      label: 'Còn nợ NCC',
+      disabled: true,
+      title: 'API hiện chưa có filter còn nợ NCC riêng cho danh sách phiếu nhập.',
+      onSelect: () => undefined,
+    },
+    {
+      id: 'physical',
+      label: 'Cuộn/tấm',
+      disabled: true,
+      title: 'API hiện chưa có filter inventory_shape cho danh sách phiếu nhập.',
+      onSelect: () => undefined,
+    },
+  ]
+
+  const receiptFilterChips: ActiveFilterChip[] = [
+    ...(search.trim()
+      ? [
+          {
+            id: 'search',
+            label: `Tìm: ${search.trim()}`,
+            onClear: () => void applyReceiptFilters({ search: '', preset: null }),
+          },
+        ]
+      : []),
+    ...(activePreset
+      ? [
+          {
+            id: 'preset',
+            label: `Preset: ${activePreset}`,
+            onClear: () => void applyReceiptFilters({ status: 'draft', dateFrom: '', dateTo: '', preset: null }),
+          },
+        ]
+      : []),
+    ...(!activePreset && status !== 'draft'
+      ? [
+          {
+            id: 'status',
+            label: `Trạng thái: ${status === 'all' ? 'Tất cả' : statusText(status)}`,
+            onClear: () => void applyReceiptFilters({ status: 'draft' }),
+          },
+        ]
+      : []),
+    ...(!activePreset && dateFrom
+      ? [
+          {
+            id: 'date-from',
+            label: `Từ ngày: ${dateFrom}`,
+            onClear: () => void applyReceiptFilters({ dateFrom: '' }),
+          },
+        ]
+      : []),
+    ...(!activePreset && dateTo
+      ? [
+          {
+            id: 'date-to',
+            label: `Đến ngày: ${dateTo}`,
+            onClear: () => void applyReceiptFilters({ dateTo: '' }),
+          },
+        ]
+      : []),
+  ]
+
   async function saveSupplierPayment() {
     if (selectedReceipt === null || selectedReceiptOutstanding <= 0) return
     if (supplierPaymentAmount <= 0) {
@@ -470,14 +634,25 @@ export function PurchaseReceiptsPage({
 
       <section className="suppliers-layout" aria-label="Quản lý phiếu nhập">
         <div className="suppliers-panel">
-          <form aria-label="Lọc phiếu nhập" className="suppliers-filter" onSubmit={filterReceipts}>
-            <label>
-              Tìm phiếu/NCC
-              <input value={search} onChange={(event) => setSearch(event.target.value)} />
-            </label>
+          <DataToolbar
+            ariaLabel="Lọc phiếu nhập"
+            chips={receiptFilterChips}
+            presets={receiptFilterPresets}
+            searchLabel="Tìm phiếu/NCC"
+            searchValue={search}
+            onReset={() => void resetReceiptFilters()}
+            onSearchChange={setSearch}
+            onSubmit={filterReceipts}
+          >
             <label>
               Trạng thái
-              <select value={status} onChange={(event) => setStatus(event.target.value as PurchaseReceiptStatus | 'all')}>
+              <select
+                value={status}
+                onChange={(event) => {
+                  setStatus(event.target.value as PurchaseReceiptStatus | 'all')
+                  setActivePreset(null)
+                }}
+              >
                 <option value="draft">Phiếu tạm</option>
                 <option value="posted">Đã nhập</option>
                 <option value="cancelled">Đã hủy</option>
@@ -486,14 +661,27 @@ export function PurchaseReceiptsPage({
             </label>
             <label>
               Từ ngày
-              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => {
+                  setDateFrom(event.target.value)
+                  setActivePreset(null)
+                }}
+              />
             </label>
             <label>
               Đến ngày
-              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => {
+                  setDateTo(event.target.value)
+                  setActivePreset(null)
+                }}
+              />
             </label>
-            <button className="button button-secondary" type="submit">Lọc</button>
-          </form>
+          </DataToolbar>
 
           {receipts ? (
             <>

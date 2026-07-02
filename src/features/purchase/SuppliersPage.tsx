@@ -3,6 +3,7 @@ import { formatApiError } from '../../lib/api/error-message'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
 import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -24,6 +25,12 @@ const blankForm: SupplierInput = {
   linked_customer_id: null,
   notes: '',
   status: 'active',
+}
+
+function supplierStatusText(status: SupplierStatus | 'all') {
+  if (status === 'active') return 'Đang hoạt động'
+  if (status === 'inactive') return 'Ngừng hoạt động'
+  return 'Tất cả'
 }
 
 export function SuppliersPage({
@@ -95,6 +102,20 @@ export function SuppliersPage({
   async function filterSuppliers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     await loadSuppliers({ search: search.trim() || undefined, status })
+  }
+
+  async function applySupplierFilters(next: { search?: string; status?: SupplierStatus | 'all' }) {
+    const nextSearch = next.search ?? search
+    const nextStatus = next.status ?? status
+    setSearch(nextSearch)
+    setStatus(nextStatus)
+    await loadSuppliers({ search: nextSearch.trim() || undefined, status: nextStatus })
+  }
+
+  async function resetSupplierFilters() {
+    setSearch('')
+    setStatus('active')
+    await loadSuppliers({ status: 'active' })
   }
 
   async function openSupplier(supplier: Supplier) {
@@ -202,6 +223,62 @@ export function SuppliersPage({
     setForm(blankForm)
   }
 
+  const supplierFilterPresets: FilterPreset[] = [
+    {
+      id: 'active',
+      label: 'Đang hoạt động',
+      active: status === 'active' && search.trim() === '',
+      onSelect: () => void applySupplierFilters({ search: '', status: 'active' }),
+    },
+    {
+      id: 'all',
+      label: 'Tất cả',
+      active: status === 'all' && search.trim() === '',
+      onSelect: () => void applySupplierFilters({ search: '', status: 'all' }),
+    },
+    {
+      id: 'inactive',
+      label: 'Ngừng hoạt động',
+      active: status === 'inactive',
+      onSelect: () => void applySupplierFilters({ status: 'inactive' }),
+    },
+    {
+      id: 'payable',
+      label: 'Đang nợ',
+      disabled: true,
+      title: 'Cần filter công nợ NCC nâng cao ở slice sau.',
+      onSelect: () => undefined,
+    },
+    {
+      id: 'linked-customer',
+      label: 'Có liên kết khách hàng',
+      disabled: true,
+      title: 'API hiện chưa có filter linked_customer_id cho NCC.',
+      onSelect: () => undefined,
+    },
+  ]
+
+  const supplierFilterChips: ActiveFilterChip[] = [
+    ...(search.trim()
+      ? [
+          {
+            id: 'search',
+            label: `Tìm: ${search.trim()}`,
+            onClear: () => void applySupplierFilters({ search: '' }),
+          },
+        ]
+      : []),
+    ...(status !== 'active'
+      ? [
+          {
+            id: 'status',
+            label: `Trạng thái: ${supplierStatusText(status)}`,
+            onClear: () => void applySupplierFilters({ status: 'active' }),
+          },
+        ]
+      : []),
+  ]
+
   return (
     <main className="suppliers-shell">
       <header className="suppliers-header">
@@ -219,11 +296,16 @@ export function SuppliersPage({
 
       <section className="suppliers-layout" aria-label="Quản lý nhà cung cấp">
         <div className="suppliers-panel">
-          <form aria-label="Lọc nhà cung cấp" className="suppliers-filter" onSubmit={filterSuppliers}>
-            <label>
-              Tìm NCC
-              <input value={search} onChange={(event) => setSearch(event.target.value)} />
-            </label>
+          <DataToolbar
+            ariaLabel="Lọc nhà cung cấp"
+            chips={supplierFilterChips}
+            presets={supplierFilterPresets}
+            searchLabel="Tìm NCC"
+            searchValue={search}
+            onReset={() => void resetSupplierFilters()}
+            onSearchChange={setSearch}
+            onSubmit={filterSuppliers}
+          >
             <label>
               Trạng thái
               <select value={status} onChange={(event) => setStatus(event.target.value as SupplierStatus | 'all')}>
@@ -232,8 +314,7 @@ export function SuppliersPage({
                 <option value="all">Tất cả</option>
               </select>
             </label>
-            <button className="button button-secondary" type="submit">Lọc</button>
-          </form>
+          </DataToolbar>
 
           {suppliers ? (
             <>

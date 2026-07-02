@@ -1165,6 +1165,97 @@ button {
   margin-bottom: 1rem;
 }
 
+.data-toolbar {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.data-toolbar-main {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.data-toolbar-search,
+.filter-drawer-content label {
+  display: grid;
+  gap: var(--space-1);
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.data-toolbar-search input,
+.filter-drawer-content input,
+.filter-drawer-content select {
+  min-height: 2.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 var(--space-3);
+}
+
+.data-toolbar-actions,
+.filter-preset-bar,
+.active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.data-toolbar-actions .button,
+.filter-preset,
+.active-filter-chip {
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+}
+
+.filter-preset:disabled {
+  opacity: 0.52;
+}
+
+.filter-drawer {
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  padding: var(--space-3);
+}
+
+.filter-drawer summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.filter-drawer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 36%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.active-filter-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
 .supplier-form,
 .purchase-receipt-form {
   display: grid;
@@ -1572,5 +1663,24 @@ button {
 
   .suppliers-filter {
     grid-template-columns: 1fr;
+  }
+
+  .data-toolbar-main,
+  .filter-drawer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .data-toolbar-actions,
+  .data-toolbar-actions .button,
+  .filter-preset-bar,
+  .filter-preset,
+  .active-filter-chip {
+    width: 100%;
+  }
+
+  .data-toolbar-actions .button,
+  .filter-preset,
+  .active-filter-chip {
+    justify-content: center;
   }
 }

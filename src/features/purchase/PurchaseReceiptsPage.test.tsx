@@ -170,18 +170,47 @@ it('filters purchase receipts by search status and dates', async () => {
 
   await screen.findByText('PN000673')
   const filterForm = screen.getByRole('form', { name: 'Lọc phiếu nhập' })
-  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673')
+  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'Nguyễn Phong')
   await userEvent.selectOptions(within(filterForm).getByLabelText('Trạng thái'), 'all')
   await userEvent.type(within(filterForm).getByLabelText('Từ ngày'), '2026-06-01')
   await userEvent.type(within(filterForm).getByLabelText('Đến ngày'), '2026-07-31')
   await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({
-    search: 'PN000673',
+    search: 'Nguyễn Phong',
     status: 'all',
     date_from: '2026-06-01',
     date_to: '2026-07-31',
   })
+})
+
+it('uses purchase receipt presets, active chips, reset action, and exact PN search priority', async () => {
+  const service = makeService()
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('PN000673')
+  const filterForm = screen.getByRole('form', { name: 'Lọc phiếu nhập' })
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Đã nhập hôm nay' }))
+
+  expect(service.listReceipts).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      status: 'posted',
+      date_from: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      date_to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    }),
+  )
+  expect(screen.getByRole('button', { name: 'Bỏ preset: Đã nhập hôm nay' })).toBeInTheDocument()
+
+  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673')
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+
+  expect(service.listReceipts).toHaveBeenLastCalledWith({ search: 'PN000673', status: 'all' })
+  expect(screen.getByRole('button', { name: 'Bỏ tìm: PN000673' })).toBeInTheDocument()
+
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Đặt lại bộ lọc' }))
+
+  expect(service.listReceipts).toHaveBeenLastCalledWith({ status: 'draft' })
 })
 
 it('creates a draft receipt for normal items with computed totals shown locally', async () => {

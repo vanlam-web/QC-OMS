@@ -95,6 +95,25 @@ it('filters suppliers by search and status', async () => {
   expect(service.listSuppliers).toHaveBeenLastCalledWith({ search: 'Nguyen', status: 'all' })
 })
 
+it('uses supplier filter presets, active chips, and reset action', async () => {
+  const service = makeService()
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('NCC000031')
+  const filterForm = screen.getByRole('form', { name: 'Lọc nhà cung cấp' })
+  await userEvent.type(within(filterForm).getByLabelText('Tìm NCC'), 'NCC000031')
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Ngừng hoạt động' }))
+
+  expect(service.listSuppliers).toHaveBeenLastCalledWith({ search: 'NCC000031', status: 'inactive' })
+  expect(screen.getByRole('button', { name: 'Bỏ tìm: NCC000031' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Bỏ trạng thái: Ngừng hoạt động' })).toBeInTheDocument()
+
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Đặt lại bộ lọc' }))
+
+  expect(service.listSuppliers).toHaveBeenLastCalledWith({ status: 'active' })
+})
+
 it('creates supplier with blank phone and selected linked customer', async () => {
   const service = makeService()
 
