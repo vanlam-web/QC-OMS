@@ -11,6 +11,8 @@ import { CatalogPage } from '../features/catalog/CatalogPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
+import { SuppliersPage } from '../features/purchase/SuppliersPage'
+import { createBrowserSupplierService } from '../features/purchase/supplier-service'
 import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
 import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
@@ -25,6 +27,7 @@ export function AppRoutes() {
         <Route path="/pos" element={<PosRoute />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
+        <Route path="/suppliers" element={<SuppliersRoute />} />
         <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
         <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
@@ -55,6 +58,7 @@ function DashboardRoute() {
       onOpenAdmin={() => navigate('/admin')}
       onOpenCatalog={() => navigate('/products')}
       onOpenSalesDocuments={() => navigate('/sales-documents')}
+      onOpenSuppliers={() => navigate('/suppliers')}
       onSignOut={() => void signOut()}
     />
   )
@@ -112,6 +116,20 @@ function CatalogRoute() {
   }
 
   return <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+}
+
+function SuppliersRoute() {
+  const { currentUser, initialized, getAccessToken } = useAuth()
+  const navigate = useNavigate()
+  const service = useMemo(() => createBrowserSupplierService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
 }
 
 function SalesDocumentsRoute() {

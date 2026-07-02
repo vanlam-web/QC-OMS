@@ -7,6 +7,7 @@ export function DashboardPage({
   onOpenAdmin,
   onOpenCatalog,
   onOpenSalesDocuments,
+  onOpenSuppliers,
   onSignOut,
 }: {
   currentUser: CurrentUserData
@@ -14,6 +15,7 @@ export function DashboardPage({
   onOpenAdmin: () => void
   onOpenCatalog: () => void
   onOpenSalesDocuments: () => void
+  onOpenSuppliers: () => void
   onSignOut: () => void
 }) {
   const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
@@ -22,6 +24,7 @@ export function DashboardPage({
     if (moduleId === 'pos') onOpenPos()
     if (moduleId === 'price-book') onOpenCatalog()
     if (moduleId === 'sales-documents') onOpenSalesDocuments()
+    if (moduleId === 'suppliers') onOpenSuppliers()
   }
 
   return (
@@ -39,7 +42,11 @@ export function DashboardPage({
       <section aria-label="Module hệ thống" className="module-grid">
         {phaseOneModules.map((module) => {
           const enabled = canOpenModule(currentUser, module)
-          const implemented = module.id === 'pos' || module.id === 'price-book' || module.id === 'sales-documents'
+          const implemented =
+            module.id === 'pos' ||
+            module.id === 'price-book' ||
+            module.id === 'sales-documents' ||
+            module.id === 'suppliers'
           return (
             <button
               disabled={!enabled || !implemented}

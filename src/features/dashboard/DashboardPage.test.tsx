@@ -15,6 +15,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   const onOpenAdmin = vi.fn()
   const onOpenCatalog = vi.fn()
   const onOpenSalesDocuments = vi.fn()
+  const onOpenSuppliers = vi.fn()
   const onSignOut = vi.fn()
 
   render(
@@ -24,6 +25,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
       onOpenAdmin={onOpenAdmin}
       onOpenCatalog={onOpenCatalog}
       onOpenSalesDocuments={onOpenSalesDocuments}
+      onOpenSuppliers={onOpenSuppliers}
       onSignOut={onSignOut}
     />,
   )
@@ -40,6 +42,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   expect(onOpenAdmin).toHaveBeenCalled()
   expect(onOpenCatalog).not.toHaveBeenCalled()
   expect(onOpenSalesDocuments).not.toHaveBeenCalled()
+  expect(onOpenSuppliers).not.toHaveBeenCalled()
   expect(onSignOut).toHaveBeenCalled()
 })
 
@@ -51,6 +54,7 @@ it('disables modules when the account lacks the matching permission', () => {
       onOpenAdmin={vi.fn()}
       onOpenCatalog={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
+      onOpenSuppliers={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -69,6 +73,7 @@ it('enables product catalog for accounts with edit price book permission', async
       onOpenAdmin={vi.fn()}
       onOpenCatalog={onOpenCatalog}
       onOpenSalesDocuments={vi.fn()}
+      onOpenSuppliers={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -86,10 +91,29 @@ it('opens sales documents for sales or finance accounts', async () => {
       onOpenAdmin={vi.fn()}
       onOpenCatalog={vi.fn()}
       onOpenSalesDocuments={onOpenSalesDocuments}
+      onOpenSuppliers={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Chứng từ bán hàng' }))
   expect(onOpenSalesDocuments).toHaveBeenCalled()
+})
+
+it('opens suppliers for inventory accounts', async () => {
+  const onOpenSuppliers = vi.fn()
+  render(
+    <DashboardPage
+      currentUser={{ ...currentUser, permissions: ['perm.manage_inventory'] }}
+      onOpenPos={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenCatalog={vi.fn()}
+      onOpenSalesDocuments={vi.fn()}
+      onOpenSuppliers={onOpenSuppliers}
+      onSignOut={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Nhà cung cấp' }))
+  expect(onOpenSuppliers).toHaveBeenCalled()
 })

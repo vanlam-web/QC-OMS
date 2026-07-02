@@ -33,6 +33,7 @@ import type {
   SalesDocumentListItemData,
   StockMovementData,
   StocktakeData,
+  SupplierData,
   UserListItem,
   WorkstationData,
 } from "../contracts.ts";
@@ -804,6 +805,89 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return data === null ? null : toCustomerData(data);
     },
+    async listSuppliers(input): Promise<{ items: SupplierData[]; total: number }> {
+      let query = client
+        .from("suppliers")
+        .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)", {
+          count: "exact",
+        })
+        .eq("organization_id", input.organizationId)
+        .order("code", { ascending: true })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+      if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.search !== undefined) {
+        const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+        query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(toSupplierData), total: count ?? 0 };
+    },
+    async getSupplier(input): Promise<SupplierData | null> {
+      const { data, error } = await client
+        .from("suppliers")
+        .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)")
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data === null ? null : toSupplierData(data);
+    },
+    async createSupplier(input): Promise<SupplierData> {
+      const code = input.code ?? await nextSupplierCode(client, input.organizationId);
+      const { data, error } = await client
+        .from("suppliers")
+        .insert({
+          organization_id: input.organizationId,
+          code,
+          name: input.name,
+          phone: input.phone ?? null,
+          email: input.email ?? null,
+          address: input.address ?? null,
+          tax_code: input.taxCode ?? null,
+          linked_customer_id: input.linkedCustomerId ?? null,
+          notes: input.notes ?? null,
+          status: input.status ?? "active",
+        })
+        .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)")
+        .single();
+      if (error !== null) throw error;
+      return toSupplierData(data);
+    },
+    async updateSupplier(input): Promise<SupplierData | null> {
+      const patch: {
+        code?: string;
+        name?: string;
+        phone?: string | null;
+        email?: string | null;
+        address?: string | null;
+        tax_code?: string | null;
+        linked_customer_id?: string | null;
+        notes?: string | null;
+        status?: "active" | "inactive";
+      } = {};
+      if (input.code !== undefined) patch.code = input.code;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.phone !== undefined) patch.phone = input.phone;
+      if (input.email !== undefined) patch.email = input.email;
+      if (input.address !== undefined) patch.address = input.address;
+      if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
+      if (input.linkedCustomerId !== undefined) patch.linked_customer_id = input.linkedCustomerId;
+      if (input.notes !== undefined) patch.notes = input.notes;
+      if (input.status !== undefined) patch.status = input.status;
+
+      const { data, error } = await client
+        .from("suppliers")
+        .update(patch)
+        .eq("id", input.id)
+        .eq("organization_id", input.organizationId)
+        .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)")
+        .maybeSingle();
+      if (error !== null) throw error;
+      return data === null ? null : toSupplierData(data);
+    },
     async listCustomerGroups(input): Promise<CustomerGroupData[]> {
       let query = client
         .from("customer_groups")
@@ -1483,6 +1567,13 @@ async function nextCustomerCode(client: DatabaseClient, organizationId: string):
   return data;
 }
 
+async function nextSupplierCode(client: DatabaseClient, organizationId: string): Promise<string> {
+  const { data, error } = await client.rpc("next_supplier_code", { p_organization_id: organizationId });
+  if (error !== null) throw error;
+  if (typeof data !== "string") throw new Error("SUPPLIER_CODE_REQUIRED");
+  return data;
+}
+
 function toCustomerData(row: {
   id: string;
   code: string;
@@ -1499,6 +1590,37 @@ function toCustomerData(row: {
     phone: row.phone,
     customer_group_id: row.customer_group_id,
     customer_group: group ?? null,
+  };
+}
+
+function toSupplierData(row: {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  tax_code: string | null;
+  linked_customer_id: string | null;
+  notes: string | null;
+  status: "active" | "inactive";
+  customers?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
+}): SupplierData {
+  const linkedCustomer = Array.isArray(row.customers) ? row.customers[0] : row.customers;
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    phone: row.phone,
+    email: row.email,
+    address: row.address,
+    tax_code: row.tax_code,
+    linked_customer_id: row.linked_customer_id,
+    linked_customer: linkedCustomer ?? null,
+    notes: row.notes,
+    status: row.status,
+    current_payable_amount: 0,
+    total_purchase_amount: 0,
   };
 }
 
