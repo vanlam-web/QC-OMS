@@ -64,6 +64,7 @@ export function SuppliersPage({
   const visibleSupplierTotal = suppliers?.length ?? 0
   const payableTotal = suppliers?.reduce((sum, supplier) => sum + supplier.current_payable_amount, 0) ?? 0
   const purchaseTotal = suppliers?.reduce((sum, supplier) => sum + supplier.total_purchase_amount, 0) ?? 0
+  const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
 
   async function loadSuppliers(input: { search?: string; status?: SupplierStatus | 'all' } = { search, status }) {
     setError(null)
@@ -320,14 +321,17 @@ export function SuppliersPage({
         <MetricCard hint="Phiếu nhập posted" label="Tổng mua" tone="success" value={<MoneyText value={purchaseTotal} />} />
       </MetricGrid>
 
-      <section className="suppliers-layout" aria-label="Quản lý nhà cung cấp">
+      <section
+        className={`suppliers-layout suppliers-layout-stacked${isCreatingSupplier ? ' suppliers-layout-create-active' : ''}`}
+        aria-label="Quản lý nhà cung cấp"
+      >
         <section aria-label="Danh sách nhà cung cấp" className="suppliers-panel">
           <div className="panel-heading">
             <div>
               <h2>Danh sách nhà cung cấp</h2>
               <p>Tìm, lọc và mở nhanh hồ sơ hoặc thanh toán NCC.</p>
             </div>
-            <button className="button button-primary" type="button" onClick={openCreateSupplier}>
+            <button className="button button-primary panel-heading-action" type="button" onClick={openCreateSupplier}>
               <Plus aria-hidden="true" size={16} />
               Tạo nhà cung cấp
             </button>
@@ -416,6 +420,7 @@ export function SuppliersPage({
           ) : null}
         </section>
 
+        {detailOpen || paymentSupplier ? (
         <aside aria-label="Hồ sơ và thanh toán nhà cung cấp" className="suppliers-panel">
           <div className="panel-heading">
             <div>
@@ -486,11 +491,6 @@ export function SuppliersPage({
                 Lưu thanh toán NCC
               </button>
             </form>
-          ) : null}
-          {!paymentSupplier && !detailOpen ? (
-            <EmptyState>
-              <p>Chọn một nhà cung cấp để sửa, hoặc bấm Tạo nhà cung cấp để nhập hồ sơ mới.</p>
-            </EmptyState>
           ) : null}
           {!paymentSupplier && detailOpen ? (
           <form aria-label="Thông tin nhà cung cấp" className="supplier-form" onSubmit={saveSupplier}>
@@ -574,6 +574,7 @@ export function SuppliersPage({
           </form>
           ) : null}
         </aside>
+        ) : null}
       </section>
     </main>
   )
