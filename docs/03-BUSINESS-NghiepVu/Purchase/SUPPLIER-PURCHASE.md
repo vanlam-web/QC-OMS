@@ -221,8 +221,19 @@ Quyết định Owner 2026-07-02 cho P5:
 - Không cho trả thừa trong luồng trả NCC sau phiếu nhập. Số âm ở P3 chỉ dùng cho tình huống đối tác vừa là NCC vừa là khách hàng và cần đối soát; P5 không mở workflow trả trước/trả thừa NCC.
 - Một lần trả NCC dùng một phương thức: tiền mặt hoặc chuyển khoản.
 - Nếu chuyển khoản, người dùng chọn được nhiều tài khoản ngân hàng đang có, nhưng mỗi lần trả chỉ chọn một tài khoản.
-- Mã phiếu chi/trả NCC cần tham khảo KiotViet trước khi chốt format cuối cùng.
-- Vị trí UI trả NCC cần tham khảo KiotViet trước khi chốt: trong chi tiết NCC, trong phiếu nhập, hay cả hai.
+
+Tham khảo KiotViet 2026-07-02:
+
+- Lịch sử công nợ NCC hiển thị giao dịch thanh toán với mã dạng `PCPN000673`, đi cặp với phiếu nhập `PN000673`.
+- Trong chi tiết phiếu nhập, tab `Lịch sử thanh toán` hiển thị `Mã phiếu`, `Thời gian`, `Người tạo`, `Phương thức`, `Trạng thái`, `Tiền chi`.
+- Trong chi tiết NCC, tab `Nợ cần trả nhà cung cấp` hiển thị lịch sử `Nhập hàng`/`Thanh toán` và có action `Thanh toán`.
+- Sổ quỹ là module quản lý `Phiếu thu`/`Phiếu chi`, có filter quỹ tiền `Tiền mặt`/`Ngân hàng` và cột `Số tài khoản` khi dùng ngân hàng.
+
+Quyết định QC-OMS cho P5:
+
+- Mã chứng từ trả NCC dùng prefix `PCPN` để bám sát KiotViet và dễ đối chiếu với `PN...`.
+- UI P5 nên hỗ trợ thao tác từ chi tiết NCC và từ chi tiết phiếu nhập posted còn nợ. Cả hai đường đều mở cùng một form trả NCC và bắt buộc chọn phiếu nhập cụ thể.
+- Chi tiết phiếu nhập posted cần có phần/lịch sử thanh toán NCC tối thiểu để xem các `PCPN...` đã chi cho phiếu đó.
 
 ---
 
@@ -362,7 +373,7 @@ Phạm vi:
 
 Không cần nhiều tài khoản trong một lần trả ở MVP. Nếu chuyển khoản, UI cho chọn từ các tài khoản ngân hàng đang có.
 
-Trước khi handoff P5, Spec phải tham khảo KiotViet để chốt:
+KiotViet audit 2026-07-02 đã chốt:
 
-- format/mã chứng từ chi tiền NCC
-- vị trí thao tác trả NCC nên đặt ở màn nào trong QC-OMS
+- format chứng từ trả NCC: prefix `PCPN...`
+- vị trí thao tác: từ chi tiết NCC và chi tiết phiếu nhập posted còn nợ; chi tiết phiếu nhập có lịch sử thanh toán

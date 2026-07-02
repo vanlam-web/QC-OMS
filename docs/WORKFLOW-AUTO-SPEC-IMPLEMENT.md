@@ -260,7 +260,8 @@ Trang thai sau PR #26:
 - Da merge P2 Purchase receipt draft/list/detail: PR #24, merge commit `0239061`.
 - Da merge P3 Post purchase receipt normal items: PR #26, merge commit `2c87a6e`.
 - Slice tiep theo Owner da chon: P5 Supplier payable/payment foundation.
-- Truoc khi handoff P5, Spec phai tham khao KiotViet de chot ma phieu chi/tra NCC va vi tri UI tra NCC.
+- Da merge Owner P5/P4 decision docs: PR #28, merge commit `0516a52`.
+- Da tham khao KiotViet cho P5 ngay 2026-07-02: thanh toan NCC dung ma dang `PCPN...`, chi tiet phieu nhap co `Lich su thanh toan`, chi tiet NCC tab `No can tra nha cung cap` co action `Thanh toan`.
 
 Queue Purchase/Supplier uu tien:
 
@@ -296,7 +297,9 @@ Queue Purchase/Supplier uu tien:
    - Khong cho tra thua trong P5.
    - Mot lan tra dung tien mat hoac chuyen khoan mot tai khoan.
    - Neu chuyen khoan, chon mot tai khoan ngan hang tu danh sach tai khoan dang co.
-   - Can tham khao KiotViet truoc handoff: ma phieu chi/tra NCC va vi tri UI.
+   - Ma phieu tra NCC dung prefix `PCPN...`.
+   - UI co duong tra tu chi tiet NCC va chi tiet phieu nhap posted con no; ca hai mo cung mot form tra NCC bat buoc chon phieu nhap cu the.
+   - Chi tiet phieu nhap posted co lich su thanh toan NCC toi thieu.
 
 4. **P4 Roll/sheet purchase objects** — needs Owner/Spec detail before handoff
    - Nhap cuon/tam theo vat ly.
