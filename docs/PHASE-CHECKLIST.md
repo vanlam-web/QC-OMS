@@ -26,6 +26,10 @@ Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm t
 - POS checkout data integrity đã merge vào `main`: PR #18, merge commit `5544421`
 - Sales Documents dimensions detail đã merge vào `main`: PR #19, merge commit `e34bc61`
 - PriceBook UI refinement đã merge vào `main`: PR #20, merge commit `3374312`
+- Docs/spec sync đã merge vào `main`: PR #21, merge commit `b8c1af7`
+- Quote print Phase 3B đã merge vào `main`: PR #22, merge commit `2c5e067`
+- Purchase/Supplier P1 Supplier foundation đã merge vào `main`: PR #23, merge commit `ad19559`
+- Purchase/Supplier P2 purchase receipt draft/list/detail đã merge vào `main`: PR #24, merge commit `0239061`
 
 ## Phase 0 — Foundation
 
@@ -625,8 +629,8 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
    - Mức sẵn sàng: trung bình-cao.
    - Lý do: SoT đã có cho NCC, phiếu nhập, công nợ NCC, nhập cuộn/tấm vật lý, cập nhật `latest_purchase_cost`.
    - Nên chia nhỏ:
-     - P1 supplier list/detail + linked customer
-     - P2 purchase receipt draft/list/detail cho hàng thường
+     - P1 supplier list/detail + linked customer: ✅ merged PR #23
+     - P2 purchase receipt draft/list/detail cho hàng thường: ✅ merged PR #24
      - P3 post receipt hàng thường tăng tồn/công nợ/cashbook và cập nhật `latest_purchase_cost`
      - P4 roll/sheet purchase objects sau khi Inventory object model đủ rõ
      - P5 supplier payments sau phiếu nhập

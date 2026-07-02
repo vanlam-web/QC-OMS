@@ -14,6 +14,9 @@ Luồng **Spec** giữ Source of Truth nghiệp vụ, rà KiotViet, ghi docs và
 
 Luồng **Implement** thi công code, test, PR/deploy và phản hồi blocker kỹ thuật/nghiệp vụ.
 
+Quy trình tự động giao việc, tự review, checklist từng giai đoạn nằm tại
+[WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
+
 ---
 
 ## 2. Thứ tự ưu tiên Source of Truth
@@ -167,6 +170,7 @@ Không tự mở các scope sau nếu Owner chưa chốt:
 Nếu một luồng bị mất mạch, đọc lại theo thứ tự:
 
 1. File này.
-2. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
-3. Docs SoT theo module đang làm.
-4. Plan trong `docs/superpowers/plans`.
+2. [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
+3. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
+4. Docs SoT theo module đang làm.
+5. Plan trong `docs/superpowers/plans`.
