@@ -4,8 +4,12 @@ import type {
   PurchaseReceipt,
   PurchaseReceiptFinanceAccount,
   PurchaseReceiptInput,
+  PurchaseReceiptInputItem,
   PurchaseReceiptProduct,
   PurchaseReceiptStatus,
+  PurchasePhysicalPayload,
+  RollPhysicalPayload,
+  SheetPhysicalPayload,
 } from './purchase-receipt-types'
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
@@ -20,10 +24,12 @@ const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).t
 
 const blankLine = {
   product_id: '',
+  inventory_shape: 'normal' as const,
   unit_name: '',
   quantity: 1,
   unit_cost: 0,
   discount_amount: 0,
+  physical_payload: null,
 }
 
 const blankForm: PurchaseReceiptInput = {
@@ -49,6 +55,51 @@ function statusText(status: PurchaseReceiptStatus) {
 
 function lineAmount(line: PurchaseReceiptInput['items'][number]) {
   return Math.max(Math.round(Number(line.quantity || 0) * Number(line.unit_cost || 0)) - Number(line.discount_amount || 0), 0)
+}
+
+function defaultPhysicalPayload(shape: PurchaseReceiptInputItem['inventory_shape']): PurchasePhysicalPayload | null {
+  if (shape === 'roll') return { rolls: { width_m: 1, lengths_m: [1] } }
+  if (shape === 'sheet') return { sheet_groups: [{ width_m: 1, length_m: 1, quantity: 1 }] }
+  return null
+}
+
+function purchaseUnitForProduct(product?: PurchaseReceiptProduct) {
+  if (product?.inventory_shape === 'roll') return 'cuộn'
+  if (product?.inventory_shape === 'sheet') return 'tấm'
+  return product?.unit_name ?? ''
+}
+
+function rollPayload(payload: PurchasePhysicalPayload | null): RollPhysicalPayload {
+  return payload !== null && 'rolls' in payload ? payload : { rolls: { width_m: 1, lengths_m: [1] } }
+}
+
+function sheetPayload(payload: PurchasePhysicalPayload | null): SheetPhysicalPayload {
+  return payload !== null && 'sheet_groups' in payload ? payload : { sheet_groups: [{ width_m: 1, length_m: 1, quantity: 1 }] }
+}
+
+function rollTotalArea(payload: RollPhysicalPayload) {
+  return payload.rolls.lengths_m.reduce((sum, length) => sum + Number(payload.rolls.width_m || 0) * Number(length || 0), 0)
+}
+
+function sheetTotalArea(payload: SheetPhysicalPayload) {
+  return payload.sheet_groups.reduce(
+    (sum, group) => sum + Number(group.width_m || 0) * Number(group.length_m || 0) * Number(group.quantity || 0),
+    0,
+  )
+}
+
+function physicalSummary(line: Pick<PurchaseReceiptInputItem, 'inventory_shape' | 'physical_payload'>) {
+  if (line.inventory_shape === 'roll') {
+    const payload = rollPayload(line.physical_payload)
+    if (payload.rolls.lengths_m.length === 0) return `0 cuộn, khổ ${payload.rolls.width_m}m, tổng 0.000 m²`
+    return `${payload.rolls.lengths_m.length} cuộn, khổ ${payload.rolls.width_m}m, tổng ${rollTotalArea(payload).toFixed(3)} m²`
+  }
+  if (line.inventory_shape === 'sheet') {
+    const payload = sheetPayload(line.physical_payload)
+    const sheetCount = payload.sheet_groups.reduce((sum, group) => sum + Number(group.quantity || 0), 0)
+    return `${sheetCount} tấm, ${payload.sheet_groups.length} nhóm kích thước, tổng ${sheetTotalArea(payload).toFixed(3)} m²`
+  }
+  return null
 }
 
 export function PurchaseReceiptsPage({
@@ -79,6 +130,7 @@ export function PurchaseReceiptsPage({
   const [supplierPaymentAmount, setSupplierPaymentAmount] = useState(0)
   const [supplierPaymentMethod, setSupplierPaymentMethod] = useState<'cash' | 'bank_transfer'>('cash')
   const [supplierPaymentFinanceAccountId, setSupplierPaymentFinanceAccountId] = useState('')
+  const [rollLengthTexts, setRollLengthTexts] = useState<Record<number, string>>({})
   const [error, setError] = useState<string | null>(null)
 
   const totals = useMemo(() => {
@@ -189,10 +241,12 @@ export function PurchaseReceiptsPage({
         paid_amount: detail.paid_amount,
         items: detail.items.map((item) => ({
           product_id: item.product_id,
+          inventory_shape: item.inventory_shape,
           unit_name: item.unit_name_snapshot,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
           discount_amount: item.discount_amount,
+          physical_payload: item.physical_payload,
         })),
       })
       setPaymentMethod('cash')
@@ -201,6 +255,7 @@ export function PurchaseReceiptsPage({
       setSupplierPaymentAmount(0)
       setSupplierPaymentMethod('cash')
       setSupplierPaymentFinanceAccountId('')
+      setRollLengthTexts({})
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết phiếu nhập.'))
     }
@@ -266,15 +321,25 @@ export function PurchaseReceiptsPage({
 
   function chooseProduct(index: number, productId: string) {
     const product = products.find((candidate) => candidate.id === productId)
+    const inventoryShape = product?.inventory_shape ?? 'normal'
     updateLine(index, {
       product_id: productId,
-      unit_name: product?.unit_name ?? '',
+      inventory_shape: inventoryShape,
+      unit_name: purchaseUnitForProduct(product),
+      quantity: 1,
       unit_cost: product?.latest_purchase_cost ?? 0,
+      physical_payload: defaultPhysicalPayload(inventoryShape),
+    })
+    setRollLengthTexts((current) => {
+      const next = { ...current }
+      if (inventoryShape === 'roll') next[index] = '1'
+      else delete next[index]
+      return next
     })
   }
 
   function addLine() {
-    setForm((current) => ({ ...current, items: [...current.items, blankLine] }))
+    setForm((current) => ({ ...current, items: [...current.items, { ...blankLine }] }))
   }
 
   function removeLine(index: number) {
@@ -282,6 +347,53 @@ export function PurchaseReceiptsPage({
       ...current,
       items: current.items.length === 1 ? current.items : current.items.filter((_, lineIndex) => lineIndex !== index),
     }))
+  }
+
+  function updateRollPayload(index: number, patch: { width_m?: number; lengths_m?: number[] }) {
+    const currentPayload = rollPayload(form.items[index]?.physical_payload ?? null)
+    const nextPayload: RollPhysicalPayload = {
+      rolls: {
+        width_m: patch.width_m ?? currentPayload.rolls.width_m,
+        lengths_m: patch.lengths_m ?? currentPayload.rolls.lengths_m,
+      },
+    }
+    updateLine(index, {
+      quantity: nextPayload.rolls.lengths_m.length,
+      physical_payload: nextPayload,
+    })
+  }
+
+  function updateSheetPayload(index: number, groupIndex: number, patch: Partial<SheetPhysicalPayload['sheet_groups'][number]>) {
+    const currentPayload = sheetPayload(form.items[index]?.physical_payload ?? null)
+    const sheetGroups = currentPayload.sheet_groups.map((group, currentGroupIndex) =>
+      currentGroupIndex === groupIndex ? { ...group, ...patch } : group,
+    )
+    const nextPayload: SheetPhysicalPayload = { sheet_groups: sheetGroups }
+    updateLine(index, {
+      quantity: sheetGroups.reduce((sum, group) => sum + Number(group.quantity || 0), 0),
+      physical_payload: nextPayload,
+    })
+  }
+
+  function addSheetGroup(index: number) {
+    const currentPayload = sheetPayload(form.items[index]?.physical_payload ?? null)
+    const nextPayload: SheetPhysicalPayload = {
+      sheet_groups: [...currentPayload.sheet_groups, { width_m: 1, length_m: 1, quantity: 1 }],
+    }
+    updateLine(index, {
+      quantity: nextPayload.sheet_groups.reduce((sum, group) => sum + Number(group.quantity || 0), 0),
+      physical_payload: nextPayload,
+    })
+  }
+
+  function removeSheetGroup(index: number, groupIndex: number) {
+    const currentPayload = sheetPayload(form.items[index]?.physical_payload ?? null)
+    const sheetGroups = currentPayload.sheet_groups.filter((_, currentGroupIndex) => currentGroupIndex !== groupIndex)
+    const nextGroups = sheetGroups.length === 0 ? [{ width_m: 1, length_m: 1, quantity: 1 }] : sheetGroups
+    updateLine(index, {
+      quantity: nextGroups.reduce((sum, group) => sum + Number(group.quantity || 0), 0),
+      physical_payload: { sheet_groups: nextGroups },
+    })
   }
 
   function resetForm() {
@@ -295,6 +407,7 @@ export function PurchaseReceiptsPage({
     setSupplierPaymentAmount(0)
     setSupplierPaymentMethod('cash')
     setSupplierPaymentFinanceAccountId('')
+    setRollLengthTexts({})
   }
 
   function openSupplierPaymentForReceipt() {
@@ -495,7 +608,7 @@ export function PurchaseReceiptsPage({
                       <option value="">Chọn hàng</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.code} - {product.name}
+                          {product.code} - {product.name} ({product.inventory_shape === 'roll' ? 'cuộn' : product.inventory_shape === 'sheet' ? 'tấm' : 'thường'})
                         </option>
                       ))}
                     </select>
@@ -510,11 +623,136 @@ export function PurchaseReceiptsPage({
                       min="0.000001"
                       step="0.000001"
                       type="number"
-                      readOnly={isReadOnly}
+                      readOnly={isReadOnly || line.inventory_shape !== 'normal'}
                       value={line.quantity}
                       onChange={(event) => updateLine(index, { quantity: Number(event.target.value) })}
                     />
                   </label>
+                  {line.inventory_shape === 'roll' ? (
+                    <div className="receipt-physical-box" aria-label={`Thông tin cuộn dòng ${index + 1}`}>
+                      {(() => {
+                        const payload = rollPayload(line.physical_payload)
+                        const firstLength = payload.rolls.lengths_m[0] ?? 1
+                        return (
+                          <>
+                            <label>
+                              Khổ rộng cuộn dòng {index + 1}
+                              <input
+                                min="0.001"
+                                step="0.001"
+                                type="number"
+                                readOnly={isReadOnly}
+                                value={payload.rolls.width_m}
+                                onChange={(event) => updateRollPayload(index, { width_m: Number(event.target.value) })}
+                              />
+                            </label>
+                            <label>
+                              Số cuộn cùng quy cách dòng {index + 1}
+                              <input
+                                min="1"
+                                step="1"
+                                type="number"
+                                readOnly={isReadOnly}
+                                value={payload.rolls.lengths_m.length}
+                                onChange={(event) => {
+                                  const count = Math.max(Math.floor(Number(event.target.value) || 0), 0)
+                                  const lengths = Array.from({ length: count }, () => firstLength || 1)
+                                  setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
+                                  updateRollPayload(index, { lengths_m: lengths })
+                                }}
+                              />
+                            </label>
+                            <label>
+                              Chiều dài mỗi cuộn dòng {index + 1}
+                              <input
+                                min="0.001"
+                                step="0.001"
+                                type="number"
+                                readOnly={isReadOnly}
+                                value={firstLength}
+                                onChange={(event) => {
+                                  const length = Number(event.target.value)
+                                  const lengths = payload.rolls.lengths_m.map(() => length)
+                                  setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
+                                  updateRollPayload(index, { lengths_m: lengths })
+                                }}
+                              />
+                            </label>
+                            <label>
+                              Chiều dài từng cuộn dòng {index + 1}
+                              <textarea
+                                readOnly={isReadOnly}
+                                value={rollLengthTexts[index] ?? payload.rolls.lengths_m.join(', ')}
+                                onChange={(event) => {
+                                  const text = event.target.value
+                                  setRollLengthTexts((current) => ({ ...current, [index]: text }))
+                                  const lengths = text
+                                    .split(',')
+                                    .map((value) => Number(value.trim()))
+                                    .filter((value) => Number.isFinite(value) && value > 0)
+                                  updateRollPayload(index, { lengths_m: lengths })
+                                }}
+                              />
+                            </label>
+                            <p>{physicalSummary(line)}</p>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  ) : null}
+                  {line.inventory_shape === 'sheet' ? (
+                    <div className="receipt-physical-box" aria-label={`Thông tin tấm dòng ${index + 1}`}>
+                      {sheetPayload(line.physical_payload).sheet_groups.map((group, groupIndex) => (
+                        <fieldset key={groupIndex}>
+                          <legend>Nhóm tấm {groupIndex + 1}</legend>
+                          <label>
+                            Rộng nhóm {groupIndex + 1} dòng {index + 1}
+                            <input
+                              min="0.001"
+                              step="0.001"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={group.width_m}
+                              onChange={(event) => updateSheetPayload(index, groupIndex, { width_m: Number(event.target.value) })}
+                            />
+                          </label>
+                          <label>
+                            Dài nhóm {groupIndex + 1} dòng {index + 1}
+                            <input
+                              min="0.001"
+                              step="0.001"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={group.length_m}
+                              onChange={(event) => updateSheetPayload(index, groupIndex, { length_m: Number(event.target.value) })}
+                            />
+                          </label>
+                          <label>
+                            Số tấm nhóm {groupIndex + 1} dòng {index + 1}
+                            <input
+                              min="1"
+                              step="1"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={group.quantity}
+                              onChange={(event) => updateSheetPayload(index, groupIndex, { quantity: Math.max(Math.floor(Number(event.target.value) || 0), 0) })}
+                            />
+                          </label>
+                          {isReadOnly ? null : (
+                            <button type="button" onClick={() => removeSheetGroup(index, groupIndex)}>
+                              Xóa nhóm tấm {groupIndex + 1}
+                            </button>
+                          )}
+                        </fieldset>
+                      ))}
+                      <p>{physicalSummary(line)}</p>
+                      {isReadOnly ? null : (
+                        <button type="button" onClick={() => addSheetGroup(index)}>
+                          Thêm nhóm kích thước
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
                   <label>
                     Đơn giá dòng {index + 1}
                     <input

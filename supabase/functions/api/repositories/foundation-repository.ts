@@ -25,6 +25,7 @@ import type {
   ProductData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
+  PurchasePhysicalPayloadData,
   PurchaseReceiptData,
   QuoteReopenPayloadData,
   QuoteSummaryData,
@@ -561,7 +562,23 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
-      return { items: (data ?? []) as ProductData[], total: count ?? 0 };
+      const items = (data ?? []) as ProductData[];
+      if (items.length === 0) return { items, total: count ?? 0 };
+
+      const { data: settings, error: settingsError } = await client
+        .from("product_inventory_settings")
+        .select("product_id, inventory_shape")
+        .eq("organization_id", input.organizationId)
+        .in("product_id", items.map((item) => item.id));
+      if (settingsError !== null) throw settingsError;
+      const shapeByProduct = new Map((settings ?? []).map((row) => [row.product_id, row.inventory_shape as "normal" | "roll" | "sheet"]));
+      return {
+        items: items.map((item) => ({
+          ...item,
+          inventory_shape: shapeByProduct.get(item.id) ?? "normal",
+        })),
+        total: count ?? 0,
+      };
     },
     async createProduct(input): Promise<ProductData> {
       const { data, error } = await client
@@ -1041,10 +1058,12 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         paidAmount: input.paidAmount ?? current.paid_amount,
         items: input.items ?? current.items.map((item) => ({
           productId: item.product_id,
+          inventoryShape: item.inventory_shape,
           unitName: item.unit_name_snapshot,
           quantity: item.quantity,
           unitCost: item.unit_cost,
           discountAmount: item.discount_amount,
+          physicalPayload: item.physical_payload,
         })),
       });
       const { data, error } = await client.rpc("save_purchase_receipt_draft_tx", {
@@ -1912,7 +1931,7 @@ async function attachPurchaseReceiptItems(
   const receiptIds = receipts.map((receipt) => receipt.id);
   const { data, error } = await client
     .from("purchase_receipt_items")
-    .select("id, purchase_receipt_id, product_id, line_no, inventory_shape, unit_name_snapshot, quantity, unit_cost, discount_amount, line_amount, products(id, code, name)")
+    .select("id, purchase_receipt_id, product_id, line_no, inventory_shape, unit_name_snapshot, quantity, unit_cost, discount_amount, line_amount, physical_payload, products(id, code, name)")
     .eq("organization_id", organizationId)
     .in("purchase_receipt_id", receiptIds)
     .order("line_no", { ascending: true });
@@ -1932,6 +1951,7 @@ async function attachPurchaseReceiptItems(
       unit_cost: Number(row.unit_cost),
       discount_amount: Number(row.discount_amount),
       line_amount: Number(row.line_amount),
+      physical_payload: row.physical_payload ?? null,
     };
     itemsByReceipt.set(row.purchase_receipt_id, [...(itemsByReceipt.get(row.purchase_receipt_id) ?? []), item]);
   }
@@ -2010,10 +2030,12 @@ function purchaseReceiptPayload(input: {
   paidAmount: number;
   items: Array<{
     productId: string;
+    inventoryShape?: "normal" | "roll" | "sheet";
     unitName: string;
     quantity: number;
     unitCost: number;
     discountAmount: number;
+    physicalPayload?: PurchasePhysicalPayloadData | null;
   }>;
 }): Record<string, unknown> {
   return {
@@ -2026,10 +2048,12 @@ function purchaseReceiptPayload(input: {
     paid_amount: input.paidAmount,
     items: input.items.map((item) => ({
       product_id: item.productId,
+      inventory_shape: item.inventoryShape ?? "normal",
       unit_name: item.unitName,
       quantity: item.quantity,
       unit_cost: item.unitCost,
       discount_amount: item.discountAmount,
+      physical_payload: item.physicalPayload ?? null,
     })),
   };
 }
