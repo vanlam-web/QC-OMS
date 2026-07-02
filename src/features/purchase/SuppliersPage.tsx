@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Home, Pencil, Plus, Save, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
-import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -59,6 +60,9 @@ export function SuppliersPage({
   const [paymentNote, setPaymentNote] = useState('')
 
   const bankAccounts = financeAccounts.filter((account) => account.is_active && account.account_type === 'bank')
+  const visibleSupplierTotal = suppliers?.length ?? 0
+  const payableTotal = suppliers?.reduce((sum, supplier) => sum + supplier.current_payable_amount, 0) ?? 0
+  const purchaseTotal = suppliers?.reduce((sum, supplier) => sum + supplier.total_purchase_amount, 0) ?? 0
 
   async function loadSuppliers(input: { search?: string; status?: SupplierStatus | 'all' } = { search, status }) {
     setError(null)
@@ -287,6 +291,7 @@ export function SuppliersPage({
           <p>Quản lý hồ sơ NCC, liên kết khách hàng và trạng thái nhập hàng</p>
         </div>
         <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+          <Home aria-hidden="true" size={16} />
           Trang chủ
         </button>
       </header>
@@ -294,8 +299,20 @@ export function SuppliersPage({
       {error ? <p role="alert">{error}</p> : null}
       {suppliers === null && error === null ? <p>Đang tải nhà cung cấp...</p> : null}
 
+      <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
+        <MetricCard hint={status === 'active' ? 'Đang hoạt động' : supplierStatusText(status)} label="Tổng NCC" value={total || visibleSupplierTotal} />
+        <MetricCard hint="Từ danh sách đang xem" label="Nợ cần trả" tone={payableTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={payableTotal} />} />
+        <MetricCard hint="Phiếu nhập posted" label="Tổng mua" tone="success" value={<MoneyText value={purchaseTotal} />} />
+      </MetricGrid>
+
       <section className="suppliers-layout" aria-label="Quản lý nhà cung cấp">
-        <div className="suppliers-panel">
+        <section aria-label="Danh sách nhà cung cấp" className="suppliers-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Danh sách nhà cung cấp</h2>
+              <p>Tìm, lọc và mở nhanh hồ sơ hoặc thanh toán NCC.</p>
+            </div>
+          </div>
           <DataToolbar
             ariaLabel="Lọc nhà cung cấp"
             chips={supplierFilterChips}
@@ -318,7 +335,7 @@ export function SuppliersPage({
 
           {suppliers ? (
             <>
-              <p>{total} nhà cung cấp</p>
+              <p className="result-count">{total} nhà cung cấp</p>
               {suppliers.length === 0 ? (
                 <EmptyState>
                   <p>Chưa có nhà cung cấp phù hợp bộ lọc.</p>
@@ -358,14 +375,18 @@ export function SuppliersPage({
                           </StatusChip>
                         </td>
                         <td>
-                          <button className="button button-secondary" type="button" onClick={() => void openSupplier(supplier)}>
-                            Sửa {supplier.code}
-                          </button>
+                          <div className="row-actions">
+                            <button className="button button-secondary" type="button" onClick={() => void openSupplier(supplier)}>
+                              <Pencil aria-hidden="true" size={15} />
+                              Sửa {supplier.code}
+                            </button>
                           {supplier.current_payable_amount > 0 ? (
                             <button className="button button-primary" type="button" onClick={() => void openSupplierPayment(supplier)}>
+                              <WalletCards aria-hidden="true" size={15} />
                               Thanh toán {supplier.code}
                             </button>
                           ) : null}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -374,14 +395,21 @@ export function SuppliersPage({
               )}
             </>
           ) : null}
-        </div>
+        </section>
 
-        <aside className="suppliers-panel">
+        <aside aria-label="Hồ sơ và thanh toán nhà cung cấp" className="suppliers-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Hồ sơ NCC</h2>
+              <p>Tạo, sửa thông tin và xử lý phiếu còn nợ.</p>
+            </div>
+          </div>
           {paymentSupplier ? (
             <form noValidate aria-label="Thanh toán nhà cung cấp" className="supplier-form" onSubmit={saveSupplierPayment}>
               <header>
                 <h2>Thanh toán {paymentSupplier.code}</h2>
                 <button className="button button-ghost" type="button" onClick={() => setPaymentSupplier(null)}>
+                  <X aria-hidden="true" size={15} />
                   Đóng
                 </button>
               </header>
@@ -435,6 +463,7 @@ export function SuppliersPage({
                 <textarea value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} />
               </label>
               <button className="button button-primary" disabled={paying || payableReceipts.length === 0} type="submit">
+                <WalletCards aria-hidden="true" size={16} />
                 Lưu thanh toán NCC
               </button>
             </form>
@@ -444,6 +473,7 @@ export function SuppliersPage({
               <h2>{editingId ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</h2>
               {editingId ? (
                 <button className="button button-secondary" type="button" onClick={resetForm}>
+                  <Plus aria-hidden="true" size={15} />
                   Tạo mới
                 </button>
               ) : null}
@@ -513,6 +543,7 @@ export function SuppliersPage({
               </select>
             </label>
             <button className="button button-primary" disabled={saving} type="submit">
+              <Save aria-hidden="true" size={16} />
               Lưu nhà cung cấp
             </button>
           </form>
