@@ -102,7 +102,7 @@ Nếu người dùng nhập đúng mã phiếu như `PN000673`, kết quả tìm
 
 - chọn/tạo nhanh nhà cung cấp
 - thời gian nhập
-- kho
+- kho mặc định trong MVP; chưa cần chọn nhiều kho
 - mã phiếu tự sinh, cho sửa trước khi posted nếu cần
 - số chứng từ/hóa đơn NCC dạng text
 - ghi chú
@@ -151,6 +151,13 @@ Form hiển thị:
 - phương thức trả: tiền mặt hoặc chuyển khoản/tài khoản
 
 MVP ưu tiên một phương thức thanh toán cho một lần trả để thao tác gọn.
+
+P2/P3 theo quyết định Owner 2026-07-02:
+
+- P2 draft có thể nhập `đã trả` để xem còn phải trả, nhưng không tạo sổ quỹ khi còn draft.
+- P3 post phiếu nhập có trả ngay thì phải ghi phiếu chi/sổ quỹ.
+- Nếu chuyển khoản, UI ưu tiên tài khoản ngân hàng/STK dùng gần nhất, cho chọn tài khoản mặc định hoặc mở danh sách chọn tài khoản khác.
+- Nếu `đã trả > cần trả`, UI/API cho phép số còn phải trả âm để thể hiện NCC đang nợ lại mình/trả thừa, chưa tự cấn trừ với khách hàng liên kết.
 
 Nếu thao tác trả NCC làm số dư âm, hệ thống không mở workflow trả trước riêng trong MVP. UI hiển thị số âm để đối soát, và nếu NCC có liên kết khách hàng thì nhân viên có thể kiểm tra khoản khách còn nợ ở hồ sơ khách hàng.
 
@@ -224,3 +231,5 @@ P2 đủ nhỏ nếu chỉ làm hàng thường:
 - lưu draft, sửa draft
 
 Chưa post tồn/kế toán nếu P3 chưa làm. Draft chỉ là dữ liệu nháp server.
+
+P2 dùng kho mặc định. Quy tắc có cho sửa mã `PN...` khi draft hay không cần tham khảo KiotViet trước khi chốt.
