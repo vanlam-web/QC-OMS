@@ -316,6 +316,13 @@ Queue Purchase/Supplier uu tien:
    - Chi doi soat doc-only.
    - Khong tu tru kho tu du lieu may san xuat neu Owner chua chot.
 
+6. **UI Shell v1 / UI validation pass** — next after P4 MVP or earlier if Owner asks to inspect UI
+   - SoT: `docs/02-PRD-UX-PhongCanh/System/00-UI-SHELL-V1.md`.
+   - Muc tieu: chuan hoa shell, token, light/dark, responsive desktop/tablet/mobile, filter presets, button/chip rules.
+   - Khong doi nghiep vu/backend neu khong bat buoc.
+   - UI chi goi service/API; khong tu tinh ton kho/cong no/thanh toan that.
+   - Can browser smoke de Owner xem workflow co dung cach van hanh thuc te khong.
+
 ---
 
 ## 6. Mau status ngan
