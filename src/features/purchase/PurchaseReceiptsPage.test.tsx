@@ -158,6 +158,8 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(within(table).getByText('NCC000031 - Nguyễn Phong')).toBeInTheDocument()
   expect(within(table).getByText('180.000 ₫')).toBeInTheDocument()
   expect(within(table).getByText('130.000 ₫')).toBeInTheDocument()
+  expect(screen.queryByRole('form', { name: 'Thông tin phiếu nhập' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tạo phiếu nhập' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sửa PN000673' }))
   expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
@@ -233,6 +235,7 @@ it('creates a draft receipt for normal items with computed totals shown locally'
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('PN000673')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
   const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
@@ -285,6 +288,7 @@ it('creates a roll draft line from physical roll lengths without manual object c
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('PN000673')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
   const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
@@ -322,6 +326,7 @@ it('creates a sheet draft line with multiple size groups', async () => {
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('PN000673')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
   const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))

@@ -79,6 +79,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(within(table).getByText('KH000123 - Nguyễn Phong')).toBeInTheDocument()
   expect(within(table).getByText('250.000 ₫')).toBeInTheDocument()
   expect(within(table).getByText('300.000 ₫')).toBeInTheDocument()
+  expect(screen.queryByRole('form', { name: 'Thông tin nhà cung cấp' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toBeInTheDocument()
 })
 
 it('summarizes supplier validation state with scan-friendly KPI cards and panels', async () => {
@@ -134,6 +136,7 @@ it('creates supplier with blank phone and selected linked customer', async () =>
   render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('NCC000031')
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo nhà cung cấp' }))
   const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
   await userEvent.type(within(form).getByLabelText('Tên NCC'), 'NCC mới')
   await userEvent.type(within(form).getByLabelText('Địa chỉ'), 'Quận 1')
