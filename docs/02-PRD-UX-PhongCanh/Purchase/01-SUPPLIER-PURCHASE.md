@@ -197,7 +197,7 @@ Không hiển thị menu/chức năng trong lát cắt đầu tiên:
 | P2 Purchase draft/list/detail | Danh sách phiếu nhập, tạo/sửa draft hàng thường | Nút Hoàn thành có thể disabled nếu P3 chưa có |
 | P3 Post normal receipt | Nút Hoàn thành cho hàng thường, cập nhật giá nhập cuối | Cuộn/tấm vật lý nếu P4 chưa có |
 | P4 Roll/sheet purchase | Form nhập cuộn/tấm vật lý | Sửa posted nâng cao |
-| P5 Supplier payments | Trả tiền NCC sau phiếu nhập | Trả nhiều tài khoản trong một lần |
+| P5 Supplier payments | Trả tiền NCC sau phiếu nhập, lịch sử thanh toán NCC | Trả nhiều tài khoản trong một lần |
 
 Trong P1/P2, UI không được hiển thị nút chức năng chưa làm như thể đã chạy được. Nếu cần giữ vị trí, dùng disabled state kèm tooltip ngắn.
 
