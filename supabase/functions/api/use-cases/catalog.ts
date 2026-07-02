@@ -66,7 +66,7 @@ export async function listProducts(
   context: CatalogContext,
   url: URL,
 ): Promise<ProductListResponse> {
-  requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book"]);
+  requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
   const { search, status, page, pageSize } = parseListProducts(url, context.permissions);
   const result = await repository.listProducts({
     organizationId: context.organizationId,

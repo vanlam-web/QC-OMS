@@ -6,6 +6,7 @@ it('shows only MVP module entries for sales documents customers price book inven
     'sales-documents',
     'customers',
     'suppliers',
+    'purchase-receipts',
     'price-book',
     'inventory',
     'finance',

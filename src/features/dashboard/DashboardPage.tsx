@@ -8,6 +8,7 @@ export function DashboardPage({
   onOpenCatalog,
   onOpenSalesDocuments,
   onOpenSuppliers,
+  onOpenPurchaseReceipts,
   onSignOut,
 }: {
   currentUser: CurrentUserData
@@ -16,6 +17,7 @@ export function DashboardPage({
   onOpenCatalog: () => void
   onOpenSalesDocuments: () => void
   onOpenSuppliers: () => void
+  onOpenPurchaseReceipts: () => void
   onSignOut: () => void
 }) {
   const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
@@ -25,6 +27,7 @@ export function DashboardPage({
     if (moduleId === 'price-book') onOpenCatalog()
     if (moduleId === 'sales-documents') onOpenSalesDocuments()
     if (moduleId === 'suppliers') onOpenSuppliers()
+    if (moduleId === 'purchase-receipts') onOpenPurchaseReceipts()
   }
 
   return (
@@ -46,7 +49,8 @@ export function DashboardPage({
             module.id === 'pos' ||
             module.id === 'price-book' ||
             module.id === 'sales-documents' ||
-            module.id === 'suppliers'
+            module.id === 'suppliers' ||
+            module.id === 'purchase-receipts'
           return (
             <button
               disabled={!enabled || !implemented}

@@ -13,6 +13,8 @@ import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
 import { SuppliersPage } from '../features/purchase/SuppliersPage'
 import { createBrowserSupplierService } from '../features/purchase/supplier-service'
+import { PurchaseReceiptsPage } from '../features/purchase/PurchaseReceiptsPage'
+import { createBrowserPurchaseReceiptService } from '../features/purchase/purchase-receipt-service'
 import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
 import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
@@ -28,6 +30,7 @@ export function AppRoutes() {
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
         <Route path="/suppliers" element={<SuppliersRoute />} />
+        <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
         <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
         <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
@@ -59,6 +62,7 @@ function DashboardRoute() {
       onOpenCatalog={() => navigate('/products')}
       onOpenSalesDocuments={() => navigate('/sales-documents')}
       onOpenSuppliers={() => navigate('/suppliers')}
+      onOpenPurchaseReceipts={() => navigate('/purchase/receipts')}
       onSignOut={() => void signOut()}
     />
   )
@@ -130,6 +134,20 @@ function SuppliersRoute() {
   }
 
   return <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+}
+
+function PurchaseReceiptsRoute() {
+  const { currentUser, initialized, getAccessToken } = useAuth()
+  const navigate = useNavigate()
+  const service = useMemo(() => createBrowserPurchaseReceiptService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
 }
 
 function SalesDocumentsRoute() {

@@ -16,6 +16,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   const onOpenCatalog = vi.fn()
   const onOpenSalesDocuments = vi.fn()
   const onOpenSuppliers = vi.fn()
+  const onOpenPurchaseReceipts = vi.fn()
   const onSignOut = vi.fn()
 
   render(
@@ -26,6 +27,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
       onOpenCatalog={onOpenCatalog}
       onOpenSalesDocuments={onOpenSalesDocuments}
       onOpenSuppliers={onOpenSuppliers}
+      onOpenPurchaseReceipts={onOpenPurchaseReceipts}
       onSignOut={onSignOut}
     />,
   )
@@ -43,6 +45,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
   expect(onOpenCatalog).not.toHaveBeenCalled()
   expect(onOpenSalesDocuments).not.toHaveBeenCalled()
   expect(onOpenSuppliers).not.toHaveBeenCalled()
+  expect(onOpenPurchaseReceipts).not.toHaveBeenCalled()
   expect(onSignOut).toHaveBeenCalled()
 })
 
@@ -55,6 +58,7 @@ it('disables modules when the account lacks the matching permission', () => {
       onOpenCatalog={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={vi.fn()}
+      onOpenPurchaseReceipts={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -74,6 +78,7 @@ it('enables product catalog for accounts with edit price book permission', async
       onOpenCatalog={onOpenCatalog}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={vi.fn()}
+      onOpenPurchaseReceipts={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -92,6 +97,7 @@ it('opens sales documents for sales or finance accounts', async () => {
       onOpenCatalog={vi.fn()}
       onOpenSalesDocuments={onOpenSalesDocuments}
       onOpenSuppliers={vi.fn()}
+      onOpenPurchaseReceipts={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
@@ -110,10 +116,30 @@ it('opens suppliers for inventory accounts', async () => {
       onOpenCatalog={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={onOpenSuppliers}
+      onOpenPurchaseReceipts={vi.fn()}
       onSignOut={vi.fn()}
     />,
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Nhà cung cấp' }))
   expect(onOpenSuppliers).toHaveBeenCalled()
+})
+
+it('opens purchase receipts for inventory accounts', async () => {
+  const onOpenPurchaseReceipts = vi.fn()
+  render(
+    <DashboardPage
+      currentUser={{ ...currentUser, permissions: ['perm.manage_inventory'] }}
+      onOpenPos={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenCatalog={vi.fn()}
+      onOpenSalesDocuments={vi.fn()}
+      onOpenSuppliers={vi.fn()}
+      onOpenPurchaseReceipts={onOpenPurchaseReceipts}
+      onSignOut={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Phiếu nhập' }))
+  expect(onOpenPurchaseReceipts).toHaveBeenCalled()
 })
