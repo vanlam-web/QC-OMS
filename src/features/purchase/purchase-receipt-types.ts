@@ -67,6 +67,31 @@ export interface PurchaseReceiptProductListResponse {
   total: number
 }
 
+export interface PurchaseReceiptFinanceAccount {
+  id: string
+  code: string
+  name: string
+  account_type: 'cash' | 'bank'
+  is_default_cash: boolean
+  is_active: boolean
+}
+
+export interface PurchaseReceiptFinanceAccountListResponse {
+  items: PurchaseReceiptFinanceAccount[]
+}
+
+export interface PurchaseReceiptPostInput {
+  payment_method?: 'cash' | 'bank_transfer'
+  finance_account_id?: string
+}
+
+export interface PurchaseReceiptPostResult {
+  purchase_receipt_id: string
+  status: 'posted'
+  posted_at: string
+  cashbook_voucher_id: string | null
+}
+
 export interface PurchaseReceiptInputItem {
   product_id: string
   unit_name: string

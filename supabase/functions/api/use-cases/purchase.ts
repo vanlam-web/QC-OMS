@@ -1,4 +1,10 @@
-import type { FoundationRepository, PermissionCode, PurchaseReceiptData, SupplierData } from "../contracts.ts";
+import type {
+  FoundationRepository,
+  PermissionCode,
+  PurchaseReceiptData,
+  PurchaseReceiptPostResult,
+  SupplierData,
+} from "../contracts.ts";
 import { ApiError } from "../http.ts";
 import { requireAnyPermission } from "./catalog.ts";
 
@@ -149,6 +155,26 @@ export async function updatePurchaseReceipt(
     return row;
   } catch (cause) {
     if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function postPurchaseReceipt(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  id: string,
+  body: unknown,
+): Promise<PurchaseReceiptPostResult> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const input = parsePurchaseReceiptPost(body);
+  try {
+    return await repository.postPurchaseReceipt({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      id,
+      ...input,
+    });
+  } catch (cause) {
     throw mapRepositoryError(cause);
   }
 }
@@ -358,6 +384,26 @@ function parsePurchaseReceiptUpdate(body: unknown): {
   if ("paid_amount" in body) input.paidAmount = parseNonNegativeAmount(body.paid_amount);
   if ("items" in body) input.items = parsePurchaseReceiptItems(body.items);
   if (Object.keys(input).length === 0) throw validationError();
+  return input;
+}
+
+function parsePurchaseReceiptPost(body: unknown): {
+  paymentMethod?: "cash" | "bank_transfer";
+  financeAccountId?: string;
+} {
+  if (body === null || body === undefined) return {};
+  if (!isRecord(body)) throw validationError();
+  const input: {
+    paymentMethod?: "cash" | "bank_transfer";
+    financeAccountId?: string;
+  } = {};
+  if ("payment_method" in body && body.payment_method !== null && body.payment_method !== undefined && String(body.payment_method).trim() !== "") {
+    if (body.payment_method !== "cash" && body.payment_method !== "bank_transfer") throw validationError();
+    input.paymentMethod = body.payment_method;
+  }
+  if ("finance_account_id" in body && body.finance_account_id !== null && body.finance_account_id !== undefined && String(body.finance_account_id).trim() !== "") {
+    input.financeAccountId = parseRequiredId(body.finance_account_id);
+  }
   return input;
 }
 

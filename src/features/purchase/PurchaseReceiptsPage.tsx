@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
 import type {
   PurchaseReceipt,
+  PurchaseReceiptFinanceAccount,
   PurchaseReceiptInput,
   PurchaseReceiptProduct,
   PurchaseReceiptStatus,
@@ -60,14 +61,19 @@ export function PurchaseReceiptsPage({
   const [receipts, setReceipts] = useState<PurchaseReceipt[] | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [products, setProducts] = useState<PurchaseReceiptProduct[]>([])
+  const [financeAccounts, setFinanceAccounts] = useState<PurchaseReceiptFinanceAccount[]>([])
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<PurchaseReceiptStatus | 'all'>('draft')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
   const [form, setForm] = useState<PurchaseReceiptInput>(blankForm)
   const [saving, setSaving] = useState(false)
+  const [posting, setPosting] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer'>('cash')
+  const [financeAccountId, setFinanceAccountId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const totals = useMemo(() => {
@@ -76,6 +82,25 @@ export function PurchaseReceiptsPage({
     const remaining = payable - Number(form.paid_amount || 0)
     return { subtotal, payable, remaining }
   }, [form.discount_amount, form.items, form.paid_amount])
+
+  const lowCostWarnings = useMemo(() => {
+    return form.items.flatMap((line, index) => {
+      const product = products.find((candidate) => candidate.id === line.product_id)
+      if (product?.latest_purchase_cost === null || product?.latest_purchase_cost === undefined) return []
+      if (Number(line.unit_cost || 0) >= product.latest_purchase_cost) return []
+      return [
+        `Dòng ${index + 1}: giá nhập ${money(Number(line.unit_cost || 0))} thấp hơn giá nhập cuối ${money(
+          product.latest_purchase_cost,
+        )} của ${product.code}.`,
+      ]
+    })
+  }, [form.items, products])
+
+  const bankAccounts = useMemo(
+    () => financeAccounts.filter((account) => account.is_active && account.account_type === 'bank'),
+    [financeAccounts],
+  )
+  const isReadOnly = editingStatus !== null && editingStatus !== 'draft'
 
   async function loadReceipts(
     input: {
@@ -106,16 +131,18 @@ export function PurchaseReceiptsPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [receiptResult, supplierResult, productResult] = await Promise.all([
+        const [receiptResult, supplierResult, productResult, financeAccountResult] = await Promise.all([
           service.listReceipts({ status: 'draft' }),
           service.listSuppliers(),
           service.listProducts(),
+          service.listFinanceAccounts(),
         ])
         if (!active) return
         setReceipts(receiptResult.items)
         setTotal(receiptResult.total)
         setSuppliers(supplierResult.items)
         setProducts(productResult.items.filter((product) => product.status === 'active'))
+        setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được phiếu nhập.'))
       }
@@ -143,6 +170,7 @@ export function PurchaseReceiptsPage({
     try {
       const detail = await service.getReceipt(receipt.id)
       setEditingId(detail.id)
+      setEditingStatus(detail.status)
       setForm({
         code: detail.code,
         supplier_id: detail.supplier_id,
@@ -159,6 +187,8 @@ export function PurchaseReceiptsPage({
           discount_amount: item.discount_amount,
         })),
       })
+      setPaymentMethod('cash')
+      setFinanceAccountId('')
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết phiếu nhập.'))
     }
@@ -166,6 +196,7 @@ export function PurchaseReceiptsPage({
 
   async function saveReceipt(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (isReadOnly) return
     setSaving(true)
     setError(null)
     try {
@@ -175,12 +206,40 @@ export function PurchaseReceiptsPage({
         await service.updateReceipt(editingId, form)
       }
       setEditingId(null)
+      setEditingStatus(null)
       setForm(blankForm)
       await loadReceipts()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được phiếu nhập.'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function postReceipt() {
+    if (editingId === null || editingStatus !== 'draft') return
+    if (Number(form.paid_amount || 0) > 0 && paymentMethod === 'bank_transfer' && financeAccountId === '') {
+      setError('Chọn tài khoản chuyển khoản trước khi hoàn thành phiếu nhập.')
+      return
+    }
+
+    setPosting(true)
+    setError(null)
+    try {
+      await service.postReceipt(editingId, {
+        ...(Number(form.paid_amount || 0) > 0 ? { payment_method: paymentMethod } : {}),
+        ...(Number(form.paid_amount || 0) > 0 && paymentMethod === 'bank_transfer'
+          ? { finance_account_id: financeAccountId }
+          : {}),
+      })
+      setEditingId(null)
+      setEditingStatus(null)
+      setForm(blankForm)
+      await loadReceipts()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không hoàn thành được phiếu nhập.'))
+    } finally {
+      setPosting(false)
     }
   }
 
@@ -213,7 +272,10 @@ export function PurchaseReceiptsPage({
 
   function resetForm() {
     setEditingId(null)
+    setEditingStatus(null)
     setForm(blankForm)
+    setPaymentMethod('cash')
+    setFinanceAccountId('')
   }
 
   return (
@@ -295,7 +357,7 @@ export function PurchaseReceiptsPage({
                         <td>{statusText(receipt.status)}</td>
                         <td>
                           <button type="button" onClick={() => void openReceipt(receipt)}>
-                            Sửa {receipt.code}
+                            {receipt.status === 'draft' ? 'Sửa' : 'Xem'} {receipt.code}
                           </button>
                         </td>
                       </tr>
@@ -310,10 +372,12 @@ export function PurchaseReceiptsPage({
         <aside className="suppliers-panel">
           <form aria-label="Thông tin phiếu nhập" className="purchase-receipt-form" onSubmit={saveReceipt}>
             <header>
-              <h2>{editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
-              <button disabled type="button">
-                Hoàn thành P3
-              </button>
+              <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
+              {editingId !== null && editingStatus === 'draft' ? (
+                <button disabled={posting} type="button" onClick={() => void postReceipt()}>
+                  Hoàn thành nhập hàng
+                </button>
+              ) : null}
               {editingId ? (
                 <button type="button" onClick={resetForm}>
                   Tạo mới
@@ -324,6 +388,7 @@ export function PurchaseReceiptsPage({
               Nhà cung cấp
               <select
                 required
+                disabled={isReadOnly}
                 value={form.supplier_id}
                 onChange={(event) => setForm((current) => ({ ...current, supplier_id: event.target.value }))}
               >
@@ -339,6 +404,7 @@ export function PurchaseReceiptsPage({
               Thời gian nhập
               <input
                 required
+                disabled={isReadOnly}
                 type="datetime-local"
                 value={form.received_at}
                 onChange={(event) => setForm((current) => ({ ...current, received_at: event.target.value }))}
@@ -347,6 +413,7 @@ export function PurchaseReceiptsPage({
             <label>
               Số chứng từ NCC
               <input
+                readOnly={isReadOnly}
                 value={form.supplier_document_no}
                 onChange={(event) => setForm((current) => ({ ...current, supplier_document_no: event.target.value }))}
               />
@@ -358,7 +425,12 @@ export function PurchaseReceiptsPage({
                   <legend>Dòng {index + 1}</legend>
                   <label>
                     Sản phẩm dòng {index + 1}
-                    <select required value={line.product_id} onChange={(event) => chooseProduct(index, event.target.value)}>
+                    <select
+                      required
+                      disabled={isReadOnly}
+                      value={line.product_id}
+                      onChange={(event) => chooseProduct(index, event.target.value)}
+                    >
                       <option value="">Chọn hàng</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
@@ -369,7 +441,7 @@ export function PurchaseReceiptsPage({
                   </label>
                   <label>
                     Đơn vị dòng {index + 1}
-                    <input value={line.unit_name} onChange={(event) => updateLine(index, { unit_name: event.target.value })} />
+                    <input readOnly disabled={isReadOnly} value={line.unit_name} />
                   </label>
                   <label>
                     Số lượng dòng {index + 1}
@@ -377,6 +449,7 @@ export function PurchaseReceiptsPage({
                       min="0.000001"
                       step="0.000001"
                       type="number"
+                      readOnly={isReadOnly}
                       value={line.quantity}
                       onChange={(event) => updateLine(index, { quantity: Number(event.target.value) })}
                     />
@@ -387,6 +460,7 @@ export function PurchaseReceiptsPage({
                       min="0"
                       step="1000"
                       type="number"
+                      readOnly={isReadOnly}
                       value={line.unit_cost}
                       onChange={(event) => updateLine(index, { unit_cost: Number(event.target.value) })}
                     />
@@ -397,19 +471,24 @@ export function PurchaseReceiptsPage({
                       min="0"
                       step="1000"
                       type="number"
+                      readOnly={isReadOnly}
                       value={line.discount_amount}
                       onChange={(event) => updateLine(index, { discount_amount: Number(event.target.value) })}
                     />
                   </label>
                   <p>Thành tiền: {money(lineAmount(line))}</p>
-                  <button type="button" onClick={() => removeLine(index)}>
-                    Xóa dòng
-                  </button>
+                  {isReadOnly ? null : (
+                    <button type="button" onClick={() => removeLine(index)}>
+                      Xóa dòng
+                    </button>
+                  )}
                 </fieldset>
               ))}
-              <button type="button" onClick={addLine}>
-                Thêm dòng
-              </button>
+              {isReadOnly ? null : (
+                <button type="button" onClick={addLine}>
+                  Thêm dòng
+                </button>
+              )}
             </div>
 
             <label>
@@ -418,6 +497,7 @@ export function PurchaseReceiptsPage({
                 min="0"
                 step="1000"
                 type="number"
+                readOnly={isReadOnly}
                 value={form.discount_amount}
                 onChange={(event) => setForm((current) => ({ ...current, discount_amount: Number(event.target.value) }))}
               />
@@ -428,13 +508,18 @@ export function PurchaseReceiptsPage({
                 min="0"
                 step="1000"
                 type="number"
+                readOnly={isReadOnly}
                 value={form.paid_amount}
                 onChange={(event) => setForm((current) => ({ ...current, paid_amount: Number(event.target.value) }))}
               />
             </label>
             <label>
               Ghi chú
-              <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} />
+              <textarea
+                readOnly={isReadOnly}
+                value={form.notes}
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+              />
             </label>
 
             <div className="receipt-total-box">
@@ -442,9 +527,45 @@ export function PurchaseReceiptsPage({
               <p>Cần trả NCC: {money(totals.payable)}</p>
               <p>Còn phải trả: {money(totals.remaining)}</p>
             </div>
-            <button disabled={saving} type="submit">
-              Lưu draft phiếu nhập
-            </button>
+            {lowCostWarnings.length > 0 ? (
+              <div role="alert" className="receipt-warning-box">
+                {lowCostWarnings.map((warning) => (
+                  <p key={warning}>{warning}</p>
+                ))}
+              </div>
+            ) : null}
+            {editingId !== null && editingStatus === 'draft' && Number(form.paid_amount || 0) > 0 ? (
+              <div className="receipt-payment-box">
+                <label>
+                  Phương thức trả ngay
+                  <select
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                  >
+                    <option value="cash">Tiền mặt</option>
+                    <option value="bank_transfer">Chuyển khoản</option>
+                  </select>
+                </label>
+                {paymentMethod === 'bank_transfer' ? (
+                  <label>
+                    Tài khoản chuyển khoản
+                    <select value={financeAccountId} onChange={(event) => setFinanceAccountId(event.target.value)}>
+                      <option value="">Chọn tài khoản</option>
+                      {bankAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.code} - {account.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            {isReadOnly ? null : (
+              <button disabled={saving} type="submit">
+                Lưu draft phiếu nhập
+              </button>
+            )}
           </form>
         </aside>
       </section>

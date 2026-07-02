@@ -235,10 +235,11 @@ async function data(response: Response): Promise<unknown> {
   return (await response.json()).data;
 }
 
-Deno.test("finance accounts require view_shift_report or manage_finance", async () => {
+Deno.test("finance accounts allow finance or inventory management permissions", async () => {
   assertEquals((await call("/api/v1/finance/accounts", { method: "GET" }, repo([]))).status, 403);
   assertEquals((await call("/api/v1/finance/accounts", { method: "GET" }, repo(["perm.view_shift_report"]))).status, 200);
   assertEquals((await call("/api/v1/finance/accounts", { method: "GET" }, repo(["perm.manage_finance"]))).status, 200);
+  assertEquals((await call("/api/v1/finance/accounts", { method: "GET" }, repo(["perm.manage_inventory"]))).status, 200);
 });
 
 Deno.test("debt collection rejects overpayment", async () => {

@@ -24,7 +24,7 @@ export async function listFinanceAccounts(
   context: FinanceContext,
   url: URL,
 ): Promise<{ items: FinanceAccountData[] }> {
-  requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
+  requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance", "perm.manage_inventory"]);
   const accountType = parseOptionalEnum(url.searchParams.get("account_type"), ["cash", "bank"]);
   const isActive = parseOptionalBoolean(url.searchParams.get("is_active"));
   return {

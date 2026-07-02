@@ -824,7 +824,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
-      return { items: (data ?? []).map(toSupplierData), total: count ?? 0 };
+      const items = await attachSupplierPurchaseTotals(client, input.organizationId, (data ?? []).map(toSupplierData));
+      return { items, total: count ?? 0 };
     },
     async getSupplier(input): Promise<SupplierData | null> {
       const { data, error } = await client
@@ -834,7 +835,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .eq("organization_id", input.organizationId)
         .maybeSingle();
       if (error !== null) throw error;
-      return data === null ? null : toSupplierData(data);
+      if (data === null) return null;
+      const [supplier] = await attachSupplierPurchaseTotals(client, input.organizationId, [toSupplierData(data)]);
+      return supplier;
     },
     async createSupplier(input): Promise<SupplierData> {
       const code = input.code ?? await nextSupplierCode(client, input.organizationId);
@@ -855,7 +858,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)")
         .single();
       if (error !== null) throw error;
-      return toSupplierData(data);
+      const [supplier] = await attachSupplierPurchaseTotals(client, input.organizationId, [toSupplierData(data)]);
+      return supplier;
     },
     async updateSupplier(input): Promise<SupplierData | null> {
       const patch: {
@@ -887,7 +891,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)")
         .maybeSingle();
       if (error !== null) throw error;
-      return data === null ? null : toSupplierData(data);
+      if (data === null) return null;
+      const [supplier] = await attachSupplierPurchaseTotals(client, input.organizationId, [toSupplierData(data)]);
+      return supplier;
     },
     async listPurchaseReceipts(input): Promise<{ items: PurchaseReceiptData[]; total: number }> {
       let query = client
@@ -987,6 +993,27 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       });
       if (error !== null) throw error;
       return await this.getPurchaseReceipt({ organizationId: input.organizationId, id: String(data) });
+    },
+    async postPurchaseReceipt(input) {
+      const payload: Record<string, unknown> = {};
+      if (input.paymentMethod !== undefined) payload.payment_method = input.paymentMethod;
+      if (input.financeAccountId !== undefined) payload.finance_account_id = input.financeAccountId;
+      const { data, error } = await client.rpc("post_purchase_receipt_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_receipt_id: input.id,
+        p_payload: payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("PURCHASE_RECEIPT_POST_RESULT_INVALID");
+      return {
+        purchase_receipt_id: String(data.purchase_receipt_id),
+        status: "posted",
+        posted_at: String(data.posted_at),
+        cashbook_voucher_id: data.cashbook_voucher_id === null || data.cashbook_voucher_id === undefined
+          ? null
+          : String(data.cashbook_voucher_id),
+      };
     },
     async listCustomerGroups(input): Promise<CustomerGroupData[]> {
       let query = client
@@ -1722,6 +1749,41 @@ function toSupplierData(row: {
     current_payable_amount: 0,
     total_purchase_amount: 0,
   };
+}
+
+async function attachSupplierPurchaseTotals(
+  client: DatabaseClient,
+  organizationId: string,
+  suppliers: SupplierData[],
+): Promise<SupplierData[]> {
+  if (suppliers.length === 0) return suppliers;
+  const supplierIds = suppliers.map((supplier) => supplier.id);
+  const { data, error } = await client
+    .from("purchase_receipts")
+    .select("supplier_id, payable_amount, remaining_amount")
+    .eq("organization_id", organizationId)
+    .eq("status", "posted")
+    .in("supplier_id", supplierIds);
+  if (error !== null) throw error;
+
+  const totalsBySupplier = new Map<string, { totalPurchase: number; currentPayable: number }>();
+  for (const row of data ?? []) {
+    const current = totalsBySupplier.get(row.supplier_id) ?? { totalPurchase: 0, currentPayable: 0 };
+    totalsBySupplier.set(row.supplier_id, {
+      totalPurchase: current.totalPurchase + Number(row.payable_amount),
+      currentPayable: current.currentPayable + Number(row.remaining_amount),
+    });
+  }
+
+  return suppliers.map((supplier) => {
+    const totals = totalsBySupplier.get(supplier.id);
+    if (totals === undefined) return supplier;
+    return {
+      ...supplier,
+      current_payable_amount: totals.currentPayable,
+      total_purchase_amount: totals.totalPurchase,
+    };
+  });
 }
 
 function toPurchaseReceiptHeaderData(row: {

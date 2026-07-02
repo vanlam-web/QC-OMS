@@ -272,13 +272,49 @@ Deno.test("purchase receipt routes reject duplicate products before repository c
   assertEquals(body.error.code, "VALIDATION_ERROR");
 });
 
-Deno.test("purchase receipt post and cancel are not implemented in P2", async () => {
-  assertEquals(
-    (await call("/api/v1/purchase/receipts/receipt-1/post", { method: "POST" }, repo(["perm.manage_inventory"]))).status,
-    405,
+Deno.test("purchase receipt post maps payment input and cancel stays disabled", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.manage_inventory"], {
+    postPurchaseReceipt: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({
+        purchase_receipt_id: "receipt-1",
+        status: "posted",
+        posted_at: "2026-07-02T03:00:00.000Z",
+        cashbook_voucher_id: "voucher-1",
+      });
+    },
+  });
+
+  const postResponse = await call(
+    "/api/v1/purchase/receipts/receipt-1/post",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        payment_method: "bank_transfer",
+        finance_account_id: "account-1",
+      }),
+    },
+    repository,
   );
+
+  assertEquals(postResponse.status, 200);
+  assertEquals(captured, {
+    organizationId,
+    actorUserId: actorId,
+    id: "receipt-1",
+    paymentMethod: "bank_transfer",
+    financeAccountId: "account-1",
+  });
+  assertEquals(await data(postResponse), {
+    purchase_receipt_id: "receipt-1",
+    status: "posted",
+    posted_at: "2026-07-02T03:00:00.000Z",
+    cashbook_voucher_id: "voucher-1",
+  });
+
   assertEquals(
-    (await call("/api/v1/purchase/receipts/receipt-1/cancel", { method: "POST" }, repo(["perm.manage_inventory"]))).status,
+    (await call("/api/v1/purchase/receipts/receipt-1/cancel", { method: "POST" }, repository)).status,
     405,
   );
 });

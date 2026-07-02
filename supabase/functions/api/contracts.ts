@@ -125,6 +125,13 @@ export interface PurchaseReceiptData {
   items: PurchaseReceiptItemData[];
 }
 
+export interface PurchaseReceiptPostResult {
+  purchase_receipt_id: string;
+  status: "posted";
+  posted_at: string;
+  cashbook_voucher_id: string | null;
+}
+
 export interface ResolvedPriceData {
   product_id: string;
   unit_price: number;
@@ -695,6 +702,13 @@ export interface FoundationRepository {
       discountAmount: number;
     }>;
   }): Promise<PurchaseReceiptData | null>;
+  postPurchaseReceipt(input: {
+    organizationId: string;
+    actorUserId: string;
+    id: string;
+    paymentMethod?: "cash" | "bank_transfer";
+    financeAccountId?: string;
+  }): Promise<PurchaseReceiptPostResult>;
   createCustomer(input: {
     organizationId: string;
     code?: string;
