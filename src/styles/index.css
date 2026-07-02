@@ -1141,6 +1141,74 @@ button {
   margin: 0;
 }
 
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.metric-card {
+  display: grid;
+  gap: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-card > span {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.metric-card > strong {
+  color: var(--color-text);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.metric-card > small {
+  color: var(--color-text-muted);
+}
+
+.metric-card-success {
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+}
+
+.metric-card-warning {
+  border-color: color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.panel-heading h2,
+.panel-heading p {
+  margin: 0;
+}
+
+.panel-heading h2 {
+  font-size: 1rem;
+}
+
+.panel-heading p {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.result-count {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
 .suppliers-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 0.75fr);
@@ -1310,6 +1378,10 @@ button {
 
 .suppliers-header button,
 .suppliers-panel button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   min-height: 2.25rem;
   padding: 0 0.75rem;
 }
@@ -1356,6 +1428,12 @@ button {
   vertical-align: top;
 }
 
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .purchase-receipts-shell {
   min-height: 100vh;
   background: var(--color-surface-muted);
@@ -1385,6 +1463,30 @@ button {
   margin: 0;
   align-self: end;
   font-weight: 700;
+}
+
+.receipt-physical-box {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  padding: var(--space-3);
+}
+
+.receipt-physical-box fieldset {
+  background: var(--color-surface);
+}
+
+.physical-summary {
+  grid-column: 1 / -1;
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
 }
 
 .receipt-total-box {
@@ -1576,6 +1678,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .suppliers-panel table {
     min-width: 42rem;
   }
@@ -1661,6 +1767,10 @@ button {
     gap: var(--space-3);
   }
 
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
   .suppliers-filter {
     grid-template-columns: 1fr;
   }
@@ -1682,5 +1792,14 @@ button {
   .filter-preset,
   .active-filter-chip {
     justify-content: center;
+  }
+
+  .row-actions,
+  .row-actions .button {
+    width: 100%;
+  }
+
+  .receipt-physical-box {
+    grid-template-columns: 1fr;
   }
 }

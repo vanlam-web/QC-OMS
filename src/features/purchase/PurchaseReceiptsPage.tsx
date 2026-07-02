@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Banknote, FilePlus2, Home, PackageCheck, Pencil, Plus, Save, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type {
   PurchaseReceipt,
@@ -13,7 +14,7 @@ import type {
 } from './purchase-receipt-types'
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
-import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -179,6 +180,14 @@ export function PurchaseReceiptsPage({
   const isReadOnly = editingStatus !== null && editingStatus !== 'draft'
   const selectedReceiptPaidAfterPost = selectedReceipt?.supplier_payments.reduce((sum, payment) => sum + payment.amount, 0) ?? 0
   const selectedReceiptOutstanding = selectedReceipt ? selectedReceipt.remaining_amount - selectedReceiptPaidAfterPost : 0
+  const receiptSummary = useMemo(() => {
+    const items = receipts ?? []
+    return {
+      payable: items.reduce((sum, receipt) => sum + receipt.payable_amount, 0),
+      remaining: items.reduce((sum, receipt) => sum + receipt.remaining_amount, 0),
+      draftCount: items.filter((receipt) => receipt.status === 'draft').length,
+    }
+  }, [receipts])
 
   async function loadReceipts(
     input: {
@@ -625,6 +634,7 @@ export function PurchaseReceiptsPage({
           <p>Draft server-side cho hàng thường; chưa tăng kho, chưa ghi công nợ hoặc sổ quỹ</p>
         </div>
         <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+          <Home aria-hidden="true" size={16} />
           Trang chủ
         </button>
       </header>
@@ -632,8 +642,25 @@ export function PurchaseReceiptsPage({
       {error ? <p role="alert">{error}</p> : null}
       {receipts === null && error === null ? <p>Đang tải phiếu nhập...</p> : null}
 
+      <MetricGrid ariaLabel="Tổng quan phiếu nhập">
+        <MetricCard hint={`${receiptSummary.draftCount} draft đang mở`} label="Tổng phiếu" value={total || receipts?.length || 0} />
+        <MetricCard hint="Từ danh sách đang xem" label="Cần trả" tone="warning" value={<MoneyText value={receiptSummary.payable} />} />
+        <MetricCard
+          hint="Sau trả ngay và thanh toán NCC"
+          label="Còn phải trả"
+          tone={receiptSummary.remaining > 0 ? 'warning' : 'neutral'}
+          value={<MoneyText value={receiptSummary.remaining} />}
+        />
+      </MetricGrid>
+
       <section className="suppliers-layout" aria-label="Quản lý phiếu nhập">
-        <div className="suppliers-panel">
+        <section aria-label="Danh sách phiếu nhập" className="suppliers-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Danh sách phiếu nhập</h2>
+              <p>Theo dõi draft, phiếu đã nhập và khoản cần trả NCC.</p>
+            </div>
+          </div>
           <DataToolbar
             ariaLabel="Lọc phiếu nhập"
             chips={receiptFilterChips}
@@ -685,7 +712,7 @@ export function PurchaseReceiptsPage({
 
           {receipts ? (
             <>
-              <p>{total} phiếu nhập</p>
+              <p className="result-count">{total} phiếu nhập</p>
               {receipts.length === 0 ? (
                 <EmptyState>
                   <p>Không có phiếu nhập phù hợp. Thử mở rộng ngày hoặc trạng thái.</p>
@@ -725,9 +752,12 @@ export function PurchaseReceiptsPage({
                           </StatusChip>
                         </td>
                         <td>
-                          <button className="button button-secondary" type="button" onClick={() => void openReceipt(receipt)}>
-                            {receipt.status === 'draft' ? 'Sửa' : 'Xem'} {receipt.code}
-                          </button>
+                          <div className="row-actions">
+                            <button className="button button-secondary" type="button" onClick={() => void openReceipt(receipt)}>
+                              <Pencil aria-hidden="true" size={15} />
+                              {receipt.status === 'draft' ? 'Sửa' : 'Xem'} {receipt.code}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -736,19 +766,27 @@ export function PurchaseReceiptsPage({
               )}
             </>
           ) : null}
-        </div>
+        </section>
 
-        <aside className="suppliers-panel">
+        <aside aria-label="Chi tiết và thao tác phiếu nhập" className="suppliers-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Chi tiết phiếu</h2>
+              <p>Nhập hàng thường, cuộn/tấm vật lý và thanh toán NCC.</p>
+            </div>
+          </div>
           <form aria-label="Thông tin phiếu nhập" className="purchase-receipt-form" onSubmit={saveReceipt}>
             <header>
               <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
               {editingId !== null && editingStatus === 'draft' ? (
                 <button className="button button-primary" disabled={posting} type="button" onClick={() => void postReceipt()}>
+                  <PackageCheck aria-hidden="true" size={16} />
                   Hoàn thành nhập hàng
                 </button>
               ) : null}
               {editingId ? (
                 <button className="button button-secondary" type="button" onClick={resetForm}>
+                  <FilePlus2 aria-hidden="true" size={15} />
                   Tạo mới
                 </button>
               ) : null}
@@ -889,7 +927,7 @@ export function PurchaseReceiptsPage({
                                 }}
                               />
                             </label>
-                            <p>{physicalSummary(line)}</p>
+                            <p className="physical-summary">{physicalSummary(line)}</p>
                           </>
                         )
                       })()}
@@ -934,15 +972,17 @@ export function PurchaseReceiptsPage({
                             />
                           </label>
                           {isReadOnly ? null : (
-                            <button type="button" onClick={() => removeSheetGroup(index, groupIndex)}>
+                            <button className="button button-danger" type="button" onClick={() => removeSheetGroup(index, groupIndex)}>
+                              <Trash2 aria-hidden="true" size={15} />
                               Xóa nhóm tấm {groupIndex + 1}
                             </button>
                           )}
                         </fieldset>
                       ))}
-                      <p>{physicalSummary(line)}</p>
+                      <p className="physical-summary">{physicalSummary(line)}</p>
                       {isReadOnly ? null : (
-                        <button type="button" onClick={() => addSheetGroup(index)}>
+                        <button className="button button-secondary" type="button" onClick={() => addSheetGroup(index)}>
+                          <Plus aria-hidden="true" size={15} />
                           Thêm nhóm kích thước
                         </button>
                       )}
@@ -973,6 +1013,7 @@ export function PurchaseReceiptsPage({
                   <p>Thành tiền: {money(lineAmount(line))}</p>
                   {isReadOnly ? null : (
                     <button className="button button-danger" type="button" onClick={() => removeLine(index)}>
+                      <Trash2 aria-hidden="true" size={15} />
                       Xóa dòng
                     </button>
                   )}
@@ -980,6 +1021,7 @@ export function PurchaseReceiptsPage({
               ))}
               {isReadOnly ? null : (
                 <button className="button button-secondary" type="button" onClick={addLine}>
+                  <Plus aria-hidden="true" size={15} />
                   Thêm dòng
                 </button>
               )}
@@ -1059,6 +1101,7 @@ export function PurchaseReceiptsPage({
                 )}
                 {selectedReceiptOutstanding > 0 ? (
                   <button className="button button-primary" type="button" onClick={openSupplierPaymentForReceipt}>
+                    <WalletCards aria-hidden="true" size={16} />
                     Thanh toán NCC
                   </button>
                 ) : null}
@@ -1107,6 +1150,7 @@ export function PurchaseReceiptsPage({
                   </label>
                 ) : null}
                 <button className="button button-primary" disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
+                  <Banknote aria-hidden="true" size={16} />
                   Lưu thanh toán NCC
                 </button>
               </section>
@@ -1140,6 +1184,7 @@ export function PurchaseReceiptsPage({
             ) : null}
             {isReadOnly ? null : (
               <button className="button button-secondary" disabled={saving} type="submit">
+                <Save aria-hidden="true" size={16} />
                 Lưu draft phiếu nhập
               </button>
             )}

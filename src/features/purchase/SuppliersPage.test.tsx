@@ -77,8 +77,22 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByText('Nguyễn Phong')).toBeInTheDocument()
   const table = screen.getByRole('table')
   expect(within(table).getByText('KH000123 - Nguyễn Phong')).toBeInTheDocument()
-  expect(screen.getByText('250.000 ₫')).toBeInTheDocument()
-  expect(screen.getByText('300.000 ₫')).toBeInTheDocument()
+  expect(within(table).getByText('250.000 ₫')).toBeInTheDocument()
+  expect(within(table).getByText('300.000 ₫')).toBeInTheDocument()
+})
+
+it('summarizes supplier validation state with scan-friendly KPI cards and panels', async () => {
+  const service = makeService()
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('NCC000031')
+  const summary = screen.getByRole('region', { name: 'Tổng quan nhà cung cấp' })
+  expect(within(summary).getByText('Tổng NCC')).toBeInTheDocument()
+  expect(within(summary).getByText('Nợ cần trả')).toBeInTheDocument()
+  expect(within(summary).getByText('Tổng mua')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toBeInTheDocument()
+  expect(screen.getByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).toBeInTheDocument()
 })
 
 it('filters suppliers by search and status', async () => {

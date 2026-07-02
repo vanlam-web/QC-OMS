@@ -163,6 +163,20 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
 })
 
+it('summarizes purchase receipt validation state with scan-friendly KPI cards and panels', async () => {
+  const service = makeService()
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('PN000673')
+  const summary = screen.getByRole('region', { name: 'Tổng quan phiếu nhập' })
+  expect(within(summary).getByText('Tổng phiếu')).toBeInTheDocument()
+  expect(within(summary).getByText('Cần trả')).toBeInTheDocument()
+  expect(within(summary).getByText('Còn phải trả')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Danh sách phiếu nhập' })).toBeInTheDocument()
+  expect(screen.getByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).toBeInTheDocument()
+})
+
 it('filters purchase receipts by search status and dates', async () => {
   const service = makeService()
 
