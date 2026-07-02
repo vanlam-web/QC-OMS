@@ -138,6 +138,7 @@ export function PurchaseReceiptsPage({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [activePreset, setActivePreset] = useState<string | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
   const [selectedReceipt, setSelectedReceipt] = useState<PurchaseReceipt | null>(null)
@@ -297,6 +298,7 @@ export function PurchaseReceiptsPage({
     setError(null)
     try {
       const detail = await service.getReceipt(receipt.id)
+      setDetailOpen(true)
       setEditingId(detail.id)
       setEditingStatus(detail.status)
       setSelectedReceipt(detail)
@@ -344,6 +346,7 @@ export function PurchaseReceiptsPage({
       setEditingId(null)
       setEditingStatus(null)
       setSelectedReceipt(null)
+      setDetailOpen(false)
       setForm(blankForm)
       await loadReceipts()
     } catch (cause) {
@@ -372,6 +375,7 @@ export function PurchaseReceiptsPage({
       setEditingId(null)
       setEditingStatus(null)
       setSelectedReceipt(null)
+      setDetailOpen(false)
       setForm(blankForm)
       await loadReceipts()
     } catch (cause) {
@@ -469,6 +473,7 @@ export function PurchaseReceiptsPage({
     setEditingId(null)
     setEditingStatus(null)
     setSelectedReceipt(null)
+    setDetailOpen(true)
     setForm(blankForm)
     setPaymentMethod('cash')
     setFinanceAccountId('')
@@ -477,6 +482,10 @@ export function PurchaseReceiptsPage({
     setSupplierPaymentMethod('cash')
     setSupplierPaymentFinanceAccountId('')
     setRollLengthTexts({})
+  }
+
+  function openCreateReceipt() {
+    resetForm()
   }
 
   function openSupplierPaymentForReceipt() {
@@ -660,6 +669,10 @@ export function PurchaseReceiptsPage({
               <h2>Danh sách phiếu nhập</h2>
               <p>Theo dõi draft, phiếu đã nhập và khoản cần trả NCC.</p>
             </div>
+            <button className="button button-primary" type="button" onClick={openCreateReceipt}>
+              <FilePlus2 aria-hidden="true" size={16} />
+              Tạo phiếu nhập
+            </button>
           </div>
           <DataToolbar
             ariaLabel="Lọc phiếu nhập"
@@ -775,6 +788,12 @@ export function PurchaseReceiptsPage({
               <p>Nhập hàng thường, cuộn/tấm vật lý và thanh toán NCC.</p>
             </div>
           </div>
+          {!detailOpen ? (
+            <EmptyState>
+              <p>Chọn một phiếu nhập để xem/sửa, hoặc bấm Tạo phiếu nhập để bắt đầu draft mới.</p>
+            </EmptyState>
+          ) : null}
+          {detailOpen ? (
           <form aria-label="Thông tin phiếu nhập" className="purchase-receipt-form" onSubmit={saveReceipt}>
             <header>
               <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
@@ -1185,10 +1204,11 @@ export function PurchaseReceiptsPage({
             {isReadOnly ? null : (
               <button className="button button-secondary" disabled={saving} type="submit">
                 <Save aria-hidden="true" size={16} />
-                Lưu draft phiếu nhập
-              </button>
+              Lưu draft phiếu nhập
+            </button>
             )}
           </form>
+          ) : null}
         </aside>
       </section>
     </main>
