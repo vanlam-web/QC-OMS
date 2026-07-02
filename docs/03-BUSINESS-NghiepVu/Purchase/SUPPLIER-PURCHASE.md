@@ -210,9 +210,19 @@ Quyết định Owner 2026-07-02:
 
 ### BR-PUR-12: Phân bổ trả nợ NCC
 
-Mặc định đề xuất: tiền trả NCC được phân bổ vào phiếu nhập nợ cũ nhất trước. Khi cần, người dùng có thể chọn phiếu cụ thể ở phase nâng cao.
+Mặc định đề xuất cũ là tiền trả NCC được phân bổ vào phiếu nhập nợ cũ nhất trước. Quyết định Owner 2026-07-02 cho P5: khi trả tiền NCC sau phiếu nhập, người dùng chọn phiếu nhập cụ thể để trả, không tự phân bổ cứng vào phiếu cũ nhất.
 
 Quy tắc này đi cùng hướng công nợ khách đã chốt: trả nợ theo chứng từ, ưu tiên chứng từ cũ nhất để dễ đối soát.
+
+Quyết định Owner 2026-07-02 cho P5:
+
+- P5 là slice tiếp theo được ưu tiên sau P3.
+- Cho phép trả một phần công nợ NCC.
+- Không cho trả thừa trong luồng trả NCC sau phiếu nhập. Số âm ở P3 chỉ dùng cho tình huống đối tác vừa là NCC vừa là khách hàng và cần đối soát; P5 không mở workflow trả trước/trả thừa NCC.
+- Một lần trả NCC dùng một phương thức: tiền mặt hoặc chuyển khoản.
+- Nếu chuyển khoản, người dùng chọn được nhiều tài khoản ngân hàng đang có, nhưng mỗi lần trả chỉ chọn một tài khoản.
+- Mã phiếu chi/trả NCC cần tham khảo KiotViet trước khi chốt format cuối cùng.
+- Vị trí UI trả NCC cần tham khảo KiotViet trước khi chốt: trong chi tiết NCC, trong phiếu nhập, hay cả hai.
 
 ---
 
@@ -332,12 +342,27 @@ Phạm vi:
 
 Chỉ làm sau khi Inventory roll/sheet object model đủ rõ trong code.
 
+Quyết định Owner 2026-07-02 cho P4:
+
+- Cuộn: cần hỗ trợ cả nhập nhiều cuộn cùng khổ/cùng mét và từng cuộn khác chiều dài.
+- Cuộn: không cần quản lý mã từng cuộn rườm rà trong MVP; chỉ cần ghi nhận cuộn/lô vật lý đủ để tính tồn và xuất sau này.
+- Tấm: chủ yếu nhập nhiều tấm cùng kích thước; sau này có thể gặp vật tư khác kích thước.
+- Tấm: không cần mã từng tấm.
+- Giá mua tấm: thường theo tấm.
+
 ### Slice P5 — Supplier payments
 
 Phạm vi:
 
 - trả tiền NCC sau phiếu nhập
-- phân bổ vào phiếu nhập nợ cũ nhất trước
-- ghi cashbook outflow theo tiền mặt/chuyển khoản một tài khoản
+- người dùng chọn phiếu nhập cụ thể để trả
+- cho trả một phần
+- không cho trả thừa trong P5
+- ghi cashbook outflow theo tiền mặt hoặc chuyển khoản một tài khoản
 
-Không cần nhiều tài khoản trong một lần trả ở MVP.
+Không cần nhiều tài khoản trong một lần trả ở MVP. Nếu chuyển khoản, UI cho chọn từ các tài khoản ngân hàng đang có.
+
+Trước khi handoff P5, Spec phải tham khảo KiotViet để chốt:
+
+- format/mã chứng từ chi tiền NCC
+- vị trí thao tác trả NCC nên đặt ở màn nào trong QC-OMS
