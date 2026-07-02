@@ -59,6 +59,7 @@ const receipt: PurchaseReceiptData = {
       unit_cost: 100000,
       discount_amount: 10000,
       line_amount: 190000,
+      physical_payload: null,
     },
   ],
   supplier_payments: [],
@@ -194,6 +195,120 @@ Deno.test("purchase receipt create normalizes draft input and lines", async () =
     supplierDocumentNo: "HD-NCC-001",
     notes: "Nhập hàng thường",
   });
+});
+
+Deno.test("purchase receipt create preserves roll and sheet physical payloads", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.manage_inventory"], {
+    createPurchaseReceipt: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({
+        ...receipt,
+        items: [
+          {
+            ...receipt.items[0],
+            inventory_shape: "roll",
+            physical_payload: { rolls: { width_m: 3.2, lengths_m: [50, 45] } },
+          },
+        ],
+      });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/purchase/receipts",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        supplier_id: "supplier-1",
+        received_at: "2026-07-01T10:00:00+07:00",
+        discount_amount: 0,
+        paid_amount: 0,
+        items: [
+          {
+            product_id: "product-roll",
+            inventory_shape: "roll",
+            unit_name: "cuộn",
+            quantity: 2,
+            unit_cost: 1000000,
+            discount_amount: 0,
+            physical_payload: { rolls: { width_m: 3.2, lengths_m: [50, 45] } },
+          },
+          {
+            product_id: "product-sheet",
+            inventory_shape: "sheet",
+            unit_name: "tấm",
+            quantity: 3,
+            unit_cost: 250000,
+            discount_amount: 0,
+            physical_payload: {
+              sheet_groups: [
+                { width_m: 1.22, length_m: 2.44, quantity: 2 },
+                { width_m: 1, length_m: 2, quantity: 1 },
+              ],
+            },
+          },
+        ],
+      }),
+    },
+    repository,
+  );
+
+  assertEquals(response.status, 201);
+  const capturedInput = captured as { items: unknown[] } | null;
+  assertEquals(capturedInput?.items[0], {
+    productId: "product-roll",
+    unitName: "cuộn",
+    quantity: 2,
+    unitCost: 1000000,
+    discountAmount: 0,
+    inventoryShape: "roll",
+    physicalPayload: { rolls: { width_m: 3.2, lengths_m: [50, 45] } },
+  });
+  assertEquals(capturedInput?.items[1], {
+    productId: "product-sheet",
+    unitName: "tấm",
+    quantity: 3,
+    unitCost: 250000,
+    discountAmount: 0,
+    inventoryShape: "sheet",
+    physicalPayload: {
+      sheet_groups: [
+        { width_m: 1.22, length_m: 2.44, quantity: 2 },
+        { width_m: 1, length_m: 2, quantity: 1 },
+      ],
+    },
+  });
+});
+
+Deno.test("purchase receipt create rejects non-object physical payload", async () => {
+  const response = await call(
+    "/api/v1/purchase/receipts",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        supplier_id: "supplier-1",
+        received_at: "2026-07-01T10:00:00+07:00",
+        items: [
+          {
+            product_id: "product-roll",
+            inventory_shape: "roll",
+            unit_name: "cuộn",
+            quantity: 1,
+            unit_cost: 1000000,
+            physical_payload: ["not-object"],
+          },
+        ],
+      }),
+    },
+    repo(["perm.manage_inventory"], {
+      createPurchaseReceipt: () => {
+        throw new Error("repository should not be called for invalid physical payload");
+      },
+    }),
+  );
+
+  assertEquals(response.status, 400);
 });
 
 Deno.test("purchase receipt update is draft-only and maps optional fields", async () => {

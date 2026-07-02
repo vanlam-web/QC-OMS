@@ -31,6 +31,7 @@ const products = [
     sell_method: 'quantity' as const,
     latest_purchase_cost: 85000,
     latest_purchase_cost_at: null,
+    inventory_shape: 'normal' as const,
   },
   {
     id: 'product-2',
@@ -41,6 +42,18 @@ const products = [
     sell_method: 'quantity' as const,
     latest_purchase_cost: null,
     latest_purchase_cost_at: null,
+    inventory_shape: 'sheet' as const,
+  },
+  {
+    id: 'product-3',
+    code: 'SP0003',
+    name: 'Bạt cuộn',
+    status: 'active' as const,
+    unit_name: 'm2',
+    sell_method: 'area_m2' as const,
+    latest_purchase_cost: 1000000,
+    latest_purchase_cost_at: null,
+    inventory_shape: 'roll' as const,
   },
 ]
 
@@ -73,6 +86,7 @@ const receipt = {
       unit_cost: 100000,
       discount_amount: 10000,
       line_amount: 190000,
+      physical_payload: null,
     },
   ],
   supplier_payments: [],
@@ -211,13 +225,99 @@ it('creates a draft receipt for normal items with computed totals shown locally'
     items: [
       {
         product_id: 'product-1',
+        inventory_shape: 'normal',
         unit_name: 'm',
         quantity: 2,
         unit_cost: 100000,
         discount_amount: 10000,
+        physical_payload: null,
       },
     ],
   })
+})
+
+it('creates a roll draft line from physical roll lengths without manual object codes', async () => {
+  const service = makeService()
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('PN000673')
+  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+  await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
+  await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
+  await userEvent.type(within(form).getByLabelText('Thời gian nhập'), '2026-07-01T10:00')
+  await userEvent.selectOptions(within(form).getByLabelText('Sản phẩm dòng 1'), 'product-3')
+
+  expect(within(form).queryByLabelText(/mã cuộn/i)).not.toBeInTheDocument()
+  await userEvent.clear(within(form).getByLabelText('Khổ rộng cuộn dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Khổ rộng cuộn dòng 1'), '3.2')
+  await userEvent.clear(within(form).getByLabelText('Chiều dài từng cuộn dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Chiều dài từng cuộn dòng 1'), '50, 50, 45')
+  expect(within(form).getByLabelText('Số lượng dòng 1')).toHaveValue(3)
+  expect(within(form).getByText('3 cuộn, khổ 3.2m, tổng 464.000 m²')).toBeInTheDocument()
+
+  await userEvent.click(within(form).getByRole('button', { name: 'Lưu draft phiếu nhập' }))
+
+  expect(service.createReceipt).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          product_id: 'product-3',
+          inventory_shape: 'roll',
+          unit_name: 'cuộn',
+          quantity: 3,
+          physical_payload: { rolls: { width_m: 3.2, lengths_m: [50, 50, 45] } },
+        }),
+      ],
+    }),
+  )
+})
+
+it('creates a sheet draft line with multiple size groups', async () => {
+  const service = makeService()
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('PN000673')
+  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+  await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
+  await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
+  await userEvent.type(within(form).getByLabelText('Thời gian nhập'), '2026-07-01T10:00')
+  await userEvent.selectOptions(within(form).getByLabelText('Sản phẩm dòng 1'), 'product-2')
+  await userEvent.clear(within(form).getByLabelText('Rộng nhóm 1 dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Rộng nhóm 1 dòng 1'), '1.22')
+  await userEvent.clear(within(form).getByLabelText('Dài nhóm 1 dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Dài nhóm 1 dòng 1'), '2.44')
+  await userEvent.clear(within(form).getByLabelText('Số tấm nhóm 1 dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Số tấm nhóm 1 dòng 1'), '2')
+  await userEvent.click(within(form).getByRole('button', { name: 'Thêm nhóm kích thước' }))
+  await userEvent.clear(within(form).getByLabelText('Rộng nhóm 2 dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Rộng nhóm 2 dòng 1'), '1')
+  await userEvent.clear(within(form).getByLabelText('Dài nhóm 2 dòng 1'))
+  await userEvent.type(within(form).getByLabelText('Dài nhóm 2 dòng 1'), '2')
+  expect(within(form).getByLabelText('Số lượng dòng 1')).toHaveValue(3)
+  expect(within(form).getByText('3 tấm, 2 nhóm kích thước, tổng 7.954 m²')).toBeInTheDocument()
+
+  await userEvent.click(within(form).getByRole('button', { name: 'Lưu draft phiếu nhập' }))
+
+  expect(service.createReceipt).toHaveBeenCalledWith(
+    expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          product_id: 'product-2',
+          inventory_shape: 'sheet',
+          unit_name: 'tấm',
+          quantity: 3,
+          physical_payload: {
+            sheet_groups: [
+              { width_m: 1.22, length_m: 2.44, quantity: 2 },
+              { width_m: 1, length_m: 2, quantity: 1 },
+            ],
+          },
+        }),
+      ],
+    }),
+  )
 })
 
 it('opens a draft receipt for editing and saves updated lines', async () => {
