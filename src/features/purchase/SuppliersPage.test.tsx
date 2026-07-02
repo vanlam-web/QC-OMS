@@ -80,6 +80,7 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(within(table).getByText('250.000 ₫')).toBeInTheDocument()
   expect(within(table).getByText('300.000 ₫')).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Thông tin nhà cung cấp' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toBeInTheDocument()
 })
 
@@ -94,7 +95,7 @@ it('summarizes supplier validation state with scan-friendly KPI cards and panels
   expect(within(summary).getByText('Nợ cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Tổng mua')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toBeInTheDocument()
-  expect(screen.getByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).toBeInTheDocument()
+  expect(screen.queryByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).not.toBeInTheDocument()
 })
 
 it('filters suppliers by search and status', async () => {
@@ -137,6 +138,10 @@ it('creates supplier with blank phone and selected linked customer', async () =>
 
   await screen.findByText('NCC000031')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo nhà cung cấp' }))
+  const detail = screen.getByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })
+  expect(detail).toBeInTheDocument()
+  expect(detail.closest('section[aria-label="Quản lý nhà cung cấp"]')).toHaveClass('suppliers-layout-stacked')
+  expect(detail.closest('section[aria-label="Quản lý nhà cung cấp"]')).toHaveClass('suppliers-layout-create-active')
   const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
   await userEvent.type(within(form).getByLabelText('Tên NCC'), 'NCC mới')
   await userEvent.type(within(form).getByLabelText('Địa chỉ'), 'Quận 1')
@@ -163,6 +168,8 @@ it('opens supplier for editing and saves inactive status', async () => {
 
   await userEvent.click(await screen.findByRole('button', { name: 'Sửa NCC000031' }))
   const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
+  const detail = screen.getByRole('complementary', { name: 'Hồ sơ và thanh toán nhà cung cấp' })
+  expect(detail.closest('section[aria-label="Quản lý nhà cung cấp"]')).not.toHaveClass('suppliers-layout-create-active')
   await userEvent.selectOptions(within(form).getByLabelText('Trạng thái NCC'), 'inactive')
   await userEvent.click(within(form).getByRole('button', { name: 'Lưu nhà cung cấp' }))
 

@@ -159,9 +159,14 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(within(table).getByText('180.000 ₫')).toBeInTheDocument()
   expect(within(table).getByText('130.000 ₫')).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Thông tin phiếu nhập' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo phiếu nhập' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sửa PN000673' }))
+  const detail = screen.getByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })
+  expect(detail).toBeInTheDocument()
+  expect(detail.closest('section[aria-label="Quản lý phiếu nhập"]')).toHaveClass('suppliers-layout-stacked')
+  expect(detail.closest('section[aria-label="Quản lý phiếu nhập"]')).not.toHaveClass('suppliers-layout-create-active')
   expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
 })
 
@@ -176,7 +181,7 @@ it('summarizes purchase receipt validation state with scan-friendly KPI cards an
   expect(within(summary).getByText('Cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Còn phải trả')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách phiếu nhập' })).toBeInTheDocument()
-  expect(screen.getByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).toBeInTheDocument()
+  expect(screen.queryByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).not.toBeInTheDocument()
 })
 
 it('filters purchase receipts by search status and dates', async () => {
@@ -236,6 +241,10 @@ it('creates a draft receipt for normal items with computed totals shown locally'
 
   await screen.findByText('PN000673')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
+  const detail = screen.getByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })
+  expect(detail).toBeInTheDocument()
+  expect(detail.closest('section[aria-label="Quản lý phiếu nhập"]')).toHaveClass('suppliers-layout-stacked')
+  expect(detail.closest('section[aria-label="Quản lý phiếu nhập"]')).toHaveClass('suppliers-layout-create-active')
   const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
