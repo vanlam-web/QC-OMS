@@ -19,9 +19,23 @@ const supplier = {
   linked_customer: { id: 'customer-1', code: 'KH000123', name: 'Nguyễn Phong' },
   notes: 'NCC cũng là khách hàng',
   status: 'active' as const,
-  current_payable_amount: 0,
-  total_purchase_amount: 0,
+  current_payable_amount: 250000,
+  total_purchase_amount: 300000,
 }
+
+const payableReceipts = [
+  {
+    id: 'receipt-1',
+    code: 'PN000673',
+    supplier_document_no: 'HD-NCC-001',
+    received_at: '2026-07-02T03:00:00.000Z',
+    payable_amount: 300000,
+    paid_amount: 0,
+    remaining_amount: 300000,
+    paid_after_post_amount: 50000,
+    outstanding_amount: 250000,
+  },
+]
 
 function makeService(overrides: Partial<SupplierService> = {}): SupplierService {
   return {
@@ -30,6 +44,25 @@ function makeService(overrides: Partial<SupplierService> = {}): SupplierService 
     createSupplier: vi.fn(async () => ({ ...supplier, id: 'supplier-2', code: 'NCC000001', phone: null })),
     updateSupplier: vi.fn(async () => ({ ...supplier, status: 'inactive' as const })),
     listCustomers: vi.fn(async () => ({ items: customers, page: 1, page_size: 20, total: 1 })),
+    listPayableReceipts: vi.fn(async () => ({ items: payableReceipts })),
+    listFinanceAccounts: vi.fn(async () => ({
+      items: [
+        {
+          id: 'bank-1',
+          code: 'VCB',
+          name: 'Vietcombank',
+          account_type: 'bank' as const,
+          is_default_cash: false,
+          is_active: true,
+        },
+      ],
+    })),
+    paySupplier: vi.fn(async () => ({
+      supplier_payment_id: 'payment-1',
+      code: 'PCPN000001',
+      amount: 250000,
+      cashbook_voucher_id: 'voucher-1',
+    })),
     ...overrides,
   }
 }
@@ -44,7 +77,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByText('Nguyễn Phong')).toBeInTheDocument()
   const table = screen.getByRole('table')
   expect(within(table).getByText('KH000123 - Nguyễn Phong')).toBeInTheDocument()
-  expect(screen.getAllByText('0 ₫')).toHaveLength(2)
+  expect(screen.getByText('250.000 ₫')).toBeInTheDocument()
+  expect(screen.getByText('300.000 ₫')).toBeInTheDocument()
 })
 
 it('filters suppliers by search and status', async () => {
@@ -98,4 +132,45 @@ it('opens supplier for editing and saves inactive status', async () => {
 
   expect(service.getSupplier).toHaveBeenCalledWith('supplier-1')
   expect(service.updateSupplier).toHaveBeenCalledWith('supplier-1', expect.objectContaining({ status: 'inactive' }))
+})
+
+it('opens supplier payment form from payable supplier and submits explicit receipt allocation', async () => {
+  const service = makeService()
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Thanh toán NCC000031' }))
+  const form = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })
+
+  expect(service.listPayableReceipts).toHaveBeenCalledWith('supplier-1')
+  expect(within(form).getByText('PN000673')).toBeInTheDocument()
+  expect(within(form).getByText('Còn nợ: 250.000 ₫')).toBeInTheDocument()
+  await userEvent.clear(within(form).getByLabelText('Số tiền trả cho PN000673'))
+  await userEvent.type(within(form).getByLabelText('Số tiền trả cho PN000673'), '250000')
+  await userEvent.selectOptions(within(form).getByLabelText('Phương thức trả NCC'), 'bank_transfer')
+  await userEvent.selectOptions(within(form).getByLabelText('Tài khoản chuyển khoản NCC'), 'bank-1')
+  await userEvent.type(within(form).getByLabelText('Ghi chú thanh toán'), 'Thanh toán NCC')
+  await userEvent.click(within(form).getByRole('button', { name: 'Lưu thanh toán NCC' }))
+
+  expect(service.paySupplier).toHaveBeenCalledWith('supplier-1', {
+    payment_method: 'bank_transfer',
+    finance_account_id: 'bank-1',
+    note: 'Thanh toán NCC',
+    allocations: [{ purchase_receipt_id: 'receipt-1', amount: 250000 }],
+  })
+})
+
+it('blocks supplier payment over selected receipt outstanding amount in UI', async () => {
+  const service = makeService()
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Thanh toán NCC000031' }))
+  const form = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })
+  await userEvent.clear(within(form).getByLabelText('Số tiền trả cho PN000673'))
+  await userEvent.type(within(form).getByLabelText('Số tiền trả cho PN000673'), '260000')
+  await userEvent.click(within(form).getByRole('button', { name: 'Lưu thanh toán NCC' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Không được trả vượt số còn nợ của phiếu nhập.')
+  expect(service.paySupplier).not.toHaveBeenCalled()
 })

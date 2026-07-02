@@ -75,6 +75,7 @@ const receipt = {
       line_amount: 190000,
     },
   ],
+  supplier_payments: [],
 }
 
 const postedReceipt = {
@@ -82,6 +83,18 @@ const postedReceipt = {
   id: 'receipt-posted',
   code: 'PN000674',
   status: 'posted' as const,
+  remaining_amount: 130000,
+  supplier_payments: [
+    {
+      id: 'payment-1',
+      code: 'PCPN000001',
+      paid_at: '2026-07-02T07:00:00.000Z',
+      created_by: 'user-1',
+      payment_method: 'cash' as const,
+      status: 'posted' as const,
+      amount: 50000,
+    },
+  ],
 }
 
 function makeService(overrides: Partial<PurchaseReceiptService> = {}): PurchaseReceiptService {
@@ -95,6 +108,12 @@ function makeService(overrides: Partial<PurchaseReceiptService> = {}): PurchaseR
       status: 'posted' as const,
       posted_at: '2026-07-02T03:00:00.000Z',
       cashbook_voucher_id: 'voucher-1',
+    })),
+    paySupplier: vi.fn(async () => ({
+      supplier_payment_id: 'payment-2',
+      code: 'PCPN000002',
+      amount: 80000,
+      cashbook_voucher_id: 'voucher-2',
     })),
     listSuppliers: vi.fn(async () => ({ items: suppliers, page: 1, page_size: 20, total: 1 })),
     listProducts: vi.fn(async () => ({ items: products, page: 1, page_size: 20, total: 2 })),
@@ -231,6 +250,33 @@ it('opens posted receipts as view-only details', async () => {
   expect(within(form).queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
   expect(within(form).queryByRole('button', { name: 'Lưu draft phiếu nhập' })).not.toBeInTheDocument()
   expect(within(form).getByLabelText('Nhà cung cấp')).toBeDisabled()
+})
+
+it('shows supplier payment history and pays remaining amount from posted receipt detail', async () => {
+  const service = makeService({
+    listReceipts: vi.fn(async () => ({ items: [postedReceipt], page: 1, page_size: 20, total: 1 })),
+    getReceipt: vi.fn(async () => postedReceipt),
+  })
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Xem PN000674' }))
+  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+
+  expect(within(form).getByText('Lịch sử thanh toán NCC')).toBeInTheDocument()
+  expect(within(form).getByText('PCPN000001')).toBeInTheDocument()
+  expect(within(form).getByText('50.000 ₫')).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: 'Thanh toán NCC' }))
+  const paymentForm = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })
+  expect(within(paymentForm).getByText('PN000674')).toBeInTheDocument()
+  expect(within(paymentForm).getByText('Còn nợ: 80.000 ₫')).toBeInTheDocument()
+  await userEvent.selectOptions(within(paymentForm).getByLabelText('Phương thức trả NCC'), 'cash')
+  await userEvent.click(within(paymentForm).getByRole('button', { name: 'Lưu thanh toán NCC' }))
+
+  expect(service.paySupplier).toHaveBeenCalledWith('supplier-1', {
+    payment_method: 'cash',
+    allocations: [{ purchase_receipt_id: 'receipt-posted', amount: 80000 }],
+  })
 })
 
 it('warns on low purchase cost and posts with a selected bank account', async () => {

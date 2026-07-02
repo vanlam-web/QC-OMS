@@ -69,11 +69,16 @@ export function PurchaseReceiptsPage({
   const [dateTo, setDateTo] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
+  const [selectedReceipt, setSelectedReceipt] = useState<PurchaseReceipt | null>(null)
   const [form, setForm] = useState<PurchaseReceiptInput>(blankForm)
   const [saving, setSaving] = useState(false)
   const [posting, setPosting] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer'>('cash')
   const [financeAccountId, setFinanceAccountId] = useState('')
+  const [supplierPaymentOpen, setSupplierPaymentOpen] = useState(false)
+  const [supplierPaymentAmount, setSupplierPaymentAmount] = useState(0)
+  const [supplierPaymentMethod, setSupplierPaymentMethod] = useState<'cash' | 'bank_transfer'>('cash')
+  const [supplierPaymentFinanceAccountId, setSupplierPaymentFinanceAccountId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const totals = useMemo(() => {
@@ -101,6 +106,8 @@ export function PurchaseReceiptsPage({
     [financeAccounts],
   )
   const isReadOnly = editingStatus !== null && editingStatus !== 'draft'
+  const selectedReceiptPaidAfterPost = selectedReceipt?.supplier_payments.reduce((sum, payment) => sum + payment.amount, 0) ?? 0
+  const selectedReceiptOutstanding = selectedReceipt ? selectedReceipt.remaining_amount - selectedReceiptPaidAfterPost : 0
 
   async function loadReceipts(
     input: {
@@ -171,6 +178,7 @@ export function PurchaseReceiptsPage({
       const detail = await service.getReceipt(receipt.id)
       setEditingId(detail.id)
       setEditingStatus(detail.status)
+      setSelectedReceipt(detail)
       setForm({
         code: detail.code,
         supplier_id: detail.supplier_id,
@@ -189,6 +197,10 @@ export function PurchaseReceiptsPage({
       })
       setPaymentMethod('cash')
       setFinanceAccountId('')
+      setSupplierPaymentOpen(false)
+      setSupplierPaymentAmount(0)
+      setSupplierPaymentMethod('cash')
+      setSupplierPaymentFinanceAccountId('')
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết phiếu nhập.'))
     }
@@ -207,6 +219,7 @@ export function PurchaseReceiptsPage({
       }
       setEditingId(null)
       setEditingStatus(null)
+      setSelectedReceipt(null)
       setForm(blankForm)
       await loadReceipts()
     } catch (cause) {
@@ -234,6 +247,7 @@ export function PurchaseReceiptsPage({
       })
       setEditingId(null)
       setEditingStatus(null)
+      setSelectedReceipt(null)
       setForm(blankForm)
       await loadReceipts()
     } catch (cause) {
@@ -273,9 +287,56 @@ export function PurchaseReceiptsPage({
   function resetForm() {
     setEditingId(null)
     setEditingStatus(null)
+    setSelectedReceipt(null)
     setForm(blankForm)
     setPaymentMethod('cash')
     setFinanceAccountId('')
+    setSupplierPaymentOpen(false)
+    setSupplierPaymentAmount(0)
+    setSupplierPaymentMethod('cash')
+    setSupplierPaymentFinanceAccountId('')
+  }
+
+  function openSupplierPaymentForReceipt() {
+    if (selectedReceipt === null) return
+    setSupplierPaymentOpen(true)
+    setSupplierPaymentAmount(Math.max(selectedReceiptOutstanding, 0))
+    setSupplierPaymentMethod('cash')
+    setSupplierPaymentFinanceAccountId('')
+  }
+
+  async function saveSupplierPayment() {
+    if (selectedReceipt === null || selectedReceiptOutstanding <= 0) return
+    if (supplierPaymentAmount <= 0) {
+      setError('Nhập số tiền thanh toán NCC.')
+      return
+    }
+    if (supplierPaymentAmount > selectedReceiptOutstanding) {
+      setError('Không được trả vượt số còn nợ của phiếu nhập.')
+      return
+    }
+    if (supplierPaymentMethod === 'bank_transfer' && supplierPaymentFinanceAccountId === '') {
+      setError('Chọn tài khoản chuyển khoản trước khi lưu thanh toán NCC.')
+      return
+    }
+
+    setPosting(true)
+    setError(null)
+    try {
+      await service.paySupplier(selectedReceipt.supplier_id, {
+        payment_method: supplierPaymentMethod,
+        ...(supplierPaymentMethod === 'bank_transfer' ? { finance_account_id: supplierPaymentFinanceAccountId } : {}),
+        allocations: [{ purchase_receipt_id: selectedReceipt.id, amount: supplierPaymentAmount }],
+      })
+      const detail = await service.getReceipt(selectedReceipt.id)
+      setSelectedReceipt(detail)
+      setSupplierPaymentOpen(false)
+      await loadReceipts()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không lưu được thanh toán NCC.'))
+    } finally {
+      setPosting(false)
+    }
   }
 
   return (
@@ -533,6 +594,89 @@ export function PurchaseReceiptsPage({
                   <p key={warning}>{warning}</p>
                 ))}
               </div>
+            ) : null}
+            {isReadOnly && selectedReceipt ? (
+              <section className="receipt-payment-history" aria-label="Lịch sử thanh toán NCC">
+                <h3>Lịch sử thanh toán NCC</h3>
+                {selectedReceipt.supplier_payments.length === 0 ? (
+                  <p>Chưa có thanh toán NCC sau nhập.</p>
+                ) : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Mã phiếu</th>
+                        <th>Thời gian</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th>Tiền chi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedReceipt.supplier_payments.map((payment) => (
+                        <tr key={payment.id}>
+                          <td>{payment.code}</td>
+                          <td>{new Date(payment.paid_at).toLocaleString('vi-VN')}</td>
+                          <td>{payment.payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt'}</td>
+                          <td>{payment.status === 'posted' ? 'Đã ghi' : 'Đã hủy'}</td>
+                          <td>{money(payment.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                {selectedReceiptOutstanding > 0 ? (
+                  <button type="button" onClick={openSupplierPaymentForReceipt}>
+                    Thanh toán NCC
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
+            {supplierPaymentOpen && selectedReceipt ? (
+              <section role="form" aria-label="Thanh toán nhà cung cấp" className="receipt-payment-box">
+                <h3>Thanh toán NCC</h3>
+                <p>{selectedReceipt.code}</p>
+                <p>Còn nợ: {money(selectedReceiptOutstanding)}</p>
+                <label>
+                  Số tiền trả cho {selectedReceipt.code}
+                  <input
+                    min="0"
+                    max={selectedReceiptOutstanding}
+                    step="1000"
+                    type="number"
+                    value={supplierPaymentAmount}
+                    onChange={(event) => setSupplierPaymentAmount(Number(event.target.value))}
+                  />
+                </label>
+                <label>
+                  Phương thức trả NCC
+                  <select
+                    value={supplierPaymentMethod}
+                    onChange={(event) => setSupplierPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                  >
+                    <option value="cash">Tiền mặt</option>
+                    <option value="bank_transfer">Chuyển khoản</option>
+                  </select>
+                </label>
+                {supplierPaymentMethod === 'bank_transfer' ? (
+                  <label>
+                    Tài khoản chuyển khoản NCC
+                    <select
+                      value={supplierPaymentFinanceAccountId}
+                      onChange={(event) => setSupplierPaymentFinanceAccountId(event.target.value)}
+                    >
+                      <option value="">Chọn tài khoản</option>
+                      {bankAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.code} - {account.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <button disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
+                  Lưu thanh toán NCC
+                </button>
+              </section>
             ) : null}
             {editingId !== null && editingStatus === 'draft' && Number(form.paid_amount || 0) > 0 ? (
               <div className="receipt-payment-box">

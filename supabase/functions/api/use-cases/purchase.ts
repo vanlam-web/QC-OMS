@@ -4,6 +4,8 @@ import type {
   PurchaseReceiptData,
   PurchaseReceiptPostResult,
   SupplierData,
+  SupplierPayableReceiptData,
+  SupplierPaymentResultData,
 } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 import { requireAnyPermission } from "./catalog.ts";
@@ -26,6 +28,10 @@ export interface PurchaseReceiptListResponse {
   page: number;
   page_size: number;
   total: number;
+}
+
+export interface SupplierPayableReceiptListResponse {
+  items: SupplierPayableReceiptData[];
 }
 
 export async function listSuppliers(
@@ -84,6 +90,35 @@ export async function updateSupplier(
     return row;
   } catch (cause) {
     if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function listSupplierPayableReceipts(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  supplierId: string,
+): Promise<SupplierPayableReceiptListResponse> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  return await repository.listSupplierPayableReceipts({ organizationId: context.organizationId, supplierId });
+}
+
+export async function paySupplier(
+  repository: FoundationRepository,
+  context: PurchaseContext,
+  supplierId: string,
+  body: unknown,
+): Promise<SupplierPaymentResultData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const input = parseSupplierPayment(body);
+  try {
+    return await repository.paySupplier({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      supplierId,
+      ...input,
+    });
+  } catch (cause) {
     throw mapRepositoryError(cause);
   }
 }
@@ -407,6 +442,52 @@ function parsePurchaseReceiptPost(body: unknown): {
   return input;
 }
 
+function parseSupplierPayment(body: unknown): {
+  paymentMethod: "cash" | "bank_transfer";
+  financeAccountId?: string;
+  paidAt?: string;
+  note?: string;
+  allocations: Array<{ purchaseReceiptId: string; amount: number }>;
+} {
+  if (!isRecord(body)) throw validationError();
+  if (body.payment_method !== "cash" && body.payment_method !== "bank_transfer") throw validationError();
+  const input: {
+    paymentMethod: "cash" | "bank_transfer";
+    financeAccountId?: string;
+    paidAt?: string;
+    note?: string;
+    allocations: Array<{ purchaseReceiptId: string; amount: number }>;
+  } = {
+    paymentMethod: body.payment_method,
+    allocations: parseSupplierPaymentAllocations(body.allocations),
+  };
+  if ("finance_account_id" in body && body.finance_account_id !== null && body.finance_account_id !== undefined && String(body.finance_account_id).trim() !== "") {
+    input.financeAccountId = parseRequiredId(body.finance_account_id);
+  }
+  if ("paid_at" in body && body.paid_at !== null && body.paid_at !== undefined && String(body.paid_at).trim() !== "") {
+    input.paidAt = parseRequiredDate(body.paid_at);
+  }
+  if ("note" in body && body.note !== null && body.note !== undefined && String(body.note).trim() !== "") {
+    input.note = normalizeText(body.note, 500);
+  }
+  return input;
+}
+
+function parseSupplierPaymentAllocations(value: unknown): Array<{ purchaseReceiptId: string; amount: number }> {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 100) throw validationError();
+  const seen = new Set<string>();
+  return value.map((item) => {
+    if (!isRecord(item)) throw validationError();
+    const purchaseReceiptId = parseRequiredId(item.purchase_receipt_id);
+    if (seen.has(purchaseReceiptId)) throw validationError();
+    seen.add(purchaseReceiptId);
+    return {
+      purchaseReceiptId,
+      amount: parsePositiveMoney(item.amount),
+    };
+  });
+}
+
 function parsePurchaseReceiptItems(value: unknown): Array<{
   productId: string;
   unitName: string;
@@ -475,6 +556,12 @@ function parsePositiveQuantity(value: unknown): number {
 function parseNonNegativeAmount(value: unknown): number {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount < 0) throw validationError();
+  return amount;
+}
+
+function parsePositiveMoney(value: unknown): number {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) throw validationError();
   return amount;
 }
 

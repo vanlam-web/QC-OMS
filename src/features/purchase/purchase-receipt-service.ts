@@ -9,6 +9,8 @@ import type {
   PurchaseReceiptPostInput,
   PurchaseReceiptPostResult,
   PurchaseReceiptSupplierListResponse,
+  PurchaseReceiptSupplierPaymentInput,
+  PurchaseReceiptSupplierPaymentResult,
   PurchaseReceiptStatus,
 } from './purchase-receipt-types'
 
@@ -47,6 +49,11 @@ export function createPurchaseReceiptService(api: PurchaseReceiptApiRequester) {
       }),
     postReceipt: (id: string, input: PurchaseReceiptPostInput) =>
       api.request<PurchaseReceiptPostResult>(`/api/v1/purchase/receipts/${id}/post`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    paySupplier: (supplierId: string, input: PurchaseReceiptSupplierPaymentInput) =>
+      api.request<PurchaseReceiptSupplierPaymentResult>(`/api/v1/suppliers/${supplierId}/payments`, {
         method: 'POST',
         body: JSON.stringify(input),
       }),
