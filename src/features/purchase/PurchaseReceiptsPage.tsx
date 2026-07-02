@@ -13,6 +13,7 @@ import type {
 } from './purchase-receipt-types'
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
+import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -459,7 +460,7 @@ export function PurchaseReceiptsPage({
           <h1>Phiếu nhập</h1>
           <p>Draft server-side cho hàng thường; chưa tăng kho, chưa ghi công nợ hoặc sổ quỹ</p>
         </div>
-        <button type="button" onClick={onOpenDashboard}>
+        <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
           Trang chủ
         </button>
       </header>
@@ -491,16 +492,16 @@ export function PurchaseReceiptsPage({
               Đến ngày
               <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
             </label>
-            <button type="submit">Lọc</button>
+            <button className="button button-secondary" type="submit">Lọc</button>
           </form>
 
           {receipts ? (
             <>
               <p>{total} phiếu nhập</p>
               {receipts.length === 0 ? (
-                <div className="empty-state">
+                <EmptyState>
                   <p>Không có phiếu nhập phù hợp. Thử mở rộng ngày hoặc trạng thái.</p>
-                </div>
+                </EmptyState>
               ) : (
                 <table>
                   <thead>
@@ -524,13 +525,19 @@ export function PurchaseReceiptsPage({
                         <td>{new Date(receipt.received_at).toLocaleString('vi-VN')}</td>
                         <td>{`${receipt.supplier.code} - ${receipt.supplier.name}`}</td>
                         <td>{receipt.items.length}</td>
-                        <td>{money(receipt.subtotal_amount)}</td>
-                        <td>{money(receipt.payable_amount)}</td>
-                        <td>{money(receipt.paid_amount)}</td>
-                        <td>{money(receipt.remaining_amount)}</td>
-                        <td>{statusText(receipt.status)}</td>
+                        <td><MoneyText value={receipt.subtotal_amount} /></td>
+                        <td><MoneyText value={receipt.payable_amount} /></td>
+                        <td><MoneyText value={receipt.paid_amount} /></td>
+                        <td><MoneyText value={receipt.remaining_amount} /></td>
                         <td>
-                          <button type="button" onClick={() => void openReceipt(receipt)}>
+                          <StatusChip
+                            tone={receipt.status === 'draft' ? 'info' : receipt.status === 'posted' ? 'success' : 'danger'}
+                          >
+                            {statusText(receipt.status)}
+                          </StatusChip>
+                        </td>
+                        <td>
+                          <button className="button button-secondary" type="button" onClick={() => void openReceipt(receipt)}>
                             {receipt.status === 'draft' ? 'Sửa' : 'Xem'} {receipt.code}
                           </button>
                         </td>
@@ -548,12 +555,12 @@ export function PurchaseReceiptsPage({
             <header>
               <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
               {editingId !== null && editingStatus === 'draft' ? (
-                <button disabled={posting} type="button" onClick={() => void postReceipt()}>
+                <button className="button button-primary" disabled={posting} type="button" onClick={() => void postReceipt()}>
                   Hoàn thành nhập hàng
                 </button>
               ) : null}
               {editingId ? (
-                <button type="button" onClick={resetForm}>
+                <button className="button button-secondary" type="button" onClick={resetForm}>
                   Tạo mới
                 </button>
               ) : null}
@@ -777,14 +784,14 @@ export function PurchaseReceiptsPage({
                   </label>
                   <p>Thành tiền: {money(lineAmount(line))}</p>
                   {isReadOnly ? null : (
-                    <button type="button" onClick={() => removeLine(index)}>
+                    <button className="button button-danger" type="button" onClick={() => removeLine(index)}>
                       Xóa dòng
                     </button>
                   )}
                 </fieldset>
               ))}
               {isReadOnly ? null : (
-                <button type="button" onClick={addLine}>
+                <button className="button button-secondary" type="button" onClick={addLine}>
                   Thêm dòng
                 </button>
               )}
@@ -856,14 +863,14 @@ export function PurchaseReceiptsPage({
                           <td>{new Date(payment.paid_at).toLocaleString('vi-VN')}</td>
                           <td>{payment.payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt'}</td>
                           <td>{payment.status === 'posted' ? 'Đã ghi' : 'Đã hủy'}</td>
-                          <td>{money(payment.amount)}</td>
+                          <td><MoneyText value={payment.amount} /></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 )}
                 {selectedReceiptOutstanding > 0 ? (
-                  <button type="button" onClick={openSupplierPaymentForReceipt}>
+                  <button className="button button-primary" type="button" onClick={openSupplierPaymentForReceipt}>
                     Thanh toán NCC
                   </button>
                 ) : null}
@@ -911,7 +918,7 @@ export function PurchaseReceiptsPage({
                     </select>
                   </label>
                 ) : null}
-                <button disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
+                <button className="button button-primary" disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
                   Lưu thanh toán NCC
                 </button>
               </section>
@@ -944,7 +951,7 @@ export function PurchaseReceiptsPage({
               </div>
             ) : null}
             {isReadOnly ? null : (
-              <button disabled={saving} type="submit">
+              <button className="button button-secondary" disabled={saving} type="submit">
                 Lưu draft phiếu nhập
               </button>
             )}

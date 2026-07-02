@@ -1,15 +1,285 @@
 @import "tailwindcss";
+:root {
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f7f9;
+  --color-surface-raised: #ffffff;
+  --color-text: #151922;
+  --color-text-muted: #5d6675;
+  --color-border: #d9dee7;
+  --color-border-muted: #edf0f4;
+  --color-primary: #2563eb;
+  --color-primary-strong: #1d4ed8;
+  --color-info: #0ea5e9;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-neutral: #64748b;
+  --color-focus: rgb(37 99 235 / 22%);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
+  --shadow-md: 0 12px 30px rgb(15 23 42 / 8%);
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --z-shell: 20;
+}
+
+:root[data-theme='dark'] {
+  --color-surface: #111827;
+  --color-surface-muted: #0b1120;
+  --color-surface-raised: #182235;
+  --color-text: #f8fafc;
+  --color-text-muted: #aab4c3;
+  --color-border: #334155;
+  --color-border-muted: #263244;
+  --color-primary: #60a5fa;
+  --color-primary-strong: #93c5fd;
+  --color-info: #38bdf8;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-neutral: #94a3b8;
+  --color-focus: rgb(96 165 250 / 26%);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-md: 0 16px 38px rgb(0 0 0 / 34%);
+}
+
 body {
   margin: 0;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #151922;
+  background: var(--color-surface-muted);
+  font-family: var(--font-body);
+  color: var(--color-text);
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button,
+button {
+  border-radius: var(--radius-sm);
+}
+
+.button-primary {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.button-secondary {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.button-ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.button-danger {
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger);
+  color: white;
+}
+
+.app-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-shell);
+  display: grid;
+  min-height: 100vh;
+  align-content: start;
+  gap: var(--space-4);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+}
+
+.app-brand span,
+.sidebar-link-icon {
+  display: inline-grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  padding: 0 var(--space-2);
+  text-decoration: none;
+}
+
+.sidebar-link[aria-current='page'] {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.sidebar-link-short {
+  display: none;
+}
+
+.app-main-frame {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: auto 1fr;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-shell);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  padding: var(--space-3) var(--space-4);
+  backdrop-filter: blur(12px);
+}
+
+.app-topbar p,
+.app-topbar strong {
+  display: block;
+  margin: 0;
+}
+
+.app-topbar p {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 var(--space-3);
+}
+
+.app-content {
+  min-width: 0;
+}
+
+.app-content > .dashboard-shell,
+.app-content > .suppliers-shell,
+.app-content > .purchase-receipts-shell,
+.app-content > .catalog-shell,
+.app-content > .sales-documents-shell {
+  min-height: auto;
+  background: transparent;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0 var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.status-chip-neutral {
+  color: var(--color-neutral);
+}
+
+.status-chip-info {
+  border-color: color-mix(in srgb, var(--color-info) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-info) 12%, transparent);
+  color: var(--color-info);
+}
+
+.status-chip-success {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+}
+
+.status-chip-warning {
+  border-color: color-mix(in srgb, var(--color-warning) 42%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+  color: var(--color-warning);
+}
+
+.status-chip-danger {
+  border-color: color-mix(in srgb, var(--color-danger) 42%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+
+.money-text {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
 }
 
 .auth-shell {
@@ -662,10 +932,10 @@ select {
 }
 
 .empty-state {
-  border: 1px dashed #c9d1dd;
-  border-radius: 0.5rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
   padding: 1rem;
-  color: #4b5563;
+  color: var(--color-text-muted);
 }
 
 .sales-document-detail {
@@ -855,7 +1125,7 @@ select {
 
 .suppliers-shell {
   min-height: 100vh;
-  background: #f6f7f9;
+  background: var(--color-surface-muted);
   padding: 1rem;
 }
 
@@ -879,11 +1149,12 @@ select {
 }
 
 .suppliers-panel {
-  border: 1px solid #d9dee7;
-  border-radius: 0.5rem;
-  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   padding: 1rem;
   overflow-x: auto;
+  box-shadow: var(--shadow-sm);
 }
 
 .suppliers-filter {
@@ -932,8 +1203,10 @@ select {
 .purchase-receipt-form select,
 .purchase-receipt-form textarea {
   min-height: 2.25rem;
-  border: 1px solid #c9d1dd;
-  border-radius: 0.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
   padding: 0 0.5rem;
 }
 
@@ -947,11 +1220,35 @@ select {
 .suppliers-header button,
 .suppliers-panel button {
   min-height: 2.25rem;
-  border: 1px solid #1f2937;
-  border-radius: 0.375rem;
-  background: #1f2937;
-  color: white;
   padding: 0 0.75rem;
+}
+
+.suppliers-header .button-primary,
+.suppliers-panel .button-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.suppliers-header .button-secondary,
+.suppliers-panel .button-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.suppliers-header .button-ghost,
+.suppliers-panel .button-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.suppliers-header .button-danger,
+.suppliers-panel .button-danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: white;
 }
 
 .suppliers-panel table {
@@ -962,7 +1259,7 @@ select {
 
 .suppliers-panel th,
 .suppliers-panel td {
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--color-border-muted);
   padding: 0.625rem 0.5rem;
   text-align: left;
   vertical-align: top;
@@ -970,7 +1267,7 @@ select {
 
 .purchase-receipts-shell {
   min-height: 100vh;
-  background: #f6f7f9;
+  background: var(--color-surface-muted);
   padding: 1rem;
 }
 
@@ -983,8 +1280,8 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.625rem;
-  border: 1px solid #d9dee7;
-  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   margin: 0;
   padding: 0.75rem;
 }
@@ -1002,9 +1299,9 @@ select {
 .receipt-total-box {
   display: grid;
   gap: 0.375rem;
-  border: 1px solid #d9dee7;
-  border-radius: 0.5rem;
-  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
   padding: 0.75rem;
 }
 
@@ -1141,6 +1438,32 @@ select {
 }
 
 @media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+  }
+
+  .app-sidebar {
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .app-brand strong,
+  .sidebar-link-label {
+    display: none;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar-link-short {
+    display: none;
+  }
+
+  .theme-toggle span:last-child {
+    display: none;
+  }
+
   .admin-grid {
     grid-template-columns: 1fr;
   }
@@ -1155,6 +1478,99 @@ select {
 
   .customer-search,
   .customer-create {
+    grid-template-columns: 1fr;
+  }
+
+  .suppliers-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .suppliers-panel table {
+    min-width: 42rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    display: block;
+    padding-bottom: 4.5rem;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    inset: auto 0 0;
+    min-height: auto;
+    border-top: 1px solid var(--color-border);
+    border-right: 0;
+    padding: var(--space-2);
+  }
+
+  .app-brand {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    gap: var(--space-1);
+    justify-content: space-around;
+    overflow-x: auto;
+  }
+
+  .sidebar-link {
+    min-width: 3.25rem;
+    min-height: 3rem;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-size: 0.6875rem;
+  }
+
+  .sidebar-link-icon {
+    width: 1.75rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.625rem;
+  }
+
+  .sidebar-link-short {
+    display: block;
+  }
+
+  .app-topbar {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .app-topbar > div:first-child {
+    min-width: 0;
+  }
+
+  .app-topbar p,
+  .app-topbar strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-actions {
+    flex-shrink: 0;
+  }
+
+  .topbar-actions .button-secondary {
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .suppliers-shell,
+  .purchase-receipts-shell {
+    padding: var(--space-3);
+  }
+
+  .suppliers-header {
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .suppliers-filter {
     grid-template-columns: 1fr;
   }
 }

@@ -10,6 +10,7 @@ export function DashboardPage({
   onOpenSuppliers,
   onOpenPurchaseReceipts,
   onSignOut,
+  showSignOut = true,
 }: {
   currentUser: CurrentUserData
   onOpenPos: () => void
@@ -19,6 +20,7 @@ export function DashboardPage({
   onOpenSuppliers: () => void
   onOpenPurchaseReceipts: () => void
   onSignOut: () => void
+  showSignOut?: boolean
 }) {
   const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
 
@@ -37,9 +39,11 @@ export function DashboardPage({
           <h1>QC-OMS</h1>
           <p>{currentUser.user.display_name}</p>
         </div>
-        <button type="button" onClick={onSignOut}>
-          Đăng xuất
-        </button>
+        {showSignOut ? (
+          <button type="button" onClick={onSignOut}>
+            Đăng xuất
+          </button>
+        ) : null}
       </header>
 
       <section aria-label="Module hệ thống" className="module-grid">
