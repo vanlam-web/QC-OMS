@@ -73,6 +73,9 @@ Các số này củng cố quyết định: SĐT không bắt buộc, nếu có 
 
 Quyết định Owner ngày `2026-07-03`:
 
+- `KH000001 - Khách lẻ` là khách mặc định của tổ chức. Khi POS/báo giá/hóa đơn không chọn khách, backend vẫn gán chứng từ vào `KH000001` để lịch sử, công nợ và báo cáo không bị rơi vào bucket `customer_id = null`.
+- Không cho trùng tên khách trong cùng tổ chức sau khi chuẩn hóa: trim, gộp khoảng trắng lặp, so sánh không phân biệt hoa/thường.
+- Không cho trùng SĐT đã chuẩn hóa trong cùng tổ chức. SĐT trống vẫn được phép cho nhiều khách nếu tên khác nhau.
 - Hồ sơ khách MVP có trường `MST` để phục vụ khách công ty/tổ chức.
 - Các trường bổ sung khác của KiotViet chưa cần đưa vào MVP nếu chưa phục vụ bán hàng, áp giá hoặc công nợ.
 - Nếu khách không có nhóm khách, hệ thống áp dụng `Bảng giá chung`.
@@ -142,6 +145,7 @@ Khi tạo khách:
 - SĐT không bắt buộc.
 - MST không bắt buộc.
 - Địa chỉ không bắt buộc, chỉ nhập một dòng text.
+- Tên khách không được trùng khách khác trong cùng tổ chức sau chuẩn hóa khoảng trắng/hoa thường; `Khách lẻ` cũng được bảo vệ bởi rule này.
 - Nếu có SĐT, hệ thống chuẩn hóa và kiểm tra không trùng.
 - Nếu có nhóm khách, lần bán sau dùng bảng giá của nhóm khách; nếu không có nhóm thì dùng bảng giá chung.
 - Modal tạo khách chỉ giữ các trường cần nhập nhanh: tên khách, mã khách, SĐT, MST, địa chỉ một dòng. Không đưa các trường KiotViet phụ như giới tính, sinh nhật, Facebook, email, CCCD/CMND, hộ chiếu, ngân hàng, khu vực/phường/xã.

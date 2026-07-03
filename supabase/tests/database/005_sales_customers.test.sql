@@ -1,6 +1,6 @@
 begin;
 
-select plan(41);
+select plan(53);
 
 select has_table('public', 'customer_groups', 'customer_groups table exists');
 select has_column('public', 'customer_groups', 'organization_id', 'customer_groups.organization_id exists');
@@ -20,6 +20,7 @@ select has_table('public', 'customers', 'customers table exists');
 select has_column('public', 'customers', 'organization_id', 'customers.organization_id exists');
 select has_column('public', 'customers', 'code', 'customers.code exists');
 select has_column('public', 'customers', 'name', 'customers.name exists');
+select has_column('public', 'customers', 'name_normalized', 'customers.name_normalized exists');
 select has_column('public', 'customers', 'phone', 'customers.phone exists');
 select has_column('public', 'customers', 'phone_normalized', 'customers.phone_normalized exists');
 select has_column('public', 'customers', 'tax_code', 'customers.tax_code exists');
@@ -30,6 +31,7 @@ select col_not_null('public', 'customers', 'organization_id', 'customers.organiz
 select col_not_null('public', 'customers', 'code', 'customers.code is not null');
 select col_not_null('public', 'customers', 'name', 'customers.name is not null');
 select has_index('public', 'customers', 'idx_customers_org_name', 'customers has org/name index');
+select has_index('public', 'customers', 'customers_org_name_normalized_key', 'customers has org/normalized-name unique index');
 select has_index('public', 'customers', 'idx_customers_org_code', 'customers has org/code index');
 select has_index('public', 'customers', 'idx_customers_org_group', 'customers has org/group index');
 select has_index('public', 'customers', 'idx_customers_org_phone_normalized', 'customers has org/phone index');
@@ -46,7 +48,9 @@ select fk_ok(
 );
 
 select has_function('public', 'normalize_customer_phone', array['text'], 'phone normalizer exists');
+select has_function('public', 'normalize_customer_name', array['text'], 'customer name normalizer exists');
 select has_function('public', 'next_customer_code', array['uuid'], 'customer code generator exists');
+select has_function('public', 'default_retail_customer_id', array['uuid'], 'default retail customer resolver exists');
 
 select is(
   public.normalize_customer_phone(' 090 123-4567 '),
@@ -54,9 +58,31 @@ select is(
   'phone normalization keeps digits'
 );
 
+select is(
+  public.normalize_customer_name('  KHÁCH   LẺ  '),
+  'khách lẻ',
+  'customer name normalization trims spaces and ignores case'
+);
+
 select ok(
   public.next_customer_code('00000000-0000-4000-8000-000000000001') ~ '^KH[0-9]{6}$',
   'next customer code uses KH000001 format'
+);
+
+select is(
+  public.default_retail_customer_id('00000000-0000-4000-8000-000000000001'),
+  '00000000-0000-4000-8000-000000000501'::uuid,
+  'default retail customer resolver returns KH000001'
+);
+
+insert into public.organizations (id, code, name, status)
+values ('00000000-0000-4000-8000-000000000099', 'NO-DEFAULT', 'No Default Customer Org', 'active');
+
+select throws_ok(
+  $$ select public.default_retail_customer_id('00000000-0000-4000-8000-000000000099') $$,
+  '22023',
+  'default retail customer KH000001 is not configured',
+  'missing KH000001 fails with configuration error'
 );
 
 insert into public.customer_groups (id, organization_id, code, name, price_list_id)
@@ -108,6 +134,12 @@ select is(
 );
 
 select is(
+  (select name_normalized from public.customers where code = 'KH900001'),
+  'cong ty abc',
+  'customer name_normalized is generated'
+);
+
+select is(
   (select tax_code from public.customers where code = 'KH900001'),
   '0312345678',
   'customer tax_code is stored'
@@ -135,6 +167,48 @@ select throws_ok(
   '23505',
   'duplicate key value violates unique constraint "customers_org_phone_normalized_key"',
   'duplicate normalized phone is rejected'
+);
+
+select throws_ok(
+  $$ insert into public.customers (organization_id, code, name, phone)
+     values ('00000000-0000-4000-8000-000000000001', 'KH900002', '  cong   TY abc  ', null) $$,
+  '23505',
+  'duplicate key value violates unique constraint "customers_org_name_normalized_key"',
+  'duplicate normalized customer name is rejected'
+);
+
+insert into public.customers (organization_id, code, name, phone)
+values
+  ('00000000-0000-4000-8000-000000000001', 'KH900003', 'Cong ty khong SDT 1', null),
+  ('00000000-0000-4000-8000-000000000001', 'KH900004', 'Cong ty khong SDT 2', null);
+
+select is(
+  (
+    select count(*)::integer
+    from public.customers
+    where code in ('KH900003', 'KH900004')
+      and phone_normalized is null
+  ),
+  2,
+  'multiple customers without phone are allowed when names differ'
+);
+
+select throws_ok(
+  $$ update public.customers
+     set name = 'Cong ty ABC'
+     where code = 'KH900003' $$,
+  '23505',
+  'duplicate key value violates unique constraint "customers_org_name_normalized_key"',
+  'updating to another customer normalized name is rejected'
+);
+
+select throws_ok(
+  $$ update public.customers
+     set phone = '090.123.4567'
+     where code = 'KH900004' $$,
+  '23505',
+  'duplicate key value violates unique constraint "customers_org_phone_normalized_key"',
+  'updating to another customer normalized phone is rejected'
 );
 
 select * from finish();

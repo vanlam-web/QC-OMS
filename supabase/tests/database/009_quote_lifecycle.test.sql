@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(19);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -89,6 +89,18 @@ select is(
 );
 
 select is(
+  (select customer_id from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
+  '00000000-0000-4000-8000-000000000501'::uuid,
+  'quote without selected customer is assigned to KH000001'
+);
+
+select is(
+  (select customer_snapshot->>'code' from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
+  'KH000001',
+  'quote without selected customer stores KH000001 snapshot'
+);
+
+select is(
   (select total_amount from public.orders where id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
   170000::numeric,
   'quote stores server-calculated total after line discount'
@@ -110,6 +122,18 @@ select is(
   (select count(*)::integer from public.customer_debt_entries where order_id = ((select result->>'order_id' from quote_results where name = 'base_quote')::uuid)),
   0,
   'quote creates no debt entry'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.orders
+    where customer_id = '00000000-0000-4000-8000-000000000501'
+      and order_type = 'quote'
+      and code = (select result->>'order_code' from quote_results where name = 'base_quote')
+  ),
+  1,
+  'KH000001 quote history includes no-selected-customer quote'
 );
 
 insert into quote_results (name, result)
@@ -190,6 +214,12 @@ select is(
   (select source_quote_id from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_draft')::uuid)),
   null::uuid,
   'invoice does not store source quote id in phase 3A'
+);
+
+select is(
+  (select customer_id from public.orders where id = ((select result->>'order_id' from quote_results where name = 'invoice_from_draft')::uuid)),
+  '00000000-0000-4000-8000-000000000501'::uuid,
+  'checkout without selected customer is assigned to KH000001'
 );
 
 select is(
