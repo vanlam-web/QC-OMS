@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FoundationAdminPage } from './FoundationAdminPage'
 import type { FoundationService } from '../users/foundation-service'
@@ -54,21 +54,33 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
 }
 
 it('loads user and permission administration data from the API service', async () => {
-  const onOpenDashboard = vi.fn()
-  render(<FoundationAdminPage service={makeService()} onOpenDashboard={onOpenDashboard} />)
+  render(<FoundationAdminPage service={makeService()} onOpenDashboard={vi.fn()} />)
 
-  expect(screen.getByText('Đang tải dữ liệu quản trị...')).toBeInTheDocument()
+  expect(screen.getByText('Đang tải dữ liệu quản trị...').closest('.management-main')).not.toBeNull()
+  expect(screen.queryByRole('heading', { name: 'Quản trị nền tảng' })).not.toBeInTheDocument()
+  expect(screen.queryByText('Người dùng và danh mục quyền')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Người dùng' })).toBeInTheDocument()
+  expect(screen.getByRole('main')).toHaveClass('management-page')
+  expect(screen.getByRole('heading', { name: 'Quản trị' }).closest('.management-page-header')).not.toBeNull()
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc người dùng' })
+  expect(sidebar).toHaveClass('management-filter-sidebar')
+  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-summary')).toHaveTextContent('Tất cả')
+  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(screen.getByRole('region', { name: 'Người dùng' })).toHaveClass('management-list-surface')
+  expect(screen.getByRole('region', { name: 'Danh mục quyền' })).toHaveClass('management-list-surface')
+  const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
+  expect(filterForm.closest('.management-page-header')).not.toBeNull()
+  expect(within(filterForm).getByLabelText('Tìm người dùng').closest('.management-compact-search')).not.toBeNull()
   expect(screen.queryByRole('heading', { name: 'Máy trạm' })).not.toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
   expect(screen.getByText('admin@example.test')).toBeInTheDocument()
+  expect(screen.getByText('admin@example.test').closest('.management-table-viewport')).not.toBeNull()
   expect(screen.getAllByText('administration').length).toBeGreaterThan(0)
   expect(screen.getAllByText('sales').length).toBeGreaterThan(0)
   expect(screen.getByText('perm.manage_users')).toBeInTheDocument()
   expect(screen.getByText('Manage users')).toBeInTheDocument()
-
-  await userEvent.click(screen.getByRole('button', { name: 'Trang chủ' }))
-  expect(onOpenDashboard).toHaveBeenCalled()
 })
 
 it('shows an error when admin data cannot be loaded', async () => {
@@ -115,11 +127,12 @@ it('filters, creates, disables, and updates permissions for users', async () => 
   render(<FoundationAdminPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('admin@example.test')
-  const filterForm = screen.getByRole('form', { name: 'Lọc người dùng' })
-  await userEvent.type(filterForm.querySelector('input') as HTMLInputElement, 'Admin')
-  await userEvent.selectOptions(filterForm.querySelector('select') as HTMLSelectElement, 'active')
-  await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
+  const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
+  await userEvent.type(within(filterForm).getByLabelText('Tìm người dùng'), 'Admin')
+  await userEvent.click(screen.getByRole('radio', { name: 'active' }))
+  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
   expect(service.listUsers).toHaveBeenLastCalledWith({ search: 'Admin', status: 'active' })
+  expect(await screen.findByText('Tìm: Admin')).toHaveClass('management-filter-summary')
 
   const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
   await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'cashier@example.test')

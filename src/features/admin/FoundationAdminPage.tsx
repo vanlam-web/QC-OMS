@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
+import {
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 
 interface AdminState {
   users: UserListItem[]
@@ -19,7 +29,6 @@ const internalStaffDefaultPermissions = [
 
 export function FoundationAdminPage({
   service,
-  onOpenDashboard,
 }: {
   service: FoundationService
   onOpenDashboard: () => void
@@ -27,20 +36,26 @@ export function FoundationAdminPage({
   const [state, setState] = useState<AdminState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState('')
+  const [lastUserSearch, setLastUserSearch] = useState('')
   const [userStatus, setUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
+  const [lastUserStatus, setLastUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
+  const [showFilters, setShowFilters] = useState(true)
   const [userForm, setUserForm] = useState({ email: '', password: '', displayName: '' })
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [savingUser, setSavingUser] = useState(false)
 
-  async function load(userFilters = { search: userSearch, status: userStatus }) {
+  async function load(userFilters = { search: lastUserSearch, status: lastUserStatus }) {
     setError(null)
     try {
       const status = userFilters.status === 'all' ? undefined : userFilters.status
+      const search = userFilters.search.trim()
       const [users, permissions] = await Promise.all([
-        service.listUsers({ search: userFilters.search.trim() || undefined, status }),
+        service.listUsers({ search: search || undefined, status }),
         service.listPermissions(),
       ])
       setState({ users: users.items, permissions })
+      setLastUserSearch(search)
+      setLastUserStatus(userFilters.status)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được dữ liệu quản trị.'))
     }
@@ -70,6 +85,12 @@ export function FoundationAdminPage({
   async function filterUsers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     await load({ search: userSearch, status: userStatus })
+  }
+
+  async function resetUserFilters() {
+    setUserSearch('')
+    setUserStatus('all')
+    await load({ search: '', status: 'all' })
   }
 
   async function createUser(event: React.FormEvent<HTMLFormElement>) {
@@ -132,43 +153,86 @@ export function FoundationAdminPage({
     ).sort(([a], [b]) => a.localeCompare(b))
   }, [state])
 
-  return (
-    <main className="admin-shell">
-      <header className="admin-header">
-        <div>
-          <h1>Quản trị nền tảng</h1>
-          <p>Người dùng và danh mục quyền</p>
-        </div>
-        <button type="button" onClick={onOpenDashboard}>
-          Trang chủ
-        </button>
-      </header>
+  const activeFilterSummary = lastUserSearch
+    ? `Tìm: ${lastUserSearch}`
+    : lastUserStatus === 'all'
+      ? 'Tất cả'
+      : `Trạng thái: ${lastUserStatus}`
 
+  return (
+    <ManagementPage
+      title="Quản trị"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc người dùng" onSubmit={filterUsers}>
+          <ManagementCompactSearch
+            label="Tìm người dùng"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm tên, email"
+            value={userSearch}
+            onChange={setUserSearch}
+          />
+          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
+            <Search aria-hidden="true" size={16} />
+          </button>
+        </ManagementCompactToolbar>
+      }
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc người dùng"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetUserFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
+          <button
+            aria-label="Ẩn bộ lọc người dùng"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
+          </button>
+          <ManagementFilterGroup title="Trạng thái">
+            <label>
+              <input checked={userStatus === 'all'} name="admin-user-status" type="radio" onChange={() => setUserStatus('all')} />
+              Tất cả
+            </label>
+            <label>
+              <input checked={userStatus === 'active'} name="admin-user-status" type="radio" onChange={() => setUserStatus('active')} />
+              active
+            </label>
+            <label>
+              <input checked={userStatus === 'inactive'} name="admin-user-status" type="radio" onChange={() => setUserStatus('inactive')} />
+              inactive
+            </label>
+          </ManagementFilterGroup>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc người dùng"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
       {error ? <p role="alert">{error}</p> : null}
       {state === null && error === null ? <p>Đang tải dữ liệu quản trị...</p> : null}
 
       {state ? (
         <div className="admin-grid">
-          <section aria-label="Người dùng">
+          <ManagementListSurface ariaLabel="Người dùng">
             <h2>Người dùng</h2>
-            <form aria-label="Lọc người dùng" className="admin-form" onSubmit={filterUsers}>
-              <label>
-                Tìm
-                <input value={userSearch} onChange={(event) => setUserSearch(event.target.value)} />
-              </label>
-              <label>
-                Trạng thái
-                <select
-                  value={userStatus}
-                  onChange={(event) => setUserStatus(event.target.value as typeof userStatus)}
-                >
-                  <option value="all">Tất cả</option>
-                  <option value="active">active</option>
-                  <option value="inactive">inactive</option>
-                </select>
-              </label>
-              <button type="submit">Lọc</button>
-            </form>
             <form aria-label="Tạo người dùng" className="admin-form" onSubmit={createUser}>
               <label>
                 Email
@@ -201,41 +265,43 @@ export function FoundationAdminPage({
                 Thêm người dùng
               </button>
             </form>
-            <table>
-              <thead>
-                <tr>
-                  <th>Tên</th>
-                  <th>Email</th>
-                  <th>Trạng thái</th>
-                  <th>Quyền</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.display_name}</td>
-                    <td>{user.email || 'Chưa đồng bộ email'}</td>
-                    <td>{user.status}</td>
-                    <td>{user.permissions.length}</td>
-                    <td>
-                      <button type="button" onClick={() => setSelectedUser(user)}>
-                        Quyền
-                      </button>
-                      <button
-                        disabled={savingUser}
-                        type="button"
-                        onClick={() =>
-                          void updateUserStatus(user, user.status === 'active' ? 'inactive' : 'active')
-                        }
-                      >
-                        {user.status === 'active' ? 'Khóa' : 'Mở'}
-                      </button>
-                    </td>
+            <ManagementTableViewport>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Trạng thái</th>
+                    <th>Quyền</th>
+                    <th>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.users.map((user) => (
+                    <tr key={user.id}>
+                      <td>{user.display_name}</td>
+                      <td>{user.email || 'Chưa đồng bộ email'}</td>
+                      <td>{user.status}</td>
+                      <td>{user.permissions.length}</td>
+                      <td>
+                        <button type="button" onClick={() => setSelectedUser(user)}>
+                          Quyền
+                        </button>
+                        <button
+                          disabled={savingUser}
+                          type="button"
+                          onClick={() =>
+                            void updateUserStatus(user, user.status === 'active' ? 'inactive' : 'active')
+                          }
+                        >
+                          {user.status === 'active' ? 'Khóa' : 'Mở'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ManagementTableViewport>
             {selectedUser ? (
               <section aria-label="Quyền người dùng" className="permission-editor">
                 <h3>{selectedUser.display_name}</h3>
@@ -252,9 +318,9 @@ export function FoundationAdminPage({
                 ))}
               </section>
             ) : null}
-          </section>
+          </ManagementListSurface>
 
-          <section aria-label="Danh mục quyền">
+          <ManagementListSurface ariaLabel="Danh mục quyền">
             <h2>Danh mục quyền</h2>
             <ul className="permission-list">
               {permissionModules.map(([module, count]) => (
@@ -264,27 +330,29 @@ export function FoundationAdminPage({
                 </li>
               ))}
             </ul>
-            <table>
-              <thead>
-                <tr>
-                  <th>Mã quyền</th>
-                  <th>Nhóm</th>
-                  <th>Mô tả</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.permissions.map((permission) => (
-                  <tr key={permission.code}>
-                    <td>{permission.code}</td>
-                    <td>{permission.module}</td>
-                    <td>{permission.description}</td>
+            <ManagementTableViewport>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã quyền</th>
+                    <th>Nhóm</th>
+                    <th>Mô tả</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+                </thead>
+                <tbody>
+                  {state.permissions.map((permission) => (
+                    <tr key={permission.code}>
+                      <td>{permission.code}</td>
+                      <td>{permission.module}</td>
+                      <td>{permission.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ManagementTableViewport>
+          </ManagementListSurface>
         </div>
       ) : null}
-    </main>
+    </ManagementPage>
   )
 }
