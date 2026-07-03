@@ -223,6 +223,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
     code?: string;
     name: string;
     phone?: string;
+    taxCode?: string;
     customerGroupId?: string | null;
   }> = [];
   const repository = repo(["perm.create_order"], {
@@ -230,6 +231,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
       code?: string;
       name: string;
       phone?: string;
+      taxCode?: string;
       customerGroupId?: string | null;
     }) => {
       receivedInputs.push(input);
@@ -238,6 +240,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
         code: input.code ?? "KH000002",
         name: input.name,
         phone: input.phone ?? null,
+        tax_code: input.taxCode ?? null,
         customer_group_id: input.customerGroupId ?? null,
         customer_group: null,
       });
@@ -248,7 +251,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
     "/api/v1/customers",
     {
       method: "POST",
-      body: JSON.stringify({ name: " Cong ty ABC ", phone: " 090 123 4567 " }),
+      body: JSON.stringify({ name: " Cong ty ABC ", phone: " 090 123 4567 ", tax_code: " 0312345678 " }),
     },
     repository,
   );
@@ -258,8 +261,52 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
   assertEquals(receivedInputs[0].code, undefined);
   assertEquals(receivedInputs[0].name, "Cong ty ABC");
   assertEquals(receivedInputs[0].phone, "090 123 4567");
+  assertEquals(receivedInputs[0].taxCode, "0312345678");
   assertEquals(body.code, "KH000002");
   assertEquals(body.name, "Cong ty ABC");
+  assertEquals(body.tax_code, "0312345678");
+});
+
+Deno.test("customer update accepts optional tax code", async () => {
+  const receivedInputs: Array<{
+    id: string;
+    name?: string;
+    taxCode?: string | null;
+  }> = [];
+  const repository = repo(["perm.create_order"], {
+    updateCustomer: (input: {
+      id: string;
+      name?: string;
+      taxCode?: string | null;
+    }) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: input.id,
+        code: "KH000123",
+        name: input.name ?? "Cong ty ABC",
+        phone: null,
+        tax_code: input.taxCode ?? null,
+        customer_group_id: null,
+        customer_group: null,
+      });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/customers/customer-1",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ name: " Cong ty ABC ", tax_code: " 0312345678 " }),
+    },
+    repository,
+  );
+
+  const body = await data(response) as Record<string, unknown>;
+  assertEquals(response.status, 200);
+  assertEquals(receivedInputs[0].id, "customer-1");
+  assertEquals(receivedInputs[0].name, "Cong ty ABC");
+  assertEquals(receivedInputs[0].taxCode, "0312345678");
+  assertEquals(body.tax_code, "0312345678");
 });
 
 Deno.test("price resolution accepts a customer id", async () => {
