@@ -608,7 +608,7 @@ Status: ✅ Hoàn thành và đã merge vào `main` qua PR #17 và PR #20 correc
 
 ## Implementation-ready queue
 
-Status: 🔄 Dùng để hai luồng làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
+Status: 🔄 Dùng để ba luồng Codex Spec / Implement / Review làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
 
 Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ SoT hoặc gần đủ SoT để implement có thể chuẩn bị plan khi xong việc đang làm.
 

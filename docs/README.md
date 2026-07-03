@@ -27,8 +27,15 @@
 | [DOCUMENT_RULES.md](./DOCUMENT_RULES.md) | Quy tắc quản lý tài liệu (nguồn gốc) | ✅ |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Kiến trúc 8 tầng — Source of Truth | ✅ |
 | [DEVELOPMENT-PLAN.md](./DEVELOPMENT-PLAN.md) | Roadmap phát triển FE + BE theo từng giai đoạn | ✅ |
-| [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Báo cáo audit tuân thủ — 2026-06-26 | ✅ |
-| [AUDIT-V2.md](./AUDIT-V2.md) | Đối chiếu audit & checklist patch — 2026-06-27 | ✅ |
+| [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md) | Quy ước phối hợp Codex Spec / Implement / Review | ✅ |
+| [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md) | Vòng lặp tự động giao việc, review và merge | ✅ |
+| [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md) | Bảng điều phối việc đang làm, current owner, next owner và next action | 🔨 |
+| [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) | Issue tracker do Review Thread duy trì | 🔨 |
+| [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) | Checklist nối mạch phase, branch, queue | 🔨 |
+| [superpowers/README.md](./superpowers/README.md) | Quy ước trạng thái specs/plans/drafts/handoff | 🔨 |
+| [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Historical audit tuân thủ — 2026-06-26 | ✅ Historical |
+| [AUDIT-V2.md](./AUDIT-V2.md) | Historical audit/patch checklist — 2026-06-27 | ✅ Historical |
+| [CHANGELOG-AI.md](./CHANGELOG-AI.md) | Historical multi-AI coordination log, không phải policy hiện hành | ✅ Historical |
 
 ---
 
@@ -68,6 +75,7 @@
 | [02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md](./02-PRD-UX-PhongCanh/Inventory/03-ROLL-SHEET-OBJECTS.md) | Quản lý cuộn, tấm nguyên, tấm dở và tấm lỡ | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md](./02-PRD-UX-PhongCanh/Inventory/04-STOCKTAKE.md) | Phiếu kiểm kho, lưu tạm, cân bằng kho và hủy phiếu | 🔨 |
 | [02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md](./02-PRD-UX-PhongCanh/Inventory/05-INVENTORY-ADJUSTMENTS.md) | Điều chỉnh tồn, hủy vật tư và lý do giảm tồn tối giản | 🔨 |
+| [02-PRD-UX-PhongCanh/Inventory/06-PRODUCTION-RECONCILIATION.md](./02-PRD-UX-PhongCanh/Inventory/06-PRODUCTION-RECONCILIATION.md) | Đối soát OMS/bill với dữ liệu máy sản xuất | 🔨 |
 
 #### Module Chứng từ bán hàng
 
@@ -76,6 +84,13 @@
 | [02-PRD-UX-PhongCanh/SalesDocuments/README.md](./02-PRD-UX-PhongCanh/SalesDocuments/README.md) | Mục lục chứng từ bán hàng | 🔨 |
 | [02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md](./02-PRD-UX-PhongCanh/SalesDocuments/01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc và thao tác nhanh | 🔨 |
 | [02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./02-PRD-UX-PhongCanh/SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ, sửa/hủy/in lại và lịch sử | 🔨 |
+| [02-PRD-UX-PhongCanh/SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md](./02-PRD-UX-PhongCanh/SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md) | Mẫu in/xem báo giá Phase 3B | 🔨 |
+
+#### Module Mua hàng & Nhà cung cấp
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Purchase/01-SUPPLIER-PURCHASE.md](./02-PRD-UX-PhongCanh/Purchase/01-SUPPLIER-PURCHASE.md) | Nhà cung cấp, phiếu nhập, thanh toán NCC, nhập cuộn/tấm | 🔨 |
 
 #### Module Khách hàng
 
@@ -102,6 +117,27 @@
 | [02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md](./02-PRD-UX-PhongCanh/Finance/02-CASHBOOK.md) | Sổ quỹ, số dư theo tiền mặt/tài khoản và phiếu thu/chi | 🔨 |
 | [02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md](./02-PRD-UX-PhongCanh/Finance/03-CUSTOMER-DEBT.md) | Công nợ khách hàng và thu nợ | 🔨 |
 | [02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md](./02-PRD-UX-PhongCanh/Finance/04-RECONCILIATION.md) | Đối soát cuối ngày theo quỹ/tài khoản | 🔨 |
+
+#### Module Báo cáo
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/Reports/README.md](./02-PRD-UX-PhongCanh/Reports/README.md) | Mục lục báo cáo và phân tích | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/01-END-OF-DAY.md](./02-PRD-UX-PhongCanh/Reports/01-END-OF-DAY.md) | Báo cáo cuối ngày | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/02-SALES-REPORT.md](./02-PRD-UX-PhongCanh/Reports/02-SALES-REPORT.md) | Báo cáo bán hàng | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/03-DEBT-REPORT.md](./02-PRD-UX-PhongCanh/Reports/03-DEBT-REPORT.md) | Báo cáo công nợ | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/04-INVENTORY-REPORT.md](./02-PRD-UX-PhongCanh/Reports/04-INVENTORY-REPORT.md) | Báo cáo tồn kho | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/05-FINANCE-REPORT.md](./02-PRD-UX-PhongCanh/Reports/05-FINANCE-REPORT.md) | Báo cáo tài chính | 🔨 |
+| [02-PRD-UX-PhongCanh/Reports/06-CUSTOMER-REPORT.md](./02-PRD-UX-PhongCanh/Reports/06-CUSTOMER-REPORT.md) | Báo cáo khách hàng | 🔨 |
+
+#### System / UI Shell
+
+| File | Mô tả | Trạng thái |
+|---|---|---|
+| [02-PRD-UX-PhongCanh/System/README.md](./02-PRD-UX-PhongCanh/System/README.md) | Mục lục hệ thống | 🔨 |
+| [02-PRD-UX-PhongCanh/System/00-UI-SHELL-V1.md](./02-PRD-UX-PhongCanh/System/00-UI-SHELL-V1.md) | Token, shell, layout quản lý, filter và responsive v1 | 🔨 |
+| [02-PRD-UX-PhongCanh/System/01-USERS-PERMISSIONS.md](./02-PRD-UX-PhongCanh/System/01-USERS-PERMISSIONS.md) | Người dùng và phân quyền | 🔨 |
+| [02-PRD-UX-PhongCanh/System/02-SYSTEM-SETTINGS.md](./02-PRD-UX-PhongCanh/System/02-SYSTEM-SETTINGS.md) | Cấu hình hệ thống | 🔨 |
 
 #### K01 — Thanh đỉnh (Top Bar)
 
@@ -172,6 +208,8 @@
 | [04-DATABASE/Finance/README.md](./04-DATABASE/Finance/README.md) | Mục lục Schema Finance | 🔨 |
 | [04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md](./04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md) | Schema Finance: thanh toán POS, phân bổ công nợ và quỹ/tài khoản nhận tiền | 🔨 |
 | [04-DATABASE/Finance/CASHBOOK-TABLES.md](./04-DATABASE/Finance/CASHBOOK-TABLES.md) | Schema Finance: sổ quỹ, phiếu thu/chi thủ công và đối soát cuối ngày | 🔨 |
+| [04-DATABASE/Purchase/PURCHASE-TABLES.md](./04-DATABASE/Purchase/PURCHASE-TABLES.md) | Schema Purchase/Supplier: NCC, phiếu nhập, thanh toán NCC, nhập cuộn/tấm | 🔨 |
+| [04-DATABASE/BOM/BOM-TABLES.md](./04-DATABASE/BOM/BOM-TABLES.md) | Schema BOM/combo vật tư | 🔨 |
 
 ---
 
@@ -194,6 +232,9 @@
 | [05-BACKEND-MayChu/Inventory/INVENTORY-API.md](./05-BACKEND-MayChu/Inventory/INVENTORY-API.md) | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 |
 | [05-BACKEND-MayChu/Finance/README.md](./05-BACKEND-MayChu/Finance/README.md) | Mục lục Backend Finance | 🔨 |
 | [05-BACKEND-MayChu/Finance/FINANCE-API.md](./05-BACKEND-MayChu/Finance/FINANCE-API.md) | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 |
+| [05-BACKEND-MayChu/Purchase/PURCHASE-API.md](./05-BACKEND-MayChu/Purchase/PURCHASE-API.md) | API Supplier/Purchase receipt/post/payment | 🔨 |
+| [05-BACKEND-MayChu/Production/PRODUCTION-RECONCILIATION-API.md](./05-BACKEND-MayChu/Production/PRODUCTION-RECONCILIATION-API.md) | API đối soát sản xuất / queue máy | 🔨 |
+| [05-BACKEND-MayChu/BOM/BOM-API.md](./05-BACKEND-MayChu/BOM/BOM-API.md) | API BOM/combo vật tư | 🔨 |
 
 ---
 

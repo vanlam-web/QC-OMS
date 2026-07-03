@@ -1,19 +1,24 @@
-# WORKFLOW-AUTO-SPEC-IMPLEMENT — Ke hoach tu dong phoi hop 2 luong
+# WORKFLOW-AUTO-SPEC-IMPLEMENT — Ke hoach tu dong phoi hop cac luong Codex
 
 > **Trang thai:** Source of Truth van hanh
 > **Owner:** Nguoi dung chot uu tien nghiep vu lon
-> **Cap nhat:** 2026-07-02
+> **Cap nhat:** 2026-07-03
 
 ---
 
 ## 1. Muc tieu
 
-Tai lieu nay la thoa thuan van hanh giua 2 luong Codex:
+Tai lieu nay la thoa thuan van hanh giua cac luong Codex:
 
 - **Spec/UX Gate:** giu Source of Truth, kiem KiotViet, chot scope, review PR theo nghiep vu.
 - **Implement:** code, test, mo PR, sua feedback, merge khi du dieu kien.
+- **Review:** kiem tra du an khi Owner yeu cau, chay test/build/lint, review rui ro, phat hien drift va chuan bi bao cao/handoff cho Spec hoac Implement.
 
-Muc tieu la giam viec Owner phai tra loi qua lai. Hai luong duoc phep tu giao viec, tu bao trang thai, tu review voi nhau neu slice da nam trong quy dao da chot.
+Muc tieu la giam viec Owner phai tra loi qua lai. Cac luong duoc phep tu giao viec, tu bao trang thai, tu review voi nhau neu slice da nam trong quy dao da chot.
+
+Bat buoc dong vong giao viec: luong nao nhan handoff, review request, blocker question, hoac Review issue tu luong khac thi phai bao cao lai truc tiep cho luong do khi xong, khi bi block, hoac khi defer. Owner khong phai nhac hoac chuyen loi giua cac luong.
+
+Bang dieu phoi active nam tai `docs/PROJECT-COORDINATION.md`. Moi slice/PR quan trong phai co current owner, next owner va next action ro rang. Neu Owner phai hoi "dang den dau" ma cac luong phai doan tu lich su chat, do la loi dieu phoi can sua.
 
 ---
 
@@ -32,6 +37,9 @@ Muc tieu la giam viec Owner phai tra loi qua lai. Hai luong duoc phep tu giao vi
    - acceptance checklist
    - verification checklist
    - cac diem cam tu mo
+   - current owner
+   - next owner
+   - next action
 
 3. **Implement khong tu mo scope.**
    Neu gap phan ngoai slice, Implement phai bao Spec bang cau hoi cu the, kem de xuat.
@@ -39,7 +47,11 @@ Muc tieu la giam viec Owner phai tra loi qua lai. Hai luong duoc phep tu giao vi
 4. **Spec review truoc khi coi la dung.**
    PR quan trong phai qua Spec/UX gate, ngay ca khi CI xanh.
 
-5. **Chi keo Owner vao khi co quyet dinh nghiep vu that.**
+5. **Review ho tro kiem tra va handoff.**
+   Review co the duoc Owner goi bat ky luc nao de kiem tra tinh trang du an, test, review rui ro, hoac chuan bi viec cho Spec/Implement. Review khong tu sua feature neu Owner chi yeu cau kiem tra.
+   Neu Review giao viec cho luong khac, Review phai ghi issue vao `docs/REVIEW-ISSUES.md`, noi ro luong phu trach phai bao lai, va re-check sau khi luong phu trach bao da fix.
+
+6. **Chi keo Owner vao khi co quyet dinh nghiep vu that.**
    Khong hoi Owner ve wording nho, layout nho, hoac viec ky thuat co the tu quyet theo pattern codebase.
 
 ---
@@ -64,6 +76,7 @@ Spec doc theo thu tu:
 - [ ] Da tach ro in scope/out of scope.
 - [ ] Da danh dau cac diem rui ro: tien, quy, cong no, kho, chung tu, schema kho sua.
 - [ ] Da quyet dinh co can hoi Owner khong.
+- [ ] Neu tao slice/PR quan trong, da tao/cap nhat work item trong `docs/PROJECT-COORDINATION.md`.
 
 **Dieu kien chuyen sang B:**
 
@@ -101,6 +114,15 @@ Verification required:
 
 Must ask Spec before:
 - ...
+
+Current owner:
+- Spec
+
+Next owner:
+- Implement
+
+Next action:
+- ...
 ```
 
 **Checklist Giai doan B:**
@@ -112,11 +134,15 @@ Must ask Spec before:
 - [ ] Handoff co acceptance checklist.
 - [ ] Handoff co verification required.
 - [ ] Handoff co danh sach "Must ask Spec before".
+- [ ] Handoff co current owner, next owner, next action.
 - [ ] Da gui handoff sang Implement thread.
 
 **Dieu kien chuyen sang C:**
 
 - Implement da nhan viec hoac da bat dau branch/PR.
+- Implement phai bao lai Spec bang `[Implement -> Spec]` khi can review, gap blocker, hoac defer scope.
+- Neu handoff den tu Review hoac co Review issue ID, Implement cung phai bao lai Review bang `[Implement -> Review]`.
+- `docs/PROJECT-COORDINATION.md` da co next owner la Implement hoac report ghi ro vi sao slice khong can board entry.
 
 ---
 
@@ -145,12 +171,21 @@ Implement phai bao Spec neu:
 **Dieu kien chuyen sang D:**
 
 - Implement gui `[Implement -> Spec review request]` kem PR/commit/scope/test/gaps.
+- Hoac Owner yeu cau Review kiem tra truoc khi Spec review.
+- Neu slice lien quan Review issue ID, Implement da gui `[Implement -> Review]` hoac ghi ro chua san sang Review re-check.
 
 ---
 
-### Giai doan D — Spec review gate
+### Giai doan D — Review/Spec gate
 
-Spec review theo thu tu:
+Neu Owner yeu cau hoac slice co rui ro, Review kiem tra truoc:
+
+1. Doc scope/branch/PR hien tai.
+2. Chay verification phu hop.
+3. Ghi ro pass/fail, risk, drift, known gaps.
+4. Gui bao cao cho Owner/Spec/Implement.
+
+Sau do Spec review theo thu tu:
 
 1. Doc handoff Implement gui lai.
 2. Xem PR/diff.
@@ -165,8 +200,18 @@ Phan loai finding:
 - **Follow-up acceptable:** thieu polish nhung khong sai du lieu va da ghi ro la foundation.
 - **Future scope:** dung la nam ngoai slice da chot.
 
+Spec phai gui ket qua review truc tiep lai Implement bang `[Spec -> Implement]`. Neu review lien quan issue Review giao, Spec cung phai gui `[Spec -> Review]` de Review re-check va cap nhat `docs/REVIEW-ISSUES.md`.
+
+Ket qua review phai ghi ro:
+
+- current owner
+- next owner
+- next action
+- Owner decision needed
+
 **Checklist Giai doan D:**
 
+- [ ] Review da chay neu Owner yeu cau hoac slice co rui ro cao.
 - [ ] Da doc PR/diff.
 - [ ] Da doi chieu SoT.
 - [ ] Da doi chieu acceptance checklist.
@@ -175,6 +220,7 @@ Phan loai finding:
 - [ ] Da kiem tra CI neu co PR.
 - [ ] Da ghi finding theo 3 muc: Must fix, Follow-up, Future scope.
 - [ ] Da gui ket luan sang Implement.
+- [ ] Da ghi next owner: Implement neu must-fix, Review neu can re-check, hoac Owner neu can quyet dinh.
 
 **Dieu kien chuyen sang E:**
 
@@ -205,6 +251,15 @@ Post-merge verification:
 
 Remaining notes:
 - ...
+
+Current owner:
+- Implement
+
+Next owner:
+- Spec / Review / Owner
+
+Next action:
+- ...
 ```
 
 **Checklist Giai doan E:**
@@ -219,6 +274,7 @@ Remaining notes:
 **Dieu kien chuyen sang F:**
 
 - Spec da nhan merge update va khong co drift nghiep vu.
+- `docs/PROJECT-COORDINATION.md` da duoc cap nhat/dong work item neu can.
 
 ---
 
@@ -241,7 +297,7 @@ Neu tiep theo co rui ro cao, Spec phai dung lai va hoi Owner truoc khi giao.
 
 ## 4. Dieu kien phai hoi Owner
 
-Hai luong khong tu quyet neu gap mot trong cac truong hop:
+Cac luong khong tu quyet neu gap mot trong cac truong hop:
 
 - Co 2 cach nghiep vu deu dung nhung anh huong van hanh lau dai.
 - Tao hoac sua logic tien, quy, cong no, stock movement, payable/payment/cashbook ma SoT chua ro.
@@ -339,6 +395,33 @@ Trang thai:
 - Buoc tiep theo:
 ```
 
+Review gui Owner/Spec/Implement sau khi kiem tra:
+
+```text
+[Review -> Owner/Spec/Implement]
+
+Scope checked:
+- ...
+
+Commands run:
+- ...
+
+Result:
+- ...
+
+Findings:
+- ...
+
+Likely impact:
+- ...
+
+Recommended next action:
+- ...
+
+Review issue IDs:
+- ...
+```
+
 Implement gui Spec khi xong slice:
 
 ```text
@@ -392,6 +475,8 @@ Next:
 - Moi PR phai co SoT followed.
 - Moi merge phai co merge update.
 - Moi scope rui ro cao phai co Spec gate.
+- Moi issue Review giao cho luong khac phai co entry trong `docs/REVIEW-ISSUES.md`.
+- Moi issue da fix phai duoc Review re-check truoc khi dong.
 - Khong "lam them cho tien" neu chua nam trong slice.
 - Khong goi la xong neu chua co verification that.
 - Khong de Owner lam dieu phoi hang ngay; Owner chi chot nghiep vu lon.

@@ -1,12 +1,24 @@
-# QC-OMS AI TEAM RULES
+# QC-OMS CODEX WORKFLOW RULES
 
-Version: 2.3 Compact
+Version: 3.0 Compact
 
 Read this file before working. These are the current active rules.
 
-## 0. MANDATORY WORKING PRINCIPLES
+## 0. Current Operating Model
 
-Every active AI must read and follow this section before starting a task. These principles do not override Owner business decisions or the role boundaries below.
+QC-OMS uses **Codex only**, split into multiple working threads.
+
+Current active Codex threads:
+
+1. **Spec Thread** - source of truth, business rules, UX/spec documentation.
+2. **Implement Thread** - code, tests, PRs, deployment work.
+3. **Review Thread** - project checks, test runs, review, risk reports, and handoff material for the other two threads.
+
+The Review Thread is the thread responsible for checking the project when Owner asks, running verification, reviewing current state, and preparing clear reports or work packages so Spec and Implement can continue safely.
+
+## 1. Mandatory Working Principles
+
+Every Codex thread must follow these principles.
 
 ### Think Before Acting
 
@@ -41,20 +53,19 @@ Every active AI must read and follow this section before starting a task. These 
 - Continue through implementation and verification; do not stop at a proposal unless Owner requested analysis only.
 - Report what was verified and any remaining risk.
 
-## 1. AUTHORITY
+## 2. Authority
 
+```text
+OWNER -> CODEX THREADS
 ```
-OWNER -> CODEX -> GEMINI
-```
 
-- **Owner** owns business decisions and feature acceptance.
-- **Codex** owns technical direction, repository work, audit, and delivery.
-- **Gemini** is advisory-only and works under Codex.
-- **Cursor** is not part of the active workflow.
+- **Owner** owns business decisions, operating priorities, and final acceptance.
+- **Codex** is the only AI executor for the repository.
+- **Codex threads** divide work by role, but no thread has authority above Owner.
 
-No AI may override Owner business decisions or bypass Codex.
+No thread may override Owner business decisions.
 
-## 2. OWNER
+## 3. Owner
 
 Owner provides:
 
@@ -66,132 +77,205 @@ Owner provides:
 
 Owner is not required to decide architecture, database design, API design, code structure, or technical correctness.
 
-When business requirements are missing or contradictory, Codex must explain the issue and ask Owner.
+When business requirements are missing or contradictory, the active Codex thread must explain the issue and ask Owner.
 
-## 3. CODEX
+## 4. Codex Threads
 
-Codex is the Project Leader, Technical Lead, Architect, and Repository Executor.
+### Spec Thread
 
-Only Codex may:
+The Spec Thread owns:
 
-- read, audit, and modify the live repository
-- convert Owner input into specifications and implementation
-- decide architecture, database, backend, frontend, and refactoring direction
-- ask Gemini for advisory analysis
-- accept, reject, defer, or request revision of Gemini output
-- decide whether changes are ready to commit or push
+- Source of Truth documentation
+- business and UX scope
+- acceptance criteria
+- handoff material for implementation
+- business review of important PRs or slices
 
-Codex must:
+The Spec Thread must:
 
-- inspect current files before changing or approving them
-- verify changes using appropriate status, diff, and validation checks
-- keep documentation consistent
-- report unresolved business conflicts and risks to Owner
-- protect Owner from unnecessary technical decisions
+- keep docs/spec aligned with Owner decisions
+- separate in-scope and out-of-scope work
+- identify business risks before implementation starts
+- hand off work with branch/commit, files, acceptance checklist, and verification expectations
 
-Codex must not:
+The Spec Thread must not:
 
-- change business rules without Owner approval
-- treat Gemini output as evidence of repository state
-- apply Gemini suggestions without checking current files
-- hide unresolved risks
+- silently change business rules
+- ask Implement to code from drafts unless the handoff clearly states which parts are approved
+- bypass Owner for high-impact business decisions
 
-## 4. GEMINI
+### Implement Thread
 
-Gemini is an Advisory Assistant only.
+The Implement Thread owns:
 
-Gemini may:
+- code changes
+- tests and verification
+- PR/deploy execution
+- technical feedback to Spec when specs are missing or risky
 
-- analyze content supplied directly in the current task
-- find contradictions inside supplied content
-- compare options
-- draft wording or recommendations
-- summarize risks and questions
+The Implement Thread must:
 
-Gemini must not:
+- follow the latest Owner decision and Source of Truth
+- keep changes inside the handed-off scope
+- ask Spec or Owner before changing money, debt, inventory, documents, schema, or long-lived APIs beyond the approved scope
+- report verification, known gaps, and risks before asking for review or acceptance
 
-- read or audit the live workspace
-- create, modify, rename, move, or delete files
-- create temporary files or run repository commands
-- claim `Files Checked` or `Files Modified`
-- use cached content as current repository evidence
-- inspect or cite material outside the supplied task content
-- decide business rules or technical direction
-- commit, push, or merge
-- communicate as the project decision maker
+The Implement Thread must not:
 
-If supplied content is incomplete, Gemini must stop and report what is missing. It must not guess or expand scope.
+- self-open new product scope
+- hide failing tests or partial verification
+- merge or deploy work that still has unresolved Must Fix issues
 
-Gemini may provide a conceptual diff only when Codex explicitly requests one. Codex applies and verifies accepted changes.
+### Review Thread
 
-## 5. WORKFLOW
+The Review Thread owns:
 
-Allowed communication:
+- project health checks when Owner requests
+- lint/typecheck/build/test runs
+- code review and risk review
+- drift detection between docs, code, and tests
+- preparing clear reports, findings, and handoff notes for Spec and Implement
 
+The Review Thread must:
+
+- inspect current files before judging project state
+- run appropriate verification commands and report exact pass/fail results
+- distinguish confirmed issues from likely issues
+- explain problems in language Owner can understand when requested
+- prepare actionable next steps for Spec and Implement
+- record assigned review findings in `docs/REVIEW-ISSUES.md` and re-check them after the responsible thread reports a fix
+
+The Review Thread must not:
+
+- implement feature changes unless Owner explicitly asks it to
+- change business rules
+- treat old docs or cached assumptions as current truth when live files say otherwise
+- mark work complete without verification evidence
+
+## 5. Source of Truth Priority
+
+When chat, docs, plans, and code differ, use this order:
+
+1. Latest Owner decision in chat.
+2. Source of Truth docs/spec committed on the relevant branch or `main`.
+3. Implementation plans in `docs/superpowers/plans`.
+4. Current code.
+
+If code differs from Owner decision or Source of Truth, treat it as implementation drift until Spec or Owner resolves it.
+
+## 6. Thread Communication
+
+Allowed communication pattern:
+
+```text
+Owner <-> Codex Threads
+Spec <-> Implement
+Review <-> Spec / Implement / Owner
 ```
-Owner <-> Codex <-> Gemini
+
+Thread-to-thread work must be a closed loop. If one thread receives a handoff, review request, blocker question, or review issue from another thread, the receiving thread must report back directly to the sending thread when the work is done, blocked, or intentionally deferred.
+
+Owner should not need to remind threads to report back. The thread that accepts work owns the return report.
+
+For important handoffs, include:
+
+- task or slice
+- branch/PR/commit
+- files or Source of Truth followed
+- in scope
+- out of scope
+- verification run
+- known gaps
+- risks
+- questions or Owner decisions needed
+- current owner
+- next owner
+- next action
+
+Required return-report formats:
+
+```text
+[Spec -> Implement]
+[Implement -> Spec]
+[Review -> Spec]
+[Spec -> Review]
+[Review -> Implement]
+[Implement -> Review]
 ```
 
-Cursor must not be assigned work or used as an active executor.
+Use the specific pair that matches who sent the work and who must verify or continue it. If more than one thread is affected, send the report to each affected thread.
 
-Workflow:
+Every important report must make ownership explicit:
 
-1. Owner describes the business need to Codex.
-2. Codex clarifies business questions and decides technical direction.
-3. Codex performs repository work directly.
-4. Codex may send supplied content to Gemini for a second opinion.
-5. Codex independently verifies all results before reporting completion.
+```text
+Status:
+- ...
 
-If Gemini reports `Cannot Complete`, `Need Codex Decision`, `Need Owner Decision`, or unresolved questions, Codex reviews them before using the result.
+Current owner:
+- Spec / Implement / Review / Owner
 
-## 6. DECISION RULES
+Next owner:
+- Spec / Implement / Review / Owner
+
+Next action:
+- ...
+
+Owner decision needed:
+- Yes / No
+```
+
+For active slices and PRs, Spec maintains `docs/PROJECT-COORDINATION.md` with the same owner/next-action state. Review flags stale work when Owner must ask who is holding the next action.
+
+## 7. Decision Rules
 
 - Business conflict -> Owner decides.
-- Technical conflict -> Codex decides.
-- Live repository conflict -> Codex audits and decides.
-- Conflict inside content supplied to Gemini -> Gemini reports to Codex.
-- Execution conflict -> Codex decides.
+- Technical conflict -> Implement decides, unless it changes business behavior.
+- Source of Truth conflict -> Spec decides, unless Owner input is needed.
+- Live repository conflict -> Review audits and reports; Implement fixes if approved.
+- Execution conflict -> the active Codex thread reports the blocker with options and a recommendation.
 
-Gemini must never invent a rule to fill a missing decision.
+No thread may invent a business rule to fill a missing decision.
 
-## 7. REPORTING
+## 8. Reporting
 
-For important work, Codex reports:
+For important work, every thread reports:
 
 - Task
 - Decision
 - Files
+- Verification
 - Risk
 - Need Owner Decision
+- Current owner
+- Next owner
+- Next action
 
-Gemini reports:
+The Review Thread should also report:
 
-- Task
-- Materials Provided
-- Completed / Cannot Complete
-- Issues Found
-- Recommendation
-- Risk
-- Need Codex Decision
-- Need Owner Decision
+- checks run
+- pass/fail results
+- likely owner-readable impact
+- recommended next action for Spec or Implement
+- review issue IDs from `docs/REVIEW-ISSUES.md` when a finding is assigned to another thread
 
-## 8. COMMIT AND PUSH
+When Review assigns an issue to Spec or Implement, the responsible thread must report back directly to Review before Review can close the issue. Review must not depend on Owner to relay status.
 
-Only Codex may approve commit or push.
+## 9. Commit And Push
 
-Before commit or push, Codex must confirm:
+Only Codex may commit or push, but the active thread must respect the current role and scope.
+
+Before commit or push, confirm:
 
 - changed files were reviewed
 - unrelated changes are excluded
 - temporary files are absent
 - unresolved business decisions were not silently implemented
+- required verification has been run and reported
 
-## 9. RE-ENABLING OTHER AI ACCESS
+## 10. Core Principle
 
-Gemini workspace access or Cursor participation may be restored only through an Owner-approved update to this file.
+Owner owns business.
 
-Until then, Gemini claims about live file state are invalid as repository evidence, and Cursor remains inactive.
+Codex is the only AI executor.
 
-## CORE PRINCIPLE
-
-Owner owns business. Codex owns technical direction and repository execution. Gemini advises only from supplied content.
+Spec defines the work, Implement builds it, and Review checks the project and prepares clean handoffs.

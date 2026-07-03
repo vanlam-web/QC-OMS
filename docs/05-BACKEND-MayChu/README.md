@@ -1,6 +1,6 @@
 # PHẦN 5: MÁY CHỦ & API (BACKEND)
 
-> 🔨 Đang xây dựng — Foundation đã chốt Giai đoạn 0; POS mới có một phần
+> 🔨 Đang xây dựng — Foundation đã chốt Giai đoạn 0; POS, Inventory, Finance, Purchase và Production Queue đã có một phần
 
 ---
 
@@ -15,6 +15,9 @@
 | `POS/TOAST-API.md` | API xử lý Toast SĐT (K03-B) | ✅ Hoàn tất |
 | `Inventory/INVENTORY-API.md` | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 Một phần |
 | `Finance/FINANCE-API.md` | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 Một phần |
+| `Purchase/PURCHASE-API.md` | API NCC, phiếu nhập, post nhập hàng và thanh toán NCC | 🔨 Một phần |
+| `Production/PRODUCTION-RECONCILIATION-API.md` | API đối soát sản xuất / hàng đợi máy | 🔨 Một phần |
+| `BOM/BOM-API.md` | API BOM/combo vật tư | 🔨 Draft |
 | `BACKEND_CONVENTIONS.md` | Quy ước API, naming, validation, error handling | ✅ Hoàn tất |
 
 ---
@@ -26,7 +29,13 @@
 | **POS** | Customer/Product/Pricing, Order/Quote/Checkout/Sửa hóa đơn và Toast API đã có một phần | 🔨 Một phần |
 | **Inventory** | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho đã có một phần | 🔨 Một phần |
 | **Finance** | API công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát đã có một phần | 🔨 Một phần |
-| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore | ⬜ Chưa có |
+| **Purchase** | Supplier, purchase receipt draft/post, supplier payments, purchase roll/sheet objects | 🔨 Một phần |
+| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore | 🔨 Một phần |
+
+## Bằng chứng implement/test hiện có
+
+- Routes/use-cases: `routes/purchase.ts`, `use-cases/purchase.ts`, `routes/production-queue.ts`, `use-cases/production-queue.ts`.
+- Function tests: `purchase_receipts_test.ts`, `suppliers_test.ts`, `production_queue_test.ts`.
 
 ---
 

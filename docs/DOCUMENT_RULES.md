@@ -30,7 +30,7 @@ Trước khi sửa tài liệu, Codex phải:
 4. Chỉ thay đổi trong phạm vi yêu cầu.
 5. Kiểm tra `git diff`, file tạm và lỗi định dạng sau khi sửa.
 
-Gemini chỉ được phân tích nội dung Codex cung cấp, theo `AI_TEAM_RULES.md`.
+Các luồng Codex phải làm việc theo vai trò hiện tại trong `AI_TEAM_RULES.md`: Spec giữ Source of Truth, Implement thi công code/test/PR, Review kiểm tra và ghi nhận issue.
 
 ## 4. Source of Truth
 
