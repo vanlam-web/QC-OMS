@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
-import { ActiveFilterChips, FilterPresetBar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
+import { Fragment, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, ExternalLink, Eye, RotateCcw, Search } from 'lucide-react'
 import {
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
   ManagementListSurface,
   ManagementPage,
-  ManagementPagination,
+  ManagementRowActionButton,
+  ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
@@ -56,6 +57,7 @@ export function SalesDocumentsPage({
   const [selected, setSelected] = useState<SalesDocumentDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [detailErrorDocumentId, setDetailErrorDocumentId] = useState<string | null>(null)
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
   const [openingQuoteId, setOpeningQuoteId] = useState<string | null>(null)
 
@@ -110,6 +112,8 @@ export function SalesDocumentsPage({
     event.preventDefault()
     const trimmed = search.trim()
     setSelected(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
     setLastSearch(trimmed)
     await loadDocuments({ search: trimmed, page: 1 })
   }
@@ -120,38 +124,50 @@ export function SalesDocumentsPage({
     setTypeFilter('all')
     setStatusFilter('all')
     setSelected(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
     await loadDocuments({ search: '', type: 'all', status: 'all', page: 1 })
   }
 
   async function applyTypeFilter(nextType: typeof typeFilter) {
     setTypeFilter(nextType)
     setSelected(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
     await loadDocuments({ type: nextType, page: 1 })
   }
 
   async function applyStatusFilter(nextStatus: typeof statusFilter) {
     setStatusFilter(nextStatus)
     setSelected(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
     await loadDocuments({ status: nextStatus, page: 1 })
   }
 
   async function goToPage(nextPage: number) {
     setSelected(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
     await loadDocuments({ page: nextPage })
   }
 
   async function openDocument(document: SalesDocumentListItem) {
     if (selected?.id === document.id) {
       setSelected(null)
+      setDetailError(null)
+      setDetailErrorDocumentId(null)
       return
     }
 
     setDetailError(null)
+    setDetailErrorDocumentId(null)
     setLoadingDetailId(document.id)
     try {
       setSelected(await service.getSalesDocument(document.id))
     } catch (cause) {
       setDetailError(formatApiError(cause, 'Không tải được chi tiết chứng từ.'))
+      setDetailErrorDocumentId(document.id)
     } finally {
       setLoadingDetailId(null)
     }
@@ -177,48 +193,13 @@ export function SalesDocumentsPage({
   const pageSize = state?.pageSize ?? salesDocumentsPageSize
   const hasFilter = lastSearch.length > 0 || typeFilter !== 'all' || statusFilter !== 'all'
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1
-  const rangeEnd = Math.min(page * pageSize, total)
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const presets: FilterPreset[] = [
-    { id: 'all', label: 'Tất cả', active: !hasFilter, onSelect: () => void resetFilters() },
-    {
-      id: 'invoice',
-      label: 'Hóa đơn',
-      active: typeFilter === 'invoice',
-      onSelect: () => void applyTypeFilter('invoice'),
-    },
-    {
-      id: 'quote',
-      label: 'Báo giá',
-      active: typeFilter === 'quote',
-      onSelect: () => void applyTypeFilter('quote'),
-    },
-    {
-      id: 'debt',
-      label: 'Còn nợ',
-      disabled: true,
-      title: 'Frontend service chưa có filter payment_status trong slice list-only này.',
-      onSelect: () => undefined,
-    },
-  ]
-  const chips: ActiveFilterChip[] = [
-    ...(lastSearch ? [{ id: 'search', label: `Tìm: ${lastSearch}`, onClear: () => void resetSearchChip() }] : []),
-    ...(typeFilter !== 'all'
-      ? [{ id: 'type', label: `Loại: ${documentTypeFilterLabel(typeFilter)}`, onClear: () => void applyTypeFilter('all') }]
-      : []),
-    ...(statusFilter !== 'all'
-      ? [{ id: 'status', label: `Trạng thái: ${lifecycleFilterLabel(statusFilter)}`, onClear: () => void applyStatusFilter('all') }]
-      : []),
-  ]
-
-  async function resetSearchChip() {
-    setSearch('')
-    setLastSearch('')
-    setSelected(null)
-    await loadDocuments({ search: '', page: 1 })
-  }
+  const activeFilterSummary = [
+    ...(lastSearch ? [`Tìm: ${lastSearch}`] : []),
+    ...(typeFilter !== 'all' ? [`Loại: ${documentTypeFilterLabel(typeFilter)}`] : []),
+    ...(statusFilter !== 'all' ? [`Trạng thái: ${lifecycleFilterLabel(statusFilter)}`] : []),
+  ].join(' • ')
 
   return (
     <ManagementPage
@@ -241,7 +222,17 @@ export function SalesDocumentsPage({
         </ManagementCompactToolbar>
       }
       filter={
-        <ManagementFilterSidebar ariaLabel="Bộ lọc chứng từ bán hàng">
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary || undefined}
+          ariaLabel="Bộ lọc chứng từ bán hàng"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
           <button
             aria-label="Ẩn bộ lọc chứng từ bán hàng"
             className="management-filter-collapse-button"
@@ -283,10 +274,6 @@ export function SalesDocumentsPage({
               Đã hủy
             </label>
           </ManagementFilterGroup>
-          <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
-            <RotateCcw aria-hidden="true" size={15} />
-            Đặt lại bộ lọc
-          </button>
         </ManagementFilterSidebar>
       }
       filterVisible={showFilters}
@@ -304,23 +291,11 @@ export function SalesDocumentsPage({
     >
       <ManagementListSurface ariaLabel="Danh sách chứng từ bán hàng">
         {error ? <p role="alert">{error}</p> : null}
-        <div className="panel-heading">
-          <div>
-            <h2>Danh sách chứng từ</h2>
-            <p>Tìm nhanh mã hóa đơn/báo giá, khách hàng hoặc ghi chú theo dữ liệu API hiện có.</p>
-          </div>
-        </div>
-
-        <div className="sales-documents-filter-row">
-          <FilterPresetBar presets={presets} />
-          <ActiveFilterChips chips={chips} />
-        </div>
 
         {state === null && error === null ? <p>Đang tải chứng từ...</p> : null}
 
         {state ? (
           <>
-            <p className="management-result-count">{rangeStart}-{rangeEnd} / {total} chứng từ</p>
             {documents.length === 0 ? (
               <EmptyState>
                 <p>{hasFilter ? 'Không thấy chứng từ theo bộ lọc hiện tại.' : 'Chưa có chứng từ phù hợp bộ lọc.'}</p>
@@ -341,74 +316,76 @@ export function SalesDocumentsPage({
                       <th>Còn nợ</th>
                       <th>Thanh toán</th>
                       <th>Trạng thái</th>
-                      <th>Thao tác</th>
+                      <th>Mở</th>
                     </tr>
                   </thead>
                   <tbody>
                     {documents.map((document) => (
-                      <tr className={selected?.id === document.id ? 'management-data-row-selected' : undefined} key={document.id}>
-                        <td>
-                          <strong>{document.code}</strong>
-                          <br />
-                          <StatusChip tone={document.order_type === 'invoice' ? 'info' : 'neutral'}>
-                            {document.order_type === 'invoice' ? 'Hóa đơn' : 'Báo giá'}
-                          </StatusChip>
-                        </td>
-                        <td>{dateTime(document.created_at)}</td>
-                        <td>{document.customer.code ?? '-'}</td>
-                        <td>{document.customer.name}</td>
-                        <td>{document.seller.name}</td>
-                        <td><MoneyText value={document.total_amount} /></td>
-                        <td><MoneyText value={document.paid_amount} /></td>
-                        <td>{document.debt_amount > 0 ? <MoneyText value={document.debt_amount} /> : '-'}</td>
-                        <td>{paymentStatusLabel(document)}</td>
-                        <td>
-                          <StatusChip tone={lifecycleStatusTone(document)}>
-                            {lifecycleStatusLabel(document)}
-                          </StatusChip>
-                        </td>
-                        <td>
-                          <div className="row-actions">
-                            <button
-                              className="button button-secondary"
-                              disabled={loadingDetailId === document.id}
-                              type="button"
-                              onClick={() => void openDocument(document)}
-                            >
-                              {selected?.id === document.id ? `Đóng ${document.code}` : `Mở ${document.code}`}
-                            </button>
-                            {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
-                              <button
-                                className="button button-secondary"
-                                disabled={openingQuoteId === document.id}
-                                type="button"
-                                onClick={() => void openQuoteInPos(document)}
+                      <Fragment key={document.id}>
+                        <tr className={selected?.id === document.id ? 'management-data-row-selected' : undefined}>
+                          <td>
+                            <strong>{document.code}</strong>
+                            <br />
+                            <StatusChip tone={document.order_type === 'invoice' ? 'info' : 'neutral'}>
+                              {document.order_type === 'invoice' ? 'Hóa đơn' : 'Báo giá'}
+                            </StatusChip>
+                          </td>
+                          <td>{dateTime(document.created_at)}</td>
+                          <td>{document.customer.code ?? '-'}</td>
+                          <td>{document.customer.name}</td>
+                          <td>{document.seller.name}</td>
+                          <td><MoneyText value={document.total_amount} /></td>
+                          <td><MoneyText value={document.paid_amount} /></td>
+                          <td>{document.debt_amount > 0 ? <MoneyText value={document.debt_amount} /> : '-'}</td>
+                          <td>{paymentStatusLabel(document)}</td>
+                          <td>
+                            <StatusChip tone={lifecycleStatusTone(document)}>
+                              {lifecycleStatusLabel(document)}
+                            </StatusChip>
+                          </td>
+                          <td>
+                            <div className="row-actions">
+                              <ManagementRowActionButton
+                                ariaLabel={selected?.id === document.id ? `Đóng chi tiết ${document.code}` : `Mở chi tiết ${document.code}`}
+                                disabled={loadingDetailId === document.id}
+                                onClick={() => void openDocument(document)}
                               >
-                                Mở tại POS
-                              </button>
-                            ) : null}
-                          </div>
-                        </td>
-                      </tr>
+                                <Eye aria-hidden="true" size={15} />
+                              </ManagementRowActionButton>
+                              {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
+                                <ManagementRowActionButton
+                                  ariaLabel={`Mở tại POS ${document.code}`}
+                                  disabled={openingQuoteId === document.id}
+                                  onClick={() => void openQuoteInPos(document)}
+                                >
+                                  <ExternalLink aria-hidden="true" size={15} />
+                                </ManagementRowActionButton>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                        {selected?.id === document.id || detailErrorDocumentId === document.id ? (
+                          <ManagementDetailRow colSpan={11} label={`Chi tiết chứng từ ${document.code}`}>
+                            <SalesDocumentDetailView document={selected} error={detailError} onOpenQuotePrint={onOpenQuotePrint} />
+                          </ManagementDetailRow>
+                        ) : null}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
               </ManagementTableViewport>
             )}
-            <ManagementPagination ariaLabel="Phân trang chứng từ">
-              <button className="button button-secondary" disabled={!canGoPrevious} type="button" onClick={() => void goToPage(page - 1)}>
-                Trang trước
-              </button>
-              <span>Trang {page} / {totalPages}</span>
-              <button className="button button-secondary" disabled={!canGoNext} type="button" onClick={() => void goToPage(page + 1)}>
-                Trang sau
-              </button>
-            </ManagementPagination>
-            {selected || detailError ? (
-              <div className="sales-documents-list-detail">
-                <SalesDocumentDetailView document={selected} error={detailError} onOpenQuotePrint={onOpenQuotePrint} />
-              </div>
-            ) : null}
+            <ManagementTableFooter
+              ariaLabel="Phân trang chứng từ"
+              canGoNext={canGoNext}
+              canGoPrevious={canGoPrevious}
+              entityLabel="chứng từ"
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onNext={() => void goToPage(page + 1)}
+              onPrevious={() => void goToPage(page - 1)}
+            />
           </>
         ) : null}
       </ManagementListSurface>
@@ -429,11 +406,7 @@ function SalesDocumentDetailView({
   if (!document) return null
 
   return (
-    <section
-      aria-label={`Chi tiết chứng từ ${document.code}`}
-      className="inline-detail-panel sales-document-detail"
-      role="region"
-    >
+    <div className="sales-document-detail">
       <header>
         <h2>{document.code}</h2>
         <p>{document.customer.name}</p>
@@ -503,7 +476,7 @@ function SalesDocumentDetailView({
           </ul>
         )}
       </section>
-    </section>
+    </div>
   )
 }
 
