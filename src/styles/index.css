@@ -2120,6 +2120,23 @@ button {
   gap: var(--space-2);
 }
 
+.sales-documents-management-table {
+  min-width: 76rem;
+}
+
+.sales-documents-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.sales-documents-list-detail {
+  margin-top: var(--space-4);
+}
+
 .purchase-receipts-shell {
   min-height: 100vh;
   background: var(--color-surface-muted);
