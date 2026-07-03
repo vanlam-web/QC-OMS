@@ -138,9 +138,9 @@ function CatalogRoute() {
 
 function CustomersRoute() {
   const { currentUser, initialized, getAccessToken, signOut } = useAuth()
-  const navigate = useNavigate()
   const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
   const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
+  const salesDocumentService = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
@@ -153,7 +153,7 @@ function CustomersRoute() {
       <CustomersPage
         service={catalogService}
         orderService={orderService}
-        onOpenDashboard={() => navigate('/dashboard')}
+        salesDocumentService={salesDocumentService}
       />
     </AppShell>
   )

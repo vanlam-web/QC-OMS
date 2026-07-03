@@ -42,6 +42,22 @@ import type {
 
 type DatabaseClient = SupabaseClient;
 
+const customerBaseSelect = "id, code, name, phone, customer_group_id, customer_groups(id, code, name)";
+const customerExtendedSelect = "id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)";
+
+type CustomerRepositoryRow = {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  tax_code?: string | null;
+  address?: string | null;
+  customer_group_id: string | null;
+  created_by?: string | null;
+  created_at?: string;
+  customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
+};
+
 interface PriceRow {
   product_id: string;
   unit_price: number | string | null;
@@ -776,7 +792,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
       let query = client
         .from("customers")
-        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)", { count: "exact" })
+        .select(customerExtendedSelect, { count: "exact" })
         .eq("organization_id", input.organizationId)
         .order("code", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -786,9 +802,32 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
       }
 
-      const { data, error, count } = await query;
+      const result = await query;
+      let data = result.data as CustomerRepositoryRow[] | null;
+      let error = result.error;
+      let count = result.count;
+      if (isMissingCustomerExtendedColumnError(error)) {
+        let fallbackQuery = client
+          .from("customers")
+          .select(customerBaseSelect, { count: "exact" })
+          .eq("organization_id", input.organizationId)
+          .order("code", { ascending: true })
+          .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+
+        if (input.search !== undefined) {
+          const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+          fallbackQuery = fallbackQuery.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+        }
+
+        const fallback = await fallbackQuery;
+        data = fallback.data as CustomerRepositoryRow[] | null;
+        error = fallback.error;
+        count = fallback.count;
+      }
       if (error !== null) throw error;
-      return { items: (data ?? []).map(toCustomerData), total: count ?? 0 };
+      const creatorMap = await loadSellerMap(client, (data ?? []).map((row) => row.created_by ?? ""));
+      const salesTotalMap = await loadCustomerSalesTotals(client, input.organizationId, (data ?? []).map((row) => row.id));
+      return { items: (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap)), total: count ?? 0 };
     },
     async createCustomer(input): Promise<CustomerData> {
       const code = input.code ?? await nextCustomerCode(client, input.organizationId);
@@ -800,19 +839,30 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           name: input.name,
           phone: input.phone ?? null,
           tax_code: input.taxCode ?? null,
+          address: input.address ?? null,
           customer_group_id: input.customerGroupId ?? null,
+          created_by: input.actorUserId,
         })
-        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)")
         .single();
       if (error !== null) throw error;
-      return toCustomerData(data);
+      const creatorMap = await loadSellerMap(client, [data.created_by ?? ""]);
+      return toCustomerData(data, creatorMap, new Map([[data.id, 0]]));
     },
     async updateCustomer(input): Promise<CustomerData | null> {
-      const patch: { code?: string; name?: string; phone?: string | null; tax_code?: string | null; customer_group_id?: string | null } = {};
+      const patch: {
+        code?: string;
+        name?: string;
+        phone?: string | null;
+        tax_code?: string | null;
+        address?: string | null;
+        customer_group_id?: string | null;
+      } = {};
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.phone !== undefined) patch.phone = input.phone;
       if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
+      if (input.address !== undefined) patch.address = input.address;
       if (input.customerGroupId !== undefined) patch.customer_group_id = input.customerGroupId;
 
       const { data, error } = await client
@@ -820,10 +870,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)")
         .maybeSingle();
       if (error !== null) throw error;
-      return data === null ? null : toCustomerData(data);
+      if (data === null) return null;
+      const creatorMap = await loadSellerMap(client, [data.created_by ?? ""]);
+      const salesTotalMap = await loadCustomerSalesTotals(client, input.organizationId, [data.id]);
+      return toCustomerData(data, creatorMap, salesTotalMap);
     },
     async listSuppliers(input): Promise<{ items: SupplierData[]; total: number }> {
       let query = client
@@ -1259,6 +1312,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       if (input.type !== undefined) query = query.eq("order_type", input.type);
       if (input.status !== undefined) query = query.eq("status", input.status);
+      if (input.customerId !== undefined) query = query.eq("customer_id", input.customerId);
       if (input.paymentStatus !== undefined) query = query.eq("payment_status", input.paymentStatus);
       if (input.from !== undefined) query = query.gte("created_at", input.from);
       if (input.to !== undefined) query = query.lte("created_at", input.to);
@@ -1784,25 +1838,65 @@ async function nextSupplierCode(client: DatabaseClient, organizationId: string):
   return data;
 }
 
-function toCustomerData(row: {
-  id: string;
-  code: string;
-  name: string;
-  phone: string | null;
-  tax_code: string | null;
-  customer_group_id: string | null;
-  customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
-}): CustomerData {
+function toCustomerData(
+  row: CustomerRepositoryRow,
+  creatorMap: Map<string, string> = new Map(),
+  salesTotalMap: Map<string, number> = new Map(),
+): CustomerData {
   const group = Array.isArray(row.customer_groups) ? row.customer_groups[0] : row.customer_groups;
+  const createdBy = row.created_by ?? null;
+  const creatorName = createdBy === null ? undefined : creatorMap.get(createdBy);
   return {
     id: row.id,
     code: row.code,
     name: row.name,
     phone: row.phone,
-    tax_code: row.tax_code,
+    tax_code: row.tax_code ?? null,
+    address: row.address ?? null,
     customer_group_id: row.customer_group_id,
     customer_group: group ?? null,
+    created_at: row.created_at ?? "",
+    created_by: createdBy === null ? null : { id: createdBy, name: creatorName ?? "" },
+    total_sales_amount: salesTotalMap.get(row.id) ?? 0,
   };
+}
+
+function isMissingCustomerExtendedColumnError(error: { code?: string; message?: string } | null) {
+  return error?.code === "42703" &&
+    (
+      error.message?.includes("customers.tax_code") === true ||
+      error.message?.includes("customers.address") === true ||
+      error.message?.includes("customers.created_by") === true ||
+      error.message?.includes("customers.created_at") === true
+    );
+}
+
+async function loadCustomerSalesTotals(
+  client: DatabaseClient,
+  organizationId: string,
+  customerIds: string[],
+): Promise<Map<string, number>> {
+  const uniqueIds = [...new Set(customerIds.filter((id) => id.length > 0))];
+  const totals = new Map(uniqueIds.map((id) => [id, 0]));
+  if (uniqueIds.length === 0) return totals;
+
+  const { data, error } = await client
+    .from("orders")
+    .select("customer_id, total_amount")
+    .eq("organization_id", organizationId)
+    .eq("order_type", "invoice")
+    .eq("status", "completed")
+    .in("customer_id", uniqueIds);
+
+  if (error !== null) throw error;
+
+  for (const row of data ?? []) {
+    const customerId = String(row.customer_id ?? "");
+    if (customerId.length === 0) continue;
+    totals.set(customerId, (totals.get(customerId) ?? 0) + Number(row.total_amount ?? 0));
+  }
+
+  return totals;
 }
 
 function toSupplierData(row: {
@@ -2779,6 +2873,7 @@ async function loadOpenDebtInvoices(
 ): Promise<Array<{
   order_id: string;
   order_code: string;
+  created_at: string;
   customer_id: string | null;
   customer_code: string | null;
   customer_name: string;
@@ -2827,6 +2922,7 @@ async function loadOpenDebtInvoices(
       return {
         order_id: order.id,
         order_code: order.code,
+        created_at: String(order.created_at),
         customer_id: order.customer_id,
         customer_code: typeof snapshot.code === "string" ? snapshot.code : null,
         customer_name: typeof snapshot.name === "string" ? snapshot.name : "Khách lẻ",

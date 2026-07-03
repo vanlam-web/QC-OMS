@@ -53,9 +53,11 @@ export function createCatalogService(api: CatalogApiRequester) {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
-    listCustomers: (input: { search?: string } = {}) => {
+    listCustomers: (input: { search?: string; page?: number; page_size?: number } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<CustomerListResponse>(`/api/v1/customers${query ? `?${query}` : ''}`)
     },
@@ -64,6 +66,7 @@ export function createCatalogService(api: CatalogApiRequester) {
       name: string
       phone?: string
       tax_code?: string
+      address?: string
       customer_group_id?: string | null
     }) =>
       api.request<Customer>('/api/v1/customers', {

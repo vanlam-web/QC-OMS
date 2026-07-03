@@ -122,6 +122,7 @@ export interface CustomerDebtDetail {
   invoices: Array<{
     order_id: string
     order_code: string
+    created_at: string
     total_amount: number
     paid_amount: number
     debt_amount: number

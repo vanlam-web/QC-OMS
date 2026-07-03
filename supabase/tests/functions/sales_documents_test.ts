@@ -178,6 +178,25 @@ Deno.test("exact document code search ignores default date filters", async () =>
   assertEquals(receivedInputs[0].to, undefined);
 });
 
+Deno.test("sales document list accepts customer filter for customer history", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const response = await call(
+    "/api/v1/sales-documents?customer_id=customer-1&page=1&page_size=10",
+    { method: "GET" },
+    repo(["perm.create_order"], {
+      listSalesDocuments: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve({ items: [documentListItem], total: 1 });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(receivedInputs[0].customerId, "customer-1");
+  assertEquals(receivedInputs[0].page, 1);
+  assertEquals(receivedInputs[0].pageSize, 10);
+});
+
 Deno.test("sales document detail returns snapshots, payments, debt and stock movements", async () => {
   const response = await call("/api/v1/sales-documents/order-1", { method: "GET" }, repo(["perm.create_order"]));
   const data = (await body(response)).data as SalesDocumentDetailData;

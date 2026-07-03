@@ -75,8 +75,12 @@ export interface CustomerData {
   name: string;
   phone: string | null;
   tax_code: string | null;
+  address: string | null;
   customer_group_id: string | null;
   customer_group: { id: string; code: string; name: string } | null;
+  created_at: string;
+  created_by: { id: string; name: string } | null;
+  total_sales_amount: number;
 }
 
 export interface SupplierData {
@@ -363,6 +367,7 @@ export interface CustomerDebtDetailData {
   invoices: Array<{
     order_id: string;
     order_code: string;
+    created_at: string;
     total_amount: number;
     paid_amount: number;
     debt_amount: number;
@@ -765,10 +770,12 @@ export interface FoundationRepository {
   }): Promise<PurchaseReceiptPostResult>;
   createCustomer(input: {
     organizationId: string;
+    actorUserId: string;
     code?: string;
     name: string;
     phone?: string;
     taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   }): Promise<CustomerData>;
   updateCustomer(input: {
@@ -778,6 +785,7 @@ export interface FoundationRepository {
     name?: string;
     phone?: string | null;
     taxCode?: string | null;
+    address?: string | null;
     customerGroupId?: string | null;
   }): Promise<CustomerData | null>;
   listCustomerGroups(input: { organizationId: string; activeOnly: boolean }): Promise<CustomerGroupData[]>;
@@ -825,6 +833,7 @@ export interface FoundationRepository {
     search?: string;
     type?: "quote" | "invoice";
     status?: "active" | "converted" | "completed" | "cancelled";
+    customerId?: string;
     paymentStatus?: "not_applicable" | "unpaid" | "partial" | "paid";
     from?: string;
     to?: string;

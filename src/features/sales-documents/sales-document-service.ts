@@ -14,11 +14,17 @@ export function createSalesDocumentService(api: SalesDocumentApiRequester) {
       search?: string
       type?: 'quote' | 'invoice'
       status?: 'active' | 'converted' | 'completed' | 'cancelled'
+      customer_id?: string
+      page?: number
+      page_size?: number
     } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
       if (input.type) params.set('type', input.type)
       if (input.status) params.set('status', input.status)
+      if (input.customer_id) params.set('customer_id', input.customer_id)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<SalesDocumentListResponse>(`/api/v1/sales-documents${query ? `?${query}` : ''}`)
     },

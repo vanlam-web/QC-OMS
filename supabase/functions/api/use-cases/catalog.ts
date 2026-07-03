@@ -269,9 +269,10 @@ export async function createCustomer(
   body: unknown,
 ): Promise<CustomerData> {
   requireAnyPermission(context, ["perm.create_order"]);
+  if (context.actorUserId === undefined) throw validationError();
   const input = parseCustomerCreate(body);
   try {
-    return await repository.createCustomer({ organizationId: context.organizationId, ...input });
+    return await repository.createCustomer({ organizationId: context.organizationId, actorUserId: context.actorUserId, ...input });
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -502,6 +503,7 @@ function parseCustomerCreate(body: unknown): {
   name: string;
   phone?: string;
   taxCode?: string;
+  address?: string;
   customerGroupId?: string | null;
 } {
   if (!isRecord(body)) throw validationError();
@@ -510,6 +512,7 @@ function parseCustomerCreate(body: unknown): {
     name: string;
     phone?: string;
     taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   } = { name: normalizeText(body.name, 200) };
   if ("code" in body && body.code !== null && body.code !== undefined && String(body.code).trim() !== "") {
@@ -520,6 +523,9 @@ function parseCustomerCreate(body: unknown): {
   }
   if ("tax_code" in body && body.tax_code !== null && body.tax_code !== undefined && String(body.tax_code).trim() !== "") {
     input.taxCode = normalizeText(body.tax_code, 50);
+  }
+  if ("address" in body && body.address !== null && body.address !== undefined && String(body.address).trim() !== "") {
+    input.address = normalizeText(body.address, 300);
   }
   if ("customer_group_id" in body) {
     input.customerGroupId = parseOptionalId(body.customer_group_id);
@@ -532,6 +538,7 @@ function parseCustomerUpdate(body: unknown): {
   name?: string;
   phone?: string | null;
   taxCode?: string | null;
+  address?: string | null;
   customerGroupId?: string | null;
 } {
   if (!isRecord(body)) throw validationError();
@@ -540,12 +547,14 @@ function parseCustomerUpdate(body: unknown): {
     name?: string;
     phone?: string | null;
     taxCode?: string | null;
+    address?: string | null;
     customerGroupId?: string | null;
   } = {};
   if ("code" in body) input.code = normalizeCustomerCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("phone" in body) input.phone = body.phone === null ? null : normalizeText(body.phone, 30);
   if ("tax_code" in body) input.taxCode = body.tax_code === null ? null : normalizeText(body.tax_code, 50);
+  if ("address" in body) input.address = body.address === null ? null : normalizeText(body.address, 300);
   if ("customer_group_id" in body) input.customerGroupId = parseOptionalId(body.customer_group_id);
   if (Object.keys(input).length === 0) throw validationError();
   return input;
