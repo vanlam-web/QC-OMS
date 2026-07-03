@@ -26,6 +26,7 @@ export async function listSalesDocuments(
     search,
     type: parseOptionalEnum(url.searchParams.get("type"), ["quote", "invoice"]),
     status: parseOptionalEnum(url.searchParams.get("status"), ["active", "converted", "completed", "cancelled"]),
+    customerId: parseOptionalId(url.searchParams.get("customer_id")),
     paymentStatus: parseOptionalEnum(url.searchParams.get("payment_status"), ["not_applicable", "unpaid", "partial", "paid"]),
     from: isExactDocumentSearch ? undefined : url.searchParams.get("from")?.trim() || undefined,
     to: isExactDocumentSearch ? undefined : url.searchParams.get("to")?.trim() || undefined,
@@ -59,6 +60,11 @@ function parseOptionalEnum<T extends string>(value: string | null, allowed: read
   if (value === null || value === "") return undefined;
   if ((allowed as readonly string[]).includes(value)) return value as T;
   throw validationError();
+}
+
+function parseOptionalId(value: string | null): string | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  return value.trim();
 }
 
 function requireSalesDocumentAccess(context: SalesDocumentsContext): void {

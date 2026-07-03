@@ -33,8 +33,12 @@ export interface Customer {
   name: string
   phone: string | null
   tax_code: string | null
+  address: string | null
   customer_group_id: string | null
   customer_group: { id: string; code: string; name: string } | null
+  created_by?: { id: string; name: string } | null
+  created_at?: string
+  total_sales_amount?: number
 }
 
 export interface CustomerListResponse {

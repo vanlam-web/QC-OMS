@@ -10,6 +10,7 @@ const customer: Customer = {
   name: 'Cong ty ABC',
   phone: null,
   tax_code: null,
+  address: null,
   customer_group_id: null,
   customer_group: null,
 }
@@ -320,6 +321,7 @@ it('loads and displays customer debt for selected customers', async () => {
         {
           order_id: 'order-old-1',
           order_code: 'HD000099',
+          created_at: '2026-06-30T03:00:00Z',
           total_amount: 200000,
           paid_amount: 50000,
           debt_amount: 150000,
