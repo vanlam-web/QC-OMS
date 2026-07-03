@@ -1,12 +1,29 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, Plus, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import {
+  ManagementActionIconButton,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementDetailRow,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementTableFooter,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
 import type { Product, ProductStatus, SellMethod } from './types'
 
 interface CatalogState {
   products: Product[]
+  page: number
+  pageSize: number
   total: number
 }
+
+const productPageSize = 15
 
 const sellMethodLabels: Record<SellMethod, string> = {
   quantity: 'Số lượng',
@@ -26,8 +43,15 @@ export function CatalogPage({
   const [state, setState] = useState<CatalogState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(true)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
+  const [lastStatus, setLastStatus] = useState<ProductStatus | 'all'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(productPageSize)
   const [form, setForm] = useState<{
     code: string
     name: string
@@ -42,14 +66,24 @@ export function CatalogPage({
     status: 'active',
   })
 
-  async function load(filters = { search, status }) {
+  async function load(filters: { search?: string; status?: ProductStatus | 'all'; page?: number } = {}) {
+    const nextSearch = filters.search ?? lastSearch
+    const nextStatus = filters.status ?? lastStatus
+    const nextPage = filters.page ?? page
     setError(null)
     try {
-      const result = await service.listProducts({ search: filters.search, status: filters.status })
-      setState({
-        products: result.items,
-        total: result.total,
+      const result = await service.listProducts({
+        page: nextPage,
+        page_size: pageSize,
+        search: nextSearch || undefined,
+        status: nextStatus,
       })
+      setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
+      setLastSearch(nextSearch)
+      setLastStatus(nextStatus)
+      setPage(result.page)
+      setPageSize(result.page_size)
+      setSelectedProductId(null)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được hàng hóa.'))
     }
@@ -61,9 +95,11 @@ export function CatalogPage({
     async function loadInitialProducts() {
       setError(null)
       try {
-        const result = await service.listProducts({ status: 'active' })
+        const result = await service.listProducts({ page: 1, page_size: productPageSize, status: 'active' })
         if (!active) return
-        setState({ products: result.items, total: result.total })
+        setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
+        setPage(result.page)
+        setPageSize(result.page_size)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được hàng hóa.'))
       }
@@ -78,7 +114,19 @@ export function CatalogPage({
 
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await load({ search, status })
+    setPage(1)
+    await load({ search: search.trim(), status, page: 1 })
+  }
+
+  async function resetProductFilters() {
+    setSearch('')
+    setStatus('active')
+    setPage(1)
+    await load({ search: '', status: 'active', page: 1 })
+  }
+
+  async function goToPage(nextPage: number) {
+    await load({ page: nextPage })
   }
 
   async function createProduct(event: React.FormEvent<HTMLFormElement>) {
@@ -94,6 +142,7 @@ export function CatalogPage({
         sell_method: form.sellMethod,
       })
       setForm({ code: '', name: '', unitName: '', sellMethod: 'quantity', status: 'active' })
+      setCreateOpen(false)
       await load()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được hàng hóa.'))
@@ -117,117 +166,245 @@ export function CatalogPage({
     }
   }
 
+  function toggleProductDetail(product: Product) {
+    setSelectedProductId((current) => (current === product.id ? null : product.id))
+  }
+
+  const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
+  const canGoPrevious = page > 1
+  const canGoNext = page < totalPages
+  const activeFilterSummary = lastSearch
+    ? `Tìm: ${lastSearch}`
+    : lastStatus === 'active'
+      ? 'Đang bán'
+      : lastStatus === 'inactive'
+        ? 'Trạng thái: Ngưng bán'
+        : 'Trạng thái: Tất cả'
+
   return (
-    <main className="catalog-shell">
-      <header className="catalog-header">
-        <div>
-          <h1>Hàng hóa</h1>
-          <p>Sản phẩm, đơn vị bán và trạng thái bán POS</p>
-        </div>
-        <button type="button" onClick={onOpenDashboard}>
-          Trang chủ
-        </button>
-      </header>
-
-      {error ? <p role="alert">{error}</p> : null}
-      {state === null && error === null ? <p>Đang tải hàng hóa...</p> : null}
-
-      <section className="catalog-panel" aria-label="Quản lý hàng hóa">
-        <form aria-label="Lọc hàng hóa" className="admin-form" onSubmit={filterProducts}>
-          <label>
-            Tìm
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
-          </label>
-          <label>
-            Trạng thái
-            <select value={status} onChange={(event) => setStatus(event.target.value as ProductStatus | 'all')}>
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngưng bán</option>
-              <option value="all">Tất cả</option>
-            </select>
-          </label>
-          <button type="submit">Lọc</button>
-        </form>
-
-        <form aria-label="Tạo hàng hóa" className="catalog-form" onSubmit={createProduct}>
-          <label>
-            Mã hàng
-            <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
-          </label>
-          <label>
-            Tên hàng
-            <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
-          </label>
-          <label>
-            Đơn vị
-            <input
-              value={form.unitName}
-              onChange={(event) => setForm((current) => ({ ...current, unitName: event.target.value }))}
-            />
-          </label>
-          <label>
-            Cách bán
-            <select
-              value={form.sellMethod}
-              onChange={(event) => setForm((current) => ({ ...current, sellMethod: event.target.value as SellMethod }))}
-            >
-              {Object.entries(sellMethodLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Trạng thái
-            <select
-              value={form.status}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ProductStatus }))}
-            >
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngưng bán</option>
-            </select>
-          </label>
-          <button disabled={saving} type="submit">
-            Thêm hàng hóa
+    <ManagementPage
+      title="Hàng hóa"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc hàng hóa" onSubmit={filterProducts}>
+          <ManagementCompactSearch
+            label="Tìm hàng hóa"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm mã, tên hàng"
+            trailingAction={
+              <ManagementActionIconButton ariaLabel="Tạo hàng hóa" variant="primary" onClick={() => setCreateOpen(true)}>
+                <Plus aria-hidden="true" size={16} />
+              </ManagementActionIconButton>
+            }
+            value={search}
+            onChange={setSearch}
+          />
+          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
+            <Search aria-hidden="true" size={16} />
           </button>
-        </form>
+          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+            Trang chủ
+          </button>
+        </ManagementCompactToolbar>
+      }
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc hàng hóa"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetProductFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
+          <button
+            aria-label="Ẩn bộ lọc hàng hóa"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
+          </button>
+          <ManagementFilterGroup title="Trạng thái">
+            <label>
+              <input checked={status === 'active'} name="product-status" type="radio" onChange={() => setStatus('active')} />
+              Đang bán
+            </label>
+            <label>
+              <input checked={status === 'inactive'} name="product-status" type="radio" onChange={() => setStatus('inactive')} />
+              Ngưng bán
+            </label>
+            <label>
+              <input checked={status === 'all'} name="product-status" type="radio" onChange={() => setStatus('all')} />
+              Tất cả
+            </label>
+          </ManagementFilterGroup>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc hàng hóa"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
+      <ManagementListSurface ariaLabel="Danh sách hàng hóa">
+        {error ? <p role="alert">{error}</p> : null}
+        {state === null && error === null ? <p>Đang tải hàng hóa...</p> : null}
+
+        {createOpen ? (
+          <form aria-label="Tạo hàng hóa" className="catalog-form" onSubmit={createProduct}>
+            <label>
+              Mã hàng
+              <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
+            </label>
+            <label>
+              Tên hàng
+              <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
+            </label>
+            <label>
+              Đơn vị
+              <input
+                value={form.unitName}
+                onChange={(event) => setForm((current) => ({ ...current, unitName: event.target.value }))}
+              />
+            </label>
+            <label>
+              Cách bán
+              <select
+                value={form.sellMethod}
+                onChange={(event) => setForm((current) => ({ ...current, sellMethod: event.target.value as SellMethod }))}
+              >
+                {Object.entries(sellMethodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Trạng thái
+              <select
+                value={form.status}
+                onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ProductStatus }))}
+              >
+                <option value="active">Đang bán</option>
+                <option value="inactive">Ngưng bán</option>
+              </select>
+            </label>
+            <button className="button button-primary" disabled={saving} type="submit">
+              Thêm hàng hóa
+            </button>
+          </form>
+        ) : null}
 
         {state ? (
           <>
-            <p>{state.total} hàng hóa</p>
-            <table aria-label="Danh sách hàng hóa">
-              <thead>
-                <tr>
-                  <th>Mã hàng</th>
-                  <th>Tên hàng</th>
-                  <th>Giá nhập cuối</th>
-                  <th>Cách bán</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.products.map((product) => (
-                  <tr key={product.id}>
-                    <td>{product.code}</td>
-                    <td>{product.name}</td>
-                    <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
-                    <td>{sellMethodLabels[product.sell_method]}</td>
-                    <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
-                    <td>
-                      <button disabled={saving} type="button" onClick={() => void toggleProductStatus(product)}>
-                        {product.status === 'active' ? 'Ngưng bán' : 'Mở bán'}
-                      </button>
-                    </td>
+            <ManagementTableViewport>
+              <table aria-label="Danh sách hàng hóa">
+                <thead>
+                  <tr>
+                    <th>Mã hàng</th>
+                    <th>Tên hàng</th>
+                    <th>Giá nhập cuối</th>
+                    <th>Đơn vị</th>
+                    <th>Cách bán</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.products.map((product) => (
+                    <Fragment key={product.id}>
+                      <tr
+                        aria-expanded={selectedProductId === product.id}
+                        className={`management-data-row${selectedProductId === product.id ? ' management-data-row-selected' : ''}`}
+                        tabIndex={0}
+                        onClick={() => toggleProductDetail(product)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            toggleProductDetail(product)
+                          }
+                        }}
+                      >
+                        <td>{product.code}</td>
+                        <td>{product.name}</td>
+                        <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
+                        <td>{product.unit_name}</td>
+                        <td>{sellMethodLabels[product.sell_method]}</td>
+                        <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
+                        <td>
+                          <button
+                            disabled={saving}
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void toggleProductStatus(product)
+                            }}
+                          >
+                            {product.status === 'active' ? 'Ngưng bán' : 'Mở bán'}
+                          </button>
+                        </td>
+                      </tr>
+                      {selectedProductId === product.id ? (
+                        <ManagementDetailRow colSpan={7} label={`Chi tiết hàng hóa ${product.code}`}>
+                          <dl>
+                            <div>
+                              <dt>Mã hàng</dt>
+                              <dd>{product.code}</dd>
+                            </div>
+                            <div>
+                              <dt>Tên hàng</dt>
+                              <dd>{product.name}</dd>
+                            </div>
+                            <div>
+                              <dt>Đơn vị</dt>
+                              <dd>{product.unit_name}</dd>
+                            </div>
+                            <div>
+                              <dt>Cách bán</dt>
+                              <dd>{sellMethodLabels[product.sell_method]}</dd>
+                            </div>
+                            <div>
+                              <dt>Giá nhập cuối</dt>
+                              <dd>{formatMoney(product.latest_purchase_cost ?? 0)}</dd>
+                            </div>
+                            <div>
+                              <dt>Trạng thái</dt>
+                              <dd>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</dd>
+                            </div>
+                          </dl>
+                        </ManagementDetailRow>
+                      ) : null}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </ManagementTableViewport>
+            <ManagementTableFooter
+              ariaLabel="Phân trang hàng hóa"
+              canGoNext={canGoNext}
+              canGoPrevious={canGoPrevious}
+              entityLabel="hàng hóa"
+              page={page}
+              pageSize={pageSize}
+              total={state.total}
+              onNext={() => void goToPage(page + 1)}
+              onPrevious={() => void goToPage(page - 1)}
+            />
           </>
         ) : null}
-      </section>
-    </main>
+      </ManagementListSurface>
+    </ManagementPage>
   )
 }
 
