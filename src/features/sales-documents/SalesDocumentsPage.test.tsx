@@ -80,6 +80,13 @@ const quoteListItem = {
   payment_status: 'not_applicable' as const,
 }
 
+const secondListItem = {
+  ...listItem,
+  id: 'order-2',
+  code: 'HD010986',
+  customer: { id: 'cus-2', code: 'KH002', name: 'Công ty An Bình', phone: '0911000000' },
+}
+
 const quoteDetail: SalesDocumentDetail = {
   ...detail,
   ...quoteListItem,
@@ -288,6 +295,61 @@ it('stores reopen payload through callback when opening active quote in POS', as
 
   expect(orderService.getQuoteReopenPayload).toHaveBeenCalledWith('quote-1')
   expect(onOpenQuoteInPos).toHaveBeenCalledWith(quoteReopenPayload)
+})
+
+it('shows quote reopen failures inside the row-level shared detail area', async () => {
+  const service = makeService({
+    listSalesDocuments: vi.fn(async () => ({
+      items: [quoteListItem],
+      page: 1,
+      page_size: 15,
+      total: 1,
+    })),
+  })
+  const orderService = makeOrderService({
+    getQuoteReopenPayload: vi.fn(async () => {
+      throw new Error('Không mở được báo giá tại POS.')
+    }),
+  })
+  render(
+    <SalesDocumentsPage
+      service={service}
+      orderService={orderService}
+      onOpenDashboard={vi.fn()}
+      onOpenQuoteInPos={vi.fn()}
+    />,
+  )
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Mở tại POS BG000123' }))
+
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ BG000123' })
+  expect(detailRegion).toHaveClass('management-inline-detail')
+  expect(within(detailRegion).getByRole('alert')).toHaveTextContent('Không mở được báo giá tại POS.')
+})
+
+it('clears the previous selected detail when opening another row fails', async () => {
+  const service = makeService({
+    listSalesDocuments: vi.fn(async () => ({
+      items: [listItem, secondListItem],
+      page: 1,
+      page_size: 15,
+      total: 2,
+    })),
+    getSalesDocument: vi.fn(async (id) => {
+      if (id === 'order-2') throw new Error('Không tải được chi tiết chứng từ.')
+      return detail
+    }),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết HD010985' }))
+  expect(await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Mở chi tiết HD010986' }))
+
+  expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
+  const failedDetailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010986' })
+  expect(within(failedDetailRegion).getByRole('alert')).toHaveTextContent('Không tải được chi tiết chứng từ.')
 })
 
 it('opens quote print only from quote detail', async () => {

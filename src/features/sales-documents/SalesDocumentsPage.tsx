@@ -162,6 +162,7 @@ export function SalesDocumentsPage({
 
     setDetailError(null)
     setDetailErrorDocumentId(null)
+    setSelected(null)
     setLoadingDetailId(document.id)
     try {
       setSelected(await service.getSalesDocument(document.id))
@@ -176,12 +177,15 @@ export function SalesDocumentsPage({
   async function openQuoteInPos(document: SalesDocumentListItem) {
     if (orderService === undefined || onOpenQuoteInPos === undefined) return
     setDetailError(null)
+    setDetailErrorDocumentId(null)
     setOpeningQuoteId(document.id)
     try {
       const payload = await orderService.getQuoteReopenPayload(document.id)
       onOpenQuoteInPos(payload)
     } catch (cause) {
+      setSelected(null)
       setDetailError(formatApiError(cause, 'Không mở được báo giá tại POS.'))
+      setDetailErrorDocumentId(document.id)
     } finally {
       setOpeningQuoteId(null)
     }
