@@ -171,7 +171,11 @@ it('lists customers in the shared management layout', async () => {
   expect(screen.getByText('Đang tải khách hàng...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('KH000123')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Khách hàng' }).closest('.management-page-header')).not.toBeNull()
-  expect(screen.getByRole('complementary', { name: 'Bộ lọc khách hàng' })).toHaveClass('management-filter-sidebar')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc khách hàng' })
+  expect(sidebar).toHaveClass('management-filter-sidebar')
+  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-summary')).toHaveTextContent('Đang hoạt động')
+  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách khách hàng' })).toHaveClass('management-list-surface')
 
   const grid = screen.getByRole('table', { name: 'Danh sách khách hàng' })
@@ -190,8 +194,8 @@ it('lists customers in the shared management layout', async () => {
   expect(orderService.getCustomerDebt).toHaveBeenCalledWith('customer-1')
 
   const footer = screen.getByRole('navigation', { name: 'Phân trang khách hàng' })
-  expect(footer).toHaveClass('management-pagination')
-  expect(footer).toContainElement(screen.getByText('Tổng 1 kết quả • 1 trang'))
+  expect(footer).toHaveClass('management-table-footer')
+  expect(footer).toContainElement(screen.getByText('1-1 / 1 khách hàng'))
   expect(footer).toContainElement(screen.getByText('Trang 1 / 1'))
   expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeDisabled()
@@ -224,13 +228,14 @@ it('uses the shared pagination footer to move between customer pages', async () 
 
   expect(await screen.findByText('KH000111')).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang khách hàng' })
-  expect(footer).toContainElement(screen.getByText('Tổng 45 kết quả • 3 trang'))
+  expect(footer).toHaveClass('management-table-footer')
+  expect(footer).toContainElement(screen.getByText('1-15 / 45 khách hàng'))
   expect(footer).toContainElement(screen.getByText('Trang 1 / 3'))
 
   await userEvent.click(within(footer).getByRole('button', { name: 'Trang sau' }))
 
   expect(await screen.findByText('KH000222')).toBeInTheDocument()
-  expect(footer).toContainElement(screen.getByText('Tổng 45 kết quả • 3 trang'))
+  expect(footer).toContainElement(screen.getByText('16-30 / 45 khách hàng'))
   expect(footer).toContainElement(screen.getByText('Trang 2 / 3'))
   expect(service.listCustomers).toHaveBeenLastCalledWith({ page: 2, page_size: 15, search: undefined })
 })
@@ -260,6 +265,7 @@ it('searches and creates a customer from the search action', async () => {
   await userEvent.type(within(searchForm).getByLabelText('Tìm khách hàng'), 'Phong')
   await userEvent.click(within(searchForm).getByRole('button', { name: 'Lọc' }))
   expect(service.listCustomers).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: 'Phong' })
+  expect(await screen.findByText('Tìm: Phong')).toHaveClass('management-filter-summary')
 
   expect(screen.queryByRole('dialog', { name: 'Tạo khách hàng' })).not.toBeInTheDocument()
   await userEvent.click(within(searchForm).getByRole('button', { name: 'Tạo khách hàng' }))

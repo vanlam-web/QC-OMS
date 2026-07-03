@@ -265,16 +265,20 @@ export function ManagementRowActionButton({
 export function ManagementDetailRow({
   colSpan,
   label,
+  rowClassName = '',
+  detailClassName = '',
   children,
 }: {
   colSpan: number
   label: string
+  rowClassName?: string
+  detailClassName?: string
   children: ReactNode
 }) {
   return (
-    <tr className="management-detail-row">
+    <tr className={`management-detail-row${rowClassName ? ` ${rowClassName}` : ''}`}>
       <td colSpan={colSpan}>
-        <section aria-label={label} className="management-inline-detail" role="region">
+        <section aria-label={label} className={`management-inline-detail${detailClassName ? ` ${detailClassName}` : ''}`} role="region">
           {children}
         </section>
       </td>
