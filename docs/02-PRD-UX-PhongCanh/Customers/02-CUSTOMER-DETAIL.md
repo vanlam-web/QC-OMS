@@ -23,6 +23,16 @@ Trang chi tiết khách hàng gom toàn bộ thông tin cần để bán hàng, 
 
 Gợi ý từ KiotViet: chi tiết khách nên mở được trực tiếp từ danh sách hoặc bằng mã khách. Header luôn cho thấy mã, tên, trạng thái, tổng nợ và tổng bán để nhân viên biết nhanh khách đang ở tình trạng nào.
 
+Quan sát KiotViet ngày `2026-07-03`:
+
+- Chi tiết khách xổ ngay dưới dòng khách trong danh sách.
+- Các tab chính gồm `Thông tin`, `Địa chỉ nhận hàng`, `Lịch sử bán/trả hàng`, `Nợ cần thu từ khách`.
+- Tab `Thông tin` có nhiều trường phụ như sinh nhật, giới tính, email, Facebook, địa chỉ, thông tin xuất hóa đơn, CCCD/CMND, hộ chiếu, ngân hàng.
+- Tab `Lịch sử bán/trả hàng` hiển thị bảng gọn: mã hóa đơn, thời gian, người bán, tổng cộng, trạng thái.
+- Tab `Nợ cần thu từ khách` hiển thị bảng gọn: mã phiếu, thời gian, loại, giá trị, dư nợ khách hàng.
+
+QC-OMS MVP chỉ lấy cấu trúc vận hành này, không bê toàn bộ trường phụ của KiotViet.
+
 ---
 
 ## 3. Tab Thông tin
@@ -35,11 +45,8 @@ Trường bắt buộc:
 Trường tùy chọn:
 
 - SĐT.
-- Email.
-- Địa chỉ.
-- Tỉnh/Thành phố, Phường/Xã.
+- MST.
 - Nhóm khách hàng.
-- Thông tin pháp lý nội bộ nếu cần: tên đơn vị, mã số thuế, địa chỉ pháp lý.
 - Ghi chú.
 
 Quy tắc:
@@ -48,8 +55,21 @@ Quy tắc:
 - Mã khách hàng được phép sửa, nhưng phải unique và đúng định dạng.
 - SĐT được phép trống.
 - Nếu có SĐT, phải chuẩn hóa và không trùng khách khác.
+- MST được phép trống; nếu nhập thì lưu theo hồ sơ khách để dùng khi xuất/chốt thông tin doanh nghiệp sau này.
 - Khi đổi nhóm khách, lần bán sau dùng bảng giá của nhóm mới.
+- Nếu khách không có nhóm khách, lần bán sau dùng bảng giá chung.
 - Nếu khách đang mở ở POS, POS sẽ cập nhật giá tự động cho các dòng chưa sửa giá thủ công sau khi hồ sơ được lưu và đồng bộ.
+
+Chi tiết khách MVP phải hiển thị readonly:
+
+| Thông tin | Nguồn dữ liệu |
+|---|---|
+| Mã khách hàng, tên khách hàng, SĐT, MST | `customers` |
+| Nhóm khách hàng | `customers.customer_group_id` -> `customer_groups` |
+| Bảng giá áp dụng | `customer_groups.price_list_id`; nếu không có nhóm thì lấy bảng giá chung |
+| Tổng nợ hiện tại, hóa đơn còn nợ | Finance Customer Debt API |
+
+Các trường như email, Facebook, sinh nhật, giới tính, địa chỉ nhận hàng, CCCD/CMND, hộ chiếu và ngân hàng không nằm trong MVP chi tiết khách.
 
 ---
 
@@ -86,6 +106,8 @@ Bấm mã chứng từ mở chi tiết tại module SalesDocuments.
 
 KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP chỉ hiển thị báo giá/hóa đơn vì chưa làm nghiệp vụ trả hàng bán.
 
+Nguồn dữ liệu chuẩn là Sales Documents lọc theo `customer_id`. Nếu API danh sách chứng từ chưa hỗ trợ filter này, không được dựng dữ liệu giả; UI có thể chưa hiển thị tab lịch sử bán trong lát đầu và phải ghi rõ follow-up.
+
 ---
 
 ## 6. Tab Nợ cần thu
@@ -109,6 +131,14 @@ Thao tác:
 - Không tạo công nợ âm/khách trả trước trong MVP.
 
 Tab này là lối xem nhanh công nợ theo khách. Nguồn dữ liệu vẫn phải khớp với module Finance/Customer Debt và phiếu thu trong Sổ quỹ.
+
+Lát MVP hiện tại chỉ cần readonly công nợ theo hóa đơn còn nợ:
+
+- tổng nợ hiện tại
+- số hóa đơn còn nợ
+- danh sách hóa đơn còn nợ gồm mã hóa đơn, tổng tiền, đã trả, còn nợ
+
+Thu nợ độc lập, điều chỉnh công nợ, chiết khấu thanh toán và QR thanh toán là scope Finance/POS sau, không tự mở trong lát khách hàng này.
 
 ---
 
