@@ -118,7 +118,7 @@ function makeService(overrides: Partial<SalesDocumentService> = {}): SalesDocume
     listSalesDocuments: vi.fn(async () => ({
       items: [listItem],
       page: 1,
-      page_size: 20,
+      page_size: 15,
       total: 1,
     })),
     getSalesDocument: vi.fn(async () => detail),
@@ -143,27 +143,66 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   const service = makeService()
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
-  expect(screen.getByText('Đang tải chứng từ...')).toBeInTheDocument()
+  expect(screen.getByText('Đang tải chứng từ...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('HD010985')).toBeInTheDocument()
+  expect(screen.getByRole('main')).toHaveClass('management-page')
+  expect(screen.getByRole('search', { name: 'Lọc chứng từ bán hàng' })).toHaveClass('management-compact-toolbar')
+  expect(screen.getByRole('region', { name: 'Danh sách chứng từ bán hàng' })).toHaveClass('management-list-surface')
+  expect(screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })).toBeInTheDocument()
+  expect(screen.queryByText('Chọn một chứng từ để xem chi tiết.')).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
+  expect(service.listSalesDocuments).toHaveBeenCalledWith({ page: 1, page_size: 15 })
+  expect(screen.getByRole('columnheader', { name: 'Loại/Mã' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Khách đã trả' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Còn nợ' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Trạng thái' })).toBeInTheDocument()
   expect(screen.getByText('Công ty Phong Cảnh')).toBeInTheDocument()
   expect(screen.getByText('Admin')).toBeInTheDocument()
-  expect(screen.getByText('150.000 ₫')).toBeInTheDocument()
-  expect(screen.getByText('Còn nợ 150.000 ₫')).toBeInTheDocument()
+  expect(screen.getAllByText('150.000 ₫')).toHaveLength(2)
+  expect(screen.getByText('0 ₫')).toBeInTheDocument()
+  expect(screen.getByText('Hoàn tất', { selector: '.status-chip' })).toBeInTheDocument()
+  expect(screen.getByText('1-1 / 1 chứng từ')).toBeInTheDocument()
 })
 
 it('searches by document code and keeps filtered empty state clear', async () => {
   const service = makeService({
-    listSalesDocuments: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
+    listSalesDocuments: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
   })
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('Chưa có chứng từ phù hợp bộ lọc.')
   await userEvent.type(screen.getByLabelText('Tìm chứng từ'), 'HD010985')
-  await userEvent.click(screen.getByRole('button', { name: 'Tìm' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
 
-  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985' })
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985', page: 1, page_size: 15 })
+  expect(screen.getByRole('button', { name: 'Bỏ tìm: HD010985' })).toBeInTheDocument()
   expect(screen.getByText('Không thấy chứng từ theo bộ lọc hiện tại.')).toBeInTheDocument()
   expect(screen.getByText('Hãy thử mở rộng thời gian hoặc bỏ bớt bộ lọc.')).toBeInTheDocument()
+})
+
+it('uses 15-row pagination range and navigates pages through the list footer', async () => {
+  const service = makeService({
+    listSalesDocuments: vi.fn(async (input = {}) => ({
+      items: [
+        {
+          ...listItem,
+          id: `order-page-${input.page ?? 1}`,
+          code: input.page === 2 ? 'HD010999' : 'HD010985',
+        },
+      ],
+      page: input.page ?? 1,
+      page_size: 15,
+      total: 40,
+    })),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  expect(await screen.findByText('1-15 / 40 chứng từ')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
+
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ page: 2, page_size: 15 })
+  expect(await screen.findByText('16-30 / 40 chứng từ')).toBeInTheDocument()
+  expect(await screen.findByText('HD010999')).toBeInTheDocument()
 })
 
 it('filters quotes and exposes reopen only for active quote rows', async () => {
@@ -171,7 +210,7 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
     listSalesDocuments: vi.fn(async () => ({
       items: [quoteListItem],
       page: 1,
-      page_size: 20,
+      page_size: 15,
       total: 1,
     })),
   })
@@ -185,12 +224,14 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   )
 
   await screen.findByText('BG000123')
-  await userEvent.selectOptions(screen.getByLabelText('Loại chứng từ'), 'quote')
-  await userEvent.selectOptions(screen.getByLabelText('Trạng thái'), 'active')
+  await userEvent.click(screen.getByRole('radio', { name: 'Báo giá' }))
+  await userEvent.click(screen.getByRole('radio', { name: 'Đang hiệu lực' }))
 
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith({
     type: 'quote',
     status: 'active',
+    page: 1,
+    page_size: 15,
   })
   expect(await screen.findByRole('button', { name: 'Mở tại POS' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
@@ -205,7 +246,7 @@ it('stores reopen payload through callback when opening active quote in POS', as
     listSalesDocuments: vi.fn(async () => ({
       items: [quoteListItem],
       page: 1,
-      page_size: 20,
+      page_size: 15,
       total: 1,
     })),
   })
@@ -230,7 +271,7 @@ it('opens quote print only from quote detail', async () => {
     listSalesDocuments: vi.fn(async () => ({
       items: [quoteListItem],
       page: 1,
-      page_size: 20,
+      page_size: 15,
       total: 1,
     })),
     getSalesDocument: vi.fn(async () => quoteDetail),
@@ -253,12 +294,16 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
 
   expect(service.getSalesDocument).toHaveBeenCalledWith('order-1')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+  expect(detailRegion.closest('.sales-documents-list-detail')).not.toBeNull()
   expect(within(detailRegion).getByText('Bảng giá chung')).toBeInTheDocument()
   expect(within(detailRegion).getByText('2.5m x 3.3m x 1 = 8.25m2')).toBeInTheDocument()
-  expect(within(detailRegion).getByText('Giảm giá 30.000 ₫')).toBeInTheDocument()
-  expect(within(detailRegion).getByText('Khách đã trả 0 ₫')).toBeInTheDocument()
-  expect(within(detailRegion).getByText('Công nợ hóa đơn 150.000 ₫')).toBeInTheDocument()
+  expect(within(detailRegion).getByText('Giảm giá', { selector: 'dt' }).closest('div')).toHaveTextContent(/Giảm giá\s+30\.000/)
+  expect(within(detailRegion).getByText('Khách đã trả', { selector: 'dt' }).closest('div')).toHaveTextContent(/Khách đã trả\s+0/)
+  expect(within(detailRegion).getByText('Công nợ', { selector: 'dt' }).closest('div')).toHaveTextContent(/Công nợ hóa đơn\s+150\.000/)
   expect(within(detailRegion).getByText('sale_deduction -8.25 m²')).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng HD010985' }))
+  expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
 })
 
 it('keeps saved invoice detail read-only until safe revise cancel and print flows exist', async () => {
