@@ -51,14 +51,23 @@ Export KiotViet ngày `2026-07-01` có `528` khách hàng:
 
 Các số này củng cố quyết định: SĐT không bắt buộc, nếu có thì unique; nhóm khách quyết định bảng giá; khách không nhóm dùng bảng giá chung.
 
+Quyết định Owner ngày `2026-07-03`:
+
+- Hồ sơ khách MVP có trường `MST` để phục vụ khách công ty/tổ chức.
+- Các trường bổ sung khác của KiotViet chưa cần đưa vào MVP nếu chưa phục vụ bán hàng, áp giá hoặc công nợ.
+- Nếu khách không có nhóm khách, hệ thống áp dụng `Bảng giá chung`.
+- Chi tiết khách tham khảo KiotViet nhưng chỉ giữ phần cần vận hành: thông tin chính, bảng giá áp dụng, lịch sử bán nếu có API đúng, và nợ cần thu.
+
 QC-OMS MVP lược bỏ:
 
 - giới tính, sinh nhật
 - điểm thưởng/thẻ thành viên
 - khu vực giao hàng nếu chưa làm module giao hàng
-- Facebook/email/company/mã số thuế trên danh sách chính
+- Facebook/email/company trên danh sách chính
+- CCCD/CMND, hộ chiếu, tài khoản ngân hàng
+- địa chỉ nhận hàng nếu chưa làm module giao hàng
 
-Các thông tin này nếu cần chỉ đặt trong chi tiết khách hoặc ghi chú, không làm bộ lọc lõi.
+`MST` không cần là cột mặc định trên danh sách chính nếu làm chật bảng, nhưng phải có trong form tạo/sửa và chi tiết khách.
 
 ---
 
@@ -104,7 +113,9 @@ Khi tạo khách:
 - Tên khách hàng bắt buộc.
 - Mã khách hàng bắt buộc về dữ liệu, nhưng nếu người dùng để trống thì hệ thống tự sinh.
 - SĐT không bắt buộc.
+- MST không bắt buộc.
 - Nếu có SĐT, hệ thống chuẩn hóa và kiểm tra không trùng.
+- Nếu có nhóm khách, lần bán sau dùng bảng giá của nhóm khách; nếu không có nhóm thì dùng bảng giá chung.
 
 Tìm theo mã khách chính xác phải mở được khách dù bộ lọc ngày tạo/trạng thái hiện tại đang che kết quả. Nếu khách bị ngừng hoạt động, UI hiển thị rõ trạng thái thay vì báo không tìm thấy.
 
