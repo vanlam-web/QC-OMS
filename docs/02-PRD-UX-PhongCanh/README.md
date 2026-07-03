@@ -36,11 +36,15 @@
     ├── [Inventory/02-PRODUCT-STOCK-LIST.md](./Inventory/02-PRODUCT-STOCK-LIST.md)
     ├── [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md)
     ├── [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md)
-    └── [Inventory/05-INVENTORY-ADJUSTMENTS.md](./Inventory/05-INVENTORY-ADJUSTMENTS.md)
+    ├── [Inventory/05-INVENTORY-ADJUSTMENTS.md](./Inventory/05-INVENTORY-ADJUSTMENTS.md)
+    └── [Inventory/06-PRODUCTION-RECONCILIATION.md](./Inventory/06-PRODUCTION-RECONCILIATION.md)
 ├── SalesDocuments/              ← Chứng từ bán hàng
     ├── [SalesDocuments/README.md](./SalesDocuments/README.md)
     ├── [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md)
-    └── [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md)
+    ├── [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md)
+    └── [SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md](./SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md)
+├── Purchase/                    ← Nhà cung cấp & nhập hàng
+    └── [Purchase/01-SUPPLIER-PURCHASE.md](./Purchase/01-SUPPLIER-PURCHASE.md)
 ├── Customers/                   ← Quản lý khách hàng
     ├── [Customers/README.md](./Customers/README.md)
     ├── [Customers/01-CUSTOMER-LIST.md](./Customers/01-CUSTOMER-LIST.md)
@@ -61,9 +65,11 @@
     ├── [Reports/02-SALES-REPORT.md](./Reports/02-SALES-REPORT.md)
     ├── [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md)
     ├── [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md)
-    └── [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md)
+    ├── [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md)
+    └── [Reports/06-CUSTOMER-REPORT.md](./Reports/06-CUSTOMER-REPORT.md)
 └── System/                      ← Tài khoản, quyền và máy trạm
     ├── [System/README.md](./System/README.md)
+    ├── [System/00-UI-SHELL-V1.md](./System/00-UI-SHELL-V1.md)
     ├── [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md)
     └── [System/02-SYSTEM-SETTINGS.md](./System/02-SYSTEM-SETTINGS.md)
 ```
@@ -92,8 +98,11 @@
 | Roll/Sheet Objects | [Inventory/03-ROLL-SHEET-OBJECTS.md](./Inventory/03-ROLL-SHEET-OBJECTS.md) | 🔨 |
 | Stocktake UX | [Inventory/04-STOCKTAKE.md](./Inventory/04-STOCKTAKE.md) | 🔨 |
 | Inventory Adjustments UX | [Inventory/05-INVENTORY-ADJUSTMENTS.md](./Inventory/05-INVENTORY-ADJUSTMENTS.md) | 🔨 |
+| Production Reconciliation UX | [Inventory/06-PRODUCTION-RECONCILIATION.md](./Inventory/06-PRODUCTION-RECONCILIATION.md) | 🔨 |
 | Sales Documents List | [SalesDocuments/01-SALES-DOCUMENT-LIST.md](./SalesDocuments/01-SALES-DOCUMENT-LIST.md) | 🔨 |
 | Sales Document Detail | [SalesDocuments/02-SALES-DOCUMENT-DETAIL.md](./SalesDocuments/02-SALES-DOCUMENT-DETAIL.md) | 🔨 |
+| Quote Print Phase 3B | [SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md](./SalesDocuments/04-QUOTE-PRINT-PHASE-3B.md) | 🔨 |
+| Purchase/Supplier | [Purchase/01-SUPPLIER-PURCHASE.md](./Purchase/01-SUPPLIER-PURCHASE.md) | 🔨 |
 | Customer List | [Customers/01-CUSTOMER-LIST.md](./Customers/01-CUSTOMER-LIST.md) | 🔨 |
 | Customer Detail | [Customers/02-CUSTOMER-DETAIL.md](./Customers/02-CUSTOMER-DETAIL.md) | 🔨 |
 | Price List | [PriceBook/01-PRICE-LIST.md](./PriceBook/01-PRICE-LIST.md) | 🔨 |
@@ -108,6 +117,8 @@
 | Debt Report | [Reports/03-DEBT-REPORT.md](./Reports/03-DEBT-REPORT.md) | 🔨 |
 | Inventory Report | [Reports/04-INVENTORY-REPORT.md](./Reports/04-INVENTORY-REPORT.md) | 🔨 |
 | Finance Report | [Reports/05-FINANCE-REPORT.md](./Reports/05-FINANCE-REPORT.md) | 🔨 |
+| Customer Report | [Reports/06-CUSTOMER-REPORT.md](./Reports/06-CUSTOMER-REPORT.md) | 🔨 |
+| UI Shell v1 | [System/00-UI-SHELL-V1.md](./System/00-UI-SHELL-V1.md) | 🔨 |
 | System Users/Permissions | [System/01-USERS-PERMISSIONS.md](./System/01-USERS-PERMISSIONS.md) | 🔨 |
 | System Settings | [System/02-SYSTEM-SETTINGS.md](./System/02-SYSTEM-SETTINGS.md) | 🔨 |
 

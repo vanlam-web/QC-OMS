@@ -1,6 +1,10 @@
-# CHANGELOG-AI — Lịch sử bypass & quyết định của AI
+# CHANGELOG-AI — Historical AI Coordination Log
 
-File này log các trường hợp **Owner Emergency Override** (xem `AI_TEAM_RULES.md` mục OWNER EMERGENCY OVERRIDE) và các quyết định AI quan trọng ngoài luồng chuẩn.
+> **Status:** Historical log only
+> **Current policy:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, and `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`
+> **Note:** Entries below describe the pre-2026-07-03 multi-AI period. They are retained for traceability and are not active operating policy.
+
+File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ngoài luồng chuẩn trong giai đoạn cũ. Từ 2026-07-03, QC-OMS dùng mô hình Codex-only với ba luồng Spec / Implement / Review; không dùng file này để quyết định workflow hiện hành.
 
 ---
 
@@ -11,7 +15,7 @@ File này log các trường hợp **Owner Emergency Override** (xem `AI_TEAM_RU
 ```
 
 - **Loại:** Bypass | Decision | Rollback | Review
-- **Actor:** Owner | Codex | Cursor | Gemini
+- **Actor:** Owner | Codex | Cursor | Gemini (historical)
 - **Status:** Pending Review | Reviewed by Codex | Reverted | Active
 
 ---
@@ -61,9 +65,9 @@ File này log các trường hợp **Owner Emergency Override** (xem `AI_TEAM_RU
 
 ---
 
-## Quy tắc sau khi Codex online
+## Quy tắc cũ sau khi Codex online
 
-Khi Codex online trở lại, Codex sẽ:
+Phần này là historical policy của giai đoạn 2026-06-27, không còn là quy trình hiện hành. Khi Codex online trở lại, kế hoạch khi đó là:
 
 1. Review 4 bypass ở trên.
 2. Có quyền giữ nguyên hoặc yêu cầu rollback.
@@ -73,8 +77,10 @@ Khi Codex online trở lại, Codex sẽ:
 
 ## SoT
 
-- **AI_TEAM_RULES.md** — quy tắc tổ chức
-- **CHANGELOG-AI.md** (file này) — log bypass & quyết định ngoài luồng
-- **AUDIT-V2.md** — log patch tài liệu (BR/ID/tham chiếu)
+- **AI_TEAM_RULES.md** — quy tắc tổ chức hiện hành
+- **docs/WORKFLOW-SPEC-IMPLEMENT.md** — workflow phối hợp hiện hành
+- **docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md** — vòng lặp tự động hiện hành
+- **CHANGELOG-AI.md** (file này) — historical trace only
+- **AUDIT-V2.md** — historical audit/patch trace
 
 Mỗi file có scope riêng, không trùng.

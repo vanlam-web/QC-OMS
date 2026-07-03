@@ -1,9 +1,11 @@
 # AUDIT-V2 — Đối chiếu audit & checklist patch
 
+> **Status:** Historical/completed audit trace. This file records the 2026-06-27 Cursor/Codex comparison and patch waves; it is not active workflow policy.
+>
 > **Ngày đối chiếu:** 2026-06-27
 > **Phạm vi:** Đối chiếu giữa 2 audit độc lập (Cursor & Codex) trên `docs/`
 > **File tham chiếu:** `docs/AUDIT_REPORT.md` (giữ nguyên, không ghi đè)
-> **Trạng thái:** **CHỐT CHECKLIST — CHƯA PATCH**
+> **Trạng thái:** **HISTORICAL — PATCH WAVES COMPLETED WHERE MARKED BELOW**
 > **Người lập:** Cursor
 
 ---

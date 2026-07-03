@@ -1,21 +1,27 @@
-# WORKFLOW-SPEC-IMPLEMENT — Quy ước phối hợp đặc tả và implement
+# WORKFLOW-SPEC-IMPLEMENT — Quy ước phối hợp các luồng Codex
 
 > **Trạng thái:** Source of Truth điều phối
 > **Owner:** Người dùng trực tiếp quyết định thứ tự và nghiệp vụ cuối cùng
-> **Cập nhật:** 2026-07-02
+> **Cập nhật:** 2026-07-03
 
 ---
 
 ## 1. Mục tiêu
 
-Tài liệu này giúp hai luồng Codex không quên cách phối hợp sau vài task.
+Tài liệu này giúp các luồng Codex không quên cách phối hợp sau vài task.
 
 Luồng **Spec** giữ Source of Truth nghiệp vụ, rà KiotViet, ghi docs và review implementation theo nghiệp vụ.
 
 Luồng **Implement** thi công code, test, PR/deploy và phản hồi blocker kỹ thuật/nghiệp vụ.
 
+Luồng **Review** kiểm tra dự án khi Owner yêu cầu, chạy test/build/lint, review rủi ro và chuẩn bị tài liệu/handoff để Spec và Implement tiếp tục làm việc.
+
 Quy trình tự động giao việc, tự review, checklist từng giai đoạn nằm tại
 [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
+
+Nguyên tắc phối hợp bắt buộc: luồng nào nhận việc từ luồng khác thì phải báo cáo lại trực tiếp cho luồng đó khi xong, khi bị block, hoặc khi quyết định defer. Owner không phải làm người nhắc hộ hay chuyển lời giữa các luồng.
+
+Bảng điều phối việc đang làm nằm tại [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md). Spec giữ bảng này đủ mới cho các slice/PR quan trọng; Review có quyền flag nếu bảng không khớp thực tế.
 
 ---
 
@@ -83,6 +89,8 @@ Spec phân loại phát hiện:
 
 Review nghiệp vụ không thay thế test kỹ thuật. Implement vẫn phải chạy verification theo plan.
 
+Review Thread có thể kiểm tra độc lập trước hoặc sau Spec review, nhưng kết quả Review không tự thay thế quyết định nghiệp vụ của Spec/Owner.
+
 ---
 
 ## 6. Handoff từ Spec sang Implement
@@ -108,7 +116,24 @@ Implementation impact:
 
 Spec validation:
 - ...
+
+Current owner:
+- Spec
+
+Next owner:
+- Implement
+
+Next action:
+- ...
 ```
+
+Sau khi nhận handoff, Implement phải trả lời lại Spec bằng `[Implement -> Spec]` khi:
+
+- đã mở PR/commit cần Spec review
+- phát hiện blocker/spec thiếu cần Spec chốt
+- quyết định defer hoặc tách scope
+
+Nếu handoff đến từ Review hoặc ảnh hưởng issue trong [REVIEW-ISSUES.md](./REVIEW-ISSUES.md), Implement cũng phải gửi `[Implement -> Review]`.
 
 ---
 
@@ -136,11 +161,94 @@ Known gaps:
 
 Questions:
 - ...
+
+Current owner:
+- Implement
+
+Next owner:
+- Spec / Review / Owner
+
+Next action:
+- ...
+
+Owner decision needed:
+- Yes / No
+```
+
+Spec phải trả lời trực tiếp bằng `[Spec -> Implement]` sau khi review nghiệp vụ:
+
+- Must fix before merge/deploy
+- Follow-up acceptable
+- Future scope
+- Owner decision needed
+
+Nếu review này liên quan issue Review giao, Spec cũng phải gửi `[Spec -> Review]` để Review re-check và cập nhật tracker.
+
+Nếu Spec approve và việc cần Review gate, report phải ghi `Next owner: Review`. Nếu Spec trả must-fix, report phải ghi `Next owner: Implement`.
+
+---
+
+## 8. Review Thread
+
+Owner có thể yêu cầu Review Thread kiểm tra toàn bộ dự án hoặc một slice cụ thể bất kỳ lúc nào.
+
+Review Thread chịu trách nhiệm:
+
+- đọc trạng thái repo hiện tại
+- chạy kiểm tra phù hợp: lint, typecheck, build, unit test, database test, function test, e2e nếu môi trường cho phép
+- phân biệt lỗi code, lỗi test, lỗi cấu hình, lỗi docs/spec drift
+- giải thích vấn đề bằng ngôn ngữ dễ hiểu khi Owner yêu cầu
+- chuẩn bị báo cáo/handoff cho Spec hoặc Implement
+- ghi các issue đã giao cho luồng khác vào [REVIEW-ISSUES.md](./REVIEW-ISSUES.md)
+- kiểm tra lại issue sau khi luồng phụ trách báo đã fix hoặc đã quyết định
+
+Khi Review giao issue cho Spec hoặc Implement, Review phải ghi rõ thread nào cần báo lại. Luồng nhận việc phải gửi `[Spec -> Review]` hoặc `[Implement -> Review]` trực tiếp sau khi xử lý; không chờ Owner nhắc.
+
+Format khuyến nghị:
+
+```text
+[Review -> Owner/Spec/Implement]
+
+Scope checked:
+- ...
+
+Commands run:
+- ...
+
+Result:
+- ...
+
+Findings:
+- ...
+
+Likely impact:
+- ...
+
+Recommended next action:
+- ...
+
+Review issue IDs:
+- ...
+
+Needs Spec:
+- ...
+
+Needs Implement:
+- ...
+
+Current owner:
+- Review
+
+Next owner:
+- Spec / Implement / Owner
+
+Next action:
+- ...
 ```
 
 ---
 
-## 8. Ưu tiên sửa lệch hiện tại
+## 9. Ưu tiên sửa lệch hiện tại
 
 Trước khi mở nhiều feature mới, ưu tiên sửa các điểm nền đã được Spec review:
 
@@ -152,7 +260,7 @@ Trước khi mở nhiều feature mới, ưu tiên sửa các điểm nền đã
 
 ---
 
-## 9. Những điều không tự mở
+## 10. Những điều không tự mở
 
 Không tự mở các scope sau nếu Owner chưa chốt:
 
@@ -165,12 +273,13 @@ Không tự mở các scope sau nếu Owner chưa chốt:
 
 ---
 
-## 10. Quy tắc nhớ
+## 11. Quy tắc nhớ
 
 Nếu một luồng bị mất mạch, đọc lại theo thứ tự:
 
 1. File này.
 2. [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
-3. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
-4. Docs SoT theo module đang làm.
-5. Plan trong `docs/superpowers/plans`.
+3. [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) nếu đang xử lý lỗi do Review giao.
+4. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
+5. Docs SoT theo module đang làm.
+6. Plan trong `docs/superpowers/plans`.
