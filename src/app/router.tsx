@@ -8,6 +8,7 @@ import { FoundationAdminPage } from '../features/admin/FoundationAdminPage'
 import { createBrowserFoundationService } from '../features/users/foundation-service'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { CatalogPage } from '../features/catalog/CatalogPage'
+import { CustomersPage } from '../features/catalog/CustomersPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
@@ -30,6 +31,7 @@ export function AppRoutes() {
         <Route path="/pos" element={<PosRoute />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
+        <Route path="/customers" element={<CustomersRoute />} />
         <Route path="/suppliers" element={<SuppliersRoute />} />
         <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
         <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
@@ -130,6 +132,29 @@ function CatalogRoute() {
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
       <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
+}
+
+function CustomersRoute() {
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
+  const navigate = useNavigate()
+  const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
+  const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.create_order')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <CustomersPage
+        service={catalogService}
+        orderService={orderService}
+        onOpenDashboard={() => navigate('/dashboard')}
+      />
     </AppShell>
   )
 }

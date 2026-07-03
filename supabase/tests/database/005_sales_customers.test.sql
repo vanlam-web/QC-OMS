@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(35);
 
 select has_table('public', 'customer_groups', 'customer_groups table exists');
 select has_column('public', 'customer_groups', 'organization_id', 'customer_groups.organization_id exists');
@@ -22,6 +22,7 @@ select has_column('public', 'customers', 'code', 'customers.code exists');
 select has_column('public', 'customers', 'name', 'customers.name exists');
 select has_column('public', 'customers', 'phone', 'customers.phone exists');
 select has_column('public', 'customers', 'phone_normalized', 'customers.phone_normalized exists');
+select has_column('public', 'customers', 'tax_code', 'customers.tax_code exists');
 select has_column('public', 'customers', 'customer_group_id', 'customers.customer_group_id exists');
 select col_not_null('public', 'customers', 'organization_id', 'customers.organization_id is not null');
 select col_not_null('public', 'customers', 'code', 'customers.code is not null');
@@ -63,10 +64,20 @@ values (
   '00000000-0000-4000-8000-000000000402'
 );
 
+update public.customers
+set tax_code = '0312345678'
+where code = 'KH900001';
+
 select is(
   (select phone_normalized from public.customers where code = 'KH900001'),
   '0901234567',
   'customer phone_normalized is generated'
+);
+
+select is(
+  (select tax_code from public.customers where code = 'KH900001'),
+  '0312345678',
+  'customer tax_code is stored'
 );
 
 select throws_ok(

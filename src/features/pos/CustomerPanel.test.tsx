@@ -11,6 +11,7 @@ const customer: Customer = {
   code: 'KH000001',
   name: 'Khach le',
   phone: null,
+  tax_code: null,
   customer_group_id: null,
   customer_group: null,
 }

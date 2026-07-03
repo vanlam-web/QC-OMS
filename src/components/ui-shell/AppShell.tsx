@@ -21,6 +21,7 @@ const shellNavItems: ShellNavItem[] = [
     marker: 'CT',
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
+  { label: 'Khách hàng', shortLabel: 'KH', path: '/customers', marker: 'KH', permissions: ['perm.create_order'] },
   { label: 'Bảng giá', shortLabel: 'Giá', path: '/products', marker: 'BG', permissions: ['perm.edit_price_book'] },
   { label: 'Nhà cung cấp', shortLabel: 'NCC', path: '/suppliers', marker: 'NC', permissions: ['perm.manage_inventory'] },
   { label: 'Phiếu nhập', shortLabel: 'PN', path: '/purchase/receipts', marker: 'PN', permissions: ['perm.manage_inventory'] },

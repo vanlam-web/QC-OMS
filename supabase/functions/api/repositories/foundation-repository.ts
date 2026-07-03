@@ -776,7 +776,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
       let query = client
         .from("customers")
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)", { count: "exact" })
+        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)", { count: "exact" })
         .eq("organization_id", input.organizationId)
         .order("code", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -799,18 +799,20 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           code,
           name: input.name,
           phone: input.phone ?? null,
+          tax_code: input.taxCode ?? null,
           customer_group_id: input.customerGroupId ?? null,
         })
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)")
         .single();
       if (error !== null) throw error;
       return toCustomerData(data);
     },
     async updateCustomer(input): Promise<CustomerData | null> {
-      const patch: { code?: string; name?: string; phone?: string | null; customer_group_id?: string | null } = {};
+      const patch: { code?: string; name?: string; phone?: string | null; tax_code?: string | null; customer_group_id?: string | null } = {};
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.phone !== undefined) patch.phone = input.phone;
+      if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
       if (input.customerGroupId !== undefined) patch.customer_group_id = input.customerGroupId;
 
       const { data, error } = await client
@@ -818,7 +820,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, customer_group_id, customer_groups(id, code, name)")
         .maybeSingle();
       if (error !== null) throw error;
       return data === null ? null : toCustomerData(data);
@@ -1787,6 +1789,7 @@ function toCustomerData(row: {
   code: string;
   name: string;
   phone: string | null;
+  tax_code: string | null;
   customer_group_id: string | null;
   customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
 }): CustomerData {
@@ -1796,6 +1799,7 @@ function toCustomerData(row: {
     code: row.code,
     name: row.name,
     phone: row.phone,
+    tax_code: row.tax_code,
     customer_group_id: row.customer_group_id,
     customer_group: group ?? null,
   };

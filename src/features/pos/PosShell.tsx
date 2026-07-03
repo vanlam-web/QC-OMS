@@ -163,6 +163,7 @@ export function PosShell({
             code: payload.customer.code,
             name: payload.customer.name,
             phone: null,
+            tax_code: null,
             customer_group_id: null,
             customer_group: null,
           }
@@ -341,6 +342,7 @@ function quotePayloadToCustomer(payload: QuoteReopenPayload): Customer | null {
     code: payload.customer.snapshot.code ?? '',
     name: payload.customer.snapshot.name,
     phone: payload.customer.snapshot.phone,
+    tax_code: null,
     customer_group_id: null,
     customer_group: null,
   }
