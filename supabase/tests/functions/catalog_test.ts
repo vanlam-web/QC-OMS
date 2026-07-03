@@ -284,6 +284,41 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
   assertEquals((body.created_by as Record<string, unknown>).name, "Admin");
 });
 
+Deno.test("customer routes map duplicate name or phone to resource conflict", async () => {
+  const duplicateError = { code: "23505", message: "duplicate key value violates unique constraint" };
+  const createResponse = await call(
+    "/api/v1/customers",
+    {
+      method: "POST",
+      body: JSON.stringify({ name: "Khach le" }),
+    },
+    repo(["perm.create_order"], {
+      createCustomer: () => {
+        throw duplicateError;
+      },
+    }),
+  );
+
+  assertEquals(createResponse.status, 409);
+  assertEquals(((await createResponse.json()).error as Record<string, unknown>).code, "RESOURCE_CONFLICT");
+
+  const updateResponse = await call(
+    "/api/v1/customers/customer-1",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ phone: "0901234567" }),
+    },
+    repo(["perm.create_order"], {
+      updateCustomer: () => {
+        throw duplicateError;
+      },
+    }),
+  );
+
+  assertEquals(updateResponse.status, 409);
+  assertEquals(((await updateResponse.json()).error as Record<string, unknown>).code, "RESOURCE_CONFLICT");
+});
+
 Deno.test("price resolution accepts a customer id", async () => {
   let receivedCustomerId: string | undefined;
   const repository = repo(["perm.create_order"], {

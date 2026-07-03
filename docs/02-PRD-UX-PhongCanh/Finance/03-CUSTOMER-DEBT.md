@@ -10,6 +10,8 @@ Màn Công nợ giúp nhân viên xem nợ theo khách hàng và thu nợ ngoài
 
 QC-OMS quản lý công nợ theo từng hóa đơn còn nợ, không chỉ theo một số tổng.
 
+`KH000001 - Khách lẻ` là hồ sơ khách mặc định của tổ chức. Hóa đơn POS chưa chọn khách nhưng còn nợ vẫn được ghi vào `KH000001`; ghi chú khách lẻ nếu có dùng để nhận diện người nợ, không tạo bucket công nợ `customer_id = null`.
+
 ---
 
 ## 2. Bố cục danh sách công nợ
@@ -76,7 +78,7 @@ Phân bổ mặc định vào hóa đơn cũ nhất trước. MVP không cho thu
 
 ## 5. Khách lẻ nợ
 
-Khách lẻ nợ cần danh sách riêng hoặc bộ lọc riêng.
+Khách lẻ nợ nằm dưới khách mặc định `KH000001 - Khách lẻ`. Có thể có bộ lọc nhanh để xem riêng các hóa đơn `KH000001` có ghi chú nhận diện khách lẻ.
 
 Mỗi dòng phải hiển thị:
 
@@ -85,7 +87,7 @@ Mỗi dòng phải hiển thị:
 - số còn nợ
 - ngày phát sinh
 
-Nếu sau này gán khách lẻ nợ vào hồ sơ khách, cần spec riêng.
+Nếu sau này chuyển một khoản nợ từ `KH000001` sang hồ sơ khách cụ thể, cần spec riêng vì đây là thao tác đổi chủ công nợ/chứng từ.
 
 ---
 
@@ -95,7 +97,7 @@ Nếu sau này gán khách lẻ nợ vào hồ sơ khách, cần spec riêng.
 2. Người dùng mở được danh sách hóa đơn còn nợ của một khách.
 3. Thu nợ hiển thị preview phân bổ vào hóa đơn cũ nhất trước.
 4. Không cho nhập số tiền thu vượt tổng nợ trong MVP.
-5. Khách lẻ nợ có ghi chú nhận diện, không bị lẫn với khách hồ sơ.
+5. Khách lẻ nợ thuộc `KH000001`, có ghi chú nhận diện khi cần và không bị rơi vào bucket không khách.
 
 ---
 

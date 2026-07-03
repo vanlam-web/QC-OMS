@@ -54,6 +54,7 @@ Quy tắc:
 
 - Mã khách hàng có thể tự sinh khi tạo mới nếu người dùng để trống.
 - Mã khách hàng được phép sửa, nhưng phải unique và đúng định dạng.
+- Tên khách hàng không được trùng trong cùng tổ chức sau khi trim, gộp khoảng trắng lặp và so sánh không phân biệt hoa/thường.
 - SĐT được phép trống.
 - Nếu có SĐT, phải chuẩn hóa và không trùng khách khác.
 - MST được phép trống; nếu nhập thì lưu theo hồ sơ khách để dùng khi xuất/chốt thông tin doanh nghiệp sau này.
@@ -124,6 +125,8 @@ KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP trong tab n
 
 Nguồn dữ liệu chuẩn là Sales Documents lọc theo `customer_id` và `type = invoice | quote`. Nếu API danh sách chứng từ chưa hỗ trợ filter này, không được dựng dữ liệu giả; UI có thể chưa hiển thị tab lịch sử bán trong lát đầu và phải ghi rõ follow-up.
 
+`KH000001 - Khách lẻ` là hồ sơ khách mặc định của tổ chức. Báo giá/hóa đơn được tạo ở POS khi nhân viên chưa chọn khách vẫn phải có `customer_id` trỏ về `KH000001`, vì vậy tab lịch sử của `KH000001` phải thấy các chứng từ khách lẻ này thay vì phụ thuộc snapshot tên khách.
+
 ---
 
 ## 6. Tab Nợ cần thu
@@ -151,6 +154,8 @@ Lát MVP hiện tại chỉ cần readonly công nợ theo hóa đơn còn nợ:
 - danh sách hóa đơn còn nợ gồm mã, thời gian, tổng tiền, đã trả, còn nợ
 
 Trên danh sách khách, cột `Nợ hiện tại` tải tự động cho các khách đang hiển thị trên trang hiện tại bằng Finance Customer Debt API. Nếu chưa tải xong hoặc tải lỗi, hiển thị `-` thay vì đoán số.
+
+Nếu hóa đơn phát sinh nợ khi POS chưa chọn khách, khoản nợ thuộc `KH000001`. Ghi chú khách lẻ nếu có chỉ là thông tin nhận diện phụ của hóa đơn/khoản nợ, không tạo bucket công nợ `customer_id = null`.
 
 Thu nợ độc lập, điều chỉnh công nợ, chiết khấu thanh toán và QR thanh toán là scope Finance/POS sau, không tự mở trong lát khách hàng này.
 

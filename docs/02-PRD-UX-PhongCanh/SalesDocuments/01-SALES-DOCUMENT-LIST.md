@@ -105,7 +105,7 @@ Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên 
 | Mã chứng từ | `BG...`, `HD...`, `HD....01`; bấm để mở chi tiết |
 | Thời gian | Thời điểm lưu báo giá hoặc checkout hóa đơn |
 | Loại | Báo giá hoặc Hóa đơn |
-| Mã khách | Mã khách tại thời điểm lưu; khách lẻ hiển thị `Khách lẻ` |
+| Mã khách | Mã khách tại thời điểm lưu; khách lẻ mặc định là `KH000001` |
 | Khách hàng | Tên khách snapshot tại thời điểm lưu |
 | Tổng tiền hàng | Tổng trước giảm/điều chỉnh |
 | Giảm giá | Nếu có |
@@ -117,6 +117,8 @@ Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên 
 | Ghi chú | Ghi chú đơn |
 
 Các cột có thể ẩn/hiện, nhưng bộ cột mặc định phải gọn để nhìn nhanh trên màn hình bán hàng.
+
+Nếu POS/báo giá/hóa đơn không chọn khách, backend phải gán chứng từ vào `KH000001 - Khách lẻ` của tổ chức. Danh sách chứng từ vẫn có thể hiển thị snapshot `Khách lẻ`, nhưng filter/lịch sử theo khách phải dựa trên `customer_id = KH000001`, không để chứng từ bán lẻ ở `customer_id = null`.
 
 ---
 
