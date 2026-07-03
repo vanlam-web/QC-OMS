@@ -6,11 +6,12 @@ import {
   ManagementActionIconButton,
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
   ManagementListSurface,
-  ManagementPagination,
   ManagementPage,
+  ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
@@ -208,6 +209,7 @@ export function CustomersPage({
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
+  const activeFilterSummary = lastSearch ? `Tìm: ${lastSearch}` : 'Đang hoạt động'
 
   return (
     <ManagementPage
@@ -232,7 +234,17 @@ export function CustomersPage({
         </ManagementCompactToolbar>
       }
       filter={
-        <ManagementFilterSidebar ariaLabel="Bộ lọc khách hàng">
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc khách hàng"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetCustomerFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
           <button
             aria-label="Ẩn bộ lọc khách hàng"
             className="management-filter-collapse-button"
@@ -248,10 +260,6 @@ export function CustomersPage({
               Đang hoạt động
             </label>
           </ManagementFilterGroup>
-          <button className="button button-secondary" type="button" onClick={() => void resetCustomerFilters()}>
-            <RotateCcw aria-hidden="true" size={15} />
-            Đặt lại bộ lọc
-          </button>
         </ManagementFilterSidebar>
       }
       filterVisible={showFilters}
@@ -385,9 +393,12 @@ export function CustomersPage({
                       <td>{customer.total_sales_amount === undefined ? '-' : <MoneyText value={customer.total_sales_amount} />}</td>
                     </tr>
                     {selectedCustomerId === customer.id ? (
-                      <tr className="management-detail-row management-detail-row-selected">
-                        <td colSpan={6}>
-                          <section aria-label={`Chi tiết khách hàng ${customer.code}`} className="management-inline-detail customer-inline-detail">
+                      <ManagementDetailRow
+                        colSpan={6}
+                        detailClassName="customer-inline-detail"
+                        label={`Chi tiết khách hàng ${customer.code}`}
+                        rowClassName="management-detail-row-selected"
+                      >
                             <div className="customer-detail-tabbar">
                               <div aria-label="Chi tiết khách hàng" className="customer-detail-tabs" role="tablist">
                                 <button
@@ -467,9 +478,7 @@ export function CustomersPage({
                                 />
                               </section>
                             )}
-                          </section>
-                        </td>
-                      </tr>
+                      </ManagementDetailRow>
                     ) : null}
                     </Fragment>
                   )
@@ -477,20 +486,17 @@ export function CustomersPage({
               </tbody>
               </table>
             </ManagementTableViewport>
-            <ManagementPagination ariaLabel="Phân trang khách hàng">
-              <span className="management-result-count">
-                Tổng {state.total} kết quả • {totalPages} trang
-              </span>
-              <button aria-label="Trang trước" disabled={!canGoPrevious} type="button" onClick={() => void goToPage(page - 1)}>
-                Trước
-              </button>
-              <span>
-                Trang {page} / {totalPages}
-              </span>
-              <button aria-label="Trang sau" disabled={!canGoNext} type="button" onClick={() => void goToPage(page + 1)}>
-                Sau
-              </button>
-            </ManagementPagination>
+            <ManagementTableFooter
+              ariaLabel="Phân trang khách hàng"
+              canGoNext={canGoNext}
+              canGoPrevious={canGoPrevious}
+              entityLabel="khách hàng"
+              page={page}
+              pageSize={pageSize}
+              total={state.total}
+              onNext={() => void goToPage(page + 1)}
+              onPrevious={() => void goToPage(page - 1)}
+            />
           </>
         ) : null}
       </ManagementListSurface>
