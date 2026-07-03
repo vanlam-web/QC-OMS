@@ -1,15 +1,18 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState, type FormEvent } from 'react'
 import {
   ManagementActionIconButton,
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
   ManagementListSurface,
   ManagementPagination,
   ManagementPage,
+  ManagementRowActionButton,
+  ManagementTableFooter,
   ManagementSearchBar,
   ManagementTableViewport,
 } from './management-layout'
@@ -166,4 +169,72 @@ it('standardizes filter groups without rendering detail content by default', () 
 
   expect(screen.getByRole('heading', { name: 'Trạng thái' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: /Chi tiết/ })).not.toBeInTheDocument()
+})
+
+it('renders a reusable filter sidebar title summary and action area', () => {
+  render(
+    <ManagementFilterSidebar
+      activeSummary="Loại: Hóa đơn"
+      ariaLabel="Bộ lọc chứng từ"
+      title="Bộ lọc"
+      actions={<button type="button">Đặt lại bộ lọc</button>}
+    >
+      <ManagementFilterGroup title="Loại chứng từ">
+        <label>
+          <input type="radio" />
+          Hóa đơn
+        </label>
+      </ManagementFilterGroup>
+    </ManagementFilterSidebar>,
+  )
+
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ' })
+  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
+  expect(within(sidebar).getByText('Loại: Hóa đơn')).toHaveClass('management-filter-summary')
+  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+})
+
+it('renders a reusable management table footer with range page and disabled controls', () => {
+  render(
+    <ManagementTableFooter
+      ariaLabel="Phân trang chứng từ"
+      canGoNext
+      canGoPrevious={false}
+      entityLabel="chứng từ"
+      page={1}
+      pageSize={15}
+      total={40}
+      onNext={vi.fn()}
+      onPrevious={vi.fn()}
+    />,
+  )
+
+  const footer = screen.getByRole('navigation', { name: 'Phân trang chứng từ' })
+  expect(footer).toHaveClass('management-table-footer')
+  expect(within(footer).getByText('1-15 / 40 chứng từ')).toBeInTheDocument()
+  expect(within(footer).getByText('Trang 1 / 3')).toBeInTheDocument()
+  expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
+  expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeEnabled()
+})
+
+it('renders compact row action buttons and inline detail rows tied to the table', () => {
+  render(
+    <table>
+      <tbody>
+        <tr className="management-data-row-selected">
+          <td>HD010985</td>
+          <td>
+            <ManagementRowActionButton ariaLabel="Mở chi tiết HD010985">Mở</ManagementRowActionButton>
+          </td>
+        </tr>
+        <ManagementDetailRow colSpan={2} label="Chi tiết chứng từ HD010985">
+          <p>Chi tiết</p>
+        </ManagementDetailRow>
+      </tbody>
+    </table>,
+  )
+
+  expect(screen.getByRole('button', { name: 'Mở chi tiết HD010985' })).toHaveClass('management-row-action')
+  expect(screen.getByRole('region', { name: 'Chi tiết chứng từ HD010985' })).toHaveClass('management-inline-detail')
+  expect(screen.getByRole('cell', { name: /Chi tiết/ })).toHaveAttribute('colspan', '2')
 })

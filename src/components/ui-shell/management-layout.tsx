@@ -36,12 +36,35 @@ export function ManagementPage({
   )
 }
 
-export function ManagementFilterSidebar({ ariaLabel, children }: { ariaLabel: string; children: ReactNode }) {
+export function ManagementFilterSidebar({
+  ariaLabel,
+  title,
+  activeSummary,
+  actions,
+  children,
+}: {
+  ariaLabel: string
+  title?: string
+  activeSummary?: string
+  actions?: ReactNode
+  children: ReactNode
+}) {
   return (
     <aside aria-label={ariaLabel} className="management-filter-sidebar">
+      {title || activeSummary ? (
+        <div className="management-filter-header">
+          {title ? <h2>{title}</h2> : null}
+          {activeSummary ? <p className="management-filter-summary">{activeSummary}</p> : null}
+        </div>
+      ) : null}
       {children}
+      {actions ? <ManagementFilterActionBar>{actions}</ManagementFilterActionBar> : null}
     </aside>
   )
+}
+
+export function ManagementFilterActionBar({ children }: { children: ReactNode }) {
+  return <div className="management-filter-actions">{children}</div>
 }
 
 export function ManagementFilterGroup({ title, children }: { title: string; children: ReactNode }) {
@@ -168,5 +191,93 @@ export function ManagementPagination({ ariaLabel, children }: { ariaLabel: strin
     <nav aria-label={ariaLabel} className="management-pagination">
       {children}
     </nav>
+  )
+}
+
+export function ManagementTableFooter({
+  ariaLabel,
+  entityLabel,
+  page,
+  pageSize,
+  total,
+  canGoPrevious,
+  canGoNext,
+  onPrevious,
+  onNext,
+}: {
+  ariaLabel: string
+  entityLabel: string
+  page: number
+  pageSize: number
+  total: number
+  canGoPrevious: boolean
+  canGoNext: boolean
+  onPrevious: () => void
+  onNext: () => void
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const rangeEnd = Math.min(page * pageSize, total)
+
+  return (
+    <nav aria-label={ariaLabel} className="management-table-footer">
+      <span>{rangeStart}-{rangeEnd} / {total} {entityLabel}</span>
+      <span>Trang {page} / {totalPages}</span>
+      <div className="management-table-footer-actions">
+        <button className="button button-secondary" disabled={!canGoPrevious} type="button" onClick={onPrevious}>
+          Trang trước
+        </button>
+        <button className="button button-secondary" disabled={!canGoNext} type="button" onClick={onNext}>
+          Trang sau
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+export function ManagementRowActionButton({
+  ariaLabel,
+  title = ariaLabel,
+  children,
+  disabled,
+  onClick,
+}: {
+  ariaLabel: string
+  title?: string
+  children: ReactNode
+  disabled?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      aria-label={ariaLabel}
+      className="management-row-action button button-secondary"
+      disabled={disabled}
+      title={title}
+      type="button"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function ManagementDetailRow({
+  colSpan,
+  label,
+  children,
+}: {
+  colSpan: number
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <tr className="management-detail-row">
+      <td colSpan={colSpan}>
+        <section aria-label={label} className="management-inline-detail" role="region">
+          {children}
+        </section>
+      </td>
+    </tr>
   )
 }
