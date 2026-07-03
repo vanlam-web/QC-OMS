@@ -28,6 +28,11 @@ const priceBookUser: CurrentUserData = {
   permissions: ['perm.edit_price_book'],
 }
 
+beforeEach(() => {
+  localStorage.clear()
+  document.documentElement.removeAttribute('data-theme')
+})
+
 function renderShell(initialPath = '/purchase/receipts', currentUser = inventoryUser) {
   return render(
     <ThemeProvider>
@@ -47,24 +52,27 @@ it('renders adaptive navigation with purchase supplier entries and active route'
 
   expect(screen.getByRole('banner')).toBeInTheDocument()
   expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
   expect(screen.getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
   expect(screen.getByRole('link', { name: /Phiếu nhập/i })).toHaveAttribute('aria-current', 'page')
   expect(screen.getByRole('heading', { name: 'Phiếu nhập' })).toBeInTheDocument()
 })
 
-it('renders POS as a normal item in the top module navigation', () => {
+it('renders POS as a quick action and keeps module navigation for management pages', () => {
   renderShell('/pos', fullNavigationUser)
 
   const banner = screen.getByRole('banner')
   const navigation = screen.getByRole('navigation', { name: 'Điều hướng chính' })
+  const quickActions = screen.getByLabelText('Thao tác nhanh')
 
   expect(banner).toContainElement(navigation)
-  expect(screen.getByRole('link', { name: 'Tổng quan QC-OMS' })).toHaveAttribute('href', '/dashboard')
+  expect(screen.getByRole('link', { name: 'Mở tổng quan' })).toHaveAttribute('href', '/dashboard')
   expect(within(navigation).queryByRole('link', { name: /Tổng quan/i })).not.toBeInTheDocument()
-  expect(screen.queryByRole('navigation', { name: 'Thao tác nhanh' })).not.toBeInTheDocument()
+  expect(quickActions.closest('.app-topbar')).not.toBeNull()
 
-  expect(within(navigation).getByRole('link', { name: /POS/i })).toHaveAttribute('href', '/pos')
-  expect(within(navigation).getByRole('link', { name: /POS/i })).toHaveAttribute('aria-current', 'page')
+  expect(within(navigation).queryByRole('link', { name: /POS/i })).not.toBeInTheDocument()
+  expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('href', '/pos')
+  expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('aria-current', 'page')
   expect(within(navigation).getByRole('link', { name: /Chứng từ/i })).toHaveAttribute('href', '/sales-documents')
   expect(within(navigation).getByRole('link', { name: /Khách hàng/i })).toHaveAttribute('href', '/customers')
   expect(within(navigation).getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
@@ -81,6 +89,31 @@ it('keeps theme toggle visible inside shell', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Đổi sang giao diện tối' }))
 
   expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+})
+
+it('keeps theme and account controls in the outer shell action rail', async () => {
+  const onSignOut = vi.fn()
+  render(
+    <ThemeProvider>
+      <MemoryRouter initialEntries={['/customers']}>
+        <AppShell currentUser={fullNavigationUser} onSignOut={onSignOut}>
+          <main>
+            <h1>Khách hàng</h1>
+          </main>
+        </AppShell>
+      </MemoryRouter>
+    </ThemeProvider>,
+  )
+
+  const userActions = screen.getByLabelText('Tài khoản và giao diện')
+  expect(userActions).toHaveClass('shell-user-actions')
+  expect(userActions.closest('.app-topbar')).toBeNull()
+  expect(within(userActions).getByRole('button', { name: 'Đổi sang giao diện tối' })).toBeInTheDocument()
+
+  await userEvent.click(within(userActions).getByRole('button', { name: 'Tài khoản' }))
+  await userEvent.click(within(userActions).getByRole('menuitem', { name: 'Đăng xuất' }))
+
+  expect(onSignOut).toHaveBeenCalled()
 })
 
 it('routes the price book nav item to the dedicated price book page', () => {

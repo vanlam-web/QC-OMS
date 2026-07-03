@@ -110,7 +110,9 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
   background: var(--color-surface-muted);
   color: var(--color-text);
 }
@@ -119,8 +121,7 @@ button {
   position: sticky;
   top: 0;
   z-index: var(--z-shell);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
   gap: var(--space-3);
   border-bottom: 1px solid var(--color-border);
@@ -130,30 +131,35 @@ button {
 }
 
 .app-brand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 2.75rem;
-  color: var(--color-text);
+  min-height: 2.25rem;
+  white-space: nowrap;
   text-decoration: none;
 }
 
 .app-brand span,
-.shell-nav-link-icon {
+.shell-nav-marker {
   display: inline-grid;
-  width: 2rem;
-  min-width: 2rem;
-  height: 2rem;
+  width: 1.9rem;
+  min-width: 1.9rem;
+  height: 1.9rem;
   place-items: center;
   border-radius: var(--radius-md);
   background: var(--color-primary);
-  color: white;
+  color: var(--color-on-primary);
   font-size: 0.75rem;
   font-weight: 800;
 }
 
+.shell-nav-marker {
+  display: none;
+}
+
 .shell-nav {
   display: flex;
+  flex: 1 1 auto;
   gap: var(--space-1);
   min-width: 0;
   overflow-x: auto;
@@ -161,15 +167,15 @@ button {
 }
 
 .shell-nav-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  flex: 0 0 auto;
+  gap: var(--space-1);
+  min-height: 2.25rem;
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-2);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .shell-nav-link[aria-current='page'] {
@@ -178,29 +184,71 @@ button {
   font-weight: 800;
 }
 
-.shell-nav-link-short {
+.shell-nav-short {
   display: none;
 }
 
-.app-main-frame {
-  display: grid;
-  min-width: 0;
-}
-
-.topbar-actions {
+.shell-quick-actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 2.25rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  box-shadow: var(--shadow-sm);
+  padding: 0.125rem;
+  backdrop-filter: blur(12px);
 }
 
-.theme-toggle {
+.shell-user-actions {
+  position: absolute;
+  top: 4.35rem;
+  right: var(--space-4);
+  z-index: calc(var(--z-shell) - 1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  box-shadow: var(--shadow-sm);
+  padding: 0.125rem;
+  backdrop-filter: blur(12px);
+}
+
+.shell-pos-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  width: 2.5rem;
-  min-height: 2.5rem;
-  border: 1px solid var(--color-border);
+  gap: var(--space-1);
+  min-height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 70%, var(--color-success));
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-success));
+  color: var(--color-on-primary);
+  padding: 0 var(--space-2);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.shell-pos-action:hover,
+.shell-pos-action[aria-current='page'] {
+  filter: brightness(1.04);
+}
+
+.theme-toggle,
+.account-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0;
@@ -210,15 +258,35 @@ button {
   display: none;
 }
 
-.account-action {
-  display: inline-flex;
+.account-menu {
+  position: relative;
+}
+
+.account-menu-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: calc(var(--z-shell) + 1);
+  min-width: 10rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-1);
+}
+
+.account-menu-popover button {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  min-width: 2.5rem;
-  min-height: 2.5rem;
-  padding: 0;
-  font-weight: 800;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  text-align: left;
 }
 
 .app-content {
@@ -2398,8 +2466,7 @@ button {
 }
 
 @media (max-width: 900px) {
-  .app-brand strong,
-  .shell-nav-link-label {
+  .shell-nav-label {
     display: none;
   }
 
@@ -2409,7 +2476,7 @@ button {
     padding: 0 var(--space-2);
   }
 
-  .shell-nav-link-short {
+  .shell-nav-short {
     display: block;
   }
 
@@ -2467,7 +2534,6 @@ button {
   }
 
   .app-topbar {
-    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: var(--space-2);
     padding: var(--space-2);
   }
@@ -2480,14 +2546,14 @@ button {
     font-size: 0.6875rem;
   }
 
-  .shell-nav-link-icon {
+  .shell-nav-marker {
     width: 1.75rem;
     min-width: 1.75rem;
     height: 1.75rem;
     font-size: 0.625rem;
   }
 
-  .shell-nav-link-short {
+  .shell-nav-short {
     display: block;
   }
 
@@ -2538,23 +2604,6 @@ button {
 
   .app-topbar > div:first-child {
     min-width: 0;
-  }
-
-  .app-topbar p,
-  .app-topbar strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .topbar-actions {
-    flex-shrink: 0;
-  }
-
-  .topbar-actions .button-secondary {
-    max-width: 5.5rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .suppliers-shell,
