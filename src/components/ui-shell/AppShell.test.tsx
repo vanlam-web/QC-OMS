@@ -12,6 +12,11 @@ const inventoryUser: CurrentUserData = {
   permissions: ['perm.manage_inventory'],
 }
 
+const priceBookUser: CurrentUserData = {
+  ...inventoryUser,
+  permissions: ['perm.edit_price_book'],
+}
+
 function renderShell(initialPath = '/purchase/receipts') {
   return render(
     <ThemeProvider>
@@ -42,4 +47,21 @@ it('keeps theme toggle visible inside shell', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Đổi sang giao diện tối' }))
 
   expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+})
+
+it('routes the price book nav item to the dedicated price book page', () => {
+  render(
+    <ThemeProvider>
+      <MemoryRouter initialEntries={['/price-book']}>
+        <AppShell currentUser={priceBookUser} onSignOut={vi.fn()}>
+          <main>
+            <h1>Bảng giá</h1>
+          </main>
+        </AppShell>
+      </MemoryRouter>
+    </ThemeProvider>,
+  )
+
+  expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
+  expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('aria-current', 'page')
 })

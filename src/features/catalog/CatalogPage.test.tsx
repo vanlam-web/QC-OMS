@@ -118,54 +118,15 @@ it('filters by status and toggles product active state', async () => {
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
 })
 
-it('renders pricebook as a grid-first pricing workspace', async () => {
+it('keeps the product catalog focused on product management', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
-  const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
+  const grid = await screen.findByRole('table', { name: 'Danh sách hàng hóa' })
   const header = within(grid).getByRole('row', {
-    name: 'Mã hàng Tên hàng Giá nhập cuối Chi phí Lợi nhuận Bảng giá chung 25 Cách bán Trạng thái Thao tác',
+    name: 'Mã hàng Tên hàng Giá nhập cuối Cách bán Trạng thái Thao tác',
   })
   expect(header).toBeInTheDocument()
-  expect(within(grid).getAllByRole('cell', { name: 'Chưa cấu hình' })).toHaveLength(2)
-  expect(within(grid).getAllByRole('cell', { name: 'Chưa xem' })).toHaveLength(2)
-  expect(screen.queryByText('Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.')).not.toBeInTheDocument()
-})
-
-it('previews formula results in the pricebook grid instead of placeholder cells', async () => {
-  const service = makeService()
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
-
-  expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
-  expect(screen.getByText('25')).toBeInTheDocument()
-
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo công thức cho bộ lọc này' }))
-  await userEvent.type(screen.getByLabelText('Tên công thức'), 'Fomex')
-  await userEvent.type(screen.getByLabelText('Mã hàng chứa'), 'MICA')
-  await userEvent.type(screen.getByLabelText('Tên hàng chứa'), 'Mica')
-  await userEvent.selectOptions(screen.getByLabelText('Cách bán áp dụng'), 'linear_m')
-  await userEvent.selectOptions(screen.getByLabelText('Kiểu chi phí'), 'amount_plus_percent')
-  await userEvent.type(screen.getByLabelText('Chi phí cộng thêm'), '5000')
-  await userEvent.type(screen.getByLabelText('% theo giá nhập cuối'), '8')
-  await userEvent.selectOptions(screen.getByLabelText('Kiểu lợi nhuận'), 'tiers')
-  await userEvent.selectOptions(screen.getByLabelText('Điều kiện lợi nhuận'), '>')
-  await userEvent.type(screen.getByLabelText('Mốc giá nhập'), '100000')
-  await userEvent.type(screen.getByLabelText('Lợi nhuận tier'), '25000')
-  await userEvent.selectOptions(screen.getByLabelText('Điều chỉnh Bảng giá chung'), 'amount')
-  await userEvent.type(screen.getByLabelText('Giá trị điều chỉnh Bảng giá chung'), '20000')
-  await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
-
-  expect(await screen.findAllByText('150.000')).toHaveLength(2)
-  const grid = screen.getByRole('table', { name: 'Lưới bảng giá' })
-  expect(within(grid).getByText('Hiện tại 120.000 → 150.000')).toBeInTheDocument()
-  expect(within(grid).queryByText('Giá tay 120.000 → 150.000')).not.toBeInTheDocument()
-  expect(within(grid).queryByText('Theo công thức 120.000 → 150.000')).not.toBeInTheDocument()
-  expect(within(grid).getByText('Mới 150.000')).toBeInTheDocument()
-  expect(service.previewPriceFormula).toHaveBeenCalledWith({
-    name: 'Fomex',
-    product_filter: { status: 'active', code_contains: 'MICA', name_contains: 'Mica', sell_method: 'linear_m' },
-    cost_formula: { type: 'amount_plus_percent', amount: 5000, percent_of_latest_purchase_cost: 8 },
-    profit_formula: { type: 'tiers', tiers: [{ operator: '>', value: 100000, amount: 25000 }] },
-    price_list_adjustments: { 'pl-default': { type: 'amount', amount: 20000 } },
-  })
+  expect(screen.queryByRole('table', { name: 'Lưới bảng giá' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).not.toBeInTheDocument()
 })
