@@ -12,7 +12,6 @@ interface ShellNavItem {
 }
 
 const shellNavItems: ShellNavItem[] = [
-  { label: 'Tổng quan', shortLabel: 'Tổng', path: '/dashboard', marker: 'TQ', permissions: [] },
   { label: 'POS', shortLabel: 'POS', path: '/pos', marker: 'POS', permissions: ['perm.create_order'] },
   {
     label: 'Chứng từ',
@@ -22,6 +21,7 @@ const shellNavItems: ShellNavItem[] = [
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
   { label: 'Khách hàng', shortLabel: 'KH', path: '/customers', marker: 'KH', permissions: ['perm.create_order'] },
+  { label: 'Hàng hóa', shortLabel: 'HH', path: '/products', marker: 'HH', permissions: ['perm.edit_price_book'] },
   { label: 'Bảng giá', shortLabel: 'Giá', path: '/price-book', marker: 'BG', permissions: ['perm.edit_price_book'] },
   { label: 'Nhà cung cấp', shortLabel: 'NCC', path: '/suppliers', marker: 'NC', permissions: ['perm.manage_inventory'] },
   { label: 'Phiếu nhập', shortLabel: 'PN', path: '/purchase/receipts', marker: 'PN', permissions: ['perm.manage_inventory'] },
@@ -45,37 +45,39 @@ export function AppShell({
 
   return (
     <div className="app-shell">
-      <aside className="app-sidebar" aria-label="Thanh điều hướng">
-        <div className="app-brand">
+      <header className="app-topbar">
+        <NavLink className="app-brand" to="/dashboard" aria-label="Tổng quan QC-OMS">
           <span aria-hidden="true">QC</span>
-          <strong>QC-OMS</strong>
-        </div>
-        <nav aria-label="Điều hướng chính" className="sidebar-nav">
+          <strong aria-hidden="true">QC-OMS</strong>
+        </NavLink>
+
+        <nav aria-label="Điều hướng chính" className="shell-nav">
           {visibleItems.map((item) => (
-            <NavLink className="sidebar-link" key={item.path} to={item.path} title={item.label}>
-              <span aria-hidden="true" className="sidebar-link-icon">
+            <NavLink className="shell-nav-link" key={item.path} to={item.path} title={item.label}>
+              <span aria-hidden="true" className="shell-nav-link-icon">
                 {item.marker}
               </span>
-              <span className="sidebar-link-label">{item.label}</span>
-              <span className="sidebar-link-short">{item.shortLabel}</span>
+              <span className="shell-nav-link-label">{item.label}</span>
+              <span className="shell-nav-link-short">{item.shortLabel}</span>
             </NavLink>
           ))}
         </nav>
-      </aside>
+
+        <div className="topbar-actions">
+          <ThemeToggle />
+          <button
+            aria-label={`Đăng xuất ${currentUser.user.display_name}`}
+            className="button button-secondary account-action"
+            title={`Đăng xuất ${currentUser.user.display_name}`}
+            type="button"
+            onClick={onSignOut}
+          >
+            <span aria-hidden="true">TK</span>
+          </button>
+        </div>
+      </header>
 
       <div className="app-main-frame">
-        <header className="app-topbar">
-          <div>
-            <p>{currentUser.organization.name}</p>
-            <strong>{currentUser.user.display_name}</strong>
-          </div>
-          <div className="topbar-actions">
-            <ThemeToggle />
-            <button className="button button-secondary" type="button" onClick={onSignOut}>
-              Đăng xuất
-            </button>
-          </div>
-        </header>
         <div className="app-content">{children}</div>
       </div>
     </div>

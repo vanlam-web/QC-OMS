@@ -59,7 +59,11 @@ UI chỉ gọi service/API đã có contract. Nếu sau này đổi từ desktop
 
 Mục tiêu: quản lý nhiều dữ liệu và thao tác sâu.
 
-- sidebar có icon + chữ
+- không dùng sidebar trái rộng làm mặc định vì các màn quản lý cần chiều ngang
+- top navigation là module bar ngang: brand/logo nhỏ bên trái link về `/dashboard`, module ở giữa, cụm giao diện/tài khoản nhỏ bên phải
+- không hiển thị mục chữ `Tổng quan` trong module bar; dashboard đi qua brand/logo để tiết kiệm chiều ngang
+- POS là một module bình thường trong cùng thanh điều hướng với `Chứng từ`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Phiếu nhập`, `Quản trị`; không tách thành nút thao tác nhanh bên phải
+- theme toggle và tài khoản/đăng xuất dùng control compact/icon, không hiển thị block mô tả lớn kiểu `Xưởng Văn Lâm / Cloud Admin`
 - danh sách dạng table hoặc dense list
 - filter bar luôn nhìn thấy
 - detail panel/drawer bên phải
@@ -343,7 +347,7 @@ Không làm toàn bộ app trong một PR lớn.
 - token màu/spacing/radius/shadow
 - light/dark toggle
 - app shell responsive
-- sidebar/bottom nav
+- top module bar/bottom nav theo breakpoint, không dùng wide left sidebar mặc định
 - button/chip/status component nền
 
 ### UI-2: Filter system
