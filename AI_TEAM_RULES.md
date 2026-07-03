@@ -4,6 +4,9 @@ Version: 3.0 Compact
 
 Read this file before working. These are the current active rules.
 
+For the shortest mandatory operating contract, read
+[`docs/AI-OPERATING-RULES.md`](docs/AI-OPERATING-RULES.md) first. Longer workflow files must not contradict it.
+
 ## 0. Current Operating Model
 
 QC-OMS uses **Codex only**, split into multiple working threads.

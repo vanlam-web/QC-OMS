@@ -10,6 +10,8 @@
 
 Tai lieu nay la thoa thuan van hanh giua cac luong Codex:
 
+Doc `docs/AI-OPERATING-RULES.md` truoc. Do la hop dong ngan gon bat buoc: Owner chi lam viec voi mot dau moi, cac luong tu giao viec va bao lai truc tiep, moi viec quan trong phai co current owner, next owner va next action.
+
 - **Spec/UX Gate:** giu Source of Truth, kiem KiotViet, chot scope, review PR theo nghiep vu.
 - **Implement:** code, test, mo PR, sua feedback, merge khi du dieu kien.
 - **Review:** kiem tra du an khi Owner yeu cau, chay test/build/lint, review rui ro, phat hien drift va chuan bi bao cao/handoff cho Spec hoac Implement.

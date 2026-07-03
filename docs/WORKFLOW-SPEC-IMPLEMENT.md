@@ -10,6 +10,9 @@
 
 Tài liệu này giúp các luồng Codex không quên cách phối hợp sau vài task.
 
+Luật vận hành ngắn gọn, bắt buộc đọc trước, nằm tại
+[AI-OPERATING-RULES.md](./AI-OPERATING-RULES.md). Nếu workflow dài và luật ngắn mâu thuẫn, ưu tiên luật ngắn rồi cập nhật workflow.
+
 Luồng **Spec** giữ Source of Truth nghiệp vụ, rà KiotViet, ghi docs và review implementation theo nghiệp vụ.
 
 Luồng **Implement** thi công code, test, PR/deploy và phản hồi blocker kỹ thuật/nghiệp vụ.

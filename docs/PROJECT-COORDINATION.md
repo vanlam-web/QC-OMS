@@ -18,6 +18,8 @@ Every active slice must show:
 - the PR/branch/commit involved
 - whether Owner decision is needed
 
+The short mandatory operating contract is [AI-OPERATING-RULES.md](./AI-OPERATING-RULES.md). This board is the live state that proves those rules are being followed.
+
 If a thread finishes work, it must update/report the next-owner state. Owner should not need to ask "who is holding this now?"
 
 ---
@@ -71,6 +73,7 @@ No important work is considered handed off unless `Current owner`, `Next owner`,
 | Customer detail MVP spec base | Chốt SoT khách hàng có MST, bảng giá áp dụng và công nợ readonly trước khi merge implementation | Review | Review | Merged | PR #43 `codex/customer-detail-mvp-spec` | Merged into `main` at `7d83247`; kept as trace for stacked order |
 | Customer detail MVP implementation | Khách hàng có MST, bảng giá áp dụng và công nợ readonly để phục vụ bán hàng | Review | Review | Merged | PR #41 `codex/customer-detail-mvp-impl` | Merged into `main` at `1402f61`; browser smoke remains follow-up risk due local login redirect |
 | Governance/docs cleanup | Quy trình 3 luồng rõ ràng, không để Owner chuyển lời | Spec | Spec | Merged | PR #42 `codex/docs-governance-index-cleanup` | Merged into `main` at `7b1a85a`; no active next action, continue normal Owner intake |
+| AI operating rules compact | Tập trung luật vận hành một nơi, tránh Owner phải điều phối và tránh AI đọc nhầm tài liệu cũ | Review | Review | Waiting Review | PR #46 `codex/ai-operating-rules` | Review kiểm tra link, độ rõ của luật và quy tắc xóa/đánh dấu tài liệu lỗi thời |
 
 ---
 

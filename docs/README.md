@@ -27,6 +27,7 @@
 | [DOCUMENT_RULES.md](./DOCUMENT_RULES.md) | Quy tắc quản lý tài liệu (nguồn gốc) | ✅ |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Kiến trúc 8 tầng — Source of Truth | ✅ |
 | [DEVELOPMENT-PLAN.md](./DEVELOPMENT-PLAN.md) | Roadmap phát triển FE + BE theo từng giai đoạn | ✅ |
+| [AI-OPERATING-RULES.md](./AI-OPERATING-RULES.md) | Luật vận hành ngắn gọn cho Owner / Spec / Implement / Review / Coordinator | ✅ |
 | [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md) | Quy ước phối hợp Codex Spec / Implement / Review | ✅ |
 | [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md) | Vòng lặp tự động giao việc, review và merge | ✅ |
 | [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md) | Bảng điều phối việc đang làm, current owner, next owner và next action | 🔨 |
