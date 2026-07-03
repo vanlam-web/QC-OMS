@@ -1417,6 +1417,86 @@ button {
   gap: var(--space-2);
 }
 
+.customer-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgb(15 23 42 / 0.36);
+  padding: var(--space-4);
+}
+
+.customer-create-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 52rem);
+  max-height: min(42rem, calc(100vh - 2rem));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.customer-create-modal-header,
+.customer-create-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.customer-create-modal-header {
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+.customer-create-modal-header h2,
+.customer-create-modal-header p {
+  margin: 0;
+}
+
+.customer-create-modal-header h2 {
+  font-size: 1.125rem;
+}
+
+.customer-create-modal-header p {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.customer-create-modal-footer {
+  border-top: 1px solid var(--color-border-muted);
+  justify-content: flex-end;
+}
+
+.customer-create-form {
+  display: grid;
+  gap: var(--space-4);
+  overflow: auto;
+  padding: var(--space-4);
+}
+
+.customer-create-form fieldset {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+  margin: 0;
+  padding: var(--space-4);
+}
+
+.customer-create-form legend {
+  padding: 0 var(--space-2);
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.form-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .suppliers-header button,
 .suppliers-panel button {
   display: inline-flex;

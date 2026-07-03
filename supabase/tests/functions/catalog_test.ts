@@ -224,6 +224,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
     name: string;
     phone?: string;
     taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   }> = [];
   const repository = repo(["perm.create_order"], {
@@ -232,6 +233,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
       name: string;
       phone?: string;
       taxCode?: string;
+      address?: string;
       customerGroupId?: string | null;
     }) => {
       receivedInputs.push(input);
@@ -241,6 +243,7 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
         name: input.name,
         phone: input.phone ?? null,
         tax_code: input.taxCode ?? null,
+        address: input.address ?? null,
         customer_group_id: input.customerGroupId ?? null,
         customer_group: null,
       });
@@ -251,7 +254,12 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
     "/api/v1/customers",
     {
       method: "POST",
-      body: JSON.stringify({ name: " Cong ty ABC ", phone: " 090 123 4567 ", tax_code: " 0312345678 " }),
+      body: JSON.stringify({
+        name: " Cong ty ABC ",
+        phone: " 090 123 4567 ",
+        tax_code: " 0312345678 ",
+        address: " 12 Nguyen Trai, Quan 1 ",
+      }),
     },
     repository,
   );
@@ -262,9 +270,11 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
   assertEquals(receivedInputs[0].name, "Cong ty ABC");
   assertEquals(receivedInputs[0].phone, "090 123 4567");
   assertEquals(receivedInputs[0].taxCode, "0312345678");
+  assertEquals(receivedInputs[0].address, "12 Nguyen Trai, Quan 1");
   assertEquals(body.code, "KH000002");
   assertEquals(body.name, "Cong ty ABC");
   assertEquals(body.tax_code, "0312345678");
+  assertEquals(body.address, "12 Nguyen Trai, Quan 1");
 });
 
 Deno.test("customer update accepts optional tax code", async () => {
@@ -278,6 +288,7 @@ Deno.test("customer update accepts optional tax code", async () => {
       id: string;
       name?: string;
       taxCode?: string | null;
+      address?: string | null;
     }) => {
       receivedInputs.push(input);
       return Promise.resolve({
@@ -286,6 +297,7 @@ Deno.test("customer update accepts optional tax code", async () => {
         name: input.name ?? "Cong ty ABC",
         phone: null,
         tax_code: input.taxCode ?? null,
+        address: input.address ?? null,
         customer_group_id: null,
         customer_group: null,
       });

@@ -75,6 +75,7 @@ export interface CustomerData {
   name: string;
   phone: string | null;
   tax_code: string | null;
+  address: string | null;
   customer_group_id: string | null;
   customer_group: { id: string; code: string; name: string } | null;
 }
@@ -769,6 +770,7 @@ export interface FoundationRepository {
     name: string;
     phone?: string;
     taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   }): Promise<CustomerData>;
   updateCustomer(input: {
@@ -778,6 +780,7 @@ export interface FoundationRepository {
     name?: string;
     phone?: string | null;
     taxCode?: string | null;
+    address?: string | null;
     customerGroupId?: string | null;
   }): Promise<CustomerData | null>;
   listCustomerGroups(input: { organizationId: string; activeOnly: boolean }): Promise<CustomerGroupData[]>;

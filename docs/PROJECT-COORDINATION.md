@@ -71,6 +71,7 @@ No important work is considered handed off unless `Current owner`, `Next owner`,
 | Customer detail MVP spec base | Chốt SoT khách hàng có MST, bảng giá áp dụng và công nợ readonly trước khi merge implementation | Review | Review | Merged | PR #43 `codex/customer-detail-mvp-spec` | Merged into `main` at `7d83247`; kept as trace for stacked order |
 | Customer detail MVP implementation | Khách hàng có MST, bảng giá áp dụng và công nợ readonly để phục vụ bán hàng | Review | Review | Merged | PR #41 `codex/customer-detail-mvp-impl` | Merged into `main` at `1402f61`; browser smoke remains follow-up risk due local login redirect |
 | Governance/docs cleanup | Quy trình 3 luồng rõ ràng, không để Owner chuyển lời | Spec | Spec | Merged | PR #42 `codex/docs-governance-index-cleanup` | Merged into `main` at `7b1a85a`; no active next action, continue normal Owner intake |
+| Customer create KV-style modal | Tạo khách hàng theo KV nhưng rút gọn: modal riêng, MST, địa chỉ một dòng, không nhập khu vực/phường/xã rườm rà | Review | Review | Waiting Review | PR #45 `codex/customer-create-kv-modal` | Review kiểm tra PR #45; Owner kiểm tra nghiệp vụ modal tạo khách sau khi có môi trường đăng nhập |
 
 ---
 

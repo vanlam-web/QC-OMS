@@ -40,7 +40,7 @@ export function CustomersPage({
   const [saving, setSaving] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [detail, setDetail] = useState<DetailState | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '', taxCode: '' })
+  const [form, setForm] = useState({ name: '', phone: '', taxCode: '', address: '' })
 
   async function load(filters = { search }) {
     setError(null)
@@ -87,7 +87,7 @@ export function CustomersPage({
   function openCreate() {
     setCreateOpen(true)
     setDetail(null)
-    setForm({ name: '', phone: '', taxCode: '' })
+    setForm({ name: '', phone: '', taxCode: '', address: '' })
   }
 
   async function createCustomer(event: React.FormEvent<HTMLFormElement>) {
@@ -99,9 +99,10 @@ export function CustomersPage({
         name: form.name,
         ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
         ...(form.taxCode.trim() ? { tax_code: form.taxCode.trim() } : {}),
+        ...(form.address.trim() ? { address: form.address.trim() } : {}),
       })
       setCreateOpen(false)
-      setForm({ name: '', phone: '', taxCode: '' })
+      setForm({ name: '', phone: '', taxCode: '', address: '' })
       await load()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được khách hàng.'))
@@ -183,36 +184,69 @@ export function CustomersPage({
       {error ? <p role="alert">{error}</p> : null}
 
       {createOpen ? (
-        <section aria-label="Tạo khách hàng" className="suppliers-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Tạo khách hàng</h2>
-              <p>MST là thông tin tùy chọn trong MVP.</p>
-            </div>
-          </div>
-          <form aria-label="Tạo khách hàng" className="form-grid" onSubmit={createCustomer}>
-            <label>
-              Tên khách hàng
-              <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
-            </label>
-            <label>
-              Điện thoại
-              <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
-            </label>
-            <label>
-              MST
-              <input value={form.taxCode} onChange={(event) => setForm((current) => ({ ...current, taxCode: event.target.value }))} />
-            </label>
-            <div className="form-actions">
-              <button className="button button-primary" disabled={saving} type="submit">
-                Lưu khách hàng
+        <div aria-modal="true" className="customer-create-backdrop" role="dialog" aria-label="Tạo khách hàng">
+          <section className="customer-create-modal">
+            <header className="customer-create-modal-header">
+              <div>
+                <h2>Tạo khách hàng</h2>
+                <p>Mã khách hàng sẽ tự sinh nếu để trống.</p>
+              </div>
+              <button className="button button-ghost" type="button" aria-label="Đóng tạo khách hàng" onClick={() => setCreateOpen(false)}>
+                ×
               </button>
+            </header>
+
+            <form id="customer-create-form" aria-label="Tạo khách hàng" className="customer-create-form" onSubmit={createCustomer}>
+              <fieldset>
+                <legend>Thông tin chính</legend>
+                <div className="form-grid form-grid-two">
+                  <label>
+                    Tên khách hàng
+                    <input
+                      required
+                      placeholder="Bắt buộc"
+                      value={form.name}
+                      onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    Mã khách hàng
+                    <input value="Tự động" disabled />
+                  </label>
+                  <label>
+                    Điện thoại
+                    <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
+                  </label>
+                  <label>
+                    MST
+                    <input value={form.taxCode} onChange={(event) => setForm((current) => ({ ...current, taxCode: event.target.value }))} />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Địa chỉ</legend>
+                <label>
+                  Địa chỉ
+                  <input
+                    placeholder="Nhập một dòng địa chỉ"
+                    value={form.address}
+                    onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
+                  />
+                </label>
+              </fieldset>
+            </form>
+
+            <footer className="customer-create-modal-footer">
               <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
-                Hủy
+                Bỏ qua
               </button>
-            </div>
-          </form>
-        </section>
+              <button className="button button-primary" disabled={saving} type="submit" form="customer-create-form">
+                Lưu
+              </button>
+            </footer>
+          </section>
+        </div>
       ) : null}
 
       <section aria-label="Danh sách khách hàng" className="suppliers-panel">
@@ -304,6 +338,10 @@ function CustomerDetail({ detail }: { detail: DetailState }) {
         <div>
           <dt>MST</dt>
           <dd>{detail.customer.tax_code ?? 'Chưa có MST'}</dd>
+        </div>
+        <div>
+          <dt>Địa chỉ</dt>
+          <dd>{detail.customer.address ?? 'Chưa có địa chỉ'}</dd>
         </div>
         <div>
           <dt>Quy tắc giá</dt>

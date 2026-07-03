@@ -46,6 +46,7 @@ Trường tùy chọn:
 
 - SĐT.
 - MST.
+- Địa chỉ một dòng.
 - Nhóm khách hàng.
 - Ghi chú.
 
@@ -56,6 +57,7 @@ Quy tắc:
 - SĐT được phép trống.
 - Nếu có SĐT, phải chuẩn hóa và không trùng khách khác.
 - MST được phép trống; nếu nhập thì lưu theo hồ sơ khách để dùng khi xuất/chốt thông tin doanh nghiệp sau này.
+- Địa chỉ được phép trống; nếu nhập thì lưu một dòng tự do trong hồ sơ khách. Không tách khu vực/phường/xã cho MVP.
 - Khi đổi nhóm khách, lần bán sau dùng bảng giá của nhóm mới.
 - Nếu khách không có nhóm khách, lần bán sau dùng bảng giá chung.
 - Nếu khách đang mở ở POS, POS sẽ cập nhật giá tự động cho các dòng chưa sửa giá thủ công sau khi hồ sơ được lưu và đồng bộ.
@@ -64,12 +66,12 @@ Chi tiết khách MVP phải hiển thị readonly:
 
 | Thông tin | Nguồn dữ liệu |
 |---|---|
-| Mã khách hàng, tên khách hàng, SĐT, MST | `customers` |
+| Mã khách hàng, tên khách hàng, SĐT, MST, địa chỉ | `customers` |
 | Nhóm khách hàng | `customers.customer_group_id` -> `customer_groups` |
 | Bảng giá áp dụng | `customer_groups.price_list_id`; nếu không có nhóm thì lấy bảng giá chung |
 | Tổng nợ hiện tại, hóa đơn còn nợ | Finance Customer Debt API |
 
-Các trường như email, Facebook, sinh nhật, giới tính, địa chỉ nhận hàng, CCCD/CMND, hộ chiếu và ngân hàng không nằm trong MVP chi tiết khách.
+Các trường như email, Facebook, sinh nhật, giới tính, địa chỉ nhận hàng nhiều khu vực, CCCD/CMND, hộ chiếu và ngân hàng không nằm trong MVP chi tiết khách.
 
 ---
 

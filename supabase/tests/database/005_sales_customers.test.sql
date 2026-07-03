@@ -1,6 +1,6 @@
 begin;
 
-select plan(35);
+select plan(37);
 
 select has_table('public', 'customer_groups', 'customer_groups table exists');
 select has_column('public', 'customer_groups', 'organization_id', 'customer_groups.organization_id exists');
@@ -23,6 +23,7 @@ select has_column('public', 'customers', 'name', 'customers.name exists');
 select has_column('public', 'customers', 'phone', 'customers.phone exists');
 select has_column('public', 'customers', 'phone_normalized', 'customers.phone_normalized exists');
 select has_column('public', 'customers', 'tax_code', 'customers.tax_code exists');
+select has_column('public', 'customers', 'address', 'customers.address exists');
 select has_column('public', 'customers', 'customer_group_id', 'customers.customer_group_id exists');
 select col_not_null('public', 'customers', 'organization_id', 'customers.organization_id is not null');
 select col_not_null('public', 'customers', 'code', 'customers.code is not null');
@@ -65,7 +66,8 @@ values (
 );
 
 update public.customers
-set tax_code = '0312345678'
+set tax_code = '0312345678',
+    address = '12 Nguyen Trai, Quan 1'
 where code = 'KH900001';
 
 select is(
@@ -78,6 +80,12 @@ select is(
   (select tax_code from public.customers where code = 'KH900001'),
   '0312345678',
   'customer tax_code is stored'
+);
+
+select is(
+  (select address from public.customers where code = 'KH900001'),
+  '12 Nguyen Trai, Quan 1',
+  'customer one-line address is stored'
 );
 
 select throws_ok(

@@ -33,6 +33,7 @@ export interface Customer {
   name: string
   phone: string | null
   tax_code: string | null
+  address: string | null
   customer_group_id: string | null
   customer_group: { id: string; code: string; name: string } | null
 }

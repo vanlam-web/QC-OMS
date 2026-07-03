@@ -64,6 +64,7 @@ export function createCatalogService(api: CatalogApiRequester) {
       name: string
       phone?: string
       tax_code?: string
+      address?: string
       customer_group_id?: string | null
     }) =>
       api.request<Customer>('/api/v1/customers', {

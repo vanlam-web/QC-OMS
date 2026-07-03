@@ -17,6 +17,7 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
           name: 'Công ty ABC',
           phone: '0901234567',
           tax_code: '0312345678',
+          address: '12 Nguyễn Trãi, Quận 1',
           customer_group_id: 'group-1',
           customer_group: { id: 'group-1', code: 'VIP', name: 'Khách VIP' },
         },
@@ -26,6 +27,7 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
           name: 'Khách lẻ',
           phone: null,
           tax_code: null,
+          address: null,
           customer_group_id: null,
           customer_group: null,
         },
@@ -40,6 +42,7 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
       name: 'Công ty MST',
       phone: '0912345678',
       tax_code: '0311111111',
+      address: '99 Lê Lợi',
       customer_group_id: null,
       customer_group: null,
     })),
@@ -87,23 +90,26 @@ it('starts list-first without a blank customer detail panel', async () => {
   expect(screen.queryByRole('region', { name: /Chi tiết khách hàng/ })).not.toBeInTheDocument()
 })
 
-it('creates a customer with optional MST from the explicit create form', async () => {
+it('opens a KiotViet-style modal and creates a customer with optional MST and one-line address', async () => {
   const service = makeCatalogService()
   render(<CustomersPage service={service} orderService={makeOrderService()} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('KH000123')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo khách hàng' }))
 
-  const form = screen.getByRole('form', { name: 'Tạo khách hàng' })
+  const dialog = screen.getByRole('dialog', { name: 'Tạo khách hàng' })
+  const form = within(dialog).getByRole('form', { name: 'Tạo khách hàng' })
   await userEvent.type(within(form).getByLabelText('Tên khách hàng'), 'Công ty MST')
   await userEvent.type(within(form).getByLabelText('Điện thoại'), '0912345678')
   await userEvent.type(within(form).getByLabelText('MST'), '0311111111')
-  await userEvent.click(within(form).getByRole('button', { name: 'Lưu khách hàng' }))
+  await userEvent.type(within(form).getByLabelText('Địa chỉ'), '99 Lê Lợi')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Lưu' }))
 
   expect(service.createCustomer).toHaveBeenCalledWith({
     name: 'Công ty MST',
     phone: '0912345678',
     tax_code: '0311111111',
+    address: '99 Lê Lợi',
   })
 })
 
@@ -118,6 +124,7 @@ it('expands customer detail directly under the selected row and closes on second
   expect(detail).toBeInTheDocument()
   expect(row.nextElementSibling).toContainElement(detail)
   expect(within(detail).getByText('0312345678')).toBeInTheDocument()
+  expect(within(detail).getByText('12 Nguyễn Trãi, Quận 1')).toBeInTheDocument()
   expect(within(detail).getByText('Theo nhóm: Khách VIP')).toBeInTheDocument()
   expect(within(detail).getByText('250.000 ₫')).toBeInTheDocument()
   expect(within(detail).getByText('2 hóa đơn mở')).toBeInTheDocument()

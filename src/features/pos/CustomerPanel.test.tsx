@@ -12,6 +12,7 @@ const customer: Customer = {
   name: 'Khach le',
   phone: null,
   tax_code: null,
+  address: null,
   customer_group_id: null,
   customer_group: null,
 }
