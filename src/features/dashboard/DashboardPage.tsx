@@ -5,7 +5,7 @@ export function DashboardPage({
   currentUser,
   onOpenPos,
   onOpenAdmin,
-  onOpenCatalog,
+  onOpenPriceBook,
   onOpenSalesDocuments,
   onOpenSuppliers,
   onOpenPurchaseReceipts,
@@ -15,7 +15,7 @@ export function DashboardPage({
   currentUser: CurrentUserData
   onOpenPos: () => void
   onOpenAdmin: () => void
-  onOpenCatalog: () => void
+  onOpenPriceBook: () => void
   onOpenSalesDocuments: () => void
   onOpenSuppliers: () => void
   onOpenPurchaseReceipts: () => void
@@ -26,7 +26,7 @@ export function DashboardPage({
 
   function openModule(moduleId: string) {
     if (moduleId === 'pos') onOpenPos()
-    if (moduleId === 'price-book') onOpenCatalog()
+    if (moduleId === 'price-book') onOpenPriceBook()
     if (moduleId === 'sales-documents') onOpenSalesDocuments()
     if (moduleId === 'suppliers') onOpenSuppliers()
     if (moduleId === 'purchase-receipts') onOpenPurchaseReceipts()

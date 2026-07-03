@@ -8,6 +8,7 @@ import { FoundationAdminPage } from '../features/admin/FoundationAdminPage'
 import { createBrowserFoundationService } from '../features/users/foundation-service'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { CatalogPage } from '../features/catalog/CatalogPage'
+import { PriceBookPage } from '../features/catalog/PriceBookPage'
 import { CustomersPage } from '../features/catalog/CustomersPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
@@ -31,6 +32,7 @@ export function AppRoutes() {
         <Route path="/pos" element={<PosRoute />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/products" element={<CatalogRoute />} />
+        <Route path="/price-book" element={<PriceBookRoute />} />
         <Route path="/customers" element={<CustomersRoute />} />
         <Route path="/suppliers" element={<SuppliersRoute />} />
         <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
@@ -63,7 +65,7 @@ function DashboardRoute() {
         currentUser={currentUser}
         onOpenPos={() => navigate('/pos')}
         onOpenAdmin={() => navigate('/admin')}
-        onOpenCatalog={() => navigate('/products')}
+        onOpenPriceBook={() => navigate('/price-book')}
         onOpenSalesDocuments={() => navigate('/sales-documents')}
         onOpenSuppliers={() => navigate('/suppliers')}
         onOpenPurchaseReceipts={() => navigate('/purchase/receipts')}
@@ -132,6 +134,24 @@ function CatalogRoute() {
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
       <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
+}
+
+function PriceBookRoute() {
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
+  const navigate = useNavigate()
+  const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.edit_price_book')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <PriceBookPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
     </AppShell>
   )
 }

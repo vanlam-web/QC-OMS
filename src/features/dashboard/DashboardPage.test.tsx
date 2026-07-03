@@ -13,7 +13,7 @@ const currentUser: CurrentUserData = {
 it('shows account-based modules without requiring a POS machine', async () => {
   const onOpenPos = vi.fn()
   const onOpenAdmin = vi.fn()
-  const onOpenCatalog = vi.fn()
+  const onOpenPriceBook = vi.fn()
   const onOpenSalesDocuments = vi.fn()
   const onOpenSuppliers = vi.fn()
   const onOpenPurchaseReceipts = vi.fn()
@@ -24,7 +24,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
       currentUser={currentUser}
       onOpenPos={onOpenPos}
       onOpenAdmin={onOpenAdmin}
-      onOpenCatalog={onOpenCatalog}
+      onOpenPriceBook={onOpenPriceBook}
       onOpenSalesDocuments={onOpenSalesDocuments}
       onOpenSuppliers={onOpenSuppliers}
       onOpenPurchaseReceipts={onOpenPurchaseReceipts}
@@ -42,7 +42,7 @@ it('shows account-based modules without requiring a POS machine', async () => {
 
   expect(onOpenPos).toHaveBeenCalled()
   expect(onOpenAdmin).toHaveBeenCalled()
-  expect(onOpenCatalog).not.toHaveBeenCalled()
+  expect(onOpenPriceBook).not.toHaveBeenCalled()
   expect(onOpenSalesDocuments).not.toHaveBeenCalled()
   expect(onOpenSuppliers).not.toHaveBeenCalled()
   expect(onOpenPurchaseReceipts).not.toHaveBeenCalled()
@@ -55,7 +55,7 @@ it('disables modules when the account lacks the matching permission', () => {
       currentUser={{ ...currentUser, permissions: [] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenCatalog={vi.fn()}
+      onOpenPriceBook={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={vi.fn()}
       onOpenPurchaseReceipts={vi.fn()}
@@ -68,14 +68,14 @@ it('disables modules when the account lacks the matching permission', () => {
   expect(screen.getByRole('button', { name: 'Bảng giá' })).toBeDisabled()
 })
 
-it('enables product catalog for accounts with edit price book permission', async () => {
-  const onOpenCatalog = vi.fn()
+it('opens the dedicated price book route for accounts with edit price book permission', async () => {
+  const onOpenPriceBook = vi.fn()
   render(
     <DashboardPage
       currentUser={{ ...currentUser, permissions: ['perm.edit_price_book'] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenCatalog={onOpenCatalog}
+      onOpenPriceBook={onOpenPriceBook}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={vi.fn()}
       onOpenPurchaseReceipts={vi.fn()}
@@ -84,7 +84,7 @@ it('enables product catalog for accounts with edit price book permission', async
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Bảng giá' }))
-  expect(onOpenCatalog).toHaveBeenCalled()
+  expect(onOpenPriceBook).toHaveBeenCalled()
 })
 
 it('opens sales documents for sales or finance accounts', async () => {
@@ -94,7 +94,7 @@ it('opens sales documents for sales or finance accounts', async () => {
       currentUser={{ ...currentUser, permissions: ['perm.create_order'] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenCatalog={vi.fn()}
+      onOpenPriceBook={vi.fn()}
       onOpenSalesDocuments={onOpenSalesDocuments}
       onOpenSuppliers={vi.fn()}
       onOpenPurchaseReceipts={vi.fn()}
@@ -113,7 +113,7 @@ it('opens suppliers for inventory accounts', async () => {
       currentUser={{ ...currentUser, permissions: ['perm.manage_inventory'] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenCatalog={vi.fn()}
+      onOpenPriceBook={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={onOpenSuppliers}
       onOpenPurchaseReceipts={vi.fn()}
@@ -132,7 +132,7 @@ it('opens purchase receipts for inventory accounts', async () => {
       currentUser={{ ...currentUser, permissions: ['perm.manage_inventory'] }}
       onOpenPos={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenCatalog={vi.fn()}
+      onOpenPriceBook={vi.fn()}
       onOpenSalesDocuments={vi.fn()}
       onOpenSuppliers={vi.fn()}
       onOpenPurchaseReceipts={onOpenPurchaseReceipts}
