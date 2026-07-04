@@ -174,6 +174,21 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
 })
 
+it('keeps purchase receipt list layout when auxiliary lookup data fails', async () => {
+  const service = makeService({
+    listProducts: vi.fn(async () => {
+      throw new Error('product lookup failed')
+    }),
+  })
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  expect(await screen.findByText('PN000673')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Danh sách phiếu nhập' })).toHaveClass('management-list-surface')
+  expect(screen.getByRole('navigation', { name: 'Phân trang phiếu nhập' })).toHaveClass('management-table-footer')
+  expect(screen.getByRole('alert')).toHaveTextContent('Không tải được dữ liệu phụ phiếu nhập.')
+})
+
 it('summarizes purchase receipt validation state with scan-friendly KPI cards and panels', async () => {
   const service = makeService()
 
