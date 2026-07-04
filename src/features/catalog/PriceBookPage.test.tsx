@@ -72,16 +72,25 @@ it('renders the price book as a separate grid-first workspace', async () => {
 
   expect(screen.getByText('Đang tải bảng giá...')).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Bảng giá' })).toBeInTheDocument()
+  expect(screen.getByRole('main')).toHaveClass('management-page')
+  expect(document.querySelector('.catalog-shell')).toBeNull()
   expect(screen.queryByRole('form', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
 
+  const searchForm = screen.getByRole('search', { name: 'Tìm bảng giá' })
+  expect(searchForm.closest('.management-page-header')).not.toBeNull()
+  const filterForm = screen.getByRole('form', { name: 'Lọc bảng giá' })
+  expect(filterForm.closest('.management-filter-sidebar')).not.toBeNull()
+  expect(screen.getByRole('navigation', { name: 'Phân trang bảng giá' })).toHaveTextContent('1-1 / 1 hàng hóa')
+
   const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
+  expect(grid.closest('.management-table-viewport')).not.toBeNull()
   const header = within(grid).getByRole('row', {
     name: 'Mã hàng Tên hàng Giá nhập cuối Chi phí Lợi nhuận Bảng giá chung 25 Cách bán Trạng thái Thao tác',
   })
   expect(header).toBeInTheDocument()
   expect(within(grid).getAllByRole('cell', { name: 'Chưa cấu hình' })).toHaveLength(2)
   expect(within(grid).getAllByRole('cell', { name: 'Chưa xem' })).toHaveLength(2)
-  expect(service.listProducts).toHaveBeenCalledWith({ status: 'active' })
+  expect(service.listProducts).toHaveBeenCalledWith({ status: 'active', page: 1, page_size: 15 })
   expect(service.listPriceLists).toHaveBeenCalled()
 })
 

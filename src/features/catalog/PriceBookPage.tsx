@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react'
+import { Calculator, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import {
+  ManagementActionIconButton,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementTableFooter,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
 import type {
   PriceFormulaInput,
@@ -15,8 +27,12 @@ import type {
 interface PriceBookState {
   products: Product[]
   priceLists: PriceList[]
+  page: number
+  pageSize: number
   total: number
 }
+
+const priceBookPageSize = 15
 
 const sellMethodLabels: Record<SellMethod, string> = {
   quantity: 'Số lượng',
@@ -41,8 +57,13 @@ export function PriceBookPage({
   const [previewingFormula, setPreviewingFormula] = useState(false)
   const [applyingFormula, setApplyingFormula] = useState(false)
   const [formulaPreview, setFormulaPreview] = useState<PriceFormulaPreview | null>(null)
+  const [showFilters, setShowFilters] = useState(true)
   const [search, setSearch] = useState('')
+  const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
+  const [lastStatus, setLastStatus] = useState<ProductStatus | 'all'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(priceBookPageSize)
   const [formulaForm, setFormulaForm] = useState({
     name: '',
     codeContains: '',
@@ -59,15 +80,29 @@ export function PriceBookPage({
     adjustments: {} as Record<string, { mode: AdjustmentMode; value: string }>,
   })
 
-  async function load(filters = { search, status }) {
+  async function load(filters: { search?: string; status?: ProductStatus | 'all'; page?: number } = {}) {
+    const nextSearch = filters.search ?? lastSearch
+    const nextStatus = filters.status ?? lastStatus
+    const nextPage = filters.page ?? page
     setError(null)
     try {
-      const result = await service.listProducts({ search: filters.search, status: filters.status })
+      const result = await service.listProducts({
+        page: nextPage,
+        page_size: pageSize,
+        search: nextSearch || undefined,
+        status: nextStatus,
+      })
       setState((current) => ({
         products: result.items,
         priceLists: current?.priceLists ?? [],
+        page: result.page,
+        pageSize: result.page_size,
         total: result.total,
       }))
+      setLastSearch(nextSearch)
+      setLastStatus(nextStatus)
+      setPage(result.page)
+      setPageSize(result.page_size)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được bảng giá.'))
     }
@@ -77,14 +112,22 @@ export function PriceBookPage({
     let active = true
 
     async function loadInitialPriceBook() {
-      setError(null)
-      try {
+        setError(null)
+        try {
         const [result, priceListResult] = await Promise.all([
-          service.listProducts({ status: 'active' }),
+          service.listProducts({ page: 1, page_size: priceBookPageSize, status: 'active' }),
           service.listPriceLists(),
         ])
         if (!active) return
-        setState({ products: result.items, priceLists: priceListResult.items, total: result.total })
+        setState({
+          products: result.items,
+          priceLists: priceListResult.items,
+          page: result.page,
+          pageSize: result.page_size,
+          total: result.total,
+        })
+        setPage(result.page)
+        setPageSize(result.page_size)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được bảng giá.'))
       }
@@ -99,7 +142,19 @@ export function PriceBookPage({
 
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await load({ search, status })
+    setPage(1)
+    await load({ search: search.trim(), status, page: 1 })
+  }
+
+  async function resetPriceBookFilters() {
+    setSearch('')
+    setStatus('active')
+    setPage(1)
+    await load({ search: '', status: 'active', page: 1 })
+  }
+
+  async function goToPage(nextPage: number) {
+    await load({ page: nextPage })
   }
 
   function buildFormulaInput(): PriceFormulaInput {
@@ -201,43 +256,109 @@ export function PriceBookPage({
     return `Hiện tại ${current} → ${computed}`
   }
 
+  const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
+  const canGoPrevious = page > 1
+  const canGoNext = page < totalPages
+  const activeFilterSummary = lastSearch
+    ? `Tìm: ${lastSearch}`
+    : lastStatus === 'active'
+      ? 'Đang bán'
+      : lastStatus === 'inactive'
+        ? 'Trạng thái: Ngưng bán'
+        : 'Trạng thái: Tất cả'
+
   return (
-    <main className="catalog-shell">
-      <header className="catalog-header">
-        <div>
-          <h1>Bảng giá</h1>
-          <p>Quản lý bảng giá bán và công thức cập nhật giá theo hàng hóa</p>
-        </div>
-        <button type="button" onClick={onOpenDashboard}>
-          Trang chủ
-        </button>
-      </header>
-
-      {error ? <p role="alert">{error}</p> : null}
-      {state === null && error === null ? <p>Đang tải bảng giá...</p> : null}
-
-      <section className="catalog-panel" aria-label="Quản lý bảng giá">
-        <form aria-label="Lọc bảng giá" className="admin-form" onSubmit={filterProducts}>
-          <label>
-            Tìm
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
-          </label>
-          <label>
-            Trạng thái
-            <select value={status} onChange={(event) => setStatus(event.target.value as ProductStatus | 'all')}>
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngưng bán</option>
-              <option value="all">Tất cả</option>
-            </select>
-          </label>
-          <button type="submit">Lọc</button>
-        </form>
-
-        <div className="catalog-toolbar">
-          <button type="button" onClick={() => setFormulaOpen((current) => !current)}>
-            Tạo công thức cho bộ lọc này
+    <ManagementPage
+      title="Bảng giá"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Tìm bảng giá" onSubmit={filterProducts}>
+          <ManagementCompactSearch
+            label="Tìm bảng giá"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm mã, tên hàng"
+            trailingAction={
+              <ManagementActionIconButton
+                ariaLabel={formulaOpen ? 'Đóng công thức bảng giá' : 'Tạo công thức cho bộ lọc này'}
+                variant="primary"
+                onClick={() => setFormulaOpen((current) => !current)}
+              >
+                <Calculator aria-hidden="true" size={16} />
+              </ManagementActionIconButton>
+            }
+            value={search}
+            onChange={setSearch}
+          />
+          <button aria-label="Tìm" className="management-action-icon button button-secondary" title="Tìm" type="submit">
+            <Search aria-hidden="true" size={16} />
           </button>
-        </div>
+          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+            Trang chủ
+          </button>
+        </ManagementCompactToolbar>
+      }
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc bảng giá"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetPriceBookFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
+          <button
+            aria-label="Ẩn bộ lọc bảng giá"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
+          </button>
+          <form aria-label="Lọc bảng giá" onSubmit={filterProducts}>
+            <ManagementFilterGroup title="Trạng thái">
+              <label>
+                <input checked={status === 'active'} name="price-book-status" type="radio" onChange={() => setStatus('active')} />
+                Đang bán
+              </label>
+              <label>
+                <input
+                  checked={status === 'inactive'}
+                  name="price-book-status"
+                  type="radio"
+                  onChange={() => setStatus('inactive')}
+                />
+                Ngưng bán
+              </label>
+              <label>
+                <input checked={status === 'all'} name="price-book-status" type="radio" onChange={() => setStatus('all')} />
+                Tất cả
+              </label>
+            </ManagementFilterGroup>
+            <button className="button button-primary" type="submit">
+              Áp dụng
+            </button>
+          </form>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc bảng giá"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
+      <ManagementListSurface ariaLabel="Quản lý bảng giá">
+        {error ? <p role="alert">{error}</p> : null}
+        {state === null && error === null ? <p>Đang tải bảng giá...</p> : null}
 
         {formulaOpen ? (
           <form aria-label="Công thức bảng giá" className="catalog-formula-panel" onSubmit={previewFormula}>
@@ -456,45 +577,57 @@ export function PriceBookPage({
 
         {state ? (
           <>
-            <p>{state.total} hàng hóa</p>
-            <table aria-label="Lưới bảng giá">
-              <thead>
-                <tr>
-                  <th>Mã hàng</th>
-                  <th>Tên hàng</th>
-                  <th>Giá nhập cuối</th>
-                  <th>Chi phí</th>
-                  <th>Lợi nhuận</th>
-                  {state.priceLists.map((priceList) => (
-                    <th key={priceList.id}>{priceList.name}</th>
-                  ))}
-                  <th>Cách bán</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.products.map((product) => (
-                  <tr key={product.id}>
-                    <td>{product.code}</td>
-                    <td>{product.name}</td>
-                    <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
-                    <td>Chưa cấu hình</td>
-                    <td>Chưa cấu hình</td>
+            <ManagementTableViewport>
+              <table aria-label="Lưới bảng giá">
+                <thead>
+                  <tr>
+                    <th>Mã hàng</th>
+                    <th>Tên hàng</th>
+                    <th>Giá nhập cuối</th>
+                    <th>Chi phí</th>
+                    <th>Lợi nhuận</th>
                     {state.priceLists.map((priceList) => (
-                      <td key={priceList.id}>{renderPriceListCell(product, priceList)}</td>
+                      <th key={priceList.id}>{priceList.name}</th>
                     ))}
-                    <td>{sellMethodLabels[product.sell_method]}</td>
-                    <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
-                    <td>-</td>
+                    <th>Cách bán</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.products.map((product) => (
+                    <tr key={product.id}>
+                      <td>{product.code}</td>
+                      <td>{product.name}</td>
+                      <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
+                      <td>Chưa cấu hình</td>
+                      <td>Chưa cấu hình</td>
+                      {state.priceLists.map((priceList) => (
+                        <td key={priceList.id}>{renderPriceListCell(product, priceList)}</td>
+                      ))}
+                      <td>{sellMethodLabels[product.sell_method]}</td>
+                      <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
+                      <td>-</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ManagementTableViewport>
+            <ManagementTableFooter
+              ariaLabel="Phân trang bảng giá"
+              canGoNext={canGoNext}
+              canGoPrevious={canGoPrevious}
+              entityLabel="hàng hóa"
+              page={page}
+              pageSize={pageSize}
+              total={state.total}
+              onNext={() => void goToPage(page + 1)}
+              onPrevious={() => void goToPage(page - 1)}
+            />
           </>
         ) : null}
-      </section>
-    </main>
+      </ManagementListSurface>
+    </ManagementPage>
   )
 }
 
