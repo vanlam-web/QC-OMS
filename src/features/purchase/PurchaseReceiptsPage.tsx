@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Banknote, FilePlus2, Home, PackageCheck, Pencil, Plus, Save, Trash2, WalletCards } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Banknote, ChevronLeft, ChevronRight, FilePlus2, PackageCheck, Pencil, Plus, RotateCcw, Save, Search, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type {
   PurchaseReceipt,
@@ -15,7 +15,19 @@ import type {
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
-import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
+import {
+  ManagementActionIconButton,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementDetailRow,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementRowActionButton,
+  ManagementTableFooter,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -45,6 +57,8 @@ const blankForm: PurchaseReceiptInput = {
   paid_amount: 0,
   items: [blankLine],
 }
+
+const purchaseReceiptPageSize = 15
 
 function money(value: number) {
   return moneyFormatter.format(value)
@@ -133,11 +147,14 @@ export function PurchaseReceiptsPage({
   const [products, setProducts] = useState<PurchaseReceiptProduct[]>([])
   const [financeAccounts, setFinanceAccounts] = useState<PurchaseReceiptFinanceAccount[]>([])
   const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(purchaseReceiptPageSize)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<PurchaseReceiptStatus | 'all'>('draft')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [activePreset, setActivePreset] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(true)
   const [detailOpen, setDetailOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
@@ -197,18 +214,30 @@ export function PurchaseReceiptsPage({
       status?: PurchaseReceiptStatus | 'all'
       date_from?: string
       date_to?: string
+      page?: number
+      page_size?: number
     } = {
       search: search.trim() || undefined,
       status,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      page,
+      page_size: pageSize,
     },
   ) {
+    const nextPage = input.page ?? page
+    const nextPageSize = input.page_size ?? pageSize
     setError(null)
     try {
-      const result = await service.listReceipts(input)
+      const result = await service.listReceipts({
+        ...input,
+        page: nextPage,
+        page_size: nextPageSize,
+      })
       setReceipts(result.items)
       setTotal(result.total)
+      setPage(result.page)
+      setPageSize(result.page_size)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được phiếu nhập.'))
     }
@@ -221,7 +250,7 @@ export function PurchaseReceiptsPage({
       setError(null)
       try {
         const [receiptResult, supplierResult, productResult, financeAccountResult] = await Promise.all([
-          service.listReceipts({ status: 'draft' }),
+          service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize }),
           service.listSuppliers(),
           service.listProducts(),
           service.listFinanceAccounts(),
@@ -229,6 +258,8 @@ export function PurchaseReceiptsPage({
         if (!active) return
         setReceipts(receiptResult.items)
         setTotal(receiptResult.total)
+        setPage(receiptResult.page)
+        setPageSize(receiptResult.page_size)
         setSuppliers(supplierResult.items)
         setProducts(productResult.items.filter((product) => product.status === 'active'))
         setFinanceAccounts(financeAccountResult.items)
@@ -246,12 +277,13 @@ export function PurchaseReceiptsPage({
 
   async function filterReceipts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setPage(1)
     if (isExactPurchaseReceiptCode(search)) {
       setStatus('all')
       setDateFrom('')
       setDateTo('')
       setActivePreset(null)
-      await loadReceipts({ search: search.trim(), status: 'all' })
+      await loadReceipts({ search: search.trim(), status: 'all', page: 1, page_size: pageSize })
       return
     }
     await loadReceipts({
@@ -259,6 +291,8 @@ export function PurchaseReceiptsPage({
       status,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      page: 1,
+      page_size: pageSize,
     })
   }
 
@@ -278,11 +312,14 @@ export function PurchaseReceiptsPage({
     setDateFrom(nextDateFrom)
     setDateTo(nextDateTo)
     setActivePreset(next.preset ?? null)
+    setPage(1)
     await loadReceipts({
       search: nextSearch.trim() || undefined,
       status: nextStatus,
       date_from: nextDateFrom || undefined,
       date_to: nextDateTo || undefined,
+      page: 1,
+      page_size: pageSize,
     })
   }
 
@@ -292,11 +329,29 @@ export function PurchaseReceiptsPage({
     setDateFrom('')
     setDateTo('')
     setActivePreset(null)
-    await loadReceipts({ status: 'draft' })
+    setPage(1)
+    await loadReceipts({ status: 'draft', page: 1, page_size: pageSize })
+  }
+
+  async function goToPage(nextPage: number) {
+    await loadReceipts({ page: nextPage, page_size: pageSize })
   }
 
   async function openReceipt(receipt: PurchaseReceipt) {
+    if (editingId === receipt.id) {
+      setEditingId(null)
+      setEditingStatus(null)
+      setSelectedReceipt(null)
+      setDetailOpen(false)
+      setSupplierPaymentOpen(false)
+      return
+    }
     setError(null)
+    setDetailOpen(false)
+    setEditingId(null)
+    setEditingStatus(null)
+    setSelectedReceipt(null)
+    setSupplierPaymentOpen(false)
     try {
       const detail = await service.getReceipt(receipt.id)
       setDetailOpen(true)
@@ -499,7 +554,7 @@ export function PurchaseReceiptsPage({
 
   const today = localDateString(new Date())
   const monthRange = currentMonthRange()
-  const receiptFilterPresets: FilterPreset[] = [
+  const receiptFilterPresets = [
     {
       id: 'draft',
       label: 'Draft cần xử lý',
@@ -554,7 +609,7 @@ export function PurchaseReceiptsPage({
     },
   ]
 
-  const receiptFilterChips: ActiveFilterChip[] = [
+  const receiptFilterChips = [
     ...(search.trim()
       ? [
           {
@@ -636,73 +691,548 @@ export function PurchaseReceiptsPage({
     }
   }
 
-  return (
-    <main className="purchase-receipts-shell">
-      <header className="suppliers-header">
-        <div>
-          <h1>Phiếu nhập</h1>
-          <p>Draft server-side cho hàng thường; chưa tăng kho, chưa ghi công nợ hoặc sổ quỹ</p>
-        </div>
-        <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-          <Home aria-hidden="true" size={16} />
-          Trang chủ
-        </button>
-      </header>
+  const receiptKpis = (
+    <MetricGrid ariaLabel="Tổng quan phiếu nhập">
+      <MetricCard hint={`${receiptSummary.draftCount} draft đang mở`} label="Tổng phiếu" value={total || receipts?.length || 0} />
+      <MetricCard hint="Từ danh sách đang xem" label="Cần trả" tone="warning" value={<MoneyText value={receiptSummary.payable} />} />
+      <MetricCard
+        hint="Sau trả ngay và thanh toán NCC"
+        label="Còn phải trả"
+        tone={receiptSummary.remaining > 0 ? 'warning' : 'neutral'}
+        value={<MoneyText value={receiptSummary.remaining} />}
+      />
+    </MetricGrid>
+  )
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const canGoPrevious = page > 1
+  const canGoNext = page < totalPages
+  const activeFilterSummary = receiptFilterChips.map((chip) => chip.label).join(' • ')
 
-      {error ? <p role="alert">{error}</p> : null}
-      {receipts === null && error === null ? <p>Đang tải phiếu nhập...</p> : null}
-
-      <MetricGrid ariaLabel="Tổng quan phiếu nhập">
-        <MetricCard hint={`${receiptSummary.draftCount} draft đang mở`} label="Tổng phiếu" value={total || receipts?.length || 0} />
-        <MetricCard hint="Từ danh sách đang xem" label="Cần trả" tone="warning" value={<MoneyText value={receiptSummary.payable} />} />
-        <MetricCard
-          hint="Sau trả ngay và thanh toán NCC"
-          label="Còn phải trả"
-          tone={receiptSummary.remaining > 0 ? 'warning' : 'neutral'}
-          value={<MoneyText value={receiptSummary.remaining} />}
-        />
-      </MetricGrid>
-
-      <section
-        className={`suppliers-layout suppliers-layout-stacked${isCreatingReceipt ? ' suppliers-layout-create-active' : ''}`}
-        aria-label="Quản lý phiếu nhập"
-      >
-        <section aria-label="Danh sách phiếu nhập" className="suppliers-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Danh sách phiếu nhập</h2>
-              <p>Theo dõi draft, phiếu đã nhập và khoản cần trả NCC.</p>
-            </div>
-            <button className="button button-primary panel-heading-action" type="button" onClick={openCreateReceipt}>
-              <FilePlus2 aria-hidden="true" size={16} />
-              Tạo phiếu nhập
-            </button>
+  function receiptDetailContent(ariaLabel: string) {
+    return (
+      <section aria-label={ariaLabel} className="management-inline-detail" role="region">
+        <div className="panel-heading">
+          <div>
+            <h2>Chi tiết phiếu</h2>
+            <p>Nhập hàng thường, cuộn/tấm vật lý và thanh toán NCC.</p>
           </div>
-          <DataToolbar
-            ariaLabel="Lọc phiếu nhập"
-            chips={receiptFilterChips}
-            presets={receiptFilterPresets}
-            searchLabel="Tìm phiếu/NCC"
-            searchValue={search}
-            onReset={() => void resetReceiptFilters()}
-            onSearchChange={setSearch}
-            onSubmit={filterReceipts}
+        </div>
+        <form aria-label="Thông tin phiếu nhập" className="purchase-receipt-form" onSubmit={saveReceipt}>
+          <header>
+            <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
+            {editingId !== null && editingStatus === 'draft' ? (
+              <button className="button button-primary" disabled={posting} type="button" onClick={() => void postReceipt()}>
+                <PackageCheck aria-hidden="true" size={16} />
+                Hoàn thành nhập hàng
+              </button>
+            ) : null}
+            {editingId ? (
+              <button className="button button-secondary" type="button" onClick={resetForm}>
+                <FilePlus2 aria-hidden="true" size={15} />
+                Tạo mới
+              </button>
+            ) : null}
+          </header>
+          <label>
+            Nhà cung cấp
+            <select
+              required
+              disabled={isReadOnly}
+              value={form.supplier_id}
+              onChange={(event) => setForm((current) => ({ ...current, supplier_id: event.target.value }))}
+            >
+              <option value="">Chọn NCC</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.code} - {supplier.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Thời gian nhập
+            <input
+              required
+              disabled={isReadOnly}
+              type="datetime-local"
+              value={form.received_at}
+              onChange={(event) => setForm((current) => ({ ...current, received_at: event.target.value }))}
+            />
+          </label>
+          <label>
+            Số chứng từ NCC
+            <input
+              readOnly={isReadOnly}
+              value={form.supplier_document_no}
+              onChange={(event) => setForm((current) => ({ ...current, supplier_document_no: event.target.value }))}
+            />
+          </label>
+
+          <div className="receipt-lines">
+            {form.items.map((line, index) => (
+              <fieldset key={index}>
+                <legend>Dòng {index + 1}</legend>
+                <label>
+                  Sản phẩm dòng {index + 1}
+                  <select
+                    required
+                    disabled={isReadOnly}
+                    value={line.product_id}
+                    onChange={(event) => chooseProduct(index, event.target.value)}
+                  >
+                    <option value="">Chọn hàng</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.code} - {product.name} ({product.inventory_shape === 'roll' ? 'cuộn' : product.inventory_shape === 'sheet' ? 'tấm' : 'thường'})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Đơn vị dòng {index + 1}
+                  <input readOnly disabled={isReadOnly} value={line.unit_name} />
+                </label>
+                <label>
+                  Số lượng dòng {index + 1}
+                  <input
+                    min="0.000001"
+                    step="0.000001"
+                    type="number"
+                    readOnly={isReadOnly || line.inventory_shape !== 'normal'}
+                    value={line.quantity}
+                    onChange={(event) => updateLine(index, { quantity: Number(event.target.value) })}
+                  />
+                </label>
+                {line.inventory_shape === 'roll' ? (
+                  <div className="receipt-physical-box" aria-label={`Thông tin cuộn dòng ${index + 1}`}>
+                    {(() => {
+                      const payload = rollPayload(line.physical_payload)
+                      const firstLength = payload.rolls.lengths_m[0] ?? 1
+                      return (
+                        <>
+                          <label>
+                            Khổ rộng cuộn dòng {index + 1}
+                            <input
+                              min="0.001"
+                              step="0.001"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={payload.rolls.width_m}
+                              onChange={(event) => updateRollPayload(index, { width_m: Number(event.target.value) })}
+                            />
+                          </label>
+                          <label>
+                            Số cuộn cùng quy cách dòng {index + 1}
+                            <input
+                              min="1"
+                              step="1"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={payload.rolls.lengths_m.length}
+                              onChange={(event) => {
+                                const count = Math.max(Math.floor(Number(event.target.value) || 0), 0)
+                                const lengths = Array.from({ length: count }, () => firstLength || 1)
+                                setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
+                                updateRollPayload(index, { lengths_m: lengths })
+                              }}
+                            />
+                          </label>
+                          <label>
+                            Chiều dài mỗi cuộn dòng {index + 1}
+                            <input
+                              min="0.001"
+                              step="0.001"
+                              type="number"
+                              readOnly={isReadOnly}
+                              value={firstLength}
+                              onChange={(event) => {
+                                const length = Number(event.target.value)
+                                const lengths = payload.rolls.lengths_m.map(() => length)
+                                setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
+                                updateRollPayload(index, { lengths_m: lengths })
+                              }}
+                            />
+                          </label>
+                          <label>
+                            Chiều dài từng cuộn dòng {index + 1}
+                            <textarea
+                              readOnly={isReadOnly}
+                              value={rollLengthTexts[index] ?? payload.rolls.lengths_m.join(', ')}
+                              onChange={(event) => {
+                                const text = event.target.value
+                                setRollLengthTexts((current) => ({ ...current, [index]: text }))
+                                const lengths = text
+                                  .split(',')
+                                  .map((value) => Number(value.trim()))
+                                  .filter((value) => Number.isFinite(value) && value > 0)
+                                updateRollPayload(index, { lengths_m: lengths })
+                              }}
+                            />
+                          </label>
+                          <p className="physical-summary">{physicalSummary(line)}</p>
+                        </>
+                      )
+                    })()}
+                  </div>
+                ) : null}
+                {line.inventory_shape === 'sheet' ? (
+                  <div className="receipt-physical-box" aria-label={`Thông tin tấm dòng ${index + 1}`}>
+                    {sheetPayload(line.physical_payload).sheet_groups.map((group, groupIndex) => (
+                      <fieldset key={groupIndex}>
+                        <legend>Nhóm tấm {groupIndex + 1}</legend>
+                        <label>
+                          Rộng nhóm {groupIndex + 1} dòng {index + 1}
+                          <input
+                            min="0.001"
+                            step="0.001"
+                            type="number"
+                            readOnly={isReadOnly}
+                            value={group.width_m}
+                            onChange={(event) => updateSheetPayload(index, groupIndex, { width_m: Number(event.target.value) })}
+                          />
+                        </label>
+                        <label>
+                          Dài nhóm {groupIndex + 1} dòng {index + 1}
+                          <input
+                            min="0.001"
+                            step="0.001"
+                            type="number"
+                            readOnly={isReadOnly}
+                            value={group.length_m}
+                            onChange={(event) => updateSheetPayload(index, groupIndex, { length_m: Number(event.target.value) })}
+                          />
+                        </label>
+                        <label>
+                          Số tấm nhóm {groupIndex + 1} dòng {index + 1}
+                          <input
+                            min="1"
+                            step="1"
+                            type="number"
+                            readOnly={isReadOnly}
+                            value={group.quantity}
+                            onChange={(event) => updateSheetPayload(index, groupIndex, { quantity: Math.max(Math.floor(Number(event.target.value) || 0), 0) })}
+                          />
+                        </label>
+                        {isReadOnly ? null : (
+                          <button className="button button-danger" type="button" onClick={() => removeSheetGroup(index, groupIndex)}>
+                            <Trash2 aria-hidden="true" size={15} />
+                            Xóa nhóm tấm {groupIndex + 1}
+                          </button>
+                        )}
+                      </fieldset>
+                    ))}
+                    <p className="physical-summary">{physicalSummary(line)}</p>
+                    {isReadOnly ? null : (
+                      <button className="button button-secondary" type="button" onClick={() => addSheetGroup(index)}>
+                        <Plus aria-hidden="true" size={15} />
+                        Thêm nhóm kích thước
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+                <label>
+                  Đơn giá dòng {index + 1}
+                  <input
+                    min="0"
+                    step="1000"
+                    type="number"
+                    readOnly={isReadOnly}
+                    value={line.unit_cost}
+                    onChange={(event) => updateLine(index, { unit_cost: Number(event.target.value) })}
+                  />
+                </label>
+                <label>
+                  Giảm giá dòng {index + 1}
+                  <input
+                    min="0"
+                    step="1000"
+                    type="number"
+                    readOnly={isReadOnly}
+                    value={line.discount_amount}
+                    onChange={(event) => updateLine(index, { discount_amount: Number(event.target.value) })}
+                  />
+                </label>
+                <p>Thành tiền: {money(lineAmount(line))}</p>
+                {isReadOnly ? null : (
+                  <button className="button button-danger" type="button" onClick={() => removeLine(index)}>
+                    <Trash2 aria-hidden="true" size={15} />
+                    Xóa dòng
+                  </button>
+                )}
+              </fieldset>
+            ))}
+            {isReadOnly ? null : (
+              <button className="button button-secondary" type="button" onClick={addLine}>
+                <Plus aria-hidden="true" size={15} />
+                Thêm dòng
+              </button>
+            )}
+          </div>
+
+          <label>
+            Giảm giá phiếu
+            <input
+              min="0"
+              step="1000"
+              type="number"
+              readOnly={isReadOnly}
+              value={form.discount_amount}
+              onChange={(event) => setForm((current) => ({ ...current, discount_amount: Number(event.target.value) }))}
+            />
+          </label>
+          <label>
+            Đã trả tạm
+            <input
+              min="0"
+              step="1000"
+              type="number"
+              readOnly={isReadOnly}
+              value={form.paid_amount}
+              onChange={(event) => setForm((current) => ({ ...current, paid_amount: Number(event.target.value) }))}
+            />
+          </label>
+          <label>
+            Ghi chú
+            <textarea
+              readOnly={isReadOnly}
+              value={form.notes}
+              onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+            />
+          </label>
+
+          <div className="receipt-total-box">
+            <p>Tổng tiền hàng: {money(totals.subtotal)}</p>
+            <p>Cần trả NCC: {money(totals.payable)}</p>
+            <p>Còn phải trả: {money(totals.remaining)}</p>
+          </div>
+          {lowCostWarnings.length > 0 ? (
+            <div role="alert" className="receipt-warning-box">
+              {lowCostWarnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
+          ) : null}
+          {isReadOnly && selectedReceipt ? (
+            <section className="receipt-payment-history" aria-label="Lịch sử thanh toán NCC">
+              <h3>Lịch sử thanh toán NCC</h3>
+              {selectedReceipt.supplier_payments.length === 0 ? (
+                <p>Chưa có thanh toán NCC sau nhập.</p>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã phiếu</th>
+                      <th>Thời gian</th>
+                      <th>Phương thức</th>
+                      <th>Trạng thái</th>
+                      <th>Tiền chi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedReceipt.supplier_payments.map((payment) => (
+                      <tr key={payment.id}>
+                        <td>{payment.code}</td>
+                        <td>{new Date(payment.paid_at).toLocaleString('vi-VN')}</td>
+                        <td>{payment.payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt'}</td>
+                        <td>{payment.status === 'posted' ? 'Đã ghi' : 'Đã hủy'}</td>
+                        <td><MoneyText value={payment.amount} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {selectedReceiptOutstanding > 0 ? (
+                <button className="button button-primary" type="button" onClick={openSupplierPaymentForReceipt}>
+                  <WalletCards aria-hidden="true" size={16} />
+                  Thanh toán NCC
+                </button>
+              ) : null}
+            </section>
+          ) : null}
+          {supplierPaymentOpen && selectedReceipt ? (
+            <section role="form" aria-label="Thanh toán nhà cung cấp" className="receipt-payment-box">
+              <h3>Thanh toán NCC</h3>
+              <p>{selectedReceipt.code}</p>
+              <p>Còn nợ: {money(selectedReceiptOutstanding)}</p>
+              <label>
+                Số tiền trả cho {selectedReceipt.code}
+                <input
+                  min="0"
+                  max={selectedReceiptOutstanding}
+                  step="1000"
+                  type="number"
+                  value={supplierPaymentAmount}
+                  onChange={(event) => setSupplierPaymentAmount(Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Phương thức trả NCC
+                <select
+                  value={supplierPaymentMethod}
+                  onChange={(event) => setSupplierPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                >
+                  <option value="cash">Tiền mặt</option>
+                  <option value="bank_transfer">Chuyển khoản</option>
+                </select>
+              </label>
+              {supplierPaymentMethod === 'bank_transfer' ? (
+                <label>
+                  Tài khoản chuyển khoản NCC
+                  <select
+                    value={supplierPaymentFinanceAccountId}
+                    onChange={(event) => setSupplierPaymentFinanceAccountId(event.target.value)}
+                  >
+                    <option value="">Chọn tài khoản</option>
+                    {bankAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.code} - {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <button className="button button-primary" disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
+                <Banknote aria-hidden="true" size={16} />
+                Lưu thanh toán NCC
+              </button>
+            </section>
+          ) : null}
+          {editingId !== null && editingStatus === 'draft' && Number(form.paid_amount || 0) > 0 ? (
+            <div className="receipt-payment-box">
+              <label>
+                Phương thức trả ngay
+                <select
+                  value={paymentMethod}
+                  onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                >
+                  <option value="cash">Tiền mặt</option>
+                  <option value="bank_transfer">Chuyển khoản</option>
+                </select>
+              </label>
+              {paymentMethod === 'bank_transfer' ? (
+                <label>
+                  Tài khoản chuyển khoản
+                  <select value={financeAccountId} onChange={(event) => setFinanceAccountId(event.target.value)}>
+                    <option value="">Chọn tài khoản</option>
+                    {bankAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.code} - {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+          {isReadOnly ? null : (
+            <button className="button button-secondary" disabled={saving} type="submit">
+              <Save aria-hidden="true" size={16} />
+              Lưu draft phiếu nhập
+            </button>
+          )}
+        </form>
+      </section>
+    )
+  }
+
+  return (
+    <ManagementPage
+      title="Phiếu nhập"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc phiếu nhập" onSubmit={filterReceipts}>
+          <ManagementCompactSearch
+            label="Tìm phiếu/NCC"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm mã phiếu, NCC"
+            trailingAction={
+              <ManagementActionIconButton ariaLabel="Tạo phiếu nhập" variant="primary" onClick={openCreateReceipt}>
+                <FilePlus2 aria-hidden="true" size={16} />
+              </ManagementActionIconButton>
+            }
+            value={search}
+            onChange={setSearch}
+          />
+          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
+            <Search aria-hidden="true" size={16} />
+          </button>
+          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+            Trang chủ
+          </button>
+        </ManagementCompactToolbar>
+      }
+      kpis={receiptKpis}
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary || undefined}
+          ariaLabel="Bộ lọc phiếu nhập"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetReceiptFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
+          <button
+            aria-label="Ẩn bộ lọc phiếu nhập"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
           >
+            <ChevronLeft aria-hidden="true" size={16} />
+          </button>
+          <ManagementFilterGroup title="Trạng thái">
             <label>
-              Trạng thái
-              <select
-                value={status}
-                onChange={(event) => {
-                  setStatus(event.target.value as PurchaseReceiptStatus | 'all')
+              <input
+                checked={status === 'draft'}
+                name="purchase-receipt-status"
+                type="radio"
+                onChange={() => {
+                  setStatus('draft')
                   setActivePreset(null)
                 }}
-              >
-                <option value="draft">Phiếu tạm</option>
-                <option value="posted">Đã nhập</option>
-                <option value="cancelled">Đã hủy</option>
-                <option value="all">Tất cả</option>
-              </select>
+              />
+              Phiếu tạm
             </label>
+            <label>
+              <input
+                checked={status === 'posted'}
+                name="purchase-receipt-status"
+                type="radio"
+                onChange={() => {
+                  setStatus('posted')
+                  setActivePreset(null)
+                }}
+              />
+              Đã nhập
+            </label>
+            <label>
+              <input
+                checked={status === 'cancelled'}
+                name="purchase-receipt-status"
+                type="radio"
+                onChange={() => {
+                  setStatus('cancelled')
+                  setActivePreset(null)
+                }}
+              />
+              Đã hủy
+            </label>
+            <label>
+              <input
+                checked={status === 'all'}
+                name="purchase-receipt-status"
+                type="radio"
+                onChange={() => {
+                  setStatus('all')
+                  setActivePreset(null)
+                }}
+              />
+              Tất cả
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Thời gian">
             <label>
               Từ ngày
               <input
@@ -725,491 +1255,122 @@ export function PurchaseReceiptsPage({
                 }}
               />
             </label>
-          </DataToolbar>
-
-          {receipts ? (
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Preset">
+            {receiptFilterPresets.map((preset) => (
+              <button
+                aria-pressed={preset.active}
+                className={`button ${preset.active ? 'button-primary' : 'button-secondary'}`}
+                disabled={preset.disabled}
+                key={preset.id}
+                title={preset.title}
+                type="button"
+                onClick={preset.onSelect}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </ManagementFilterGroup>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc phiếu nhập"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
+      <ManagementListSurface ariaLabel="Danh sách phiếu nhập">
+        {error ? <p role="alert">{error}</p> : null}
+        {receipts === null && error === null ? <p>Đang tải phiếu nhập...</p> : null}
+        {isCreatingReceipt ? receiptDetailContent('Tạo phiếu nhập') : null}
+        {receipts ? (
             <>
-              <p className="result-count">{total} phiếu nhập</p>
               {receipts.length === 0 ? (
                 <EmptyState>
                   <p>Không có phiếu nhập phù hợp. Thử mở rộng ngày hoặc trạng thái.</p>
                 </EmptyState>
               ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Mã PN</th>
-                      <th>Thời gian</th>
-                      <th>Nhà cung cấp</th>
-                      <th>Số dòng</th>
-                      <th>Tổng tiền hàng</th>
-                      <th>Cần trả</th>
-                      <th>Đã trả</th>
-                      <th>Còn phải trả</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {receipts.map((receipt) => (
-                      <tr key={receipt.id}>
-                        <td>{receipt.code}</td>
-                        <td>{new Date(receipt.received_at).toLocaleString('vi-VN')}</td>
-                        <td>{`${receipt.supplier.code} - ${receipt.supplier.name}`}</td>
-                        <td>{receipt.items.length}</td>
-                        <td><MoneyText value={receipt.subtotal_amount} /></td>
-                        <td><MoneyText value={receipt.payable_amount} /></td>
-                        <td><MoneyText value={receipt.paid_amount} /></td>
-                        <td><MoneyText value={receipt.remaining_amount} /></td>
-                        <td>
-                          <StatusChip
-                            tone={receipt.status === 'draft' ? 'info' : receipt.status === 'posted' ? 'success' : 'danger'}
-                          >
-                            {statusText(receipt.status)}
-                          </StatusChip>
-                        </td>
-                        <td>
-                          <div className="row-actions">
-                            <button className="button button-secondary" type="button" onClick={() => void openReceipt(receipt)}>
-                              <Pencil aria-hidden="true" size={15} />
-                              {receipt.status === 'draft' ? 'Sửa' : 'Xem'} {receipt.code}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          ) : null}
-        </section>
-
-        {detailOpen ? (
-        <aside aria-label="Chi tiết và thao tác phiếu nhập" className="suppliers-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Chi tiết phiếu</h2>
-              <p>Nhập hàng thường, cuộn/tấm vật lý và thanh toán NCC.</p>
-            </div>
-          </div>
-          <form aria-label="Thông tin phiếu nhập" className="purchase-receipt-form" onSubmit={saveReceipt}>
-            <header>
-              <h2>{isReadOnly ? 'Xem phiếu nhập' : editingId ? 'Sửa draft phiếu nhập' : 'Tạo draft phiếu nhập'}</h2>
-              {editingId !== null && editingStatus === 'draft' ? (
-                <button className="button button-primary" disabled={posting} type="button" onClick={() => void postReceipt()}>
-                  <PackageCheck aria-hidden="true" size={16} />
-                  Hoàn thành nhập hàng
-                </button>
-              ) : null}
-              {editingId ? (
-                <button className="button button-secondary" type="button" onClick={resetForm}>
-                  <FilePlus2 aria-hidden="true" size={15} />
-                  Tạo mới
-                </button>
-              ) : null}
-            </header>
-            <label>
-              Nhà cung cấp
-              <select
-                required
-                disabled={isReadOnly}
-                value={form.supplier_id}
-                onChange={(event) => setForm((current) => ({ ...current, supplier_id: event.target.value }))}
-              >
-                <option value="">Chọn NCC</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.code} - {supplier.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Thời gian nhập
-              <input
-                required
-                disabled={isReadOnly}
-                type="datetime-local"
-                value={form.received_at}
-                onChange={(event) => setForm((current) => ({ ...current, received_at: event.target.value }))}
-              />
-            </label>
-            <label>
-              Số chứng từ NCC
-              <input
-                readOnly={isReadOnly}
-                value={form.supplier_document_no}
-                onChange={(event) => setForm((current) => ({ ...current, supplier_document_no: event.target.value }))}
-              />
-            </label>
-
-            <div className="receipt-lines">
-              {form.items.map((line, index) => (
-                <fieldset key={index}>
-                  <legend>Dòng {index + 1}</legend>
-                  <label>
-                    Sản phẩm dòng {index + 1}
-                    <select
-                      required
-                      disabled={isReadOnly}
-                      value={line.product_id}
-                      onChange={(event) => chooseProduct(index, event.target.value)}
-                    >
-                      <option value="">Chọn hàng</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.code} - {product.name} ({product.inventory_shape === 'roll' ? 'cuộn' : product.inventory_shape === 'sheet' ? 'tấm' : 'thường'})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Đơn vị dòng {index + 1}
-                    <input readOnly disabled={isReadOnly} value={line.unit_name} />
-                  </label>
-                  <label>
-                    Số lượng dòng {index + 1}
-                    <input
-                      min="0.000001"
-                      step="0.000001"
-                      type="number"
-                      readOnly={isReadOnly || line.inventory_shape !== 'normal'}
-                      value={line.quantity}
-                      onChange={(event) => updateLine(index, { quantity: Number(event.target.value) })}
-                    />
-                  </label>
-                  {line.inventory_shape === 'roll' ? (
-                    <div className="receipt-physical-box" aria-label={`Thông tin cuộn dòng ${index + 1}`}>
-                      {(() => {
-                        const payload = rollPayload(line.physical_payload)
-                        const firstLength = payload.rolls.lengths_m[0] ?? 1
-                        return (
-                          <>
-                            <label>
-                              Khổ rộng cuộn dòng {index + 1}
-                              <input
-                                min="0.001"
-                                step="0.001"
-                                type="number"
-                                readOnly={isReadOnly}
-                                value={payload.rolls.width_m}
-                                onChange={(event) => updateRollPayload(index, { width_m: Number(event.target.value) })}
-                              />
-                            </label>
-                            <label>
-                              Số cuộn cùng quy cách dòng {index + 1}
-                              <input
-                                min="1"
-                                step="1"
-                                type="number"
-                                readOnly={isReadOnly}
-                                value={payload.rolls.lengths_m.length}
-                                onChange={(event) => {
-                                  const count = Math.max(Math.floor(Number(event.target.value) || 0), 0)
-                                  const lengths = Array.from({ length: count }, () => firstLength || 1)
-                                  setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
-                                  updateRollPayload(index, { lengths_m: lengths })
-                                }}
-                              />
-                            </label>
-                            <label>
-                              Chiều dài mỗi cuộn dòng {index + 1}
-                              <input
-                                min="0.001"
-                                step="0.001"
-                                type="number"
-                                readOnly={isReadOnly}
-                                value={firstLength}
-                                onChange={(event) => {
-                                  const length = Number(event.target.value)
-                                  const lengths = payload.rolls.lengths_m.map(() => length)
-                                  setRollLengthTexts((current) => ({ ...current, [index]: lengths.join(', ') }))
-                                  updateRollPayload(index, { lengths_m: lengths })
-                                }}
-                              />
-                            </label>
-                            <label>
-                              Chiều dài từng cuộn dòng {index + 1}
-                              <textarea
-                                readOnly={isReadOnly}
-                                value={rollLengthTexts[index] ?? payload.rolls.lengths_m.join(', ')}
-                                onChange={(event) => {
-                                  const text = event.target.value
-                                  setRollLengthTexts((current) => ({ ...current, [index]: text }))
-                                  const lengths = text
-                                    .split(',')
-                                    .map((value) => Number(value.trim()))
-                                    .filter((value) => Number.isFinite(value) && value > 0)
-                                  updateRollPayload(index, { lengths_m: lengths })
-                                }}
-                              />
-                            </label>
-                            <p className="physical-summary">{physicalSummary(line)}</p>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  ) : null}
-                  {line.inventory_shape === 'sheet' ? (
-                    <div className="receipt-physical-box" aria-label={`Thông tin tấm dòng ${index + 1}`}>
-                      {sheetPayload(line.physical_payload).sheet_groups.map((group, groupIndex) => (
-                        <fieldset key={groupIndex}>
-                          <legend>Nhóm tấm {groupIndex + 1}</legend>
-                          <label>
-                            Rộng nhóm {groupIndex + 1} dòng {index + 1}
-                            <input
-                              min="0.001"
-                              step="0.001"
-                              type="number"
-                              readOnly={isReadOnly}
-                              value={group.width_m}
-                              onChange={(event) => updateSheetPayload(index, groupIndex, { width_m: Number(event.target.value) })}
-                            />
-                          </label>
-                          <label>
-                            Dài nhóm {groupIndex + 1} dòng {index + 1}
-                            <input
-                              min="0.001"
-                              step="0.001"
-                              type="number"
-                              readOnly={isReadOnly}
-                              value={group.length_m}
-                              onChange={(event) => updateSheetPayload(index, groupIndex, { length_m: Number(event.target.value) })}
-                            />
-                          </label>
-                          <label>
-                            Số tấm nhóm {groupIndex + 1} dòng {index + 1}
-                            <input
-                              min="1"
-                              step="1"
-                              type="number"
-                              readOnly={isReadOnly}
-                              value={group.quantity}
-                              onChange={(event) => updateSheetPayload(index, groupIndex, { quantity: Math.max(Math.floor(Number(event.target.value) || 0), 0) })}
-                            />
-                          </label>
-                          {isReadOnly ? null : (
-                            <button className="button button-danger" type="button" onClick={() => removeSheetGroup(index, groupIndex)}>
-                              <Trash2 aria-hidden="true" size={15} />
-                              Xóa nhóm tấm {groupIndex + 1}
-                            </button>
-                          )}
-                        </fieldset>
-                      ))}
-                      <p className="physical-summary">{physicalSummary(line)}</p>
-                      {isReadOnly ? null : (
-                        <button className="button button-secondary" type="button" onClick={() => addSheetGroup(index)}>
-                          <Plus aria-hidden="true" size={15} />
-                          Thêm nhóm kích thước
-                        </button>
-                      )}
-                    </div>
-                  ) : null}
-                  <label>
-                    Đơn giá dòng {index + 1}
-                    <input
-                      min="0"
-                      step="1000"
-                      type="number"
-                      readOnly={isReadOnly}
-                      value={line.unit_cost}
-                      onChange={(event) => updateLine(index, { unit_cost: Number(event.target.value) })}
-                    />
-                  </label>
-                  <label>
-                    Giảm giá dòng {index + 1}
-                    <input
-                      min="0"
-                      step="1000"
-                      type="number"
-                      readOnly={isReadOnly}
-                      value={line.discount_amount}
-                      onChange={(event) => updateLine(index, { discount_amount: Number(event.target.value) })}
-                    />
-                  </label>
-                  <p>Thành tiền: {money(lineAmount(line))}</p>
-                  {isReadOnly ? null : (
-                    <button className="button button-danger" type="button" onClick={() => removeLine(index)}>
-                      <Trash2 aria-hidden="true" size={15} />
-                      Xóa dòng
-                    </button>
-                  )}
-                </fieldset>
-              ))}
-              {isReadOnly ? null : (
-                <button className="button button-secondary" type="button" onClick={addLine}>
-                  <Plus aria-hidden="true" size={15} />
-                  Thêm dòng
-                </button>
-              )}
-            </div>
-
-            <label>
-              Giảm giá phiếu
-              <input
-                min="0"
-                step="1000"
-                type="number"
-                readOnly={isReadOnly}
-                value={form.discount_amount}
-                onChange={(event) => setForm((current) => ({ ...current, discount_amount: Number(event.target.value) }))}
-              />
-            </label>
-            <label>
-              Đã trả tạm
-              <input
-                min="0"
-                step="1000"
-                type="number"
-                readOnly={isReadOnly}
-                value={form.paid_amount}
-                onChange={(event) => setForm((current) => ({ ...current, paid_amount: Number(event.target.value) }))}
-              />
-            </label>
-            <label>
-              Ghi chú
-              <textarea
-                readOnly={isReadOnly}
-                value={form.notes}
-                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-              />
-            </label>
-
-            <div className="receipt-total-box">
-              <p>Tổng tiền hàng: {money(totals.subtotal)}</p>
-              <p>Cần trả NCC: {money(totals.payable)}</p>
-              <p>Còn phải trả: {money(totals.remaining)}</p>
-            </div>
-            {lowCostWarnings.length > 0 ? (
-              <div role="alert" className="receipt-warning-box">
-                {lowCostWarnings.map((warning) => (
-                  <p key={warning}>{warning}</p>
-                ))}
-              </div>
-            ) : null}
-            {isReadOnly && selectedReceipt ? (
-              <section className="receipt-payment-history" aria-label="Lịch sử thanh toán NCC">
-                <h3>Lịch sử thanh toán NCC</h3>
-                {selectedReceipt.supplier_payments.length === 0 ? (
-                  <p>Chưa có thanh toán NCC sau nhập.</p>
-                ) : (
+                <ManagementTableViewport>
                   <table>
                     <thead>
                       <tr>
-                        <th>Mã phiếu</th>
+                        <th>Mã PN</th>
                         <th>Thời gian</th>
-                        <th>Phương thức</th>
+                        <th>Nhà cung cấp</th>
+                        <th>Số dòng</th>
+                        <th>Tổng tiền hàng</th>
+                        <th>Cần trả</th>
+                        <th>Đã trả</th>
+                        <th>Còn phải trả</th>
                         <th>Trạng thái</th>
-                        <th>Tiền chi</th>
+                        <th>Mở</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedReceipt.supplier_payments.map((payment) => (
-                        <tr key={payment.id}>
-                          <td>{payment.code}</td>
-                          <td>{new Date(payment.paid_at).toLocaleString('vi-VN')}</td>
-                          <td>{payment.payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt'}</td>
-                          <td>{payment.status === 'posted' ? 'Đã ghi' : 'Đã hủy'}</td>
-                          <td><MoneyText value={payment.amount} /></td>
-                        </tr>
-                      ))}
+                      {receipts.map((receipt) => {
+                        const detailForRow = editingId === receipt.id
+                        return (
+                          <Fragment key={receipt.id}>
+                            <tr className={detailForRow ? 'management-data-row-selected' : undefined}>
+                              <td>{receipt.code}</td>
+                              <td>{new Date(receipt.received_at).toLocaleString('vi-VN')}</td>
+                              <td>{`${receipt.supplier.code} - ${receipt.supplier.name}`}</td>
+                              <td>{receipt.items.length}</td>
+                              <td><MoneyText value={receipt.subtotal_amount} /></td>
+                              <td><MoneyText value={receipt.payable_amount} /></td>
+                              <td><MoneyText value={receipt.paid_amount} /></td>
+                              <td><MoneyText value={receipt.remaining_amount} /></td>
+                              <td>
+                                <StatusChip
+                                  tone={receipt.status === 'draft' ? 'info' : receipt.status === 'posted' ? 'success' : 'danger'}
+                                >
+                                  {statusText(receipt.status)}
+                                </StatusChip>
+                              </td>
+                              <td>
+                                <div className="row-actions">
+                                  <ManagementRowActionButton
+                                    ariaLabel={detailForRow ? `Đóng chi tiết ${receipt.code}` : `Mở chi tiết ${receipt.code}`}
+                                    onClick={() => void openReceipt(receipt)}
+                                  >
+                                    <Pencil aria-hidden="true" size={15} />
+                                  </ManagementRowActionButton>
+                                </div>
+                              </td>
+                            </tr>
+                            {detailForRow ? (
+                              <ManagementDetailRow colSpan={10} label={`Chi tiết phiếu nhập ${receipt.code}`}>
+                                {receiptDetailContent(`Nội dung chi tiết ${receipt.code}`)}
+                              </ManagementDetailRow>
+                            ) : null}
+                          </Fragment>
+                        )
+                      })}
                     </tbody>
                   </table>
-                )}
-                {selectedReceiptOutstanding > 0 ? (
-                  <button className="button button-primary" type="button" onClick={openSupplierPaymentForReceipt}>
-                    <WalletCards aria-hidden="true" size={16} />
-                    Thanh toán NCC
-                  </button>
-                ) : null}
-              </section>
-            ) : null}
-            {supplierPaymentOpen && selectedReceipt ? (
-              <section role="form" aria-label="Thanh toán nhà cung cấp" className="receipt-payment-box">
-                <h3>Thanh toán NCC</h3>
-                <p>{selectedReceipt.code}</p>
-                <p>Còn nợ: {money(selectedReceiptOutstanding)}</p>
-                <label>
-                  Số tiền trả cho {selectedReceipt.code}
-                  <input
-                    min="0"
-                    max={selectedReceiptOutstanding}
-                    step="1000"
-                    type="number"
-                    value={supplierPaymentAmount}
-                    onChange={(event) => setSupplierPaymentAmount(Number(event.target.value))}
-                  />
-                </label>
-                <label>
-                  Phương thức trả NCC
-                  <select
-                    value={supplierPaymentMethod}
-                    onChange={(event) => setSupplierPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
-                  >
-                    <option value="cash">Tiền mặt</option>
-                    <option value="bank_transfer">Chuyển khoản</option>
-                  </select>
-                </label>
-                {supplierPaymentMethod === 'bank_transfer' ? (
-                  <label>
-                    Tài khoản chuyển khoản NCC
-                    <select
-                      value={supplierPaymentFinanceAccountId}
-                      onChange={(event) => setSupplierPaymentFinanceAccountId(event.target.value)}
-                    >
-                      <option value="">Chọn tài khoản</option>
-                      {bankAccounts.map((account) => (
-                        <option key={account.id} value={account.id}>
-                          {account.code} - {account.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-                <button className="button button-primary" disabled={posting} type="button" onClick={() => void saveSupplierPayment()}>
-                  <Banknote aria-hidden="true" size={16} />
-                  Lưu thanh toán NCC
-                </button>
-              </section>
-            ) : null}
-            {editingId !== null && editingStatus === 'draft' && Number(form.paid_amount || 0) > 0 ? (
-              <div className="receipt-payment-box">
-                <label>
-                  Phương thức trả ngay
-                  <select
-                    value={paymentMethod}
-                    onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
-                  >
-                    <option value="cash">Tiền mặt</option>
-                    <option value="bank_transfer">Chuyển khoản</option>
-                  </select>
-                </label>
-                {paymentMethod === 'bank_transfer' ? (
-                  <label>
-                    Tài khoản chuyển khoản
-                    <select value={financeAccountId} onChange={(event) => setFinanceAccountId(event.target.value)}>
-                      <option value="">Chọn tài khoản</option>
-                      {bankAccounts.map((account) => (
-                        <option key={account.id} value={account.id}>
-                          {account.code} - {account.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-              </div>
-            ) : null}
-            {isReadOnly ? null : (
-              <button className="button button-secondary" disabled={saving} type="submit">
-                <Save aria-hidden="true" size={16} />
-              Lưu draft phiếu nhập
-            </button>
-            )}
-          </form>
-        </aside>
-        ) : null}
-      </section>
-    </main>
+                </ManagementTableViewport>
+              )}
+              <ManagementTableFooter
+                ariaLabel="Phân trang phiếu nhập"
+                canGoNext={canGoNext}
+                canGoPrevious={canGoPrevious}
+                entityLabel="phiếu nhập"
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onNext={() => void goToPage(page + 1)}
+                onPrevious={() => void goToPage(page - 1)}
+              />
+            </>
+          ) : null}
+      </ManagementListSurface>
+    </ManagementPage>
   )
 }
