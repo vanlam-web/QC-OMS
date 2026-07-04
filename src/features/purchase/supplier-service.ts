@@ -29,10 +29,12 @@ export interface SupplierInput {
 
 export function createSupplierService(api: SupplierApiRequester) {
   return {
-    listSuppliers: (input: { search?: string; status?: SupplierStatus | 'all' } = {}) => {
+    listSuppliers: (input: { search?: string; status?: SupplierStatus | 'all'; page?: number; page_size?: number } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('q', input.search)
       if (input.status) params.set('status', input.status)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<SupplierListResponse>(`/api/v1/suppliers${query ? `?${query}` : ''}`)
     },

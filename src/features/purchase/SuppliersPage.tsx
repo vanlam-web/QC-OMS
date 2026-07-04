@@ -1,10 +1,22 @@
-import { useEffect, useState } from 'react'
-import { Home, Pencil, Plus, Save, WalletCards, X } from 'lucide-react'
+import { Fragment, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Search, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
-import { DataToolbar, type ActiveFilterChip, type FilterPreset } from '../../components/ui-shell/filters'
+import {
+  ManagementActionIconButton,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementDetailRow,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementRowActionButton,
+  ManagementTableFooter,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -28,6 +40,8 @@ const blankForm: SupplierInput = {
   status: 'active',
 }
 
+const supplierPageSize = 15
+
 function supplierStatusText(status: SupplierStatus | 'all') {
   if (status === 'active') return 'Đang hoạt động'
   if (status === 'inactive') return 'Ngừng hoạt động'
@@ -46,7 +60,12 @@ export function SuppliersPage({
   const [financeAccounts, setFinanceAccounts] = useState<SupplierFinanceAccount[]>([])
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
+  const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<SupplierStatus | 'all'>('active')
+  const [lastStatus, setLastStatus] = useState<SupplierStatus | 'all'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(supplierPageSize)
+  const [showFilters, setShowFilters] = useState(true)
   const [detailOpen, setDetailOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<SupplierInput>(blankForm)
@@ -66,12 +85,30 @@ export function SuppliersPage({
   const purchaseTotal = suppliers?.reduce((sum, supplier) => sum + supplier.total_purchase_amount, 0) ?? 0
   const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
 
-  async function loadSuppliers(input: { search?: string; status?: SupplierStatus | 'all' } = { search, status }) {
+  async function loadSuppliers(
+    input: { search?: string; status?: SupplierStatus | 'all'; page?: number } = {
+      search: lastSearch,
+      status: lastStatus,
+      page,
+    },
+  ) {
+    const nextSearch = input.search ?? lastSearch
+    const nextStatus = input.status ?? lastStatus
+    const nextPage = input.page ?? page
     setError(null)
     try {
-      const result = await service.listSuppliers(input)
+      const result = await service.listSuppliers({
+        page: nextPage,
+        page_size: pageSize,
+        search: nextSearch?.trim() || undefined,
+        status: nextStatus,
+      })
       setSuppliers(result.items)
       setTotal(result.total)
+      setLastSearch(nextSearch?.trim() ?? '')
+      setLastStatus(nextStatus)
+      setPage(result.page)
+      setPageSize(result.page_size)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được nhà cung cấp.'))
     }
@@ -84,13 +121,15 @@ export function SuppliersPage({
       setError(null)
       try {
         const [supplierResult, customerResult, financeAccountResult] = await Promise.all([
-          service.listSuppliers({ status: 'active' }),
+          service.listSuppliers({ status: 'active', page: 1, page_size: supplierPageSize }),
           service.listCustomers(),
           service.listFinanceAccounts(),
         ])
         if (!active) return
         setSuppliers(supplierResult.items)
         setTotal(supplierResult.total)
+        setPage(supplierResult.page)
+        setPageSize(supplierResult.page_size)
         setCustomers(customerResult.items)
         setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
@@ -107,29 +146,30 @@ export function SuppliersPage({
 
   async function filterSuppliers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await loadSuppliers({ search: search.trim() || undefined, status })
-  }
-
-  async function applySupplierFilters(next: { search?: string; status?: SupplierStatus | 'all' }) {
-    const nextSearch = next.search ?? search
-    const nextStatus = next.status ?? status
-    setSearch(nextSearch)
-    setStatus(nextStatus)
-    await loadSuppliers({ search: nextSearch.trim() || undefined, status: nextStatus })
+    setPage(1)
+    await loadSuppliers({ search: search.trim(), status, page: 1 })
   }
 
   async function resetSupplierFilters() {
     setSearch('')
     setStatus('active')
-    await loadSuppliers({ status: 'active' })
+    setPage(1)
+    await loadSuppliers({ search: '', status: 'active', page: 1 })
+  }
+
+  async function goToPage(nextPage: number) {
+    await loadSuppliers({ page: nextPage })
   }
 
   async function openSupplier(supplier: Supplier) {
     setError(null)
+    setDetailOpen(false)
+    setPaymentSupplier(null)
+    setEditingId(null)
+    setForm(blankForm)
     try {
       const detail = await service.getSupplier(supplier.id)
       setDetailOpen(true)
-      setPaymentSupplier(null)
       setEditingId(detail.id)
       setForm({
         code: detail.code,
@@ -158,8 +198,9 @@ export function SuppliersPage({
         await service.updateSupplier(editingId, form)
       }
       setEditingId(null)
+      setDetailOpen(false)
       setForm(blankForm)
-      await loadSuppliers({ search: search.trim() || undefined, status })
+      await loadSuppliers()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được nhà cung cấp.'))
     } finally {
@@ -169,12 +210,15 @@ export function SuppliersPage({
 
   async function openSupplierPayment(supplier: Supplier) {
     setError(null)
+    setPaymentSupplier(null)
+    setDetailOpen(false)
+    setEditingId(null)
+    setForm(blankForm)
+    setPayableReceipts([])
+    setPaymentAmounts({})
     try {
       const result = await service.listPayableReceipts(supplier.id)
       setPaymentSupplier(supplier)
-      setDetailOpen(false)
-      setEditingId(null)
-      setForm(blankForm)
       setPayableReceipts(result.items)
       setPaymentAmounts(Object.fromEntries(result.items.map((receipt) => [receipt.id, receipt.outstanding_amount])))
       setPaymentMethod('cash')
@@ -221,7 +265,7 @@ export function SuppliersPage({
       setPaymentSupplier(null)
       setPayableReceipts([])
       setPaymentAmounts({})
-      await loadSuppliers({ search: search.trim() || undefined, status })
+      await loadSuppliers()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được thanh toán NCC.'))
     } finally {
@@ -243,127 +287,263 @@ export function SuppliersPage({
     setForm(blankForm)
   }
 
-  const supplierFilterPresets: FilterPreset[] = [
-    {
-      id: 'active',
-      label: 'Đang hoạt động',
-      active: status === 'active' && search.trim() === '',
-      onSelect: () => void applySupplierFilters({ search: '', status: 'active' }),
-    },
-    {
-      id: 'all',
-      label: 'Tất cả',
-      active: status === 'all' && search.trim() === '',
-      onSelect: () => void applySupplierFilters({ search: '', status: 'all' }),
-    },
-    {
-      id: 'inactive',
-      label: 'Ngừng hoạt động',
-      active: status === 'inactive',
-      onSelect: () => void applySupplierFilters({ status: 'inactive' }),
-    },
-    {
-      id: 'payable',
-      label: 'Đang nợ',
-      disabled: true,
-      title: 'Cần filter công nợ NCC nâng cao ở slice sau.',
-      onSelect: () => undefined,
-    },
-    {
-      id: 'linked-customer',
-      label: 'Có liên kết khách hàng',
-      disabled: true,
-      title: 'API hiện chưa có filter linked_customer_id cho NCC.',
-      onSelect: () => undefined,
-    },
-  ]
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const canGoPrevious = page > 1
+  const canGoNext = page < totalPages
+  const activeFilterSummary = lastSearch
+    ? `Tìm: ${lastSearch}`
+    : lastStatus === 'active'
+      ? 'Đang hoạt động'
+      : `Trạng thái: ${supplierStatusText(lastStatus)}`
 
-  const supplierFilterChips: ActiveFilterChip[] = [
-    ...(search.trim()
-      ? [
-          {
-            id: 'search',
-            label: `Tìm: ${search.trim()}`,
-            onClear: () => void applySupplierFilters({ search: '' }),
-          },
-        ]
-      : []),
-    ...(status !== 'active'
-      ? [
-          {
-            id: 'status',
-            label: `Trạng thái: ${supplierStatusText(status)}`,
-            onClear: () => void applySupplierFilters({ status: 'active' }),
-          },
-        ]
-      : []),
-  ]
-
-  return (
-    <main className="suppliers-shell">
-      <header className="suppliers-header">
-        <div>
-          <h1>Nhà cung cấp</h1>
-          <p>Quản lý hồ sơ NCC, liên kết khách hàng và trạng thái nhập hàng</p>
-        </div>
-        <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-          <Home aria-hidden="true" size={16} />
-          Trang chủ
-        </button>
-      </header>
-
-      {error ? <p role="alert">{error}</p> : null}
-      {suppliers === null && error === null ? <p>Đang tải nhà cung cấp...</p> : null}
-
-      <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
+  const supplierKpis = (
+    <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
         <MetricCard hint={status === 'active' ? 'Đang hoạt động' : supplierStatusText(status)} label="Tổng NCC" value={total || visibleSupplierTotal} />
         <MetricCard hint="Từ danh sách đang xem" label="Nợ cần trả" tone={payableTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={payableTotal} />} />
         <MetricCard hint="Phiếu nhập posted" label="Tổng mua" tone="success" value={<MoneyText value={purchaseTotal} />} />
       </MetricGrid>
+  )
 
-      <section
-        className={`suppliers-layout suppliers-layout-stacked${isCreatingSupplier ? ' suppliers-layout-create-active' : ''}`}
-        aria-label="Quản lý nhà cung cấp"
-      >
-        <section aria-label="Danh sách nhà cung cấp" className="suppliers-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Danh sách nhà cung cấp</h2>
-              <p>Tìm, lọc và mở nhanh hồ sơ hoặc thanh toán NCC.</p>
-            </div>
-            <button className="button button-primary panel-heading-action" type="button" onClick={openCreateSupplier}>
-              <Plus aria-hidden="true" size={16} />
-              Tạo nhà cung cấp
+  function supplierForm() {
+    return (
+      <form aria-label="Thông tin nhà cung cấp" className="supplier-form" onSubmit={saveSupplier}>
+        <header>
+          <h2>{editingId ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</h2>
+          {editingId ? (
+            <button className="button button-secondary" type="button" onClick={resetForm}>
+              <Plus aria-hidden="true" size={15} />
+              Tạo mới
             </button>
-          </div>
-          <DataToolbar
-            ariaLabel="Lọc nhà cung cấp"
-            chips={supplierFilterChips}
-            presets={supplierFilterPresets}
-            searchLabel="Tìm NCC"
-            searchValue={search}
-            onReset={() => void resetSupplierFilters()}
-            onSearchChange={setSearch}
-            onSubmit={filterSuppliers}
+          ) : null}
+        </header>
+        <label>
+          Mã NCC
+          <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
+        </label>
+        <label>
+          Tên NCC
+          <input
+            required
+            value={form.name}
+            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+          />
+        </label>
+        <label>
+          Điện thoại
+          <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
+        </label>
+        <label>
+          Email
+          <input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
+        </label>
+        <label>
+          Địa chỉ
+          <input
+            value={form.address}
+            onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
+          />
+        </label>
+        <label>
+          Mã số thuế
+          <input
+            value={form.tax_code}
+            onChange={(event) => setForm((current) => ({ ...current, tax_code: event.target.value }))}
+          />
+        </label>
+        <label>
+          Khách hàng liên kết
+          <select
+            value={form.linked_customer_id ?? ''}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, linked_customer_id: event.target.value || null }))
+            }
           >
-            <label>
-              Trạng thái
-              <select value={status} onChange={(event) => setStatus(event.target.value as SupplierStatus | 'all')}>
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Ngừng hoạt động</option>
-                <option value="all">Tất cả</option>
-              </select>
-            </label>
-          </DataToolbar>
+            <option value="">Không liên kết</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.code} - {customer.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Ghi chú
+          <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} />
+        </label>
+        <label>
+          Trạng thái NCC
+          <select
+            value={form.status}
+            onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as SupplierStatus }))}
+          >
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
+          </select>
+        </label>
+        <button className="button button-primary" disabled={saving} type="submit">
+          <Save aria-hidden="true" size={16} />
+          Lưu nhà cung cấp
+        </button>
+      </form>
+    )
+  }
 
-          {suppliers ? (
+  function supplierPaymentForm() {
+    if (!paymentSupplier) return null
+    return (
+      <form noValidate aria-label="Thanh toán nhà cung cấp" className="supplier-form" onSubmit={saveSupplierPayment}>
+        <header>
+          <h2>Thanh toán {paymentSupplier.code}</h2>
+          <button className="button button-ghost" type="button" onClick={() => setPaymentSupplier(null)}>
+            <X aria-hidden="true" size={15} />
+            Đóng
+          </button>
+        </header>
+        {payableReceipts.length === 0 ? (
+          <p>Không còn phiếu nhập posted cần trả cho NCC này.</p>
+        ) : (
+          <div className="receipt-lines">
+            {payableReceipts.map((receipt) => (
+              <fieldset key={receipt.id}>
+                <legend>{receipt.code}</legend>
+                <p>Còn nợ: {money(receipt.outstanding_amount)}</p>
+                <label>
+                  Số tiền trả cho {receipt.code}
+                  <input
+                    min="0"
+                    max={receipt.outstanding_amount}
+                    step="1000"
+                    type="number"
+                    value={paymentAmounts[receipt.id] ?? 0}
+                    onChange={(event) =>
+                      setPaymentAmounts((current) => ({ ...current, [receipt.id]: Number(event.target.value) }))
+                    }
+                  />
+                </label>
+              </fieldset>
+            ))}
+          </div>
+        )}
+        <label>
+          Phương thức trả NCC
+          <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}>
+            <option value="cash">Tiền mặt</option>
+            <option value="bank_transfer">Chuyển khoản</option>
+          </select>
+        </label>
+        {paymentMethod === 'bank_transfer' ? (
+          <label>
+            Tài khoản chuyển khoản NCC
+            <select value={paymentFinanceAccountId} onChange={(event) => setPaymentFinanceAccountId(event.target.value)}>
+              <option value="">Chọn tài khoản</option>
+              {bankAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.code} - {account.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <label>
+          Ghi chú thanh toán
+          <textarea value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} />
+        </label>
+        <button className="button button-primary" disabled={paying || payableReceipts.length === 0} type="submit">
+          <WalletCards aria-hidden="true" size={16} />
+          Lưu thanh toán NCC
+        </button>
+      </form>
+    )
+  }
+
+  return (
+    <ManagementPage
+      title="Nhà cung cấp"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc nhà cung cấp" onSubmit={filterSuppliers}>
+          <ManagementCompactSearch
+            label="Tìm NCC"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm mã, tên, điện thoại"
+            trailingAction={
+              <ManagementActionIconButton ariaLabel="Tạo nhà cung cấp" variant="primary" onClick={openCreateSupplier}>
+                <Plus aria-hidden="true" size={16} />
+              </ManagementActionIconButton>
+            }
+            value={search}
+            onChange={setSearch}
+          />
+          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
+            <Search aria-hidden="true" size={16} />
+          </button>
+          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
+            Trang chủ
+          </button>
+        </ManagementCompactToolbar>
+      }
+      kpis={supplierKpis}
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc nhà cung cấp"
+          title="Bộ lọc"
+          actions={
+            <button className="button button-secondary" type="button" onClick={() => void resetSupplierFilters()}>
+              <RotateCcw aria-hidden="true" size={15} />
+              Đặt lại bộ lọc
+            </button>
+          }
+        >
+          <button
+            aria-label="Ẩn bộ lọc nhà cung cấp"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
+          </button>
+          <ManagementFilterGroup title="Trạng thái">
+            <label>
+              <input checked={status === 'active'} name="supplier-status" type="radio" onChange={() => setStatus('active')} />
+              Đang hoạt động
+            </label>
+            <label>
+              <input checked={status === 'inactive'} name="supplier-status" type="radio" onChange={() => setStatus('inactive')} />
+              Ngừng hoạt động
+            </label>
+            <label>
+              <input checked={status === 'all'} name="supplier-status" type="radio" onChange={() => setStatus('all')} />
+              Tất cả
+            </label>
+          </ManagementFilterGroup>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc nhà cung cấp"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
+      <ManagementListSurface ariaLabel="Danh sách nhà cung cấp">
+        {error ? <p role="alert">{error}</p> : null}
+        {suppliers === null && error === null ? <p>Đang tải nhà cung cấp...</p> : null}
+        {isCreatingSupplier ? supplierForm() : null}
+        {suppliers ? (
+          suppliers.length === 0 ? (
+            <EmptyState>
+              <p>Chưa có nhà cung cấp phù hợp bộ lọc.</p>
+            </EmptyState>
+          ) : (
             <>
-              <p className="result-count">{total} nhà cung cấp</p>
-              {suppliers.length === 0 ? (
-                <EmptyState>
-                  <p>Chưa có nhà cung cấp phù hợp bộ lọc.</p>
-                </EmptyState>
-              ) : (
+              <ManagementTableViewport>
                 <table>
                   <thead>
                     <tr>
@@ -379,203 +559,66 @@ export function SuppliersPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {suppliers.map((supplier) => (
-                      <tr key={supplier.id}>
-                        <td>{supplier.code}</td>
-                        <td>{supplier.name}</td>
-                        <td>{supplier.phone ?? '-'}</td>
-                        <td>{supplier.email ?? '-'}</td>
-                        <td><MoneyText value={supplier.current_payable_amount} /></td>
-                        <td><MoneyText value={supplier.total_purchase_amount} /></td>
-                        <td>
-                          {supplier.linked_customer
-                            ? `${supplier.linked_customer.code} - ${supplier.linked_customer.name}`
-                            : '-'}
-                        </td>
-                        <td>
-                          <StatusChip tone={supplier.status === 'active' ? 'success' : 'neutral'}>
-                            {supplier.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
-                          </StatusChip>
-                        </td>
-                        <td>
-                          <div className="row-actions">
-                            <button className="button button-secondary" type="button" onClick={() => void openSupplier(supplier)}>
-                              <Pencil aria-hidden="true" size={15} />
-                              Sửa {supplier.code}
-                            </button>
-                          {supplier.current_payable_amount > 0 ? (
-                            <button className="button button-primary" type="button" onClick={() => void openSupplierPayment(supplier)}>
-                              <WalletCards aria-hidden="true" size={15} />
-                              Thanh toán {supplier.code}
-                            </button>
+                    {suppliers.map((supplier) => {
+                      const detailForRow = editingId === supplier.id || paymentSupplier?.id === supplier.id
+                      return (
+                        <Fragment key={supplier.id}>
+                          <tr>
+                            <td>{supplier.code}</td>
+                            <td>{supplier.name}</td>
+                            <td>{supplier.phone ?? '-'}</td>
+                            <td>{supplier.email ?? '-'}</td>
+                            <td><MoneyText value={supplier.current_payable_amount} /></td>
+                            <td><MoneyText value={supplier.total_purchase_amount} /></td>
+                            <td>
+                              {supplier.linked_customer
+                                ? `${supplier.linked_customer.code} - ${supplier.linked_customer.name}`
+                                : '-'}
+                            </td>
+                            <td>
+                              <StatusChip tone={supplier.status === 'active' ? 'success' : 'neutral'}>
+                                {supplier.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                              </StatusChip>
+                            </td>
+                            <td>
+                              <div className="row-actions">
+                                <ManagementRowActionButton ariaLabel={`Sửa ${supplier.code}`} onClick={() => void openSupplier(supplier)}>
+                                  <Pencil aria-hidden="true" size={15} />
+                                </ManagementRowActionButton>
+                                {supplier.current_payable_amount > 0 ? (
+                                  <ManagementRowActionButton ariaLabel={`Thanh toán ${supplier.code}`} onClick={() => void openSupplierPayment(supplier)}>
+                                    <WalletCards aria-hidden="true" size={15} />
+                                  </ManagementRowActionButton>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                          {detailForRow ? (
+                            <ManagementDetailRow colSpan={9} label="Hồ sơ và thanh toán nhà cung cấp">
+                              {paymentSupplier?.id === supplier.id ? supplierPaymentForm() : supplierForm()}
+                            </ManagementDetailRow>
                           ) : null}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                        </Fragment>
+                      )
+                    })}
                   </tbody>
                 </table>
-              )}
+              </ManagementTableViewport>
+              <ManagementTableFooter
+                ariaLabel="Phân trang nhà cung cấp"
+                canGoNext={canGoNext}
+                canGoPrevious={canGoPrevious}
+                entityLabel="nhà cung cấp"
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onNext={() => void goToPage(page + 1)}
+                onPrevious={() => void goToPage(page - 1)}
+              />
             </>
-          ) : null}
-        </section>
-
-        {detailOpen || paymentSupplier ? (
-        <aside aria-label="Hồ sơ và thanh toán nhà cung cấp" className="suppliers-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Hồ sơ NCC</h2>
-              <p>Tạo, sửa thông tin và xử lý phiếu còn nợ.</p>
-            </div>
-          </div>
-          {paymentSupplier ? (
-            <form noValidate aria-label="Thanh toán nhà cung cấp" className="supplier-form" onSubmit={saveSupplierPayment}>
-              <header>
-                <h2>Thanh toán {paymentSupplier.code}</h2>
-                <button className="button button-ghost" type="button" onClick={() => setPaymentSupplier(null)}>
-                  <X aria-hidden="true" size={15} />
-                  Đóng
-                </button>
-              </header>
-              {payableReceipts.length === 0 ? (
-                <p>Không còn phiếu nhập posted cần trả cho NCC này.</p>
-              ) : (
-                <div className="receipt-lines">
-                  {payableReceipts.map((receipt) => (
-                    <fieldset key={receipt.id}>
-                      <legend>{receipt.code}</legend>
-                      <p>Còn nợ: {money(receipt.outstanding_amount)}</p>
-                      <label>
-                        Số tiền trả cho {receipt.code}
-                        <input
-                          min="0"
-                          max={receipt.outstanding_amount}
-                          step="1000"
-                          type="number"
-                          value={paymentAmounts[receipt.id] ?? 0}
-                          onChange={(event) =>
-                            setPaymentAmounts((current) => ({ ...current, [receipt.id]: Number(event.target.value) }))
-                          }
-                        />
-                      </label>
-                    </fieldset>
-                  ))}
-                </div>
-              )}
-              <label>
-                Phương thức trả NCC
-                <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}>
-                  <option value="cash">Tiền mặt</option>
-                  <option value="bank_transfer">Chuyển khoản</option>
-                </select>
-              </label>
-              {paymentMethod === 'bank_transfer' ? (
-                <label>
-                  Tài khoản chuyển khoản NCC
-                  <select value={paymentFinanceAccountId} onChange={(event) => setPaymentFinanceAccountId(event.target.value)}>
-                    <option value="">Chọn tài khoản</option>
-                    {bankAccounts.map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.code} - {account.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              <label>
-                Ghi chú thanh toán
-                <textarea value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} />
-              </label>
-              <button className="button button-primary" disabled={paying || payableReceipts.length === 0} type="submit">
-                <WalletCards aria-hidden="true" size={16} />
-                Lưu thanh toán NCC
-              </button>
-            </form>
-          ) : null}
-          {!paymentSupplier && detailOpen ? (
-          <form aria-label="Thông tin nhà cung cấp" className="supplier-form" onSubmit={saveSupplier}>
-            <header>
-              <h2>{editingId ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</h2>
-              {editingId ? (
-                <button className="button button-secondary" type="button" onClick={resetForm}>
-                  <Plus aria-hidden="true" size={15} />
-                  Tạo mới
-                </button>
-              ) : null}
-            </header>
-            <label>
-              Mã NCC
-              <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
-            </label>
-            <label>
-              Tên NCC
-              <input
-                required
-                value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              />
-            </label>
-            <label>
-              Điện thoại
-              <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
-            </label>
-            <label>
-              Email
-              <input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
-            </label>
-            <label>
-              Địa chỉ
-              <input
-                value={form.address}
-                onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
-              />
-            </label>
-            <label>
-              Mã số thuế
-              <input
-                value={form.tax_code}
-                onChange={(event) => setForm((current) => ({ ...current, tax_code: event.target.value }))}
-              />
-            </label>
-            <label>
-              Khách hàng liên kết
-              <select
-                value={form.linked_customer_id ?? ''}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, linked_customer_id: event.target.value || null }))
-                }
-              >
-                <option value="">Không liên kết</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.code} - {customer.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Ghi chú
-              <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} />
-            </label>
-            <label>
-              Trạng thái NCC
-              <select
-                value={form.status}
-                onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as SupplierStatus }))}
-              >
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Ngừng hoạt động</option>
-              </select>
-            </label>
-            <button className="button button-primary" disabled={saving} type="submit">
-              <Save aria-hidden="true" size={16} />
-              Lưu nhà cung cấp
-            </button>
-          </form>
-          ) : null}
-        </aside>
+          )
         ) : null}
-      </section>
-    </main>
+      </ManagementListSurface>
+    </ManagementPage>
   )
 }
