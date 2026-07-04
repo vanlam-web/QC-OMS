@@ -156,12 +156,6 @@ export function FoundationAdminPage({
     ).sort(([a], [b]) => a.localeCompare(b))
   }, [state])
 
-  const activeFilterSummary = lastUserSearch
-    ? `Tìm: ${lastUserSearch}`
-    : lastUserStatus === 'all'
-      ? 'Tất cả'
-      : `Trạng thái: ${lastUserStatus}`
-
   return (
     <ManagementPage
       title="Quản trị"
@@ -181,9 +175,7 @@ export function FoundationAdminPage({
       }
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc người dùng"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetUserFilters()}>
               <RotateCcw aria-hidden="true" size={15} />

@@ -38,25 +38,15 @@ export function ManagementPage({
 
 export function ManagementFilterSidebar({
   ariaLabel,
-  title,
-  activeSummary,
   actions,
   children,
 }: {
   ariaLabel: string
-  title?: string
-  activeSummary?: string
   actions?: ReactNode
   children: ReactNode
 }) {
   return (
     <aside aria-label={ariaLabel} className="management-filter-sidebar">
-      {title || activeSummary ? (
-        <div className="management-filter-header">
-          {title ? <h2>{title}</h2> : null}
-          {activeSummary ? <p className="management-filter-summary">{activeSummary}</p> : null}
-        </div>
-      ) : null}
       {children}
       {actions ? <ManagementFilterActionBar>{actions}</ManagementFilterActionBar> : null}
     </aside>
@@ -65,6 +55,31 @@ export function ManagementFilterSidebar({
 
 export function ManagementFilterActionBar({ children }: { children: ReactNode }) {
   return <div className="management-filter-actions">{children}</div>
+}
+
+export function ManagementFilterSummaryStats({
+  ariaLabel,
+  items,
+}: {
+  ariaLabel: string
+  items: Array<{
+    label: string
+    value: ReactNode
+    hint?: string
+    tone?: 'neutral' | 'warning' | 'success'
+  }>
+}) {
+  return (
+    <section aria-label={ariaLabel} className="management-filter-stats">
+      {items.map((item) => (
+        <article className={`management-filter-stat management-filter-stat-${item.tone ?? 'neutral'}`} key={item.label}>
+          <span className="management-filter-stat-label">{item.label}:</span>
+          <strong>{item.value}</strong>
+          {item.hint ? <span className="management-filter-stat-hint">{item.hint}</span> : null}
+        </article>
+      ))}
+    </section>
+  )
 }
 
 export function ManagementFilterGroup({ title, children }: { title: string; children: ReactNode }) {

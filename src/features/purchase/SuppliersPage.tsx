@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Search, Walle
 import { formatApiError } from '../../lib/api/error-message'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
-import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
   ManagementActionIconButton,
   ManagementCompactSearch,
@@ -11,6 +11,7 @@ import {
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
+  ManagementFilterSummaryStats,
   ManagementListSurface,
   ManagementPage,
   ManagementRowActionButton,
@@ -42,18 +43,10 @@ const blankForm: SupplierInput = {
 
 const supplierPageSize = 15
 
-function supplierStatusText(status: SupplierStatus | 'all') {
-  if (status === 'active') return 'Đang hoạt động'
-  if (status === 'inactive') return 'Ngừng hoạt động'
-  return 'Tất cả'
-}
-
 export function SuppliersPage({
   service,
-  onOpenDashboard,
 }: {
   service: SupplierService
-  onOpenDashboard: () => void
 }) {
   const [suppliers, setSuppliers] = useState<Supplier[] | null>(null)
   const [customers, setCustomers] = useState<SupplierCustomerOption[]>([])
@@ -80,7 +73,6 @@ export function SuppliersPage({
   const [paymentNote, setPaymentNote] = useState('')
 
   const bankAccounts = financeAccounts.filter((account) => account.is_active && account.account_type === 'bank')
-  const visibleSupplierTotal = suppliers?.length ?? 0
   const payableTotal = suppliers?.reduce((sum, supplier) => sum + supplier.current_payable_amount, 0) ?? 0
   const purchaseTotal = suppliers?.reduce((sum, supplier) => sum + supplier.total_purchase_amount, 0) ?? 0
   const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
@@ -159,6 +151,15 @@ export function SuppliersPage({
     event.preventDefault()
     setPage(1)
     await loadSuppliers({ search: search.trim(), status, page: 1 })
+  }
+
+  async function applySupplierFilters(next: { search?: string; status?: SupplierStatus | 'all' }) {
+    const nextSearch = next.search ?? search
+    const nextStatus = next.status ?? status
+    setSearch(nextSearch)
+    setStatus(nextStatus)
+    setPage(1)
+    await loadSuppliers({ search: nextSearch.trim(), status: nextStatus, page: 1 })
   }
 
   async function resetSupplierFilters() {
@@ -301,19 +302,6 @@ export function SuppliersPage({
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = lastSearch
-    ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active'
-      ? 'Đang hoạt động'
-      : `Trạng thái: ${supplierStatusText(lastStatus)}`
-
-  const supplierKpis = (
-    <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
-        <MetricCard hint={status === 'active' ? 'Đang hoạt động' : supplierStatusText(status)} label="Tổng NCC" value={total || visibleSupplierTotal} />
-        <MetricCard hint="Từ danh sách đang xem" label="Nợ cần trả" tone={payableTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={payableTotal} />} />
-        <MetricCard hint="Phiếu nhập posted" label="Tổng mua" tone="success" value={<MoneyText value={purchaseTotal} />} />
-      </MetricGrid>
-  )
 
   function supplierForm() {
     return (
@@ -478,26 +466,17 @@ export function SuppliersPage({
             placeholder="Tìm mã, tên, điện thoại"
             trailingAction={
               <ManagementActionIconButton ariaLabel="Tạo nhà cung cấp" variant="primary" onClick={openCreateSupplier}>
-                <Plus aria-hidden="true" size={16} />
+                <span aria-hidden="true">+</span>
               </ManagementActionIconButton>
             }
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
-      kpis={supplierKpis}
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc nhà cung cấp"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetSupplierFilters()}>
               <RotateCcw aria-hidden="true" size={15} />
@@ -505,6 +484,13 @@ export function SuppliersPage({
             </button>
           }
         >
+          <ManagementFilterSummaryStats
+            ariaLabel="Kết quả lọc nhà cung cấp"
+            items={[
+              { label: 'Còn nợ', value: <MoneyText value={payableTotal} /> },
+              { label: 'Tổng mua', value: <MoneyText value={purchaseTotal} /> },
+            ]}
+          />
           <button
             aria-label="Ẩn bộ lọc nhà cung cấp"
             className="management-filter-collapse-button"
@@ -516,15 +502,15 @@ export function SuppliersPage({
           </button>
           <ManagementFilterGroup title="Trạng thái">
             <label>
-              <input checked={status === 'active'} name="supplier-status" type="radio" onChange={() => setStatus('active')} />
+              <input checked={status === 'active'} name="supplier-status" type="radio" onChange={() => void applySupplierFilters({ status: 'active' })} />
               Đang hoạt động
             </label>
             <label>
-              <input checked={status === 'inactive'} name="supplier-status" type="radio" onChange={() => setStatus('inactive')} />
+              <input checked={status === 'inactive'} name="supplier-status" type="radio" onChange={() => void applySupplierFilters({ status: 'inactive' })} />
               Ngừng hoạt động
             </label>
             <label>
-              <input checked={status === 'all'} name="supplier-status" type="radio" onChange={() => setStatus('all')} />
+              <input checked={status === 'all'} name="supplier-status" type="radio" onChange={() => void applySupplierFilters({ status: 'all' })} />
               Tất cả
             </label>
           </ManagementFilterGroup>

@@ -38,13 +38,11 @@ interface SalesDocumentsState {
 export function SalesDocumentsPage({
   service,
   orderService,
-  onOpenDashboard,
   onOpenQuoteInPos,
   onOpenQuotePrint,
 }: {
   service: SalesDocumentService
   orderService?: Pick<OrderService, 'getQuoteReopenPayload'>
-  onOpenDashboard: () => void
   onOpenQuoteInPos?: (payload: QuoteReopenPayload) => void
   onOpenQuotePrint?: (documentId: string) => void
 }) {
@@ -199,11 +197,6 @@ export function SalesDocumentsPage({
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = [
-    ...(lastSearch ? [`Tìm: ${lastSearch}`] : []),
-    ...(typeFilter !== 'all' ? [`Loại: ${documentTypeFilterLabel(typeFilter)}`] : []),
-    ...(statusFilter !== 'all' ? [`Trạng thái: ${lifecycleFilterLabel(statusFilter)}`] : []),
-  ].join(' • ')
 
   return (
     <ManagementPage
@@ -217,19 +210,11 @@ export function SalesDocumentsPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary || undefined}
           ariaLabel="Bộ lọc chứng từ bán hàng"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
               <RotateCcw aria-hidden="true" size={15} />
@@ -482,16 +467,6 @@ function SalesDocumentDetailView({
       </section>
     </div>
   )
-}
-
-function documentTypeFilterLabel(value: 'invoice' | 'quote') {
-  return value === 'invoice' ? 'Hóa đơn' : 'Báo giá'
-}
-
-function lifecycleFilterLabel(value: 'active' | 'completed' | 'cancelled') {
-  if (value === 'active') return 'Đang hiệu lực'
-  if (value === 'completed') return 'Hoàn tất'
-  return 'Đã hủy'
 }
 
 function lifecycleStatusLabel(document: SalesDocumentListItem) {

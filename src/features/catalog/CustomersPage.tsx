@@ -209,7 +209,6 @@ export function CustomersPage({
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = lastSearch ? `Tìm: ${lastSearch}` : 'Đang hoạt động'
 
   return (
     <ManagementPage
@@ -228,16 +227,11 @@ export function CustomersPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
         </ManagementCompactToolbar>
       }
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc khách hàng"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetCustomerFilters()}>
               <RotateCcw aria-hidden="true" size={15} />

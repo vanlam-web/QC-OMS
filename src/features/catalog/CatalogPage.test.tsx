@@ -82,7 +82,7 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
 
 it('lists products and creates a product', async () => {
   const service = makeService()
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<CatalogPage service={service} />)
 
   expect(screen.getByText('Đang tải hàng hóa...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
@@ -91,9 +91,12 @@ it('lists products and creates a product', async () => {
   expect(screen.getByRole('heading', { name: 'Hàng hóa' }).closest('.management-page-header')).not.toBeNull()
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
   expect(sidebar).toHaveClass('management-filter-sidebar')
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
-  expect(sidebar.querySelector('.management-filter-summary')).toHaveTextContent('Đang bán')
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-header')).toBeNull()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách hàng hóa' })).toHaveClass('management-list-surface')
   expect(screen.queryByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).not.toBeInTheDocument()
 
@@ -118,7 +121,7 @@ it('lists products and creates a product', async () => {
 
 it('filters by status and toggles product active state', async () => {
   const service = makeService()
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<CatalogPage service={service} />)
 
   await screen.findByText('MICA-3MM')
   const filterForm = screen.getByRole('search', { name: 'Lọc hàng hóa' })
@@ -128,9 +131,9 @@ it('filters by status and toggles product active state', async () => {
   expect(createAction.closest('.management-compact-search')).not.toBeNull()
   expect(createAction).toHaveClass('button-primary')
   await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.keyboard('{Enter}')
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
-  expect(await screen.findByText('Trạng thái: Tất cả')).toHaveClass('management-filter-summary')
+  expect(screen.queryByText('Trạng thái: Tất cả')).not.toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Ngưng bán' }))
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
@@ -138,7 +141,7 @@ it('filters by status and toggles product active state', async () => {
 
 it('renders products as a goods and inventory-oriented list, not a pricebook workspace', async () => {
   const service = makeService()
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<CatalogPage service={service} />)
 
   const grid = await screen.findByRole('table', { name: 'Danh sách hàng hóa' })
   expect(grid.closest('.management-table-viewport')).not.toBeNull()
@@ -173,7 +176,7 @@ it('uses the shared table footer to move between product pages', async () => {
       total: 45,
     })),
   })
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<CatalogPage service={service} />)
 
   expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
@@ -190,7 +193,7 @@ it('uses the shared table footer to move between product pages', async () => {
 
 it('expands product details directly under the selected row and closes on second click', async () => {
   const service = makeService()
-  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<CatalogPage service={service} />)
 
   await userEvent.click(await screen.findByText('MICA-3MM'))
   const detail = screen.getByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })

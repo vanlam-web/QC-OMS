@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Calculator, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import {
   ManagementActionIconButton,
@@ -44,12 +44,8 @@ const sellMethodLabels: Record<SellMethod, string> = {
 
 type AdjustmentMode = 'none' | 'amount' | 'percent'
 
-export function PriceBookPage({
-  service,
-  onOpenDashboard,
-}: {
+export function PriceBookPage({ service }: {
   service: CatalogService
-  onOpenDashboard: () => void
 }) {
   const [state, setState] = useState<PriceBookState | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -151,6 +147,12 @@ export function PriceBookPage({
     setStatus('active')
     setPage(1)
     await load({ search: '', status: 'active', page: 1 })
+  }
+
+  async function changeStatusFilter(nextStatus: ProductStatus | 'all') {
+    setStatus(nextStatus)
+    setPage(1)
+    await load({ search: search.trim(), status: nextStatus, page: 1 })
   }
 
   async function goToPage(nextPage: number) {
@@ -259,13 +261,6 @@ export function PriceBookPage({
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = lastSearch
-    ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active'
-      ? 'Đang bán'
-      : lastStatus === 'inactive'
-        ? 'Trạng thái: Ngưng bán'
-        : 'Trạng thái: Tất cả'
 
   return (
     <ManagementPage
@@ -282,25 +277,17 @@ export function PriceBookPage({
                 variant="primary"
                 onClick={() => setFormulaOpen((current) => !current)}
               >
-                <Calculator aria-hidden="true" size={16} />
+                <span aria-hidden="true">+</span>
               </ManagementActionIconButton>
             }
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Tìm" className="management-action-icon button button-secondary" title="Tìm" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc bảng giá"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetPriceBookFilters()}>
               <RotateCcw aria-hidden="true" size={15} />
@@ -320,7 +307,12 @@ export function PriceBookPage({
           <form aria-label="Lọc bảng giá" onSubmit={filterProducts}>
             <ManagementFilterGroup title="Trạng thái">
               <label>
-                <input checked={status === 'active'} name="price-book-status" type="radio" onChange={() => setStatus('active')} />
+                <input
+                  checked={status === 'active'}
+                  name="price-book-status"
+                  type="radio"
+                  onChange={() => void changeStatusFilter('active')}
+                />
                 Đang bán
               </label>
               <label>
@@ -328,12 +320,12 @@ export function PriceBookPage({
                   checked={status === 'inactive'}
                   name="price-book-status"
                   type="radio"
-                  onChange={() => setStatus('inactive')}
+                  onChange={() => void changeStatusFilter('inactive')}
                 />
                 Ngưng bán
               </label>
               <label>
-                <input checked={status === 'all'} name="price-book-status" type="radio" onChange={() => setStatus('all')} />
+                <input checked={status === 'all'} name="price-book-status" type="radio" onChange={() => void changeStatusFilter('all')} />
                 Tất cả
               </label>
             </ManagementFilterGroup>

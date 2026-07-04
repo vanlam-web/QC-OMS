@@ -33,12 +33,8 @@ const sellMethodLabels: Record<SellMethod, string> = {
   combo: 'Combo',
 }
 
-export function CatalogPage({
-  service,
-  onOpenDashboard,
-}: {
+export function CatalogPage({ service }: {
   service: CatalogService
-  onOpenDashboard: () => void
 }) {
   const [state, setState] = useState<CatalogState | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -125,6 +121,12 @@ export function CatalogPage({
     await load({ search: '', status: 'active', page: 1 })
   }
 
+  async function changeStatusFilter(nextStatus: ProductStatus | 'all') {
+    setStatus(nextStatus)
+    setPage(1)
+    await load({ search: search.trim(), status: nextStatus, page: 1 })
+  }
+
   async function goToPage(nextPage: number) {
     await load({ page: nextPage })
   }
@@ -173,13 +175,6 @@ export function CatalogPage({
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = lastSearch
-    ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active'
-      ? 'Đang bán'
-      : lastStatus === 'inactive'
-        ? 'Trạng thái: Ngưng bán'
-        : 'Trạng thái: Tất cả'
 
   return (
     <ManagementPage
@@ -198,19 +193,11 @@ export function CatalogPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc hàng hóa"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetProductFilters()}>
               <RotateCcw aria-hidden="true" size={15} />
@@ -229,15 +216,15 @@ export function CatalogPage({
           </button>
           <ManagementFilterGroup title="Trạng thái">
             <label>
-              <input checked={status === 'active'} name="product-status" type="radio" onChange={() => setStatus('active')} />
+              <input checked={status === 'active'} name="product-status" type="radio" onChange={() => void changeStatusFilter('active')} />
               Đang bán
             </label>
             <label>
-              <input checked={status === 'inactive'} name="product-status" type="radio" onChange={() => setStatus('inactive')} />
+              <input checked={status === 'inactive'} name="product-status" type="radio" onChange={() => void changeStatusFilter('inactive')} />
               Ngưng bán
             </label>
             <label>
-              <input checked={status === 'all'} name="product-status" type="radio" onChange={() => setStatus('all')} />
+              <input checked={status === 'all'} name="product-status" type="radio" onChange={() => void changeStatusFilter('all')} />
               Tất cả
             </label>
           </ManagementFilterGroup>

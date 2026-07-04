@@ -8,6 +8,7 @@ import {
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
+  ManagementFilterSummaryStats,
   ManagementListSurface,
   ManagementPagination,
   ManagementPage,
@@ -198,12 +199,10 @@ it('standardizes filter groups without rendering detail content by default', () 
   expect(screen.queryByRole('region', { name: /Chi tiết/ })).not.toBeInTheDocument()
 })
 
-it('renders a reusable filter sidebar title summary and action area', () => {
+it('keeps filter sidebar headerless while preserving the action area', () => {
   render(
     <ManagementFilterSidebar
-      activeSummary="Loại: Hóa đơn"
       ariaLabel="Bộ lọc chứng từ"
-      title="Bộ lọc"
       actions={<button type="button">Đặt lại bộ lọc</button>}
     >
       <ManagementFilterGroup title="Loại chứng từ">
@@ -216,9 +215,40 @@ it('renders a reusable filter sidebar title summary and action area', () => {
   )
 
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ' })
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
-  expect(within(sidebar).getByText('Loại: Hóa đơn')).toHaveClass('management-filter-summary')
+  expect(sidebar.querySelector('.management-filter-header')).toBeNull()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByText('Loại: Hóa đơn')).not.toBeInTheDocument()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+})
+
+it('renders reusable filter result stats inside the sidebar', () => {
+  render(
+    <ManagementFilterSidebar ariaLabel="Bộ lọc phiếu nhập">
+      <ManagementFilterSummaryStats
+        ariaLabel="Kết quả lọc phiếu nhập"
+        items={[
+          { label: 'Tiền hàng', value: '5.760.000 ₫' },
+          { label: 'Còn nợ', value: '5.260.000 ₫' },
+        ]}
+      />
+      <ManagementFilterGroup title="Trạng thái">
+        <label>
+          <input type="radio" />
+          Phiếu tạm
+        </label>
+      </ManagementFilterGroup>
+    </ManagementFilterSidebar>,
+  )
+
+  const stats = screen.getByRole('region', { name: 'Kết quả lọc phiếu nhập' })
+  expect(stats).toHaveClass('management-filter-stats')
+  expect(within(stats).getByText('Tiền hàng:')).toBeInTheDocument()
+  expect(within(stats).getByText('5.760.000 ₫')).toBeInTheDocument()
+  expect(within(stats).getByText('Còn nợ:')).toBeInTheDocument()
+  expect(within(stats).getByText('5.260.000 ₫')).toBeInTheDocument()
+  expect(within(stats).queryByText('Theo bộ lọc')).not.toBeInTheDocument()
+  expect(stats.querySelector('.management-filter-stat-warning')).toBeNull()
 })
 
 it('renders a reusable management table footer with range page and disabled controls', () => {

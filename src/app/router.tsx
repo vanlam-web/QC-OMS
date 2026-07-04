@@ -122,7 +122,6 @@ function AdminRoute() {
 
 function CatalogRoute() {
   const { currentUser, initialized, getAccessToken, signOut } = useAuth()
-  const navigate = useNavigate()
   const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
@@ -133,14 +132,13 @@ function CatalogRoute() {
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <CatalogPage service={service} />
     </AppShell>
   )
 }
 
 function PriceBookRoute() {
   const { currentUser, initialized, getAccessToken, signOut } = useAuth()
-  const navigate = useNavigate()
   const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
@@ -151,7 +149,7 @@ function PriceBookRoute() {
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <PriceBookPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <PriceBookPage service={service} />
     </AppShell>
   )
 }
@@ -181,7 +179,6 @@ function CustomersRoute() {
 
 function SuppliersRoute() {
   const { currentUser, initialized, getAccessToken, signOut } = useAuth()
-  const navigate = useNavigate()
   const service = useMemo(() => createBrowserSupplierService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
@@ -192,14 +189,13 @@ function SuppliersRoute() {
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <SuppliersPage service={service} />
     </AppShell>
   )
 }
 
 function PurchaseReceiptsRoute() {
   const { currentUser, initialized, getAccessToken, signOut } = useAuth()
-  const navigate = useNavigate()
   const service = useMemo(() => createBrowserPurchaseReceiptService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
@@ -210,7 +206,7 @@ function PurchaseReceiptsRoute() {
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <PurchaseReceiptsPage service={service} />
     </AppShell>
   )
 }
@@ -235,7 +231,6 @@ function SalesDocumentsRoute() {
       <SalesDocumentsPage
         service={service}
         orderService={orderService}
-        onOpenDashboard={() => navigate('/dashboard')}
         onOpenQuoteInPos={(payload) => {
           saveQuoteReopenPayload(payload)
           navigate('/pos')

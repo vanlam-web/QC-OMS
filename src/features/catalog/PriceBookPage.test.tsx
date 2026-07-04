@@ -68,7 +68,7 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
 
 it('renders the price book as a separate grid-first workspace', async () => {
   const service = makeService()
-  render(<PriceBookPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<PriceBookPage service={service} />)
 
   expect(screen.getByText('Đang tải bảng giá...')).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Bảng giá' })).toBeInTheDocument()
@@ -78,8 +78,15 @@ it('renders the price book as a separate grid-first workspace', async () => {
 
   const searchForm = screen.getByRole('search', { name: 'Tìm bảng giá' })
   expect(searchForm.closest('.management-page-header')).not.toBeNull()
+  expect(screen.queryByRole('button', { name: 'Tìm' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
+  expect(within(searchForm).getByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).toHaveTextContent('+')
   const filterForm = screen.getByRole('form', { name: 'Lọc bảng giá' })
   expect(filterForm.closest('.management-filter-sidebar')).not.toBeNull()
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc bảng giá' })
+  expect(sidebar).not.toHaveTextContent('Bộ lọc')
+  expect(sidebar.querySelector('.management-filter-header')).toBeNull()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
   expect(screen.getByRole('navigation', { name: 'Phân trang bảng giá' })).toHaveTextContent('1-1 / 1 hàng hóa')
 
   const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
@@ -96,7 +103,7 @@ it('renders the price book as a separate grid-first workspace', async () => {
 
 it('previews and applies formula results in the price book grid', async () => {
   const service = makeService()
-  render(<PriceBookPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<PriceBookPage service={service} />)
 
   expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
 

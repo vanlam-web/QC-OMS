@@ -80,7 +80,7 @@ function makeService(overrides: Partial<SupplierService> = {}): SupplierService 
 it('lists suppliers with payable and purchase totals plus linked customer', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   expect(screen.getByText('Đang tải nhà cung cấp...').closest('.management-main')).not.toBeNull()
   expect(await screen.findByText('NCC000031')).toBeInTheDocument()
@@ -89,11 +89,23 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(document.querySelector('.suppliers-shell')).toBeNull()
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
   expect(sidebar).toHaveClass('management-filter-sidebar')
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
-  expect(sidebar.querySelector('.management-filter-summary')).toHaveTextContent('Đang hoạt động')
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-header')).toBeNull()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
+  const filterResults = within(sidebar).getByRole('region', { name: 'Kết quả lọc nhà cung cấp' })
+  expect(filterResults).toHaveClass('management-filter-stats')
+  expect(within(filterResults).getByText('Còn nợ:')).toBeInTheDocument()
+  expect(within(filterResults).getByText('250.000 ₫')).toBeInTheDocument()
+  expect(within(filterResults).getByText('Tổng mua:')).toBeInTheDocument()
+  expect(within(filterResults).getByText('300.000 ₫')).toBeInTheDocument()
+  expect(filterResults.querySelector('.management-filter-stat-warning')).toBeNull()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
   expect(screen.getByRole('search', { name: 'Lọc nhà cung cấp' }).closest('.management-page-header')).not.toBeNull()
+  expect(screen.queryByRole('region', { name: 'Tổng quan nhà cung cấp' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toHaveTextContent('+')
   expect(screen.getByText('Nguyễn Phong')).toBeInTheDocument()
   const table = screen.getByRole('table')
   expect(table.closest('.management-table-viewport')).not.toBeNull()
@@ -105,16 +117,18 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toBeInTheDocument()
 })
 
-it('summarizes supplier validation state with scan-friendly KPI cards and panels', async () => {
+it('keeps supplier result totals in the filter sidebar without KPI cards', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await screen.findByText('NCC000031')
-  const summary = screen.getByRole('region', { name: 'Tổng quan nhà cung cấp' })
-  expect(within(summary).getByText('Tổng NCC')).toBeInTheDocument()
-  expect(within(summary).getByText('Nợ cần trả')).toBeInTheDocument()
-  expect(within(summary).getByText('Tổng mua')).toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Tổng quan nhà cung cấp' })).not.toBeInTheDocument()
+  const filterResults = screen.getByRole('region', { name: 'Kết quả lọc nhà cung cấp' })
+  expect(within(filterResults).getByText('Còn nợ:')).toBeInTheDocument()
+  expect(within(filterResults).getByText('250.000 ₫')).toBeInTheDocument()
+  expect(within(filterResults).getByText('Tổng mua:')).toBeInTheDocument()
+  expect(within(filterResults).getByText('300.000 ₫')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).not.toBeInTheDocument()
 })
@@ -122,13 +136,13 @@ it('summarizes supplier validation state with scan-friendly KPI cards and panels
 it('filters suppliers by search and status', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
   await userEvent.type(within(filterForm).getByLabelText('Tìm NCC'), 'Nguyen')
   await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.keyboard('{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
     page: 1,
@@ -136,19 +150,19 @@ it('filters suppliers by search and status', async () => {
     search: 'Nguyen',
     status: 'all',
   })
-  expect(screen.getByText('Tìm: Nguyen')).toHaveClass('management-filter-summary')
+  expect(screen.queryByText('Tìm: Nguyen')).not.toBeInTheDocument()
 })
 
 it('uses supplier sidebar filters and reset action', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
   await userEvent.type(within(filterForm).getByLabelText('Tìm NCC'), 'NCC000031')
   await userEvent.click(screen.getByRole('radio', { name: 'Ngừng hoạt động' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.keyboard('{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
     page: 1,
@@ -156,7 +170,7 @@ it('uses supplier sidebar filters and reset action', async () => {
     search: 'NCC000031',
     status: 'inactive',
   })
-  expect(screen.getByText('Tìm: NCC000031')).toHaveClass('management-filter-summary')
+  expect(screen.queryByText('Tìm: NCC000031')).not.toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Đặt lại bộ lọc' }))
 
@@ -178,7 +192,7 @@ it('uses 15-row pagination range and navigates pages through the list footer', a
     })),
   })
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await screen.findByText('NCC000031')
   const footer = screen.getByRole('navigation', { name: 'Phân trang nhà cung cấp' })
@@ -197,7 +211,7 @@ it('keeps supplier list layout when auxiliary lookup data fails', async () => {
     }),
   })
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   expect(await screen.findByText('NCC000031')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
@@ -208,7 +222,7 @@ it('keeps supplier list layout when auxiliary lookup data fails', async () => {
 it('creates supplier with blank phone and selected linked customer', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await screen.findByText('NCC000031')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo nhà cung cấp' }))
@@ -236,7 +250,7 @@ it('creates supplier with blank phone and selected linked customer', async () =>
 it('opens supplier for editing and saves inactive status', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Sửa NCC000031' }))
   const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
@@ -259,7 +273,7 @@ it('clears stale supplier edit detail when switching rows fails', async () => {
     }),
   })
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Sửa NCC000031' }))
   expect(screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })).toBeInTheDocument()
@@ -273,7 +287,7 @@ it('clears stale supplier edit detail when switching rows fails', async () => {
 it('opens supplier payment form from payable supplier and submits explicit receipt allocation', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Thanh toán NCC000031' }))
   const form = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })
@@ -306,7 +320,7 @@ it('clears stale supplier payment detail when switching rows fails', async () =>
     }),
   })
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Thanh toán NCC000031' }))
   expect(screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })).toBeInTheDocument()
@@ -320,7 +334,7 @@ it('clears stale supplier payment detail when switching rows fails', async () =>
 it('blocks supplier payment over selected receipt outstanding amount in UI', async () => {
   const service = makeService()
 
-  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SuppliersPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Thanh toán NCC000031' }))
   const form = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })

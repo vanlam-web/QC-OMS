@@ -148,7 +148,7 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
 
 it('lists invoices with money, seller and customer snapshots', async () => {
   const service = makeService()
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   expect(screen.getByText('Đang tải chứng từ...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('HD010985')).toBeInTheDocument()
@@ -157,7 +157,11 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(screen.getByRole('region', { name: 'Danh sách chứng từ bán hàng' })).toHaveClass('management-list-surface')
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
   expect(sidebar).toBeInTheDocument()
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-header')).toBeNull()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
   const typeFilterGroup = within(sidebar).getByRole('region', { name: 'Loại chứng từ' })
   const statusFilterGroup = within(sidebar).getByRole('region', { name: 'Trạng thái' })
   expect(within(typeFilterGroup).getByRole('radio', { name: 'Tất cả' })).toBeInTheDocument()
@@ -194,15 +198,15 @@ it('searches by document code and keeps filtered empty state clear', async () =>
   const service = makeService({
     listSalesDocuments: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
   })
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   await screen.findByText('Chưa có chứng từ phù hợp bộ lọc.')
   await userEvent.type(screen.getByLabelText('Tìm chứng từ'), 'HD010985')
-  await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
+  await userEvent.keyboard('{Enter}')
 
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985', page: 1, page_size: 15 })
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
-  expect(within(sidebar).getByText('Tìm: HD010985')).toHaveClass('management-filter-summary')
+  expect(within(sidebar).queryByText('Tìm: HD010985')).not.toBeInTheDocument()
   expect(screen.getByText('Không thấy chứng từ theo bộ lọc hiện tại.')).toBeInTheDocument()
   expect(screen.getByText('Hãy thử mở rộng thời gian hoặc bỏ bớt bộ lọc.')).toBeInTheDocument()
 })
@@ -222,7 +226,7 @@ it('uses 15-row pagination range and navigates pages through the list footer', a
       total: 40,
     })),
   })
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   const footer = await screen.findByRole('navigation', { name: 'Phân trang chứng từ' })
   expect(within(footer).getByText('1-15 / 40 chứng từ')).toBeInTheDocument()
@@ -250,7 +254,6 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
     <SalesDocumentsPage
       service={service}
       orderService={makeOrderService()}
-      onOpenDashboard={vi.fn()}
       onOpenQuoteInPos={vi.fn()}
     />,
   )
@@ -286,7 +289,6 @@ it('stores reopen payload through callback when opening active quote in POS', as
     <SalesDocumentsPage
       service={service}
       orderService={orderService}
-      onOpenDashboard={vi.fn()}
       onOpenQuoteInPos={onOpenQuoteInPos}
     />,
   )
@@ -315,7 +317,6 @@ it('shows quote reopen failures inside the row-level shared detail area', async 
     <SalesDocumentsPage
       service={service}
       orderService={orderService}
-      onOpenDashboard={vi.fn()}
       onOpenQuoteInPos={vi.fn()}
     />,
   )
@@ -340,7 +341,7 @@ it('clears the previous selected detail when opening another row fails', async (
       return detail
     }),
   })
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết HD010985' }))
   expect(await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })).toBeInTheDocument()
@@ -363,7 +364,7 @@ it('opens quote print only from quote detail', async () => {
     })),
     getSalesDocument: vi.fn(async () => quoteDetail),
   })
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} onOpenQuotePrint={onOpenQuotePrint} />)
+  render(<SalesDocumentsPage service={service} onOpenQuotePrint={onOpenQuotePrint} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết BG000123' }))
 
@@ -375,7 +376,7 @@ it('opens quote print only from quote detail', async () => {
 
 it('opens invoice detail with item, price list, debt and stock snapshots', async () => {
   const service = makeService()
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết HD010985' }))
 
@@ -396,7 +397,7 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
 
 it('keeps saved invoice detail read-only until safe revise cancel and print flows exist', async () => {
   const service = makeService()
-  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+  render(<SalesDocumentsPage service={service} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết HD010985' }))
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })

@@ -430,31 +430,51 @@ button {
   opacity: 1;
 }
 
-.management-filter-header {
-  display: grid;
-  gap: var(--space-1);
-  border-bottom: 1px solid var(--color-border-muted);
-  padding-bottom: var(--space-3);
-}
-
-.management-filter-header h2 {
-  margin: 0;
-  font-size: 0.9375rem;
-}
-
-.management-filter-summary {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-}
-
 .management-filter-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   border-top: 1px solid var(--color-border-muted);
   padding-top: var(--space-3);
+}
+
+.management-filter-stats {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.management-filter-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  padding: var(--space-2);
+}
+
+.management-filter-stat-warning {
+  border-color: var(--color-border-muted);
+}
+
+.management-filter-stat-success {
+  border-color: var(--color-border-muted);
+}
+
+.management-filter-stat-label,
+.management-filter-stat-hint {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.management-filter-stat strong {
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  text-align: right;
 }
 
 .management-filter-expand-button:hover,

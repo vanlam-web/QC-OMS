@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Banknote, ChevronLeft, ChevronRight, FilePlus2, PackageCheck, Pencil, Plus, RotateCcw, Save, Search, Trash2, WalletCards } from 'lucide-react'
+import { Banknote, ChevronLeft, ChevronRight, PackageCheck, Pencil, Plus, RotateCcw, Save, Search, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type {
   PurchaseReceipt,
@@ -14,7 +14,7 @@ import type {
 } from './purchase-receipt-types'
 import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
-import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
   ManagementActionIconButton,
   ManagementCompactSearch,
@@ -22,6 +22,7 @@ import {
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
+  ManagementFilterSummaryStats,
   ManagementListSurface,
   ManagementPage,
   ManagementRowActionButton,
@@ -137,10 +138,8 @@ function physicalSummary(line: Pick<PurchaseReceiptInputItem, 'inventory_shape' 
 
 export function PurchaseReceiptsPage({
   service,
-  onOpenDashboard,
 }: {
   service: PurchaseReceiptService
-  onOpenDashboard: () => void
 }) {
   const [receipts, setReceipts] = useState<PurchaseReceipt[] | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
@@ -624,54 +623,6 @@ export function PurchaseReceiptsPage({
     },
   ]
 
-  const receiptFilterChips = [
-    ...(search.trim()
-      ? [
-          {
-            id: 'search',
-            label: `Tìm: ${search.trim()}`,
-            onClear: () => void applyReceiptFilters({ search: '', preset: null }),
-          },
-        ]
-      : []),
-    ...(activePreset
-      ? [
-          {
-            id: 'preset',
-            label: `Preset: ${activePreset}`,
-            onClear: () => void applyReceiptFilters({ status: 'draft', dateFrom: '', dateTo: '', preset: null }),
-          },
-        ]
-      : []),
-    ...(!activePreset && status !== 'draft'
-      ? [
-          {
-            id: 'status',
-            label: `Trạng thái: ${status === 'all' ? 'Tất cả' : statusText(status)}`,
-            onClear: () => void applyReceiptFilters({ status: 'draft' }),
-          },
-        ]
-      : []),
-    ...(!activePreset && dateFrom
-      ? [
-          {
-            id: 'date-from',
-            label: `Từ ngày: ${dateFrom}`,
-            onClear: () => void applyReceiptFilters({ dateFrom: '' }),
-          },
-        ]
-      : []),
-    ...(!activePreset && dateTo
-      ? [
-          {
-            id: 'date-to',
-            label: `Đến ngày: ${dateTo}`,
-            onClear: () => void applyReceiptFilters({ dateTo: '' }),
-          },
-        ]
-      : []),
-  ]
-
   async function saveSupplierPayment() {
     if (selectedReceipt === null || selectedReceiptOutstanding <= 0) return
     if (supplierPaymentAmount <= 0) {
@@ -706,22 +657,9 @@ export function PurchaseReceiptsPage({
     }
   }
 
-  const receiptKpis = (
-    <MetricGrid ariaLabel="Tổng quan phiếu nhập">
-      <MetricCard hint={`${receiptSummary.draftCount} draft đang mở`} label="Tổng phiếu" value={total || receipts?.length || 0} />
-      <MetricCard hint="Từ danh sách đang xem" label="Cần trả" tone="warning" value={<MoneyText value={receiptSummary.payable} />} />
-      <MetricCard
-        hint="Sau trả ngay và thanh toán NCC"
-        label="Còn phải trả"
-        tone={receiptSummary.remaining > 0 ? 'warning' : 'neutral'}
-        value={<MoneyText value={receiptSummary.remaining} />}
-      />
-    </MetricGrid>
-  )
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = receiptFilterChips.map((chip) => chip.label).join(' • ')
 
   function receiptDetailContent(ariaLabel: string) {
     return (
@@ -743,7 +681,7 @@ export function PurchaseReceiptsPage({
             ) : null}
             {editingId ? (
               <button className="button button-secondary" type="button" onClick={resetForm}>
-                <FilePlus2 aria-hidden="true" size={15} />
+                <Plus aria-hidden="true" size={15} />
                 Tạo mới
               </button>
             ) : null}
@@ -1161,26 +1099,17 @@ export function PurchaseReceiptsPage({
             placeholder="Tìm mã phiếu, NCC"
             trailingAction={
               <ManagementActionIconButton ariaLabel="Tạo phiếu nhập" variant="primary" onClick={openCreateReceipt}>
-                <FilePlus2 aria-hidden="true" size={16} />
+                <span aria-hidden="true">+</span>
               </ManagementActionIconButton>
             }
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
-      kpis={receiptKpis}
       filter={
         <ManagementFilterSidebar
-          activeSummary={activeFilterSummary || undefined}
           ariaLabel="Bộ lọc phiếu nhập"
-          title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetReceiptFilters()}>
               <RotateCcw aria-hidden="true" size={15} />
@@ -1188,6 +1117,16 @@ export function PurchaseReceiptsPage({
             </button>
           }
         >
+          <ManagementFilterSummaryStats
+            ariaLabel="Kết quả lọc phiếu nhập"
+            items={[
+              { label: 'Tiền hàng', value: <MoneyText value={receiptSummary.payable} /> },
+              {
+                label: 'Còn nợ',
+                value: <MoneyText value={receiptSummary.remaining} />,
+              },
+            ]}
+          />
           <button
             aria-label="Ẩn bộ lọc phiếu nhập"
             className="management-filter-collapse-button"
@@ -1203,10 +1142,7 @@ export function PurchaseReceiptsPage({
                 checked={status === 'draft'}
                 name="purchase-receipt-status"
                 type="radio"
-                onChange={() => {
-                  setStatus('draft')
-                  setActivePreset(null)
-                }}
+                onChange={() => void applyReceiptFilters({ status: 'draft', preset: null })}
               />
               Phiếu tạm
             </label>
@@ -1215,10 +1151,7 @@ export function PurchaseReceiptsPage({
                 checked={status === 'posted'}
                 name="purchase-receipt-status"
                 type="radio"
-                onChange={() => {
-                  setStatus('posted')
-                  setActivePreset(null)
-                }}
+                onChange={() => void applyReceiptFilters({ status: 'posted', preset: null })}
               />
               Đã nhập
             </label>
@@ -1227,10 +1160,7 @@ export function PurchaseReceiptsPage({
                 checked={status === 'cancelled'}
                 name="purchase-receipt-status"
                 type="radio"
-                onChange={() => {
-                  setStatus('cancelled')
-                  setActivePreset(null)
-                }}
+                onChange={() => void applyReceiptFilters({ status: 'cancelled', preset: null })}
               />
               Đã hủy
             </label>
@@ -1239,10 +1169,7 @@ export function PurchaseReceiptsPage({
                 checked={status === 'all'}
                 name="purchase-receipt-status"
                 type="radio"
-                onChange={() => {
-                  setStatus('all')
-                  setActivePreset(null)
-                }}
+                onChange={() => void applyReceiptFilters({ status: 'all', preset: null })}
               />
               Tất cả
             </label>
@@ -1253,10 +1180,7 @@ export function PurchaseReceiptsPage({
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(event) => {
-                  setDateFrom(event.target.value)
-                  setActivePreset(null)
-                }}
+                onChange={(event) => void applyReceiptFilters({ dateFrom: event.target.value, preset: null })}
               />
             </label>
             <label>
@@ -1264,10 +1188,7 @@ export function PurchaseReceiptsPage({
               <input
                 type="date"
                 value={dateTo}
-                onChange={(event) => {
-                  setDateTo(event.target.value)
-                  setActivePreset(null)
-                }}
+                onChange={(event) => void applyReceiptFilters({ dateTo: event.target.value, preset: null })}
               />
             </label>
           </ManagementFilterGroup>
