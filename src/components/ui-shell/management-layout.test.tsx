@@ -35,6 +35,33 @@ it('renders a KV-style management page with filter sidebar and list surface', ()
   expect(screen.getByLabelText('Hàng hóa')).toHaveClass('management-layout')
 })
 
+it('keeps page title and search toolbar grouped in the management page header', () => {
+  render(
+    <ManagementPage
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc chứng từ bán hàng" onSubmit={vi.fn()}>
+          <ManagementCompactSearch
+            label="Tìm chứng từ"
+            placeholder="Mã chứng từ, khách hàng"
+            value=""
+            onChange={vi.fn()}
+          />
+        </ManagementCompactToolbar>
+      }
+      title="Chứng từ bán hàng"
+    >
+      <ManagementListSurface ariaLabel="Danh sách chứng từ">Danh sách</ManagementListSurface>
+    </ManagementPage>,
+  )
+
+  const header = screen.getByRole('heading', { name: 'Chứng từ bán hàng' }).closest('.management-page-header')
+  const search = screen.getByRole('search', { name: 'Lọc chứng từ bán hàng' })
+
+  expect(header).not.toBeNull()
+  expect(header).toContainElement(search)
+  expect(search.closest('.management-page-actions')).not.toBeNull()
+})
+
 it('can hide the filter sidebar and let the list use the full width', () => {
   render(
     <ManagementPage

@@ -2547,10 +2547,6 @@ button {
     justify-content: flex-start;
   }
 
-  .management-page-header {
-    grid-template-columns: 1fr;
-  }
-
   .customer-search,
   .customer-create {
     grid-template-columns: 1fr;
@@ -2600,6 +2596,10 @@ button {
 
   .management-page {
     padding: var(--space-3);
+  }
+
+  .management-page-header {
+    grid-template-columns: 1fr;
   }
 
   .management-compact-toolbar {
