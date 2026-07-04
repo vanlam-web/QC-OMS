@@ -203,23 +203,32 @@ export function PosShell({
   return (
     <main className="pos-shell">
       <section aria-label="K01 topbar" className="pos-topbar">
-        <strong>QC-OMS POS</strong>
-        <ConnectionStatus connected={connected} />
-        <button disabled>Tìm kiếm</button>
-        <ProfileMenu
-          displayName={currentUser.user.display_name}
-          permissions={currentUser.permissions}
-          onSignOut={onSignOut}
-          onOpenAdmin={onOpenAdmin}
-          onOpenDashboard={onOpenDashboard}
-        />
+        <section aria-label="K01 tìm kiếm" className="pos-topbar-search">
+          <strong>QC-OMS POS</strong>
+          <label>
+            <span>Tìm hàng (F3)</span>
+            <input disabled placeholder="Tìm hàng, combo, vật tư" />
+          </label>
+        </section>
+        <section aria-label="K01 tab hóa đơn" className="pos-topbar-tabs">
+          <button aria-current="true" type="button">Hóa đơn 1</button>
+          <button aria-label="Tạo hóa đơn mới" type="button">+</button>
+        </section>
+        <section aria-label="K01 khui vật tư" className="pos-topbar-material">
+          <button disabled type="button">Khui VT</button>
+        </section>
+        <section aria-label="K01 tiện ích" className="pos-topbar-actions">
+          <ConnectionStatus connected={connected} />
+          <ProfileMenu
+            displayName={currentUser.user.display_name}
+            permissions={currentUser.permissions}
+            onSignOut={onSignOut}
+            onOpenAdmin={onOpenAdmin}
+            onOpenDashboard={onOpenDashboard}
+          />
+        </section>
       </section>
       <section aria-label="K02 giỏ hàng" className="pos-cart">
-        <CustomerPanel
-          service={catalogService}
-          selectedCustomer={selectedCustomer}
-          onSelectCustomer={setSelectedCustomer}
-        />
         <ProductionQueuePanel
           service={productionQueueService}
           onAddToDraft={handleProductionQueueDraft}
@@ -304,6 +313,11 @@ export function PosShell({
         ) : null}
       </section>
       <section aria-label="K03 sản phẩm" className="pos-payment">
+        <CustomerPanel
+          service={catalogService}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={setSelectedCustomer}
+        />
         {error ? <p role="alert">{error}</p> : null}
         <ProductGrid
           products={products}
