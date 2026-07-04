@@ -318,7 +318,14 @@ export function PosShell({
     <main className="pos-shell">
       <section aria-label="K01 topbar" className="pos-topbar">
         <section aria-label="K01 tìm kiếm" className="pos-topbar-search">
-          <strong>QC-OMS POS</strong>
+          <button
+            aria-label="QC"
+            className="pos-brand-button"
+            type="button"
+            onClick={onOpenDashboard}
+          >
+            QC
+          </button>
           <label>
             <span>Tìm hàng (F3)</span>
             <input

@@ -65,6 +65,7 @@ function renderPosShell(overrides: {
   orderService?: OrderService
   productionQueueService?: ProductionQueueService
   currentUser?: Parameters<typeof PosShell>[0]['currentUser']
+  onOpenDashboard?: () => void
 } = {}) {
   return render(
     <PosShell
@@ -81,7 +82,7 @@ function renderPosShell(overrides: {
       }
       onSignOut={vi.fn()}
       onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
+      onOpenDashboard={overrides.onOpenDashboard ?? vi.fn()}
     />,
   )
 }
@@ -191,6 +192,18 @@ it('keeps K01 utility actions visible beside connection and profile', async () =
   expect(within(actions).getByRole('button', { name: 'Tải lại giao diện' })).toBeInTheDocument()
   expect(within(actions).getByText('Đã kết nối')).toBeInTheDocument()
   expect(within(actions).getByRole('button', { name: '👤 Cashier' })).toBeInTheDocument()
+})
+
+it('uses the QC brand button as a dashboard shortcut', async () => {
+  const onOpenDashboard = vi.fn()
+  renderPosShell({ onOpenDashboard })
+
+  const search = screen.getByLabelText('K01 tìm kiếm')
+  expect(within(search).queryByText('QC-OMS POS')).not.toBeInTheDocument()
+
+  await userEvent.click(within(search).getByRole('button', { name: 'QC' }))
+
+  expect(onOpenDashboard).toHaveBeenCalledTimes(1)
 })
 
 it('keeps cart lines isolated between invoice tabs', async () => {
