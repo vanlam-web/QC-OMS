@@ -38,7 +38,6 @@ interface SalesDocumentsState {
 export function SalesDocumentsPage({
   service,
   orderService,
-  onOpenDashboard,
   onOpenQuoteInPos,
   onOpenQuotePrint,
 }: {
@@ -217,12 +216,6 @@ export function SalesDocumentsPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       filter={

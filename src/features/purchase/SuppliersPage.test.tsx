@@ -85,8 +85,6 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByText('Đang tải nhà cung cấp...').closest('.management-main')).not.toBeNull()
   expect(await screen.findByText('NCC000031')).toBeInTheDocument()
   expect(screen.getByRole('main')).toHaveClass('management-page')
-  expect(screen.queryByRole('heading', { name: 'Nhà cung cấp' })?.closest('.suppliers-header')).toBeNull()
-  expect(document.querySelector('.suppliers-shell')).toBeNull()
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
   expect(sidebar).toHaveClass('management-filter-sidebar')
   expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
@@ -94,6 +92,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
   expect(screen.getByRole('search', { name: 'Lọc nhà cung cấp' }).closest('.management-page-header')).not.toBeNull()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(screen.getByText('Nguyễn Phong')).toBeInTheDocument()
   const table = screen.getByRole('table')
   expect(table.closest('.management-table-viewport')).not.toBeNull()
@@ -112,6 +112,8 @@ it('summarizes supplier validation state with scan-friendly KPI cards and panels
 
   await screen.findByText('NCC000031')
   const summary = screen.getByRole('region', { name: 'Tổng quan nhà cung cấp' })
+  expect(summary.closest('.management-filter-column')).not.toBeNull()
+  expect(summary.closest('.management-page-header')).toBeNull()
   expect(within(summary).getByText('Tổng NCC')).toBeInTheDocument()
   expect(within(summary).getByText('Nợ cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Tổng mua')).toBeInTheDocument()
@@ -126,9 +128,10 @@ it('filters suppliers by search and status', async () => {
 
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
-  await userEvent.type(within(filterForm).getByLabelText('Tìm NCC'), 'Nguyen')
+  const searchInput = within(filterForm).getByLabelText('Tìm NCC')
+  await userEvent.type(searchInput, 'Nguyen')
   await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
     page: 1,
@@ -146,9 +149,10 @@ it('uses supplier sidebar filters and reset action', async () => {
 
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
-  await userEvent.type(within(filterForm).getByLabelText('Tìm NCC'), 'NCC000031')
+  const searchInput = within(filterForm).getByLabelText('Tìm NCC')
+  await userEvent.type(searchInput, 'NCC000031')
   await userEvent.click(screen.getByRole('radio', { name: 'Ngừng hoạt động' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
     page: 1,

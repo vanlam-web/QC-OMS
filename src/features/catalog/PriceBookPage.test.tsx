@@ -73,11 +73,12 @@ it('renders the price book as a separate grid-first workspace', async () => {
   expect(screen.getByText('Đang tải bảng giá...')).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Bảng giá' })).toBeInTheDocument()
   expect(screen.getByRole('main')).toHaveClass('management-page')
-  expect(document.querySelector('.catalog-shell')).toBeNull()
   expect(screen.queryByRole('form', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
 
   const searchForm = screen.getByRole('search', { name: 'Tìm bảng giá' })
   expect(searchForm.closest('.management-page-header')).not.toBeNull()
+  expect(screen.queryByRole('button', { name: 'Tìm' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   const filterForm = screen.getByRole('form', { name: 'Lọc bảng giá' })
   expect(filterForm.closest('.management-filter-sidebar')).not.toBeNull()
   expect(screen.getByRole('navigation', { name: 'Phân trang bảng giá' })).toHaveTextContent('1-1 / 1 hàng hóa')

@@ -96,6 +96,8 @@ it('lists products and creates a product', async () => {
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách hàng hóa' })).toHaveClass('management-list-surface')
   expect(screen.queryByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
 
   expect(screen.queryByRole('form', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
   await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
@@ -127,8 +129,9 @@ it('filters by status and toggles product active state', async () => {
   const createAction = within(filterForm).getByRole('button', { name: 'Tạo hàng hóa' })
   expect(createAction.closest('.management-compact-search')).not.toBeNull()
   expect(createAction).toHaveClass('button-primary')
+  const searchInput = within(filterForm).getByLabelText('Tìm hàng hóa')
   await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(searchInput, '{Enter}')
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
   expect(await screen.findByText('Trạng thái: Tất cả')).toHaveClass('management-filter-summary')
 

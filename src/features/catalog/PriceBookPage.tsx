@@ -46,7 +46,6 @@ type AdjustmentMode = 'none' | 'amount' | 'percent'
 
 export function PriceBookPage({
   service,
-  onOpenDashboard,
 }: {
   service: CatalogService
   onOpenDashboard: () => void
@@ -288,12 +287,6 @@ export function PriceBookPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Tìm" className="management-action-icon button button-secondary" title="Tìm" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       filter={

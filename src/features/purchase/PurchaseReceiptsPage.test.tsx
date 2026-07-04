@@ -161,6 +161,8 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(screen.queryByRole('form', { name: 'Thông tin phiếu nhập' })).not.toBeInTheDocument()
   expect(screen.queryByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo phiếu nhập' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang phiếu nhập' })
   expect(within(footer).getByText('1-1 / 1 phiếu nhập')).toBeInTheDocument()
@@ -170,7 +172,6 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(detail).toBeInTheDocument()
   expect(detail.closest('tr')).toHaveClass('management-detail-row')
   expect(detail.closest('section[aria-label="Phiếu nhập"]')).toHaveClass('management-layout')
-  expect(detail.closest('section[aria-label="Phiếu nhập"]')).not.toHaveClass('suppliers-layout-stacked')
   expect(screen.getByRole('button', { name: 'Hoàn thành nhập hàng' })).toBeInTheDocument()
 })
 
@@ -181,6 +182,8 @@ it('summarizes purchase receipt validation state with scan-friendly KPI cards an
 
   await screen.findByText('PN000673')
   const summary = screen.getByRole('region', { name: 'Tổng quan phiếu nhập' })
+  expect(summary.closest('.management-filter-column')).not.toBeNull()
+  expect(summary.closest('.management-page-header')).toBeNull()
   expect(within(summary).getByText('Tổng phiếu')).toBeInTheDocument()
   expect(within(summary).getByText('Cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Còn phải trả')).toBeInTheDocument()
@@ -197,11 +200,12 @@ it('filters purchase receipts by search status and dates', async () => {
   await screen.findByText('PN000673')
   const filterForm = screen.getByRole('search', { name: 'Lọc phiếu nhập' })
   const filterSidebar = screen.getByRole('complementary', { name: 'Bộ lọc phiếu nhập' })
-  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'Nguyễn Phong')
+  const searchInput = within(filterForm).getByLabelText('Tìm phiếu/NCC')
+  await userEvent.type(searchInput, 'Nguyễn Phong')
   await userEvent.click(within(filterSidebar).getByLabelText('Tất cả'))
   await userEvent.type(within(filterSidebar).getByLabelText('Từ ngày'), '2026-06-01')
   await userEvent.type(within(filterSidebar).getByLabelText('Đến ngày'), '2026-07-31')
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({
     search: 'Nguyễn Phong',
@@ -232,8 +236,7 @@ it('uses purchase receipt presets, active chips, reset action, and exact PN sear
   )
   expect(within(filterSidebar).getByText('Preset: Đã nhập hôm nay')).toBeInTheDocument()
 
-  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673')
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673{Enter}')
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({ search: 'PN000673', status: 'all', page: 1, page_size: 15 })
   expect(within(filterSidebar).getByText(/Tìm: PN000673/)).toBeInTheDocument()

@@ -1,5 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { useState, type FormEvent } from 'react'
 import {
   ManagementActionIconButton,
@@ -13,15 +15,39 @@ import {
   ManagementPage,
   ManagementRowActionButton,
   ManagementTableFooter,
-  ManagementSearchBar,
   ManagementTableViewport,
 } from './management-layout'
+
+it('keeps retired management toolbar patterns out of the shared source', () => {
+  const css = readFileSync(join(process.cwd(), 'src/styles/index.css'), 'utf8')
+  const layout = readFileSync(join(process.cwd(), 'src/components/ui-shell/management-layout.tsx'), 'utf8')
+  const retiredPatterns = [
+    'DataToolbar',
+    'FilterPresetBar',
+    'ActiveFilterChips',
+    'ManagementSearchBar',
+    'management-search-bar',
+    'data-toolbar',
+    'filter-drawer',
+    'catalog-shell',
+    'sales-documents-panel',
+    'suppliers-panel',
+    'purchase-receipts-shell',
+  ]
+
+  expect(existsSync(join(process.cwd(), 'src/components/ui-shell/filters.tsx'))).toBe(false)
+  for (const pattern of retiredPatterns) {
+    expect(css).not.toContain(pattern)
+    expect(layout).not.toContain(pattern)
+  }
+})
 
 it('renders a KV-style management page with filter sidebar and list surface', () => {
   render(
     <ManagementPage
       actions={<button type="button">Tìm nhanh</button>}
       filter={<ManagementFilterSidebar ariaLabel="Bộ lọc hàng hóa">Bộ lọc</ManagementFilterSidebar>}
+      kpis={<section aria-label="Tổng quan hàng hóa">Tổng 12 hàng</section>}
       title="Hàng hóa"
     >
       <ManagementListSurface ariaLabel="Danh sách hàng hóa">Danh sách</ManagementListSurface>
@@ -31,6 +57,8 @@ it('renders a KV-style management page with filter sidebar and list surface', ()
   expect(screen.getByRole('heading', { name: 'Hàng hóa' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tìm nhanh' }).closest('.management-page-header')).not.toBeNull()
   expect(screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Tổng quan hàng hóa' }).closest('.management-filter-column')).not.toBeNull()
+  expect(screen.getByRole('region', { name: 'Tổng quan hàng hóa' }).closest('.management-page-header')).toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách hàng hóa' })).toBeInTheDocument()
   expect(screen.getByLabelText('Hàng hóa')).toHaveClass('management-layout')
 })
@@ -75,39 +103,6 @@ it('can hide the filter sidebar and let the list use the full width', () => {
 
   expect(screen.queryByRole('complementary', { name: 'Bộ lọc chứng từ' })).not.toBeInTheDocument()
   expect(screen.getByLabelText('Chứng từ')).toHaveClass('management-layout-filters-hidden')
-})
-
-it('renders search and icon actions with accessible labels', async () => {
-  const onSearchChange = vi.fn()
-  const onAction = vi.fn()
-  function SearchHarness() {
-    const [value, setValue] = useState('')
-
-    return (
-      <ManagementSearchBar
-        actions={
-          <ManagementActionIconButton ariaLabel="Tạo hàng hóa" onClick={onAction}>
-            +
-          </ManagementActionIconButton>
-        }
-        searchLabel="Tìm hàng hóa"
-        searchValue={value}
-        onSearchChange={(nextValue) => {
-          setValue(nextValue)
-          onSearchChange(nextValue)
-        }}
-        onSubmit={(event) => event.preventDefault()}
-      />
-    )
-  }
-
-  render(<SearchHarness />)
-
-  await userEvent.type(screen.getByLabelText('Tìm hàng hóa'), 'mica')
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo hàng hóa' }))
-
-  expect(onSearchChange).toHaveBeenLastCalledWith('mica')
-  expect(onAction).toHaveBeenCalledTimes(1)
 })
 
 it('renders reusable compact search toolbar with an icon action inside the search box', async () => {

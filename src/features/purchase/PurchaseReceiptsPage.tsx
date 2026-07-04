@@ -137,7 +137,6 @@ function physicalSummary(line: Pick<PurchaseReceiptInputItem, 'inventory_shape' 
 
 export function PurchaseReceiptsPage({
   service,
-  onOpenDashboard,
 }: {
   service: PurchaseReceiptService
   onOpenDashboard: () => void
@@ -1152,12 +1151,6 @@ export function PurchaseReceiptsPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
-          <button className="button button-secondary" type="button" onClick={onOpenDashboard}>
-            Trang chủ
-          </button>
         </ManagementCompactToolbar>
       }
       kpis={receiptKpis}

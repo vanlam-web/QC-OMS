@@ -23,12 +23,16 @@ export function ManagementPage({
         <h1>{title}</h1>
         {actions ? <div className="management-page-actions">{actions}</div> : null}
       </header>
-      {kpis ? <div className="management-kpis">{kpis}</div> : null}
       <section
         aria-label={title}
-        className={`management-layout${filterVisible && filter ? '' : ' management-layout-filters-hidden'}`}
+        className={`management-layout${filterVisible && (filter || kpis) ? '' : ' management-layout-filters-hidden'}`}
       >
-        {filterVisible ? filter : null}
+        {filterVisible && (filter || kpis) ? (
+          <div className="management-filter-column">
+            {kpis ? <div className="management-kpis">{kpis}</div> : null}
+            {filter}
+          </div>
+        ) : null}
         {!filterVisible && filterCollapsedControl ? <div className="management-filter-rail">{filterCollapsedControl}</div> : null}
         <div className="management-main">{children}</div>
       </section>
@@ -81,33 +85,6 @@ export function ManagementListSurface({ ariaLabel, children }: { ariaLabel: stri
     <section aria-label={ariaLabel} className="management-list-surface">
       {children}
     </section>
-  )
-}
-
-export function ManagementSearchBar({
-  searchLabel,
-  searchValue,
-  onSearchChange,
-  onSubmit,
-  actions,
-  children,
-}: {
-  searchLabel: string
-  searchValue: string
-  onSearchChange: (value: string) => void
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
-  actions?: ReactNode
-  children?: ReactNode
-}) {
-  return (
-    <form aria-label={`Thanh ${searchLabel.charAt(0).toLowerCase()}${searchLabel.slice(1)}`} className="management-search-bar" role="search" onSubmit={onSubmit}>
-      <label className="management-search-input">
-        <span>{searchLabel}</span>
-        <input value={searchValue} onChange={(event) => onSearchChange(event.target.value)} />
-      </label>
-      {actions ? <div className="management-search-actions">{actions}</div> : null}
-      {children}
-    </form>
   )
 }
 

@@ -174,9 +174,6 @@ export function FoundationAdminPage({
             value={userSearch}
             onChange={setUserSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
         </ManagementCompactToolbar>
       }
       filter={

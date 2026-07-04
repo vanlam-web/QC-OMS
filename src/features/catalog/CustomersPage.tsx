@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { BarChart3, ChevronLeft, ChevronRight, Plus, RotateCcw, Search } from 'lucide-react'
-import { MoneyText } from '../../components/ui-shell/primitives'
+import { MetricCard, MetricGrid, MoneyText } from '../../components/ui-shell/primitives'
 import { formatApiError } from '../../lib/api/error-message'
 import {
   ManagementActionIconButton,
@@ -210,6 +210,18 @@ export function CustomersPage({
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
   const activeFilterSummary = lastSearch ? `Tìm: ${lastSearch}` : 'Đang hoạt động'
+  const visibleDebtTotal = state?.customers.reduce((sum, customer) => {
+    const debt = customerDebts[customer.id]
+    return sum + (typeof debt === 'object' ? debt.total_debt : 0)
+  }, 0) ?? 0
+  const visibleSalesTotal = state?.customers.reduce((sum, customer) => sum + (customer.total_sales_amount ?? 0), 0) ?? 0
+  const customerKpis = (
+    <MetricGrid ariaLabel="Tổng quan khách hàng">
+      <MetricCard hint={lastSearch ? 'Theo bộ lọc tìm kiếm' : 'Đang hoạt động'} label="Tổng KH" value={state?.total ?? 0} />
+      <MetricCard hint="Từ danh sách đang xem" label="Nợ hiện tại" tone={visibleDebtTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={visibleDebtTotal} />} />
+      <MetricCard hint="Từ danh sách đang xem" label="Tổng bán" tone="success" value={<MoneyText value={visibleSalesTotal} />} />
+    </MetricGrid>
+  )
 
   return (
     <ManagementPage
@@ -228,11 +240,9 @@ export function CustomersPage({
             value={search}
             onChange={setSearch}
           />
-          <button aria-label="Lọc" className="management-action-icon button button-secondary" title="Lọc" type="submit">
-            <Search aria-hidden="true" size={16} />
-          </button>
         </ManagementCompactToolbar>
       }
+      kpis={customerKpis}
       filter={
         <ManagementFilterSidebar
           activeSummary={activeFilterSummary}

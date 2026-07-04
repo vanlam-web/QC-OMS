@@ -154,6 +154,8 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(await screen.findByText('HD010985')).toBeInTheDocument()
   expect(screen.getByRole('main')).toHaveClass('management-page')
   expect(screen.getByRole('search', { name: 'Lọc chứng từ bán hàng' })).toHaveClass('management-compact-toolbar')
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách chứng từ bán hàng' })).toHaveClass('management-list-surface')
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
   expect(sidebar).toBeInTheDocument()
@@ -197,8 +199,7 @@ it('searches by document code and keeps filtered empty state clear', async () =>
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('Chưa có chứng từ phù hợp bộ lọc.')
-  await userEvent.type(screen.getByLabelText('Tìm chứng từ'), 'HD010985')
-  await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(screen.getByLabelText('Tìm chứng từ'), 'HD010985{Enter}')
 
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985', page: 1, page_size: 15 })
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })

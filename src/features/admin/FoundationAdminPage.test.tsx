@@ -75,6 +75,7 @@ it('loads user and permission administration data from the API service', async (
   const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
   expect(filterForm.closest('.management-page-header')).not.toBeNull()
   expect(within(filterForm).getByLabelText('Tìm người dùng').closest('.management-compact-search')).not.toBeNull()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Máy trạm' })).not.toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
   expect(screen.getByText('admin@example.test')).toBeInTheDocument()
@@ -134,9 +135,10 @@ it('filters, creates, disables, and updates permissions for users', async () => 
 
   await screen.findByText('admin@example.test')
   const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
-  await userEvent.type(within(filterForm).getByLabelText('Tìm người dùng'), 'Admin')
+  const searchInput = within(filterForm).getByLabelText('Tìm người dùng')
+  await userEvent.type(searchInput, 'Admin')
   await userEvent.click(screen.getByRole('radio', { name: 'active' }))
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
+  await userEvent.type(searchInput, '{Enter}')
   expect(service.listUsers).toHaveBeenLastCalledWith({ search: 'Admin', status: 'active' })
   expect(await screen.findByText('Tìm: Admin')).toHaveClass('management-filter-summary')
 
