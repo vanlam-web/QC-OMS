@@ -235,6 +235,7 @@ function SalesDocumentsRoute() {
       <SalesDocumentsPage
         service={service}
         orderService={orderService}
+        onCreateSalesDocument={() => navigate('/pos')}
         onOpenDashboard={() => navigate('/dashboard')}
         onOpenQuoteInPos={(payload) => {
           saveQuoteReopenPayload(payload)

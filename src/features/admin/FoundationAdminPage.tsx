@@ -1,9 +1,10 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, KeyRound, Lock, RotateCcw, Search, Unlock } from 'lucide-react'
 import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
 import {
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementFilterGroup,
@@ -46,6 +47,7 @@ export function FoundationAdminPage({
   const [userForm, setUserForm] = useState({ email: '', password: '', displayName: '' })
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [savingUser, setSavingUser] = useState(false)
+  const createUserEmailRef = useRef<HTMLInputElement | null>(null)
 
   async function load(userFilters = { search: lastUserSearch, status: lastUserStatus }) {
     setError(null)
@@ -94,6 +96,10 @@ export function FoundationAdminPage({
     setUserSearch('')
     setUserStatus('all')
     await load({ search: '', status: 'all' })
+  }
+
+  function focusCreateUserForm() {
+    createUserEmailRef.current?.focus()
   }
 
   async function createUser(event: React.FormEvent<HTMLFormElement>) {
@@ -171,6 +177,9 @@ export function FoundationAdminPage({
             label="Tìm người dùng"
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm tên, email"
+            trailingAction={
+              <ManagementCompactCreateAction ariaLabel="Tạo người dùng" onClick={focusCreateUserForm} />
+            }
             value={userSearch}
             onChange={setUserSearch}
           />
@@ -237,6 +246,7 @@ export function FoundationAdminPage({
               <label>
                 Email
                 <input
+                  ref={createUserEmailRef}
                   type="email"
                   value={userForm.email}
                   onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))}

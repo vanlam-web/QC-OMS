@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import {
-  ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -191,9 +191,7 @@ export function CatalogPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã, tên hàng"
             trailingAction={
-              <ManagementActionIconButton ariaLabel="Tạo hàng hóa" variant="primary" onClick={() => setCreateOpen(true)}>
-                <Plus aria-hidden="true" size={16} />
-              </ManagementActionIconButton>
+              <ManagementCompactCreateAction ariaLabel="Tạo hàng hóa" onClick={() => setCreateOpen(true)} />
             }
             value={search}
             onChange={setSearch}

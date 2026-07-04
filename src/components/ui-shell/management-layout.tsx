@@ -1,4 +1,5 @@
 import type { FormEvent, ReactNode } from 'react'
+import { Plus } from 'lucide-react'
 
 export function ManagementPage({
   title,
@@ -42,8 +43,6 @@ export function ManagementPage({
 
 export function ManagementFilterSidebar({
   ariaLabel,
-  title,
-  activeSummary,
   actions,
   children,
 }: {
@@ -55,12 +54,6 @@ export function ManagementFilterSidebar({
 }) {
   return (
     <aside aria-label={ariaLabel} className="management-filter-sidebar">
-      {title || activeSummary ? (
-        <div className="management-filter-header">
-          {title ? <h2>{title}</h2> : null}
-          {activeSummary ? <p className="management-filter-summary">{activeSummary}</p> : null}
-        </div>
-      ) : null}
       {children}
       {actions ? <ManagementFilterActionBar>{actions}</ManagementFilterActionBar> : null}
     </aside>
@@ -110,6 +103,28 @@ export function ManagementActionIconButton({
       onClick={onClick}
     >
       {children}
+    </button>
+  )
+}
+
+export function ManagementCompactCreateAction({
+  ariaLabel,
+  title = ariaLabel,
+  onClick,
+}: {
+  ariaLabel: string
+  title?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      aria-label={ariaLabel}
+      className="management-compact-create-action"
+      title={title}
+      type="button"
+      onClick={onClick}
+    >
+      <Plus aria-hidden="true" size={18} strokeWidth={2} />
     </button>
   )
 }

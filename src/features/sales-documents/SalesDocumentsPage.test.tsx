@@ -159,7 +159,12 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(screen.getByRole('region', { name: 'Danh sách chứng từ bán hàng' })).toHaveClass('management-list-surface')
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
   expect(sidebar).toBeInTheDocument()
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  const summary = screen.getByRole('region', { name: 'Tổng quan chứng từ bán hàng' })
+  expect(summary.closest('.management-filter-column')).not.toBeNull()
+  expect(within(summary).queryByText('Tổng chứng từ')).not.toBeInTheDocument()
+  expect(within(summary).getByText('Tổng tiền')).toBeInTheDocument()
+  expect(within(summary).getByText('Còn nợ')).toBeInTheDocument()
   const typeFilterGroup = within(sidebar).getByRole('region', { name: 'Loại chứng từ' })
   const statusFilterGroup = within(sidebar).getByRole('region', { name: 'Trạng thái' })
   expect(within(typeFilterGroup).getByRole('radio', { name: 'Tất cả' })).toBeInTheDocument()
@@ -181,7 +186,7 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(screen.getByRole('columnheader', { name: 'Trạng thái' })).toBeInTheDocument()
   expect(screen.getByText('Công ty Phong Cảnh')).toBeInTheDocument()
   expect(screen.getByText('Admin')).toBeInTheDocument()
-  expect(screen.getAllByText('150 000')).toHaveLength(2)
+  expect(within(screen.getByRole('table', { name: 'Danh sách chứng từ bán hàng' })).getAllByText('150 000')).toHaveLength(2)
   expect(screen.getByText('0')).toBeInTheDocument()
   expect(screen.getByText('Hoàn tất', { selector: '.status-chip' })).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang chứng từ' })
@@ -190,6 +195,26 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(within(footer).getByText('Trang 1 / 1')).toBeInTheDocument()
   expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeDisabled()
+})
+
+it('shows a shared plus action in document search to start a new sale', async () => {
+  const onCreateSalesDocument = vi.fn()
+  render(
+    <SalesDocumentsPage
+      service={makeService()}
+      onCreateSalesDocument={onCreateSalesDocument}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  const searchForm = screen.getByRole('search', { name: 'Lọc chứng từ bán hàng' })
+  const createAction = within(searchForm).getByRole('button', { name: 'Tạo chứng từ bán hàng' })
+
+  expect(createAction.closest('.management-compact-search')).not.toBeNull()
+  expect(createAction).toHaveClass('management-compact-create-action')
+  expect(createAction.querySelector('.lucide-plus')).not.toBeNull()
+  await userEvent.click(createAction)
+  expect(onCreateSalesDocument).toHaveBeenCalledTimes(1)
 })
 
 it('searches by document code and keeps filtered empty state clear', async () => {
@@ -203,7 +228,7 @@ it('searches by document code and keeps filtered empty state clear', async () =>
 
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985', page: 1, page_size: 15 })
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
-  expect(within(sidebar).getByText('Tìm: HD010985')).toHaveClass('management-filter-summary')
+  expect(within(sidebar).queryByText('Tìm: HD010985')).not.toBeInTheDocument()
   expect(screen.getByText('Không thấy chứng từ theo bộ lọc hiện tại.')).toBeInTheDocument()
   expect(screen.getByText('Hãy thử mở rộng thời gian hoặc bỏ bớt bộ lọc.')).toBeInTheDocument()
 })

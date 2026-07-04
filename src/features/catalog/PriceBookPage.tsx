@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Calculator, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import {
-  ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementFilterGroup,
@@ -277,13 +277,10 @@ export function PriceBookPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã, tên hàng"
             trailingAction={
-              <ManagementActionIconButton
+              <ManagementCompactCreateAction
                 ariaLabel={formulaOpen ? 'Đóng công thức bảng giá' : 'Tạo công thức cho bộ lọc này'}
-                variant="primary"
                 onClick={() => setFormulaOpen((current) => !current)}
-              >
-                <Calculator aria-hidden="true" size={16} />
-              </ManagementActionIconButton>
+              />
             }
             value={search}
             onChange={setSearch}

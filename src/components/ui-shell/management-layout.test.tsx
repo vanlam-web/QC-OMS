@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { useState, type FormEvent } from 'react'
 import {
   ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -154,6 +155,15 @@ it('renders reusable compact search toolbar with an icon action inside the searc
   expect(onSubmit).toHaveBeenCalled()
 })
 
+it('renders the shared compact create action as the standard plus button', () => {
+  render(<ManagementCompactCreateAction ariaLabel="Tạo khách hàng" onClick={vi.fn()} />)
+
+  const action = screen.getByRole('button', { name: 'Tạo khách hàng' })
+  expect(action).toHaveClass('management-compact-create-action')
+  expect(action).not.toHaveClass('button-primary')
+  expect(action.querySelector('.lucide-plus')).not.toBeNull()
+})
+
 it('renders reusable scroll body and footer pagination outside the table scroll area', () => {
   render(
     <ManagementListSurface ariaLabel="Danh sách chứng từ">
@@ -193,7 +203,7 @@ it('standardizes filter groups without rendering detail content by default', () 
   expect(screen.queryByRole('region', { name: /Chi tiết/ })).not.toBeInTheDocument()
 })
 
-it('renders a reusable filter sidebar title summary and action area', () => {
+it('renders filter sidebar content without a duplicated header summary', () => {
   render(
     <ManagementFilterSidebar
       activeSummary="Loại: Hóa đơn"
@@ -211,8 +221,8 @@ it('renders a reusable filter sidebar title summary and action area', () => {
   )
 
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ' })
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
-  expect(within(sidebar).getByText('Loại: Hóa đơn')).toHaveClass('management-filter-summary')
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByText('Loại: Hóa đơn')).not.toBeInTheDocument()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
 })
 

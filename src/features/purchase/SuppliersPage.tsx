@@ -6,7 +6,7 @@ import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, Supplier
 import type { SupplierInput, SupplierService } from './supplier-service'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
-  ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -74,7 +74,6 @@ export function SuppliersPage({
   const [paymentNote, setPaymentNote] = useState('')
 
   const bankAccounts = financeAccounts.filter((account) => account.is_active && account.account_type === 'bank')
-  const visibleSupplierTotal = suppliers?.length ?? 0
   const payableTotal = suppliers?.reduce((sum, supplier) => sum + supplier.current_payable_amount, 0) ?? 0
   const purchaseTotal = suppliers?.reduce((sum, supplier) => sum + supplier.total_purchase_amount, 0) ?? 0
   const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
@@ -292,7 +291,6 @@ export function SuppliersPage({
 
   const supplierKpis = (
     <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
-        <MetricCard hint={status === 'active' ? 'Đang hoạt động' : supplierStatusText(status)} label="Tổng NCC" value={total || visibleSupplierTotal} />
         <MetricCard hint="Từ danh sách đang xem" label="Nợ cần trả" tone={payableTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={payableTotal} />} />
         <MetricCard hint="Phiếu nhập posted" label="Tổng mua" tone="success" value={<MoneyText value={purchaseTotal} />} />
       </MetricGrid>
@@ -460,9 +458,7 @@ export function SuppliersPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã, tên, điện thoại"
             trailingAction={
-              <ManagementActionIconButton ariaLabel="Tạo nhà cung cấp" variant="primary" onClick={openCreateSupplier}>
-                <Plus aria-hidden="true" size={16} />
-              </ManagementActionIconButton>
+              <ManagementCompactCreateAction ariaLabel="Tạo nhà cung cấp" onClick={openCreateSupplier} />
             }
             value={search}
             onChange={setSearch}
