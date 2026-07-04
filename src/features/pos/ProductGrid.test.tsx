@@ -56,7 +56,7 @@ it('renders active products and selects one', async () => {
   )
 
   expect(screen.getByText('Mica 3mm')).toBeInTheDocument()
-  expect(screen.getByText('120.000/m')).toBeInTheDocument()
+  expect(screen.getByText('120 000/m')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: /Mica 3mm/ }))
   expect(onSelectProduct).toHaveBeenCalledWith(expect.objectContaining({ id: 'p-1' }))
 })
@@ -77,14 +77,14 @@ it('paginates quick products by 12 items per page', async () => {
     />,
   )
 
-  expect(screen.getByRole('button', { name: 'Sản phẩm 1 1.000/cái' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Sản phẩm 13 13.000/cái' })).not.toBeInTheDocument()
-  expect(screen.getByText('1 / 2')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Sản phẩm 1 1 000/cái' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Sản phẩm 13 13 000/cái' })).not.toBeInTheDocument()
+  expect(screen.getByText('1/2')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Trang trước sản phẩm nhanh' })).toBeDisabled()
 
   await userEvent.click(screen.getByRole('button', { name: 'Trang sau sản phẩm nhanh' }))
 
-  expect(screen.getByRole('button', { name: 'Sản phẩm 13 13.000/cái' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Sản phẩm 1 1.000/cái' })).not.toBeInTheDocument()
-  expect(screen.getByText('2 / 2')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Sản phẩm 13 13 000/cái' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Sản phẩm 1 1 000/cái' })).not.toBeInTheDocument()
+  expect(screen.getByText('2/2')).toBeInTheDocument()
 })

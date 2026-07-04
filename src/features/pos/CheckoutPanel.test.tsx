@@ -87,7 +87,7 @@ it('calculates cart total and submits cash checkout', async () => {
   const service = makeOrderService()
   render(<CheckoutPanel cartLines={[line]} selectedCustomer={customer} orderService={service} />)
 
-  expect(screen.getAllByText('240.000').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('240 000').length).toBeGreaterThan(0)
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '240000')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
@@ -101,7 +101,7 @@ it('calculates cart total and submits cash checkout', async () => {
   const receipt = await screen.findByLabelText('Kết quả checkout')
   expect(within(receipt).getByText('HD000001')).toBeInTheDocument()
   expect(within(receipt).getByText('PT000001')).toBeInTheDocument()
-  expect(within(receipt).getByText('Đã trả 240.000')).toBeInTheDocument()
+  expect(within(receipt).getByText('Đã trả 240 000')).toBeInTheDocument()
   expect(within(receipt).getByText('Còn nợ 0')).toBeInTheDocument()
 })
 
@@ -219,7 +219,7 @@ it('subtracts line discounts from payable total and checkout payload', async () 
   expect(screen.getByText('Tiền hàng')).toBeInTheDocument()
   expect(screen.getByText('Chiết khấu')).toBeInTheDocument()
   expect(screen.getByText('Khách cần trả')).toBeInTheDocument()
-  expect(screen.getByText('200.000')).toBeInTheDocument()
+  expect(screen.getByText('200 000')).toBeInTheDocument()
 
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '200000')
@@ -258,7 +258,7 @@ it('offers recent prices for the selected customer and product', async () => {
 
   expect(service.listRecentCustomerProductPrices).toHaveBeenCalledWith('customer-1', 'p-1')
   expect(await screen.findByText('HD000099')).toBeInTheDocument()
-  expect(screen.getByText('110.000')).toBeInTheDocument()
+  expect(screen.getByText('110 000')).toBeInTheDocument()
 })
 
 it('shows checkout inventory warnings without blocking success', async () => {
@@ -307,7 +307,7 @@ it('asks whether customer surplus is returned or applied to old debt', async () 
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '300000')
 
-  expect(await screen.findByText('Khách trả dư 60.000')).toBeInTheDocument()
+  expect(await screen.findByText('Khách trả dư 60 000')).toBeInTheDocument()
   expect(screen.getByRole('radio', { name: 'Trả lại khách' })).toBeChecked()
   expect(screen.getByRole('radio', { name: 'Cấn vào nợ cũ' })).toBeInTheDocument()
 })
@@ -336,7 +336,7 @@ it('loads and displays customer debt for selected customers', async () => {
   expect(service.getCustomerDebt).toHaveBeenCalledWith('customer-1')
   expect(await screen.findByText('Tổng nợ hiện tại')).toBeInTheDocument()
   const debtList = screen.getByLabelText('Hóa đơn còn nợ')
-  expect(within(debtList).getByText('150.000')).toBeInTheDocument()
+  expect(within(debtList).getByText('150 000')).toBeInTheDocument()
   expect(screen.getByText('HD000099')).toBeInTheDocument()
 })
 

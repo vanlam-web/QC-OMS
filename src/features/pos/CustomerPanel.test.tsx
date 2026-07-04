@@ -37,7 +37,7 @@ describe('CustomerPanel', () => {
     render(<CustomerPanel service={service} selectedCustomer={null} onSelectCustomer={onSelectCustomer} />)
 
     await userEvent.type(screen.getByLabelText('Tìm khách'), 'khach')
-    await userEvent.click(screen.getByRole('button', { name: 'Tìm khách' }))
+    await userEvent.keyboard('{Enter}')
     await userEvent.click(await screen.findByRole('button', { name: 'Chọn KH000001 Khach le' }))
 
     expect(service.listCustomers).toHaveBeenCalledWith({ search: 'khach' })
@@ -65,6 +65,7 @@ describe('CustomerPanel', () => {
 
     render(<Harness />)
 
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo khách nhanh' }))
     await userEvent.type(screen.getByLabelText('Tên khách'), 'Cong ty ABC')
     await userEvent.click(screen.getByRole('button', { name: 'Tạo khách' }))
 
@@ -75,6 +76,6 @@ describe('CustomerPanel', () => {
       customer_group_id: null,
     })
     expect(onSelectCustomer).toHaveBeenCalledWith(created)
-    expect(await screen.findByText('Đã chọn KH000002 - Cong ty ABC')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('Cong ty ABC')).toBeInTheDocument()
   })
 })

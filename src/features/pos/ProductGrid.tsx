@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { Product, ResolvedPrice } from '../catalog/types'
+import { formatMoney } from '../../lib/number-format'
 
 const productsPerPage = 12
 
@@ -8,11 +9,13 @@ export function ProductGrid({
   prices,
   loading,
   onSelectProduct,
+  footerAction,
 }: {
   products: Product[]
   prices: Record<string, ResolvedPrice>
   loading: boolean
   onSelectProduct: (product: Product) => void
+  footerAction?: ReactNode
 }) {
   const [page, setPage] = useState(1)
   const totalPages = Math.max(1, Math.ceil(products.length / productsPerPage))
@@ -27,7 +30,6 @@ export function ProductGrid({
 
   return (
     <section aria-label="Sản phẩm nhanh" className="product-grid-panel">
-      <h2>Sản phẩm nhanh</h2>
       <div className="product-grid">
         {visibleProducts.map((product) => {
           const price = prices[product.id]?.unit_price ?? 0
@@ -35,18 +37,17 @@ export function ProductGrid({
             <button
               key={product.id}
               type="button"
-              aria-label={`${product.name} ${price.toLocaleString('vi-VN')}/${product.unit_name}`}
+              aria-label={`${product.name} ${formatMoney(price)}/${product.unit_name}`}
               onClick={() => onSelectProduct(product)}
             >
               <strong>{product.name}</strong>
-              <span>{price.toLocaleString('vi-VN')}/{product.unit_name}</span>
+              <span>{formatMoney(price)}/{product.unit_name}</span>
             </button>
           )
         })}
       </div>
       <footer className="product-grid-footer">
-        <span>{safePage} / {totalPages}</span>
-        <div>
+        <div className="product-grid-pagination" aria-label="Phân trang sản phẩm nhanh">
           <button
             aria-label="Trang trước sản phẩm nhanh"
             disabled={safePage === 1}
@@ -55,6 +56,7 @@ export function ProductGrid({
           >
             ‹
           </button>
+          <span>{safePage}/{totalPages}</span>
           <button
             aria-label="Trang sau sản phẩm nhanh"
             disabled={safePage === totalPages}
@@ -64,6 +66,7 @@ export function ProductGrid({
             ›
           </button>
         </div>
+        {footerAction ? <div className="product-grid-footer-action">{footerAction}</div> : null}
       </footer>
     </section>
   )

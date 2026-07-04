@@ -7,6 +7,7 @@ export interface CheckoutCartLine {
   width_m?: number
   height_m?: number
   linear_m?: number
+  pieceCount?: number
   unitPrice: number
   discountAmount?: number
   priceSource: string
@@ -30,6 +31,7 @@ export interface FinanceAccount {
 
 export interface CheckoutInput {
   customer_id?: string
+  note?: string
   retail_debt_note?: string
   items: Array<{
     product_id: string
