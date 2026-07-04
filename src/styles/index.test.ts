@@ -17,3 +17,10 @@ it('keeps shell account controls aligned with the management page header row', (
   expect(cssRule('.shell-action-rail')).toContain('top: var(--shell-action-rail-top)')
   expect(cssRule('.management-page-header')).toContain('padding-right: var(--shell-action-rail-reserved-width)')
 })
+
+it('keeps login controls on theme colors so entered text remains visible', () => {
+  expect(cssRule('.auth-shell')).toContain('background: var(--color-background)')
+  expect(cssRule('.auth-shell form')).toContain('background: var(--color-surface)')
+  expect(cssRule('.auth-shell input')).toContain('color: var(--color-text)')
+  expect(cssRule('.auth-shell input')).toContain('background: var(--color-surface-muted)')
+})

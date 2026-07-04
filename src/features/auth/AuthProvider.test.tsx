@@ -116,6 +116,35 @@ it('returns to ready state when sign in fails', async () => {
   expect(await screen.findByRole('button', { name: 'ready' })).toBeInTheDocument()
 })
 
+it('keeps auth initialized while sign in is pending', async () => {
+  function SignInProbe() {
+    const auth = useAuth()
+    return (
+      <button type="button" onClick={() => void auth.signIn('admin@qc.local', '123456').catch(() => undefined)}>
+        {auth.initialized ? 'ready' : 'booting'}
+      </button>
+    )
+  }
+
+  render(
+    <AuthProvider
+      service={{
+        signIn: vi.fn(() => new Promise<void>(() => undefined)),
+        signOut: vi.fn(),
+        getAccessToken: vi.fn().mockResolvedValue(null),
+      }}
+      api={{ request: vi.fn() }}
+      realtimeClient={{ channel: vi.fn(), removeChannel: vi.fn() }}
+    >
+      <SignInProbe />
+    </AuthProvider>,
+  )
+
+  await screen.findByRole('button', { name: 'ready' })
+  await userEvent.click(screen.getByRole('button'))
+  expect(screen.getByRole('button', { name: 'ready' })).toBeInTheDocument()
+})
+
 it('restores /me and refreshes when the access channel changes', async () => {
   let signal: () => void = () => undefined
   const channel: RealtimeChannel = {

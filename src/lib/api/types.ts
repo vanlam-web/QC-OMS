@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | 'RESOURCE_CONFLICT'
   | 'RESOURCE_NOT_FOUND'
   | 'RATE_LIMITED'
+  | 'CONFIGURATION_ERROR'
   | 'INTERNAL_ERROR'
 
 export interface SuccessEnvelope<T> {

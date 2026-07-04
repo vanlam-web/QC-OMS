@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { ApiError } from '../../lib/api/client'
+import { isSupabaseAuthConfigured, runtimeConfig, type RuntimeConfig } from '../../lib/config/runtime'
 
 export interface AuthService {
   signIn(email: string, password: string): Promise<void>
@@ -6,9 +8,17 @@ export interface AuthService {
   getAccessToken(): Promise<string | null>
 }
 
-export function createAuthService(client: SupabaseClient): AuthService {
+export function createAuthService(client: SupabaseClient, config: RuntimeConfig = runtimeConfig): AuthService {
   return {
     async signIn(email, password) {
+      if (!isSupabaseAuthConfigured(config)) {
+        throw new ApiError(
+          0,
+          'CONFIGURATION_ERROR',
+          'Thiếu cấu hình Supabase anon key. Vui lòng tạo .env.local từ .env.example và nhập VITE_SUPABASE_ANON_KEY.',
+          'local',
+        )
+      }
       const { error } = await client.auth.signInWithPassword({ email, password })
       if (error) throw error
     },

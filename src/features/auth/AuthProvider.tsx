@@ -72,7 +72,6 @@ export function AuthProvider({
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      setInitialized(false)
       try {
         await authService.signIn(email, password)
         await refreshMe()

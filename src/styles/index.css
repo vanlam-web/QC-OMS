@@ -1108,19 +1108,20 @@ button {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  background: #f6f7f9;
+  background: var(--color-background);
   padding: 1rem;
+  color: var(--color-text);
 }
 
 .auth-shell form {
   display: grid;
   width: min(100%, 24rem);
   gap: 1rem;
-  border: 1px solid #d9dee7;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: white;
+  background: var(--color-surface);
   padding: 1.25rem;
-  box-shadow: 0 12px 30px rgb(15 23 42 / 8%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 24%);
 }
 
 .auth-shell h1 {
@@ -1138,18 +1139,19 @@ button {
 
 .auth-shell input {
   min-height: 2.75rem;
-  border: 1px solid #c9d1dd;
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   padding: 0 0.75rem;
-  background: white;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }
 
 .auth-shell button {
   min-height: 2.75rem;
-  border: 1px solid #1f2937;
+  border: 1px solid var(--color-primary);
   border-radius: 0.375rem;
-  background: #1f2937;
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-surface-muted);
   font-weight: 700;
 }
 
@@ -1160,10 +1162,10 @@ button {
 
 .auth-shell [role='alert'] {
   margin: 0;
-  border: 1px solid #fecaca;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 42%, var(--color-border));
   border-radius: 0.375rem;
-  background: #fef2f2;
-  color: #991b1b;
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+  color: var(--color-danger);
   padding: 0.75rem;
 }
 
