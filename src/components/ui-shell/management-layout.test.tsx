@@ -267,6 +267,8 @@ it('renders compact row action buttons and inline detail rows tied to the table'
   )
 
   expect(screen.getByRole('button', { name: 'Mở chi tiết HD010985' })).toHaveClass('management-row-action')
-  expect(screen.getByRole('region', { name: 'Chi tiết chứng từ HD010985' })).toHaveClass('management-inline-detail')
+  const detailRegion = screen.getByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+  expect(detailRegion).toHaveClass('management-inline-detail')
+  expect(detailRegion.closest('tr')).toHaveClass('management-detail-row-selected')
   expect(screen.getByRole('cell', { name: /Chi tiết/ })).toHaveAttribute('colspan', '2')
 })

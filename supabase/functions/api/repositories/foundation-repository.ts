@@ -2497,7 +2497,10 @@ async function loadSalesDocumentPaymentReceipts(
   return receipts.filter((receipt): receipt is PaymentReceiptDetailData => receipt !== null).map((receipt) => ({
     id: receipt.id,
     code: receipt.code,
+    status: receipt.status,
+    receipt_type: receipt.receipt_type,
     total_received_amount: receipt.total_received_amount,
+    created_at: receipt.created_at,
     methods: receipt.methods,
     allocations: receipt.allocations,
   }));

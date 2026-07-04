@@ -323,7 +323,10 @@ export interface SalesDocumentDetailData extends SalesDocumentListItemData {
   payment_receipts: Array<{
     id: string;
     code: string;
+    status: "posted" | "cancelled";
+    receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
     total_received_amount: number;
+    created_at: string;
     methods: Array<{
       method_type: "cash" | "bank_transfer";
       amount: number;

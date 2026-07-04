@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ExternalLink, Eye, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Search } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
@@ -9,7 +9,6 @@ import {
   ManagementFilterSidebar,
   ManagementListSurface,
   ManagementPage,
-  ManagementRowActionButton,
   ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
@@ -60,7 +59,6 @@ export function SalesDocumentsPage({
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [detailErrorDocumentId, setDetailErrorDocumentId] = useState<string | null>(null)
-  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
   const [openingQuoteId, setOpeningQuoteId] = useState<string | null>(null)
 
   async function loadDocuments(input: {
@@ -86,6 +84,23 @@ export function SalesDocumentsPage({
       if (result.items.length === 0) setSelected(null)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chứng từ bán hàng.'))
+    }
+  }
+
+  async function openQuoteInPos(document: SalesDocumentListItem) {
+    if (orderService === undefined || onOpenQuoteInPos === undefined) return
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    setOpeningQuoteId(document.id)
+    try {
+      const payload = await orderService.getQuoteReopenPayload(document.id)
+      onOpenQuoteInPos(payload)
+    } catch (cause) {
+      setSelected(null)
+      setDetailError(formatApiError(cause, 'Không mở được báo giá tại POS.'))
+      setDetailErrorDocumentId(document.id)
+    } finally {
+      setOpeningQuoteId(null)
     }
   }
 
@@ -165,31 +180,11 @@ export function SalesDocumentsPage({
     setDetailError(null)
     setDetailErrorDocumentId(null)
     setSelected(null)
-    setLoadingDetailId(document.id)
     try {
       setSelected(await service.getSalesDocument(document.id))
     } catch (cause) {
       setDetailError(formatApiError(cause, 'Không tải được chi tiết chứng từ.'))
       setDetailErrorDocumentId(document.id)
-    } finally {
-      setLoadingDetailId(null)
-    }
-  }
-
-  async function openQuoteInPos(document: SalesDocumentListItem) {
-    if (orderService === undefined || onOpenQuoteInPos === undefined) return
-    setDetailError(null)
-    setDetailErrorDocumentId(null)
-    setOpeningQuoteId(document.id)
-    try {
-      const payload = await orderService.getQuoteReopenPayload(document.id)
-      onOpenQuoteInPos(payload)
-    } catch (cause) {
-      setSelected(null)
-      setDetailError(formatApiError(cause, 'Không mở được báo giá tại POS.'))
-      setDetailErrorDocumentId(document.id)
-    } finally {
-      setOpeningQuoteId(null)
     }
   }
 
@@ -320,66 +315,55 @@ export function SalesDocumentsPage({
                 <table aria-label="Danh sách chứng từ bán hàng" className="sales-documents-management-table">
                   <thead>
                     <tr>
-                      <th>Loại/Mã</th>
+                      <th>Mã hóa đơn</th>
                       <th>Thời gian</th>
-                      <th>Mã KH</th>
                       <th>Khách hàng</th>
-                      <th>Người bán</th>
-                      <th>Tổng</th>
+                      <th>Tổng tiền hàng</th>
+                      <th>Giảm giá</th>
+                      <th>Tổng sau giảm</th>
                       <th>Khách đã trả</th>
-                      <th>Còn nợ</th>
-                      <th>Thanh toán</th>
-                      <th>Trạng thái</th>
-                      <th>Mở</th>
                     </tr>
                   </thead>
                   <tbody>
                     {documents.map((document) => (
                       <Fragment key={document.id}>
-                        <tr className={selected?.id === document.id ? 'management-data-row-selected' : undefined}>
+                        <tr
+                          aria-expanded={selected?.id === document.id}
+                          className={`management-data-row${selected?.id === document.id ? ' management-data-row-selected' : ''}`}
+                          tabIndex={0}
+                          onClick={() => void openDocument(document)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault()
+                              void openDocument(document)
+                            }
+                          }}
+                        >
                           <td>
                             <strong>{document.code}</strong>
-                            <br />
-                            <StatusChip tone={document.order_type === 'invoice' ? 'info' : 'neutral'}>
-                              {document.order_type === 'invoice' ? 'Hóa đơn' : 'Báo giá'}
-                            </StatusChip>
                           </td>
                           <td>{dateTime(document.created_at)}</td>
-                          <td>{document.customer.code ?? '-'}</td>
                           <td>{document.customer.name}</td>
-                          <td>{document.seller.name}</td>
+                          <td><MoneyText value={document.subtotal_amount} /></td>
+                          <td><MoneyText value={document.discount_amount} /></td>
                           <td><MoneyText value={document.total_amount} /></td>
                           <td><MoneyText value={document.paid_amount} /></td>
-                          <td>{document.debt_amount > 0 ? <MoneyText value={document.debt_amount} /> : '-'}</td>
-                          <td>{paymentStatusLabel(document)}</td>
-                          <td>
-                            <StatusChip tone={lifecycleStatusTone(document)}>
-                              {lifecycleStatusLabel(document)}
-                            </StatusChip>
-                          </td>
-                          <td>
-                            <div className="row-actions">
-                              <ManagementRowActionButton
-                                ariaLabel={selected?.id === document.id ? `Đóng chi tiết ${document.code}` : `Mở chi tiết ${document.code}`}
-                                disabled={loadingDetailId === document.id}
-                                onClick={() => void openDocument(document)}
-                              >
-                                <Eye aria-hidden="true" size={15} />
-                              </ManagementRowActionButton>
-                              {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
-                                <ManagementRowActionButton
-                                  ariaLabel={`Mở tại POS ${document.code}`}
+                        </tr>
+                        {selected?.id === document.id || detailErrorDocumentId === document.id ? (
+                          <ManagementDetailRow colSpan={7} label={`Chi tiết chứng từ ${document.code}`}>
+                            {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
+                              <div className="row-actions">
+                                <button
+                                  className="button button-secondary"
                                   disabled={openingQuoteId === document.id}
+                                  type="button"
                                   onClick={() => void openQuoteInPos(document)}
                                 >
                                   <ExternalLink aria-hidden="true" size={15} />
-                                </ManagementRowActionButton>
-                              ) : null}
-                            </div>
-                          </td>
-                        </tr>
-                        {selected?.id === document.id || detailErrorDocumentId === document.id ? (
-                          <ManagementDetailRow colSpan={11} label={`Chi tiết chứng từ ${document.code}`}>
+                                  Mở tại POS
+                                </button>
+                              </div>
+                            ) : null}
                             <SalesDocumentDetailView document={selected} error={detailError} onOpenQuotePrint={onOpenQuotePrint} />
                           </ManagementDetailRow>
                         ) : null}
@@ -416,82 +400,154 @@ function SalesDocumentDetailView({
   error: string | null
   onOpenQuotePrint?: (documentId: string) => void
 }) {
+  const [activeTab, setActiveTab] = useState<'info' | 'payment-history'>('info')
+
   if (error) return <p role="alert">{error}</p>
   if (!document) return null
 
   return (
     <div className="sales-document-detail">
-      <header>
-        <h2>{document.code}</h2>
-        <p>{document.customer.name}</p>
-        {document.order_type === 'quote' && document.code.startsWith('BG') && onOpenQuotePrint ? (
-          <button type="button" onClick={() => onOpenQuotePrint(document.id)}>
-            Xem/In báo giá
+      <div className="inline-detail-tabbar">
+        <div aria-label="Chi tiết chứng từ" className="inline-detail-tabs" role="tablist">
+          <button
+            aria-selected={activeTab === 'info'}
+            role="tab"
+            type="button"
+            onClick={() => setActiveTab('info')}
+          >
+            Thông tin
           </button>
-        ) : null}
-      </header>
-      <dl className="sales-document-summary">
-        <div>
-          <dt>Bảng giá</dt>
-          <dd>{document.price_list?.name ?? 'Không ghi nhận'}</dd>
+          <button
+            aria-selected={activeTab === 'payment-history'}
+            role="tab"
+            type="button"
+            onClick={() => setActiveTab('payment-history')}
+          >
+            Lịch sử thanh toán
+          </button>
         </div>
-        <div>
-          <dt>Tiền hàng</dt>
-          <dd><MoneyText value={document.subtotal_amount} /></dd>
-        </div>
-        <div>
-          <dt>Giảm giá</dt>
-          <dd>Giảm giá <MoneyText value={document.discount_amount} /></dd>
-        </div>
-        <div>
-          <dt>Khách cần trả</dt>
-          <dd><MoneyText value={document.total_amount} /></dd>
-        </div>
-        <div>
-          <dt>Khách đã trả</dt>
-          <dd>Khách đã trả <MoneyText value={document.paid_amount} /></dd>
-        </div>
-        <div>
-          <dt>Công nợ</dt>
-          <dd>Công nợ hóa đơn <MoneyText value={document.debt_amount} /></dd>
-        </div>
-      </dl>
+      </div>
+      {activeTab === 'info' ? (
+        <section aria-label="Thông tin chứng từ" role="tabpanel">
+          <header className="sales-document-detail-header">
+            <h2>{document.customer.name}</h2>
+            <span>{document.code}</span>
+            <StatusChip tone={document.status === 'cancelled' ? 'danger' : document.status === 'completed' ? 'success' : 'info'}>
+              {salesDocumentStatusLabel(document)}
+            </StatusChip>
+            {document.order_type === 'quote' && document.code.startsWith('BG') && onOpenQuotePrint ? (
+              <button type="button" onClick={() => onOpenQuotePrint(document.id)}>
+                Xem/In báo giá
+              </button>
+            ) : null}
+          </header>
 
-      <section aria-label="Dòng hàng">
-        <h3>Dòng hàng</h3>
-        {document.items.map((item) => (
-          <article className="sales-document-line" key={item.id}>
-            <strong>
-              {item.product.code} - {item.product.name}
-            </strong>
-            <p>
-              {item.quantity} {item.product.unit_name} x <MoneyText value={item.unit_price} /> = <MoneyText value={item.line_total} />
-            </p>
-            {item.note ? <p>{item.note}</p> : null}
-          </article>
-        ))}
-      </section>
+          <dl className="sales-document-meta-grid">
+            <div>
+              <dt>Người bán:</dt>
+              <dd>{document.seller.name}</dd>
+            </div>
+            <div>
+              <dt>Ngày bán:</dt>
+              <dd>{dateTime(document.created_at)}</dd>
+            </div>
+            {document.price_list ? (
+              <div>
+                <dt>Bảng giá:</dt>
+                <dd>{document.price_list.name}</dd>
+              </div>
+            ) : null}
+          </dl>
 
-      <section aria-label="Sổ kho">
-        <h3>Sổ kho</h3>
-        {document.stock_movements.length === 0 ? (
-          <p>Không có bút toán kho.</p>
-        ) : (
-          <ul>
-            {document.stock_movements.map((movement) => {
-              const matchingItem = document.items.find((item) => item.product.id === movement.product_id)
-              const unitName = movement.unit_name ?? matchingItem?.product.unit_name ?? ''
-              return (
-                <li key={movement.id}>
-                  {movement.movement_type} {movement.quantity_delta} {unitName}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+          <table aria-label="Dòng hàng" className="sales-document-lines-table">
+            <thead>
+              <tr>
+                <th>Mã hàng</th>
+                <th>Tên hàng</th>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+                <th>Giảm giá</th>
+                <th>Giá bán</th>
+                <th>Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              {document.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.product.code}</td>
+                  <td>
+                    <span>{item.product.name}</span>
+                    {item.note ? <small>{item.note}</small> : null}
+                  </td>
+                  <td>{`${item.quantity} ${item.product.unit_name}`}</td>
+                  <td><MoneyText value={item.unit_price} /></td>
+                  <td><MoneyText value={item.discount_amount} /></td>
+                  <td><MoneyText value={lineSellPrice(item)} /></td>
+                  <td><MoneyText value={item.line_total} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="sales-document-detail-lower sales-document-detail-lower-right">
+            {document.note ? <p className="sales-document-note">{document.note}</p> : null}
+            <dl className="sales-document-summary-box sales-document-summary-box-right">
+              <div>
+                <dt>{`Tổng tiền hàng (${document.items.length})`}</dt>
+                <dd><MoneyText value={document.subtotal_amount} /></dd>
+              </div>
+              <div>
+                <dt>Giảm giá hóa đơn</dt>
+                <dd><MoneyText value={document.discount_amount} /></dd>
+              </div>
+              <div>
+                <dt>Khách cần trả</dt>
+                <dd><MoneyText value={document.total_amount} /></dd>
+              </div>
+              <div>
+                <dt>Khách đã trả</dt>
+                <dd><MoneyText value={document.paid_amount} /></dd>
+              </div>
+              {document.debt_amount > 0 ? (
+                <div>
+                  <dt>Công nợ</dt>
+                  <dd><MoneyText value={document.debt_amount} /></dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        </section>
+      ) : (
+        <section aria-label="Lịch sử thanh toán" role="tabpanel">
+          <table aria-label="Lịch sử thanh toán" className="sales-document-payment-history-table">
+            <thead>
+              <tr>
+                <th>Mã phiếu</th>
+                <th>Thời gian</th>
+                <th>Người tạo</th>
+                <th>Giá trị phiếu</th>
+                <th>Phương thức</th>
+                <th>Trạng thái</th>
+                <th>Tiền thu/chi</th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
+        </section>
+      )}
     </div>
   )
+}
+
+function lineSellPrice(item: SalesDocumentDetail['items'][number]) {
+  if (item.quantity <= 0) return item.line_total
+  return Math.round(item.line_total / item.quantity)
+}
+
+function salesDocumentStatusLabel(document: SalesDocumentDetail) {
+  if (document.status === 'cancelled') return 'Đã hủy'
+  if (document.order_type === 'quote') return document.status === 'converted' ? 'Đã chuyển' : 'Đang hiệu lực'
+  return 'Hoàn tất'
 }
 
 function documentTypeFilterLabel(value: 'invoice' | 'quote') {
@@ -502,23 +558,4 @@ function lifecycleFilterLabel(value: 'active' | 'completed' | 'cancelled') {
   if (value === 'active') return 'Đang hiệu lực'
   if (value === 'completed') return 'Hoàn tất'
   return 'Đã hủy'
-}
-
-function lifecycleStatusLabel(document: SalesDocumentListItem) {
-  if (document.status === 'cancelled') return 'Đã hủy'
-  if (document.order_type === 'quote') return document.status === 'converted' ? 'Đã chuyển' : 'Đang hiệu lực'
-  return 'Hoàn tất'
-}
-
-function lifecycleStatusTone(document: SalesDocumentListItem) {
-  if (document.status === 'cancelled') return 'danger'
-  if (document.order_type === 'quote') return document.status === 'active' ? 'info' : 'neutral'
-  return 'success'
-}
-
-function paymentStatusLabel(document: SalesDocumentListItem) {
-  if (document.payment_status === 'not_applicable') return 'Không áp dụng'
-  if (document.payment_status === 'paid' || document.debt_amount === 0) return 'Đã thanh toán'
-  if (document.payment_status === 'partial') return 'Nợ 1 phần'
-  return 'Nợ'
 }

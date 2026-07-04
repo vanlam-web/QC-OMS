@@ -268,7 +268,7 @@ export function ManagementDetailRow({
   children: ReactNode
 }) {
   return (
-    <tr className={`management-detail-row${rowClassName ? ` ${rowClassName}` : ''}`}>
+    <tr className={`management-detail-row management-detail-row-selected${rowClassName ? ` ${rowClassName}` : ''}`}>
       <td colSpan={colSpan}>
         <section aria-label={label} className={`management-inline-detail${detailClassName ? ` ${detailClassName}` : ''}`} role="region">
           {children}
