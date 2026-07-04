@@ -1241,6 +1241,10 @@ button {
   min-width: 0;
 }
 
+.pos-topbar-search {
+  position: relative;
+}
+
 .pos-topbar-search strong {
   flex: 0 0 auto;
   color: var(--color-text);
@@ -1272,12 +1276,63 @@ button {
   padding: 0 var(--space-3);
 }
 
+.pos-search-results {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--space-2));
+  left: 6.5rem;
+  display: grid;
+  width: min(36rem, 150%);
+  max-height: 19rem;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  padding: var(--space-2);
+}
+
+.pos-search-results li {
+  margin: 0;
+}
+
+.pos-search-results button,
+.pos-search-results [role="option"] {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) 4rem 6rem;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  text-align: left;
+}
+
+.pos-search-results button:hover,
+.pos-search-results button:focus-visible {
+  background: var(--color-surface-muted);
+  outline: none;
+}
+
+.pos-search-results span {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
 .pos-topbar-tabs {
   overflow-x: auto;
 }
 
 .pos-topbar-tabs button,
 .pos-topbar-material button,
+.pos-icon-button,
 .profile-menu > button {
   min-height: 2.5rem;
   border: 1px solid var(--color-border);
@@ -1308,6 +1363,11 @@ button {
 
 .pos-topbar-actions {
   justify-content: flex-end;
+}
+
+.pos-icon-button {
+  width: 2.5rem;
+  padding: 0;
 }
 
 .pos-topbar-actions [aria-label="connection status"] {
@@ -1444,6 +1504,36 @@ button {
 .product-grid button span {
   color: var(--color-primary-strong);
   font-weight: 700;
+}
+
+.product-grid-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.product-grid-footer div {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.product-grid-footer button {
+  width: 2rem;
+  min-height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.product-grid-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .customer-panel {

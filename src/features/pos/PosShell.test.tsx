@@ -60,6 +60,32 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
   }
 }
 
+function renderPosShell(overrides: {
+  catalogService?: CatalogService
+  orderService?: OrderService
+  productionQueueService?: ProductionQueueService
+  currentUser?: Parameters<typeof PosShell>[0]['currentUser']
+} = {}) {
+  return render(
+    <PosShell
+      catalogService={overrides.catalogService ?? makeCatalogService()}
+      orderService={overrides.orderService ?? makeOrderService()}
+      productionQueueService={overrides.productionQueueService ?? makeProductionQueueService()}
+      currentUser={
+        overrides.currentUser ?? {
+          user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+          organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+          workstation: null,
+          permissions: ['perm.create_order'],
+        }
+      }
+      onSignOut={vi.fn()}
+      onOpenAdmin={vi.fn()}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+}
+
 function makeOrderService(): OrderService {
   return {
     validateCart: vi.fn(),
@@ -136,6 +162,34 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
   const cart = screen.getByLabelText('K02 giỏ hàng')
   expect(within(cart).getByText('Mica 3mm')).toBeInTheDocument()
   expect(within(cart).getByText('120.000')).toBeInTheDocument()
+})
+
+it('uses the K01 F3 product search as an enabled product picker', async () => {
+  renderPosShell()
+
+  const search = screen.getByRole('textbox', { name: 'Tìm hàng (F3)' })
+  expect(search).toBeEnabled()
+
+  await userEvent.keyboard('{F3}')
+  expect(search).toHaveFocus()
+
+  await userEvent.type(search, 'mica')
+  const results = await screen.findByRole('listbox', { name: 'Kết quả tìm hàng' })
+  await userEvent.click(within(results).getByRole('option', { name: /MICA-3MM Mica 3mm/ }))
+
+  const cart = screen.getByLabelText('K02 giỏ hàng')
+  expect(within(cart).getByText('Mica 3mm')).toBeInTheDocument()
+  expect(within(cart).getByText('120.000')).toBeInTheDocument()
+})
+
+it('keeps K01 utility actions visible beside connection and profile', async () => {
+  renderPosShell()
+
+  const actions = screen.getByLabelText('K01 tiện ích')
+  expect(within(actions).getByRole('button', { name: 'Lịch sử 10 đơn gần nhất' })).toBeInTheDocument()
+  expect(within(actions).getByRole('button', { name: 'Tải lại giao diện' })).toBeInTheDocument()
+  expect(within(actions).getByText('Đã kết nối')).toBeInTheDocument()
+  expect(within(actions).getByRole('button', { name: '👤 Cashier' })).toBeInTheDocument()
 })
 
 it('resolves prices again with the selected customer', async () => {

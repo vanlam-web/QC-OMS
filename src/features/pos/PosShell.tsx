@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ConnectionStatus } from '../../components/ConnectionStatus'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
@@ -49,7 +49,20 @@ export function PosShell({
   )
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [productSearch, setProductSearch] = useState('')
+  const productSearchRef = useRef<HTMLInputElement>(null)
   const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
+  const productSearchResults = useMemo(() => {
+    const query = normalizeSearch(productSearch)
+    if (query.length === 0) return []
+    return products
+      .filter((product) =>
+        `${product.code} ${product.name}`.split(/\s+/).some((part) =>
+          normalizeSearch(part).includes(query),
+        ) || normalizeSearch(`${product.code} ${product.name}`).includes(query),
+      )
+      .slice(0, 7)
+  }, [productSearch, products])
 
   useEffect(() => {
     let active = true
@@ -98,6 +111,18 @@ export function PosShell({
     }
   }, [catalogService, selectedCustomer])
 
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if (event.key !== 'F3') return
+      event.preventDefault()
+      productSearchRef.current?.focus()
+      productSearchRef.current?.select()
+    }
+
+    window.addEventListener('keydown', handleShortcut)
+    return () => window.removeEventListener('keydown', handleShortcut)
+  }, [])
+
   function selectProduct(product: Product) {
     const unitPrice = prices[product.id]?.unit_price ?? 0
     const priceSource = prices[product.id]?.price_source ?? 'default_price_list'
@@ -113,6 +138,23 @@ export function PosShell({
         discountAmount: 0,
       },
     ])
+  }
+
+  function selectProductFromSearch(product: Product) {
+    selectProduct(product)
+    setProductSearch('')
+  }
+
+  function handleProductSearchKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      setProductSearch('')
+      return
+    }
+    if (event.key !== 'Enter') return
+    const firstResult = productSearchResults[0]
+    if (firstResult === undefined) return
+    event.preventDefault()
+    selectProductFromSearch(firstResult)
   }
 
   function updateLineQuantity(lineId: string, quantity: number) {
@@ -207,8 +249,39 @@ export function PosShell({
           <strong>QC-OMS POS</strong>
           <label>
             <span>Tìm hàng (F3)</span>
-            <input disabled placeholder="Tìm hàng, combo, vật tư" />
+            <input
+              ref={productSearchRef}
+              value={productSearch}
+              placeholder="Tìm hàng, combo, vật tư"
+              onChange={(event) => setProductSearch(event.target.value)}
+              onKeyDown={handleProductSearchKeyDown}
+            />
           </label>
+          {productSearch.trim().length > 0 ? (
+            <ul aria-label="Kết quả tìm hàng" className="pos-search-results" role="listbox">
+              {productSearchResults.length > 0 ? (
+                productSearchResults.map((product) => {
+                  const price = prices[product.id]?.unit_price ?? 0
+                  return (
+                    <li key={product.id}>
+                      <button
+                        role="option"
+                        aria-selected="false"
+                        type="button"
+                        onClick={() => selectProductFromSearch(product)}
+                      >
+                        <strong>{product.code} {product.name}</strong>
+                        <span>{product.unit_name}</span>
+                        <span>{price.toLocaleString('vi-VN')}</span>
+                      </button>
+                    </li>
+                  )
+                })
+              ) : (
+                <li role="option" aria-selected="false">Không tìm thấy hàng hóa phù hợp</li>
+              )}
+            </ul>
+          ) : null}
         </section>
         <section aria-label="K01 tab hóa đơn" className="pos-topbar-tabs">
           <button aria-current="true" type="button">Hóa đơn 1</button>
@@ -218,7 +291,18 @@ export function PosShell({
           <button disabled type="button">Khui VT</button>
         </section>
         <section aria-label="K01 tiện ích" className="pos-topbar-actions">
+          <button aria-label="Lịch sử 10 đơn gần nhất" className="pos-icon-button" type="button">
+            🕒
+          </button>
           <ConnectionStatus connected={connected} />
+          <button
+            aria-label="Tải lại giao diện"
+            className="pos-icon-button"
+            type="button"
+            onClick={() => window.location.reload()}
+          >
+            ↻
+          </button>
           <ProfileMenu
             displayName={currentUser.user.display_name}
             permissions={currentUser.permissions}
@@ -339,6 +423,14 @@ export function PosShell({
       </section>
     </main>
   )
+}
+
+function normalizeSearch(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
 function quoteBlockedReason(cartLines: CheckoutCartLine[]): string | null {
