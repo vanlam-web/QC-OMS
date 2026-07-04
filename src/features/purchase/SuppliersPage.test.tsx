@@ -38,7 +38,7 @@ const payableReceipts = [
     id: 'receipt-1',
     code: 'PN000673',
     supplier_document_no: 'HD-NCC-001',
-    received_at: '2026-07-02T03:00:00.000Z',
+    received_at: '2026-07-02T03:00:00 000Z',
     payable_amount: 300000,
     paid_amount: 0,
     remaining_amount: 300000,
@@ -98,8 +98,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   const table = screen.getByRole('table')
   expect(table.closest('.management-table-viewport')).not.toBeNull()
   expect(within(table).getByText('KH000123 - Nguyễn Phong')).toBeInTheDocument()
-  expect(within(table).getByText('250.000 ₫')).toBeInTheDocument()
-  expect(within(table).getByText('300.000 ₫')).toBeInTheDocument()
+  expect(within(table).getByText('250 000')).toBeInTheDocument()
+  expect(within(table).getByText('300 000')).toBeInTheDocument()
   expect(screen.getByRole('navigation', { name: 'Phân trang nhà cung cấp' })).toHaveClass('management-table-footer')
   expect(screen.queryByRole('form', { name: 'Thông tin nhà cung cấp' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toBeInTheDocument()
@@ -270,7 +270,7 @@ it('opens supplier payment form from payable supplier and submits explicit recei
 
   expect(service.listPayableReceipts).toHaveBeenCalledWith('supplier-1')
   expect(within(form).getByText('PN000673')).toBeInTheDocument()
-  expect(within(form).getByText('Còn nợ: 250.000 ₫')).toBeInTheDocument()
+  expect(within(form).getByText('Còn nợ: 250 000')).toBeInTheDocument()
   await userEvent.clear(within(form).getByLabelText('Số tiền trả cho PN000673'))
   await userEvent.type(within(form).getByLabelText('Số tiền trả cho PN000673'), '250000')
   await userEvent.selectOptions(within(form).getByLabelText('Phương thức trả NCC'), 'bank_transfer')

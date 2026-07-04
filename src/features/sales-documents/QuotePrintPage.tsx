@@ -1,24 +1,15 @@
 import { useEffect, useState } from 'react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMeasure, formatMoney } from '../../lib/number-format'
 import type { SalesDocumentService } from './sales-document-service'
 import type { SalesDocumentDetail } from './types'
 
-const moneyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
-const numberFormatter = new Intl.NumberFormat('vi-VN', {
-  maximumFractionDigits: 3,
-})
-
 function money(value: number) {
-  return moneyFormatter.format(value)
+  return formatMoney(value)
 }
 
 function number(value: number) {
-  return numberFormatter.format(value)
+  return formatMeasure(value)
 }
 
 function date(value: string) {

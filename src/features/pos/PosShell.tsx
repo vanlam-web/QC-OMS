@@ -967,7 +967,7 @@ export function PosShell({
                                 type="button"
                                 onClick={() => setDiscountModes((current) => ({ ...current, [line.id]: 'amount' }))}
                               >
-                                VND
+                                Tiền
                               </button>
                               <button
                                 aria-pressed={discountModes[line.id] === 'percent'}

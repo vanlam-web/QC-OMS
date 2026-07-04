@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Banknote, ChevronLeft, ChevronRight, FilePlus2, PackageCheck, Pencil, Plus, RotateCcw, Save, Search, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
 import type {
   PurchaseReceipt,
   PurchaseReceiptFinanceAccount,
@@ -29,12 +30,6 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 
-const moneyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
 const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 
 const blankLine = {
@@ -61,7 +56,7 @@ const blankForm: PurchaseReceiptInput = {
 const purchaseReceiptPageSize = 15
 
 function money(value: number) {
-  return moneyFormatter.format(value)
+  return formatMoney(value)
 }
 
 function statusText(status: PurchaseReceiptStatus) {

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
 import {
   ManagementActionIconButton,
   ManagementCompactSearch,
@@ -399,8 +400,4 @@ export function CatalogPage({
       </ManagementListSurface>
     </ManagementPage>
   )
-}
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat('vi-VN').format(value)
 }

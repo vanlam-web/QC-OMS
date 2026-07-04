@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Calculator, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
 import {
   ManagementActionIconButton,
   ManagementCompactSearch,
@@ -622,8 +623,4 @@ export function PriceBookPage({
       </ManagementListSurface>
     </ManagementPage>
   )
-}
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat('vi-VN').format(value)
 }

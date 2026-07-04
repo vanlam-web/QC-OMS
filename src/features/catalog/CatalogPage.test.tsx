@@ -203,7 +203,7 @@ it('expands product details directly under the selected row and closes on second
   expect(detail.closest('tr')).toHaveClass('management-detail-row')
   expect(within(detail).getByText('Mica 3mm')).toBeInTheDocument()
   expect(within(detail).getByText('m tới')).toBeInTheDocument()
-  expect(within(detail).getByText('100.000')).toBeInTheDocument()
+  expect(within(detail).getByText('100 000')).toBeInTheDocument()
 
   await userEvent.click(productRow as HTMLElement)
   expect(screen.queryByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })).not.toBeInTheDocument()

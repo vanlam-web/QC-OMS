@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Search, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
 import type { SupplierInput, SupplierService } from './supplier-service'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
@@ -18,14 +19,8 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 
-const moneyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
 function money(value: number) {
-  return moneyFormatter.format(value)
+  return formatMoney(value)
 }
 
 const blankForm: SupplierInput = {

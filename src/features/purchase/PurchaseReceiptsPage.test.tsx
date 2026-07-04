@@ -62,7 +62,7 @@ const receipt = {
   code: 'PN000673',
   supplier_id: 'supplier-1',
   supplier: { id: 'supplier-1', code: 'NCC000031', name: 'Nguyễn Phong' },
-  received_at: '2026-07-01T03:00:00.000Z',
+  received_at: '2026-07-01T03:00:00 000Z',
   status: 'draft' as const,
   supplier_document_no: 'HD-NCC-001',
   subtotal_amount: 190000,
@@ -72,8 +72,8 @@ const receipt = {
   remaining_amount: 130000,
   notes: 'Nhập hàng thường',
   created_by: 'user-1',
-  created_at: '2026-07-01T03:00:00.000Z',
-  updated_at: '2026-07-01T03:00:00.000Z',
+  created_at: '2026-07-01T03:00:00 000Z',
+  updated_at: '2026-07-01T03:00:00 000Z',
   items: [
     {
       id: 'item-1',
@@ -102,7 +102,7 @@ const postedReceipt = {
     {
       id: 'payment-1',
       code: 'PCPN000001',
-      paid_at: '2026-07-02T07:00:00.000Z',
+      paid_at: '2026-07-02T07:00:00 000Z',
       created_by: 'user-1',
       payment_method: 'cash' as const,
       status: 'posted' as const,
@@ -120,7 +120,7 @@ function makeService(overrides: Partial<PurchaseReceiptService> = {}): PurchaseR
     postReceipt: vi.fn(async () => ({
       purchase_receipt_id: 'receipt-1',
       status: 'posted' as const,
-      posted_at: '2026-07-02T03:00:00.000Z',
+      posted_at: '2026-07-02T03:00:00 000Z',
       cashbook_voucher_id: 'voucher-1',
     })),
     paySupplier: vi.fn(async () => ({
@@ -156,8 +156,8 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(await screen.findByText('PN000673')).toBeInTheDocument()
   const table = screen.getByRole('table')
   expect(within(table).getByText('NCC000031 - Nguyễn Phong')).toBeInTheDocument()
-  expect(within(table).getByText('180.000 ₫')).toBeInTheDocument()
-  expect(within(table).getByText('130.000 ₫')).toBeInTheDocument()
+  expect(within(table).getByText('180 000')).toBeInTheDocument()
+  expect(within(table).getByText('130 000')).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Thông tin phiếu nhập' })).not.toBeInTheDocument()
   expect(screen.queryByRole('complementary', { name: 'Chi tiết và thao tác phiếu nhập' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo phiếu nhập' })).toBeInTheDocument()
@@ -273,9 +273,9 @@ it('creates a draft receipt for normal items with computed totals shown locally'
   await userEvent.clear(within(form).getByLabelText('Đã trả tạm'))
   await userEvent.type(within(form).getByLabelText('Đã trả tạm'), '50000')
 
-  expect(within(form).getByText('Tổng tiền hàng: 190.000 ₫')).toBeInTheDocument()
-  expect(within(form).getByText('Cần trả NCC: 180.000 ₫')).toBeInTheDocument()
-  expect(within(form).getByText('Còn phải trả: 130.000 ₫')).toBeInTheDocument()
+  expect(within(form).getByText('Tổng tiền hàng: 190 000')).toBeInTheDocument()
+  expect(within(form).getByText('Cần trả NCC: 180 000')).toBeInTheDocument()
+  expect(within(form).getByText('Còn phải trả: 130 000')).toBeInTheDocument()
 
   await userEvent.click(within(form).getByRole('button', { name: 'Lưu draft phiếu nhập' }))
 
@@ -432,11 +432,11 @@ it('shows supplier payment history and pays remaining amount from posted receipt
 
   expect(within(form).getByText('Lịch sử thanh toán NCC')).toBeInTheDocument()
   expect(within(form).getByText('PCPN000001')).toBeInTheDocument()
-  expect(within(form).getByText('50.000 ₫')).toBeInTheDocument()
+  expect(within(form).getByText('50 000')).toBeInTheDocument()
   await userEvent.click(within(form).getByRole('button', { name: 'Thanh toán NCC' }))
   const paymentForm = screen.getByRole('form', { name: 'Thanh toán nhà cung cấp' })
   expect(within(paymentForm).getByText('PN000674')).toBeInTheDocument()
-  expect(within(paymentForm).getByText('Còn nợ: 80.000 ₫')).toBeInTheDocument()
+  expect(within(paymentForm).getByText('Còn nợ: 80 000')).toBeInTheDocument()
   await userEvent.selectOptions(within(paymentForm).getByLabelText('Phương thức trả NCC'), 'cash')
   await userEvent.click(within(paymentForm).getByRole('button', { name: 'Lưu thanh toán NCC' }))
 

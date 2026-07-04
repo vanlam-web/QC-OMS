@@ -117,10 +117,10 @@ it('previews and applies formula results in the price book grid', async () => {
   await userEvent.type(screen.getByLabelText('Giá trị điều chỉnh Bảng giá chung'), '20000')
   await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
 
-  expect(await screen.findAllByText('150.000')).toHaveLength(2)
+  expect(await screen.findAllByText('150 000')).toHaveLength(2)
   const grid = screen.getByRole('table', { name: 'Lưới bảng giá' })
-  expect(within(grid).getByText('Hiện tại 120.000 → 150.000')).toBeInTheDocument()
-  expect(within(grid).getByText('Mới 150.000')).toBeInTheDocument()
+  expect(within(grid).getByText('Hiện tại 120 000 → 150 000')).toBeInTheDocument()
+  expect(within(grid).getByText('Mới 150 000')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Áp dụng công thức' }))
   expect(service.applyPriceFormula).toHaveBeenCalledWith({
     formula: {
