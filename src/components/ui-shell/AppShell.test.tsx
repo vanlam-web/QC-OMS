@@ -54,7 +54,8 @@ it('renders adaptive navigation with purchase supplier entries and active route'
   expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
   expect(screen.getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
-  expect(screen.getByRole('link', { name: /Phiếu nhập/i })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('aria-current', 'page')
+  expect(screen.queryByRole('link', { name: /Phiếu nhập/i })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Phiếu nhập' })).toBeInTheDocument()
 })
 
@@ -78,7 +79,7 @@ it('renders POS as a quick action and keeps module navigation for management pag
   expect(within(navigation).getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
   expect(within(navigation).getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
   expect(within(navigation).getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
-  expect(within(navigation).getByRole('link', { name: /Phiếu nhập/i })).toHaveAttribute('href', '/purchase/receipts')
+  expect(within(navigation).getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('href', '/purchase/receipts')
   expect(within(navigation).getByRole('link', { name: /Quản trị/i })).toHaveAttribute('href', '/admin')
   expect(within(navigation).queryByRole('button', { name: /Đổi sang giao diện/i })).not.toBeInTheDocument()
 })
