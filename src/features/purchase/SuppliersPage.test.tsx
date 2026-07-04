@@ -190,6 +190,21 @@ it('uses 15-row pagination range and navigates pages through the list footer', a
   expect(service.listSuppliers).toHaveBeenLastCalledWith({ page: 2, page_size: 15, search: undefined, status: 'active' })
 })
 
+it('keeps supplier list layout when auxiliary lookup data fails', async () => {
+  const service = makeService({
+    listCustomers: vi.fn(async () => {
+      throw new Error('customer lookup failed')
+    }),
+  })
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  expect(await screen.findByText('NCC000031')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
+  expect(screen.getByRole('navigation', { name: 'Phân trang nhà cung cấp' })).toHaveClass('management-table-footer')
+  expect(screen.getByRole('alert')).toHaveTextContent('Không tải được dữ liệu phụ nhà cung cấp.')
+})
+
 it('creates supplier with blank phone and selected linked customer', async () => {
   const service = makeService()
 

@@ -120,20 +120,31 @@ export function SuppliersPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [supplierResult, customerResult, financeAccountResult] = await Promise.all([
-          service.listSuppliers({ status: 'active', page: 1, page_size: supplierPageSize }),
-          service.listCustomers(),
-          service.listFinanceAccounts(),
-        ])
+        const supplierResult = await service.listSuppliers({ status: 'active', page: 1, page_size: supplierPageSize })
         if (!active) return
         setSuppliers(supplierResult.items)
         setTotal(supplierResult.total)
         setPage(supplierResult.page)
         setPageSize(supplierResult.page_size)
-        setCustomers(customerResult.items)
-        setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được nhà cung cấp.'))
+        return
+      }
+
+      const [customerResult, financeAccountResult] = await Promise.allSettled([
+        service.listCustomers(),
+        service.listFinanceAccounts(),
+      ])
+      if (!active) return
+      if (customerResult.status === 'fulfilled') {
+        setCustomers(customerResult.value.items)
+      } else {
+        setError(formatApiError(customerResult.reason, 'Không tải được dữ liệu phụ nhà cung cấp.'))
+      }
+      if (financeAccountResult.status === 'fulfilled') {
+        setFinanceAccounts(financeAccountResult.value.items)
+      } else {
+        setError(formatApiError(financeAccountResult.reason, 'Không tải được dữ liệu phụ nhà cung cấp.'))
       }
     }
 

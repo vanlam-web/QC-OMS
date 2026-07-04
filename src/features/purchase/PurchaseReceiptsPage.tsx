@@ -249,22 +249,37 @@ export function PurchaseReceiptsPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [receiptResult, supplierResult, productResult, financeAccountResult] = await Promise.all([
-          service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize }),
-          service.listSuppliers(),
-          service.listProducts(),
-          service.listFinanceAccounts(),
-        ])
+        const receiptResult = await service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize })
         if (!active) return
         setReceipts(receiptResult.items)
         setTotal(receiptResult.total)
         setPage(receiptResult.page)
         setPageSize(receiptResult.page_size)
-        setSuppliers(supplierResult.items)
-        setProducts(productResult.items.filter((product) => product.status === 'active'))
-        setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được phiếu nhập.'))
+        return
+      }
+
+      const [supplierResult, productResult, financeAccountResult] = await Promise.allSettled([
+        service.listSuppliers(),
+        service.listProducts(),
+        service.listFinanceAccounts(),
+      ])
+      if (!active) return
+      if (supplierResult.status === 'fulfilled') {
+        setSuppliers(supplierResult.value.items)
+      } else {
+        setError(formatApiError(supplierResult.reason, 'Không tải được dữ liệu phụ phiếu nhập.'))
+      }
+      if (productResult.status === 'fulfilled') {
+        setProducts(productResult.value.items.filter((product) => product.status === 'active'))
+      } else {
+        setError(formatApiError(productResult.reason, 'Không tải được dữ liệu phụ phiếu nhập.'))
+      }
+      if (financeAccountResult.status === 'fulfilled') {
+        setFinanceAccounts(financeAccountResult.value.items)
+      } else {
+        setError(formatApiError(financeAccountResult.reason, 'Không tải được dữ liệu phụ phiếu nhập.'))
       }
     }
 
