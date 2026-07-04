@@ -13,6 +13,10 @@ it('shows only MVP module entries for sales documents customers price book inven
   ])
 })
 
+it('names purchase receipts as the operator-facing import workflow', () => {
+  expect(phaseOneModules.find((module) => module.id === 'purchase-receipts')?.label).toBe('Nhập hàng')
+})
+
 it('does not expose returns delivery cod e-invoice purchasing payroll reports online sales or tax modules', () => {
   const blocked = [
     'returns',

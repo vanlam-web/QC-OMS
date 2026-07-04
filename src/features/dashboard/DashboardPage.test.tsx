@@ -140,6 +140,6 @@ it('opens purchase receipts for inventory accounts', async () => {
     />,
   )
 
-  await userEvent.click(screen.getByRole('button', { name: 'Phiếu nhập' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Nhập hàng' }))
   expect(onOpenPurchaseReceipts).toHaveBeenCalled()
 })
