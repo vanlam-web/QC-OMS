@@ -106,6 +106,7 @@ function makeOrderService(): OrderService {
 
 beforeEach(() => {
   window.sessionStorage.clear()
+  window.localStorage.clear()
 })
 
 function makeProductionQueueService(
@@ -190,6 +191,73 @@ it('keeps K01 utility actions visible beside connection and profile', async () =
   expect(within(actions).getByRole('button', { name: 'Tải lại giao diện' })).toBeInTheDocument()
   expect(within(actions).getByText('Đã kết nối')).toBeInTheDocument()
   expect(within(actions).getByRole('button', { name: '👤 Cashier' })).toBeInTheDocument()
+})
+
+it('keeps cart lines isolated between invoice tabs', async () => {
+  renderPosShell()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn mới' }))
+  expect(screen.getByRole('button', { name: 'Hóa đơn 2' })).toHaveAttribute('aria-current', 'true')
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  expect(screen.getByLabelText('K02 giỏ hàng')).toHaveTextContent('Mica 3mm')
+
+  expect(screen.getByRole('button', { name: 'HĐ 1' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Đóng Hóa đơn 1' })).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'HĐ 1' }))
+  expect(screen.getByRole('button', { name: 'Hóa đơn 1' })).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByRole('button', { name: 'HĐ 2 •' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Đóng Hóa đơn 2' })).not.toBeInTheDocument()
+  expect(screen.getByLabelText('K02 giỏ hàng')).not.toHaveTextContent('Mica 3mm')
+
+  await userEvent.click(screen.getByRole('button', { name: 'HĐ 2 •' }))
+  expect(screen.getByLabelText('K02 giỏ hàng')).toHaveTextContent('Mica 3mm')
+})
+
+it('restores local invoice draft tabs after POS remount', async () => {
+  const { unmount } = renderPosShell()
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn mới' }))
+  await userEvent.click(screen.getByRole('button', { name: 'HĐ 1 •' }))
+  expect(screen.getByLabelText('K02 giỏ hàng')).toHaveTextContent('Mica 3mm')
+
+  unmount()
+  renderPosShell()
+
+  expect(screen.getByRole('button', { name: 'Hóa đơn 1 •' })).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByRole('button', { name: 'HĐ 2' })).toBeInTheDocument()
+  expect(screen.getByLabelText('K02 giỏ hàng')).toHaveTextContent('Mica 3mm')
+})
+
+it('closes empty invoice tabs immediately', async () => {
+  renderPosShell()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn mới' }))
+  expect(screen.getByRole('button', { name: 'Hóa đơn 2' })).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng Hóa đơn 2' }))
+
+  expect(screen.queryByRole('button', { name: 'Hóa đơn 2' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Hóa đơn 1' })).toHaveAttribute('aria-current', 'true')
+})
+
+it('requires confirmation before closing a dirty invoice tab', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderPosShell()
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng Hóa đơn 1' }))
+
+  expect(confirm).toHaveBeenCalledWith('Đơn hàng này chưa được lưu, bạn có chắc chắn muốn xóa không?')
+  expect(screen.getByRole('button', { name: 'Hóa đơn 1 •' })).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng Hóa đơn 1' }))
+
+  expect(screen.getByRole('button', { name: 'Hóa đơn 1' })).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByLabelText('K02 giỏ hàng')).not.toHaveTextContent('Mica 3mm')
+  confirm.mockRestore()
 })
 
 it('resolves prices again with the selected customer', async () => {

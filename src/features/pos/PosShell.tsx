@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { ConnectionStatus } from '../../components/ConnectionStatus'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
@@ -13,6 +20,17 @@ import { ProfileMenu } from './ProfileMenu'
 import { ProductGrid } from './ProductGrid'
 import { ProductionQueuePanel } from './ProductionQueuePanel'
 import { consumeQuoteReopenPayload } from './quote-draft-handoff'
+
+const posDraftStorageKey = 'qc-oms.pos.invoice-tabs.v1'
+const maxInvoiceTabs = 10
+
+interface PosInvoiceTab {
+  id: string
+  number: number
+  cartLines: CheckoutCartLine[]
+  selectedCustomer: Customer | null
+  sourceQuote?: { id: string; code: string }
+}
 
 export function PosShell({
   catalogService,
@@ -36,22 +54,23 @@ export function PosShell({
   const [products, setProducts] = useState<Product[]>([])
   const [prices, setPrices] = useState<Record<string, ResolvedPrice>>({})
   const [initialQuotePayload] = useState(() => consumeQuoteReopenPayload())
-  const [cartLines, setCartLines] = useState<CheckoutCartLine[]>(() =>
-    initialQuotePayload === null ? [] : quotePayloadToCartLines(initialQuotePayload),
-  )
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(() =>
-    initialQuotePayload === null ? null : quotePayloadToCustomer(initialQuotePayload),
-  )
-  const [sourceQuote, setSourceQuote] = useState<{ id: string; code: string } | undefined>(() =>
-    initialQuotePayload === null
-      ? undefined
-      : { id: initialQuotePayload.quote.id, code: initialQuotePayload.quote.code },
-  )
+  const [initialTabs] = useState(() => initialQuotePayloadToTabs(initialQuotePayload))
+  const [tabs, setTabs] = useState<PosInvoiceTab[]>(initialTabs)
+  const [activeTabId, setActiveTabId] = useState(initialTabs[0]?.id ?? makeInvoiceTab(1).id)
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [productSearch, setProductSearch] = useState('')
   const productSearchRef = useRef<HTMLInputElement>(null)
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0] ?? makeInvoiceTab(1)
+  const cartLines = activeTab.cartLines
+  const selectedCustomer = activeTab.selectedCustomer
+  const sourceQuote = activeTab.sourceQuote
   const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
+  const updateActiveTab = useCallback((updater: (tab: PosInvoiceTab) => PosInvoiceTab) => {
+    setTabs((current) =>
+      current.map((tab) => (tab.id === activeTabId ? updater(tab) : tab)),
+    )
+  }, [activeTabId])
   const productSearchResults = useMemo(() => {
     const query = normalizeSearch(productSearch)
     if (query.length === 0) return []
@@ -85,8 +104,9 @@ export function PosShell({
         setPrices(
           Object.fromEntries(priceResult.items.map((price) => [price.product_id, price])),
         )
-        setCartLines((current) =>
-          current.map((line) => {
+        updateActiveTab((tab) => ({
+          ...tab,
+          cartLines: tab.cartLines.map((line) => {
             if (line.isManualPrice) return line
             const resolved = priceResult.items.find((price) => price.product_id === line.product.id)
             if (resolved === undefined) return line
@@ -96,7 +116,7 @@ export function PosShell({
               priceSource: resolved.price_source,
             })
           }),
-        )
+        }))
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được sản phẩm POS.'))
       } finally {
@@ -109,7 +129,7 @@ export function PosShell({
     return () => {
       active = false
     }
-  }, [catalogService, selectedCustomer])
+  }, [catalogService, selectedCustomer, updateActiveTab])
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -123,21 +143,62 @@ export function PosShell({
     return () => window.removeEventListener('keydown', handleShortcut)
   }, [])
 
+  useEffect(() => {
+    persistInvoiceTabs(tabs)
+  }, [tabs])
+
+  function createInvoiceTab() {
+    if (tabs.length >= maxInvoiceTabs) return
+    const tab = makeInvoiceTab(nextInvoiceNumber(tabs))
+    setTabs((current) => [...current, tab])
+    setActiveTabId(tab.id)
+  }
+
+  function closeInvoiceTab(tabId: string) {
+    const target = tabs.find((tab) => tab.id === tabId)
+    if (target === undefined) return
+    if (
+      isInvoiceTabDirty(target) &&
+      !window.confirm('Đơn hàng này chưa được lưu, bạn có chắc chắn muốn xóa không?')
+    ) {
+      return
+    }
+
+    setTabs((current) => {
+      const targetIndex = current.findIndex((tab) => tab.id === tabId)
+      if (targetIndex < 0) return current
+      const remaining = current.filter((tab) => tab.id !== tabId)
+      if (remaining.length === 0) {
+        const freshTab = makeInvoiceTab(1)
+        setActiveTabId(freshTab.id)
+        return [freshTab]
+      }
+      if (tabId === activeTabId) {
+        const nextTab = remaining[Math.min(targetIndex, remaining.length - 1)]
+        setActiveTabId(nextTab.id)
+      }
+      return remaining
+    })
+  }
+
   function selectProduct(product: Product) {
     const unitPrice = prices[product.id]?.unit_price ?? 0
     const priceSource = prices[product.id]?.price_source ?? 'default_price_list'
-    setCartLines((current) => [
-      ...current,
-      {
-        id: `${product.id}-${current.length + 1}`,
-        product,
-        quantity: 1,
-        unitPrice,
-        priceSource,
-        isManualPrice: false,
-        discountAmount: 0,
-      },
-    ])
+    updateActiveTab((tab) => ({
+      ...tab,
+      cartLines: [
+        ...tab.cartLines,
+        {
+          id: `${product.id}-${tab.cartLines.length + 1}`,
+          product,
+          quantity: 1,
+          unitPrice,
+          priceSource,
+          isManualPrice: false,
+          discountAmount: 0,
+        },
+      ],
+    }))
   }
 
   function selectProductFromSearch(product: Product) {
@@ -158,42 +219,50 @@ export function PosShell({
   }
 
   function updateLineQuantity(lineId: string, quantity: number) {
-    setCartLines((current) =>
-      current.map((line) =>
+    updateActiveTab((tab) => ({
+      ...tab,
+      cartLines: tab.cartLines.map((line) =>
         line.id === lineId
           ? clampLineDiscount({ ...line, quantity: Math.max(quantity, 0) })
           : line,
       ),
-    )
+    }))
   }
 
   function updateLineUnitPrice(lineId: string, unitPrice: number) {
-    setCartLines((current) =>
-      current.map((line) =>
-        line.id === lineId
-          ? {
-              ...line,
-              unitPrice: Math.max(unitPrice, 0),
-              priceSource: 'manual',
-              isManualPrice: true,
-            }
-          : line,
-      ).map((line) => (line.id === lineId ? clampLineDiscount(line) : line)),
-    )
+    updateActiveTab((tab) => ({
+      ...tab,
+      cartLines: tab.cartLines
+        .map((line) =>
+          line.id === lineId
+            ? {
+                ...line,
+                unitPrice: Math.max(unitPrice, 0),
+                priceSource: 'manual' as const,
+                isManualPrice: true,
+              }
+            : line,
+        )
+        .map((line) => (line.id === lineId ? clampLineDiscount(line) : line)),
+    }))
   }
 
   function updateLineDiscount(lineId: string, discountAmount: number) {
-    setCartLines((current) =>
-      current.map((line) =>
+    updateActiveTab((tab) => ({
+      ...tab,
+      cartLines: tab.cartLines.map((line) =>
         line.id === lineId
           ? clampLineDiscount({ ...line, discountAmount: Math.max(discountAmount, 0) })
           : line,
       ),
-    )
+    }))
   }
 
   function removeLine(lineId: string) {
-    setCartLines((current) => current.filter((line) => line.id !== lineId))
+    updateActiveTab((tab) => ({
+      ...tab,
+      cartLines: tab.cartLines.filter((line) => line.id !== lineId),
+    }))
   }
 
   async function handleProductionQueueDraft(payload: ProductionQueueDraftPayload) {
@@ -216,30 +285,33 @@ export function PosShell({
       customerForPricing?.id,
     )
     const resolvedPrice = priceResult.items[0]
-    if (queueCustomer !== null) setSelectedCustomer(queueCustomer)
-    setCartLines((current) => [
-      ...current,
-      {
-        id: `${payload.queue_item_id}-${current.length + 1}`,
-        product: {
-          id: payload.draft_line.product_id,
-          code: payload.draft_line.product_code,
-          name: payload.draft_line.product_name,
-          status: 'active',
-          unit_name: payload.draft_line.unit_name,
-          sell_method: payload.draft_line.sell_method,
+    updateActiveTab((tab) => ({
+      ...tab,
+      selectedCustomer: queueCustomer ?? tab.selectedCustomer,
+      cartLines: [
+        ...tab.cartLines,
+        {
+          id: `${payload.queue_item_id}-${tab.cartLines.length + 1}`,
+          product: {
+            id: payload.draft_line.product_id,
+            code: payload.draft_line.product_code,
+            name: payload.draft_line.product_name,
+            status: 'active',
+            unit_name: payload.draft_line.unit_name,
+            sell_method: payload.draft_line.sell_method,
+          },
+          quantity: payload.draft_line.quantity,
+          width_m: payload.draft_line.width_m ?? undefined,
+          height_m: payload.draft_line.height_m ?? undefined,
+          linear_m: payload.draft_line.linear_m ?? undefined,
+          unitPrice: resolvedPrice?.unit_price ?? 0,
+          priceSource: resolvedPrice?.price_source ?? 'default_price_list',
+          isManualPrice: false,
+          discountAmount: 0,
+          note: 'Từ hàng đợi máy sản xuất',
         },
-        quantity: payload.draft_line.quantity,
-        width_m: payload.draft_line.width_m ?? undefined,
-        height_m: payload.draft_line.height_m ?? undefined,
-        linear_m: payload.draft_line.linear_m ?? undefined,
-        unitPrice: resolvedPrice?.unit_price ?? 0,
-        priceSource: resolvedPrice?.price_source ?? 'default_price_list',
-        isManualPrice: false,
-        discountAmount: 0,
-        note: 'Từ hàng đợi máy sản xuất',
-      },
-    ])
+      ],
+    }))
   }
 
   return (
@@ -284,8 +356,43 @@ export function PosShell({
           ) : null}
         </section>
         <section aria-label="K01 tab hóa đơn" className="pos-topbar-tabs">
-          <button aria-current="true" type="button">Hóa đơn 1</button>
-          <button aria-label="Tạo hóa đơn mới" type="button">+</button>
+          {tabs.map((tab) => {
+            const isActiveTab = tab.id === activeTabId
+            return (
+              <span
+                key={tab.id}
+                className="pos-invoice-tab"
+                data-current={isActiveTab ? 'true' : undefined}
+              >
+                <button
+                  aria-current={isActiveTab ? 'true' : undefined}
+                  type="button"
+                  onClick={() => setActiveTabId(tab.id)}
+                >
+                  {invoiceTabLabel(tab, isActiveTab)}
+                </button>
+                {isActiveTab ? (
+                  <button
+                    aria-label={`Đóng Hóa đơn ${tab.number}`}
+                    className="pos-invoice-tab-close"
+                    type="button"
+                    onClick={() => closeInvoiceTab(tab.id)}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </span>
+            )
+          })}
+          <button
+            aria-label="Tạo hóa đơn mới"
+            disabled={tabs.length >= maxInvoiceTabs}
+            title={tabs.length >= maxInvoiceTabs ? 'Đã đạt tối đa 10 hóa đơn đang mở' : undefined}
+            type="button"
+            onClick={createInvoiceTab}
+          >
+            +
+          </button>
         </section>
         <section aria-label="K01 khui vật tư" className="pos-topbar-material">
           <button disabled type="button">Khui VT</button>
@@ -400,7 +507,9 @@ export function PosShell({
         <CustomerPanel
           service={catalogService}
           selectedCustomer={selectedCustomer}
-          onSelectCustomer={setSelectedCustomer}
+          onSelectCustomer={(customer) =>
+            updateActiveTab((tab) => ({ ...tab, selectedCustomer: customer }))
+          }
         />
         {error ? <p role="alert">{error}</p> : null}
         <ProductGrid
@@ -416,8 +525,11 @@ export function PosShell({
           sourceQuote={sourceQuote}
           quoteBlockedReason={quoteBlockedReason(cartLines)}
           onCheckoutSuccess={() => {
-            setSourceQuote(undefined)
-            setCartLines([])
+            updateActiveTab((tab) => ({
+              ...tab,
+              sourceQuote: undefined,
+              cartLines: [],
+            }))
           }}
         />
       </section>
@@ -431,6 +543,74 @@ function normalizeSearch(value: string) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+}
+
+function initialQuotePayloadToTabs(payload: QuoteReopenPayload | null): PosInvoiceTab[] {
+  if (payload !== null) {
+    return [
+      {
+        ...makeInvoiceTab(1),
+        cartLines: quotePayloadToCartLines(payload),
+        selectedCustomer: quotePayloadToCustomer(payload),
+        sourceQuote: { id: payload.quote.id, code: payload.quote.code },
+      },
+    ]
+  }
+
+  const restored = restoreInvoiceTabs()
+  return restored.length > 0 ? restored : [makeInvoiceTab(1)]
+}
+
+function makeInvoiceTab(number: number): PosInvoiceTab {
+  return {
+    id: `invoice-${number}`,
+    number,
+    cartLines: [],
+    selectedCustomer: null,
+  }
+}
+
+function invoiceTabLabel(tab: PosInvoiceTab, active = true) {
+  const dirty = isInvoiceTabDirty(tab)
+  const prefix = active ? 'Hóa đơn' : 'HĐ'
+  return `${prefix} ${tab.number}${dirty ? ' •' : ''}`
+}
+
+function isInvoiceTabDirty(tab: PosInvoiceTab) {
+  return tab.cartLines.length > 0 || tab.selectedCustomer !== null || tab.sourceQuote !== undefined
+}
+
+function nextInvoiceNumber(tabs: PosInvoiceTab[]) {
+  const used = new Set(tabs.map((tab) => tab.number))
+  for (let number = 1; number <= maxInvoiceTabs; number += 1) {
+    if (!used.has(number)) return number
+  }
+  return Math.min(tabs.length + 1, maxInvoiceTabs)
+}
+
+function persistInvoiceTabs(tabs: PosInvoiceTab[]) {
+  window.localStorage.setItem(posDraftStorageKey, JSON.stringify(tabs.slice(0, maxInvoiceTabs)))
+}
+
+function restoreInvoiceTabs(): PosInvoiceTab[] {
+  try {
+    const raw = window.localStorage.getItem(posDraftStorageKey)
+    if (raw === null) return []
+    const parsed = JSON.parse(raw) as PosInvoiceTab[]
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((tab) => Number.isInteger(tab.number) && Array.isArray(tab.cartLines))
+      .slice(0, maxInvoiceTabs)
+      .map((tab) => ({
+        ...makeInvoiceTab(tab.number),
+        id: typeof tab.id === 'string' ? tab.id : `invoice-${tab.number}`,
+        cartLines: tab.cartLines,
+        selectedCustomer: tab.selectedCustomer ?? null,
+        sourceQuote: tab.sourceQuote,
+      }))
+  } catch {
+    return []
+  }
 }
 
 function quoteBlockedReason(cartLines: CheckoutCartLine[]): string | null {

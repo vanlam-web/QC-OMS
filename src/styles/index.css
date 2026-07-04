@@ -1330,6 +1330,21 @@ button {
   overflow-x: auto;
 }
 
+.pos-invoice-tab {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.pos-invoice-tab[data-current="true"] {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
 .pos-topbar-tabs button,
 .pos-topbar-material button,
 .pos-icon-button,
@@ -1343,10 +1358,33 @@ button {
   font-weight: 700;
 }
 
+.pos-invoice-tab > button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 var(--space-2);
+}
+
 .pos-topbar-tabs button[aria-current="true"] {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: transparent;
+  background: transparent;
   color: var(--color-text);
+}
+
+.pos-invoice-tab-close {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  border-left: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.pos-invoice-tab-close:hover,
+.pos-invoice-tab-close:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
 }
 
 .pos-topbar-tabs button[aria-label="Tạo hóa đơn mới"] {
