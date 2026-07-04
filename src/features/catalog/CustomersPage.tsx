@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { BarChart3, ChevronLeft, ChevronRight, Plus, RotateCcw, Search } from 'lucide-react'
+import { BarChart3, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { MetricCard, MetricGrid, MoneyText } from '../../components/ui-shell/primitives'
 import { formatApiError } from '../../lib/api/error-message'
 import {
-  ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -217,7 +217,6 @@ export function CustomersPage({
   const visibleSalesTotal = state?.customers.reduce((sum, customer) => sum + (customer.total_sales_amount ?? 0), 0) ?? 0
   const customerKpis = (
     <MetricGrid ariaLabel="Tổng quan khách hàng">
-      <MetricCard hint={lastSearch ? 'Theo bộ lọc tìm kiếm' : 'Đang hoạt động'} label="Tổng KH" value={state?.total ?? 0} />
       <MetricCard hint="Từ danh sách đang xem" label="Nợ hiện tại" tone={visibleDebtTotal > 0 ? 'warning' : 'neutral'} value={<MoneyText value={visibleDebtTotal} />} />
       <MetricCard hint="Từ danh sách đang xem" label="Tổng bán" tone="success" value={<MoneyText value={visibleSalesTotal} />} />
     </MetricGrid>
@@ -233,9 +232,7 @@ export function CustomersPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã, tên, số điện thoại"
             trailingAction={
-              <ManagementActionIconButton ariaLabel="Tạo khách hàng" variant="primary" onClick={openCreateCustomer}>
-                <Plus aria-hidden="true" size={16} />
-              </ManagementActionIconButton>
+              <ManagementCompactCreateAction ariaLabel="Tạo khách hàng" onClick={openCreateCustomer} />
             }
             value={search}
             onChange={setSearch}

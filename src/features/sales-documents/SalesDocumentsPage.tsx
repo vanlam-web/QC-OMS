@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, ExternalLink, Eye, RotateCcw, Search } from 'lucide-react'
 import {
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -12,7 +13,7 @@ import {
   ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
-import { EmptyState, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import { formatApiError } from '../../lib/api/error-message'
 import type { SalesDocumentDetail, SalesDocumentListItem } from './types'
 import type { SalesDocumentService } from './sales-document-service'
@@ -38,11 +39,13 @@ interface SalesDocumentsState {
 export function SalesDocumentsPage({
   service,
   orderService,
+  onCreateSalesDocument,
   onOpenQuoteInPos,
   onOpenQuotePrint,
 }: {
   service: SalesDocumentService
   orderService?: Pick<OrderService, 'getQuoteReopenPayload'>
+  onCreateSalesDocument?: () => void
   onOpenDashboard: () => void
   onOpenQuoteInPos?: (payload: QuoteReopenPayload) => void
   onOpenQuotePrint?: (documentId: string) => void
@@ -203,6 +206,14 @@ export function SalesDocumentsPage({
     ...(typeFilter !== 'all' ? [`Loại: ${documentTypeFilterLabel(typeFilter)}`] : []),
     ...(statusFilter !== 'all' ? [`Trạng thái: ${lifecycleFilterLabel(statusFilter)}`] : []),
   ].join(' • ')
+  const documentTotalAmount = documents.reduce((sum, document) => sum + document.total_amount, 0)
+  const documentDebtAmount = documents.reduce((sum, document) => sum + document.debt_amount, 0)
+  const documentKpis = (
+    <MetricGrid ariaLabel="Tổng quan chứng từ bán hàng">
+      <MetricCard hint="Từ danh sách đang xem" label="Tổng tiền" tone="success" value={<MoneyText value={documentTotalAmount} />} />
+      <MetricCard hint="Từ danh sách đang xem" label="Còn nợ" tone={documentDebtAmount > 0 ? 'warning' : 'neutral'} value={<MoneyText value={documentDebtAmount} />} />
+    </MetricGrid>
+  )
 
   return (
     <ManagementPage
@@ -213,11 +224,17 @@ export function SalesDocumentsPage({
             label="Tìm chứng từ"
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Mã chứng từ, khách hàng, ghi chú"
+            trailingAction={
+              onCreateSalesDocument ? (
+                <ManagementCompactCreateAction ariaLabel="Tạo chứng từ bán hàng" onClick={onCreateSalesDocument} />
+              ) : undefined
+            }
             value={search}
             onChange={setSearch}
           />
         </ManagementCompactToolbar>
       }
+      kpis={documentKpis}
       filter={
         <ManagementFilterSidebar
           activeSummary={activeFilterSummary || undefined}

@@ -17,7 +17,7 @@ import type { PurchaseReceiptService } from './purchase-receipt-service'
 import type { Supplier } from './types'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
-  ManagementActionIconButton,
+  ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
@@ -198,7 +198,6 @@ export function PurchaseReceiptsPage({
     return {
       payable: items.reduce((sum, receipt) => sum + receipt.payable_amount, 0),
       remaining: items.reduce((sum, receipt) => sum + receipt.remaining_amount, 0),
-      draftCount: items.filter((receipt) => receipt.status === 'draft').length,
     }
   }, [receipts])
 
@@ -687,7 +686,6 @@ export function PurchaseReceiptsPage({
 
   const receiptKpis = (
     <MetricGrid ariaLabel="Tổng quan phiếu nhập">
-      <MetricCard hint={`${receiptSummary.draftCount} draft đang mở`} label="Tổng phiếu" value={total || receipts?.length || 0} />
       <MetricCard hint="Từ danh sách đang xem" label="Cần trả" tone="warning" value={<MoneyText value={receiptSummary.payable} />} />
       <MetricCard
         hint="Sau trả ngay và thanh toán NCC"
@@ -1139,9 +1137,7 @@ export function PurchaseReceiptsPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã phiếu, NCC"
             trailingAction={
-              <ManagementActionIconButton ariaLabel="Tạo phiếu nhập" variant="primary" onClick={openCreateReceipt}>
-                <FilePlus2 aria-hidden="true" size={16} />
-              </ManagementActionIconButton>
+              <ManagementCompactCreateAction ariaLabel="Tạo phiếu nhập" onClick={openCreateReceipt} />
             }
             value={search}
             onChange={setSearch}

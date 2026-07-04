@@ -343,7 +343,7 @@ button {
   min-height: 0;
   background: transparent;
   color: var(--color-text);
-  padding: var(--space-4);
+  padding: var(--space-3);
 }
 
 .management-page-header {
@@ -379,7 +379,6 @@ button {
   grid-template-columns: 2.25rem minmax(0, 1fr);
 }
 
-.management-filter-sidebar,
 .management-list-surface {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -388,15 +387,66 @@ button {
 }
 
 .management-filter-column {
+  position: sticky;
+  top: 4rem;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  gap: var(--space-3);
+  gap: 0;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-3);
 }
 
 .management-kpis {
   min-width: 0;
+}
+
+.management-kpis .metric-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.management-kpis .metric-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 2rem;
+  border-radius: 0;
+  border-color: var(--color-border);
+  border-bottom: 0;
+  background: var(--color-surface);
+  padding: 0 var(--space-3);
+  box-shadow: none;
+}
+
+.management-kpis .metric-card:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.management-kpis .metric-card:last-child {
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.management-kpis .metric-card > span {
+  font-size: 0.8125rem;
+}
+
+.management-kpis .metric-card > strong {
+  font-size: 1rem;
+  text-align: right;
+}
+
+.management-kpis .metric-card > small {
+  display: none;
 }
 
 .management-main {
@@ -407,15 +457,12 @@ button {
 }
 
 .management-filter-sidebar {
-  position: sticky;
-  top: 4rem;
+  position: relative;
   display: grid;
   align-content: start;
   align-items: start;
-  gap: var(--space-5);
-  height: 100%;
-  max-height: none;
-  overflow-y: auto;
+  gap: var(--space-3);
+  min-height: 0;
 }
 
 .management-filter-rail {
@@ -441,10 +488,11 @@ button {
 }
 
 .management-filter-collapse-button {
-  position: sticky;
-  top: 0;
+  position: absolute;
+  top: calc(var(--space-2) * -1);
+  right: calc(var(--space-2) * -1);
   justify-self: end;
-  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0 0;
+  z-index: 1;
   opacity: 0;
   transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
@@ -452,25 +500,6 @@ button {
 .management-filter-sidebar:hover .management-filter-collapse-button,
 .management-filter-collapse-button:focus-visible {
   opacity: 1;
-}
-
-.management-filter-header {
-  display: grid;
-  gap: var(--space-1);
-  border-bottom: 1px solid var(--color-border-muted);
-  padding-bottom: var(--space-3);
-}
-
-.management-filter-header h2 {
-  margin: 0;
-  font-size: 0.9375rem;
-}
-
-.management-filter-summary {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  line-height: 1.4;
 }
 
 .management-filter-actions {
@@ -557,15 +586,18 @@ button {
   border: 0;
   background: transparent;
   color: var(--color-text);
-  padding: 0 2.5rem 0 2.25rem;
+  padding: 0 2.75rem 0 2.25rem;
 }
 
 .management-compact-search-trailing {
   position: absolute;
-  right: 0.25rem;
+  top: 0;
+  right: 0;
+  bottom: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 2.25rem;
 }
 
 .management-action-icon {
@@ -576,6 +608,38 @@ button {
   min-width: 2rem;
   min-height: 2rem;
   padding: 0;
+}
+
+.management-compact-create-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
+  cursor: pointer;
+}
+
+.management-compact-create-action:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.management-compact-create-action:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.management-compact-create-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .management-result-count {

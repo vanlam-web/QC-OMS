@@ -184,7 +184,7 @@ it('summarizes purchase receipt validation state with scan-friendly KPI cards an
   const summary = screen.getByRole('region', { name: 'Tổng quan phiếu nhập' })
   expect(summary.closest('.management-filter-column')).not.toBeNull()
   expect(summary.closest('.management-page-header')).toBeNull()
-  expect(within(summary).getByText('Tổng phiếu')).toBeInTheDocument()
+  expect(within(summary).queryByText('Tổng phiếu')).not.toBeInTheDocument()
   expect(within(summary).getByText('Cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Còn phải trả')).toBeInTheDocument()
   expect(screen.getByRole('complementary', { name: 'Bộ lọc phiếu nhập' })).toBeInTheDocument()
@@ -234,12 +234,12 @@ it('uses purchase receipt presets, active chips, reset action, and exact PN sear
       date_to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
     }),
   )
-  expect(within(filterSidebar).getByText('Preset: Đã nhập hôm nay')).toBeInTheDocument()
+  expect(within(filterSidebar).queryByText('Preset: Đã nhập hôm nay')).not.toBeInTheDocument()
 
   await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673{Enter}')
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({ search: 'PN000673', status: 'all', page: 1, page_size: 15 })
-  expect(within(filterSidebar).getByText(/Tìm: PN000673/)).toBeInTheDocument()
+  expect(within(filterSidebar).queryByText(/Tìm: PN000673/)).not.toBeInTheDocument()
 
   await userEvent.click(within(filterSidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }))
 

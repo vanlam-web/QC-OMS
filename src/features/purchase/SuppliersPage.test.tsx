@@ -87,8 +87,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByRole('main')).toHaveClass('management-page')
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
   expect(sidebar).toHaveClass('management-filter-sidebar')
-  expect(within(sidebar).getByRole('heading', { name: 'Bộ lọc' })).toBeInTheDocument()
-  expect(sidebar.querySelector('.management-filter-summary')).toHaveTextContent('Đang hoạt động')
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
   expect(screen.getByRole('search', { name: 'Lọc nhà cung cấp' }).closest('.management-page-header')).not.toBeNull()
@@ -114,7 +114,7 @@ it('summarizes supplier validation state with scan-friendly KPI cards and panels
   const summary = screen.getByRole('region', { name: 'Tổng quan nhà cung cấp' })
   expect(summary.closest('.management-filter-column')).not.toBeNull()
   expect(summary.closest('.management-page-header')).toBeNull()
-  expect(within(summary).getByText('Tổng NCC')).toBeInTheDocument()
+  expect(within(summary).queryByText('Tổng NCC')).not.toBeInTheDocument()
   expect(within(summary).getByText('Nợ cần trả')).toBeInTheDocument()
   expect(within(summary).getByText('Tổng mua')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toBeInTheDocument()
@@ -139,7 +139,7 @@ it('filters suppliers by search and status', async () => {
     search: 'Nguyen',
     status: 'all',
   })
-  expect(screen.getByText('Tìm: Nguyen')).toHaveClass('management-filter-summary')
+  expect(screen.queryByText('Tìm: Nguyen')).not.toBeInTheDocument()
 })
 
 it('uses supplier sidebar filters and reset action', async () => {
@@ -160,7 +160,7 @@ it('uses supplier sidebar filters and reset action', async () => {
     search: 'NCC000031',
     status: 'inactive',
   })
-  expect(screen.getByText('Tìm: NCC000031')).toHaveClass('management-filter-summary')
+  expect(screen.queryByText('Tìm: NCC000031')).not.toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Đặt lại bộ lọc' }))
 
