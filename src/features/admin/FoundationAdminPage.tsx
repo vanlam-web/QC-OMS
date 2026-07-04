@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, KeyRound, Lock, RotateCcw, Search, Unlock } from 'lucide-react'
 import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
@@ -8,8 +8,11 @@ import {
   ManagementCompactToolbar,
   ManagementFilterGroup,
   ManagementFilterSidebar,
+  ManagementDetailRow,
   ManagementListSurface,
   ManagementPage,
+  ManagementRowActionButton,
+  ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 
@@ -230,10 +233,10 @@ export function FoundationAdminPage({
       {state === null && error === null ? <p>Đang tải dữ liệu quản trị...</p> : null}
 
       {state ? (
-        <div className="admin-grid">
+        <>
           <ManagementListSurface ariaLabel="Người dùng">
             <h2>Người dùng</h2>
-            <form aria-label="Tạo người dùng" className="admin-form" onSubmit={createUser}>
+            <form aria-label="Tạo người dùng" className="management-create-form" onSubmit={createUser}>
               <label>
                 Email
                 <input
@@ -278,46 +281,68 @@ export function FoundationAdminPage({
                 </thead>
                 <tbody>
                   {state.users.map((user) => (
-                    <tr key={user.id}>
-                      <td>{user.display_name}</td>
-                      <td>{user.email || 'Chưa đồng bộ email'}</td>
-                      <td>{user.status}</td>
-                      <td>{user.permissions.length}</td>
-                      <td>
-                        <button type="button" onClick={() => setSelectedUser(user)}>
-                          Quyền
-                        </button>
-                        <button
-                          disabled={savingUser}
-                          type="button"
-                          onClick={() =>
-                            void updateUserStatus(user, user.status === 'active' ? 'inactive' : 'active')
-                          }
-                        >
-                          {user.status === 'active' ? 'Khóa' : 'Mở'}
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={user.id}>
+                      <tr className={selectedUser?.id === user.id ? 'management-data-row-selected' : undefined}>
+                        <td>{user.display_name}</td>
+                        <td>{user.email || 'Chưa đồng bộ email'}</td>
+                        <td>{user.status}</td>
+                        <td>{user.permissions.length}</td>
+                        <td>
+                          <ManagementRowActionButton
+                            ariaLabel={`${selectedUser?.id === user.id ? 'Đóng' : 'Mở'} quyền ${user.display_name}`}
+                            onClick={() => setSelectedUser((current) => (current?.id === user.id ? null : user))}
+                          >
+                            <KeyRound aria-hidden="true" size={15} />
+                          </ManagementRowActionButton>
+                          <ManagementRowActionButton
+                            ariaLabel={`${user.status === 'active' ? 'Khóa' : 'Mở'} ${user.display_name}`}
+                            disabled={savingUser}
+                            onClick={() =>
+                              void updateUserStatus(user, user.status === 'active' ? 'inactive' : 'active')
+                            }
+                          >
+                            {user.status === 'active' ? (
+                              <Lock aria-hidden="true" size={15} />
+                            ) : (
+                              <Unlock aria-hidden="true" size={15} />
+                            )}
+                          </ManagementRowActionButton>
+                        </td>
+                      </tr>
+                      {selectedUser?.id === user.id ? (
+                        <ManagementDetailRow colSpan={5} label={`Quyền người dùng ${selectedUser.display_name}`}>
+                          <div className="permission-editor">
+                            <h3>{selectedUser.display_name}</h3>
+                            {state.permissions.map((permission) => (
+                              <label key={permission.code}>
+                                <input
+                                  checked={selectedUser.permissions.includes(permission.code)}
+                                  disabled={savingUser}
+                                  type="checkbox"
+                                  onChange={() => void togglePermission(permission.code)}
+                                />
+                                {permission.code}
+                              </label>
+                            ))}
+                          </div>
+                        </ManagementDetailRow>
+                      ) : null}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
             </ManagementTableViewport>
-            {selectedUser ? (
-              <section aria-label="Quyền người dùng" className="permission-editor">
-                <h3>{selectedUser.display_name}</h3>
-                {state.permissions.map((permission) => (
-                  <label key={permission.code}>
-                    <input
-                      checked={selectedUser.permissions.includes(permission.code)}
-                      disabled={savingUser}
-                      type="checkbox"
-                      onChange={() => void togglePermission(permission.code)}
-                    />
-                    {permission.code}
-                  </label>
-                ))}
-              </section>
-            ) : null}
+            <ManagementTableFooter
+              ariaLabel="Phân trang người dùng"
+              canGoNext={false}
+              canGoPrevious={false}
+              entityLabel="người dùng"
+              page={1}
+              pageSize={Math.max(1, state.users.length)}
+              total={state.users.length}
+              onNext={() => undefined}
+              onPrevious={() => undefined}
+            />
           </ManagementListSurface>
 
           <ManagementListSurface ariaLabel="Danh mục quyền">
@@ -350,8 +375,19 @@ export function FoundationAdminPage({
                 </tbody>
               </table>
             </ManagementTableViewport>
+            <ManagementTableFooter
+              ariaLabel="Phân trang danh mục quyền"
+              canGoNext={false}
+              canGoPrevious={false}
+              entityLabel="quyền"
+              page={1}
+              pageSize={Math.max(1, state.permissions.length)}
+              total={state.permissions.length}
+              onNext={() => undefined}
+              onPrevious={() => undefined}
+            />
           </ManagementListSurface>
-        </div>
+        </>
       ) : null}
     </ManagementPage>
   )
