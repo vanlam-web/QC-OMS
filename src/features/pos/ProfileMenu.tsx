@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { UserCircle } from 'lucide-react'
 import type { PermissionCode } from '../users/types'
 
 export function ProfileMenu({
@@ -7,12 +8,14 @@ export function ProfileMenu({
   onSignOut,
   onOpenAdmin,
   onOpenDashboard,
+  compact = false,
 }: {
   displayName: string
   permissions: PermissionCode[]
   onSignOut: () => void
   onOpenAdmin: () => void
   onOpenDashboard: () => void
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const id = useId()
@@ -35,9 +38,16 @@ export function ProfileMenu({
   }, [open])
 
   return (
-    <div ref={ref} className="profile-menu">
-      <button aria-controls={id} aria-expanded={open} onClick={() => setOpen((value) => !value)} type="button">
-        👤 {displayName}
+    <div ref={ref} className={compact ? 'profile-menu profile-menu-compact' : 'profile-menu'}>
+      <button
+        aria-controls={id}
+        aria-expanded={open}
+        aria-label={compact ? 'Tài khoản' : undefined}
+        onClick={() => setOpen((value) => !value)}
+        title={compact ? displayName : undefined}
+        type="button"
+      >
+        {compact ? <UserCircle aria-hidden="true" size={20} /> : `👤 ${displayName}`}
       </button>
       {open ? (
         <div id={id} role="menu">

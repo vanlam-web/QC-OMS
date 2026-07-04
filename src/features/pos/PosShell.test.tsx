@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PosShell } from './PosShell'
+import { ThemeProvider } from '../../components/ui-shell/ThemeProvider'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { OrderService } from '../orders/order-service'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
@@ -68,22 +69,24 @@ function renderPosShell(overrides: {
   onOpenDashboard?: () => void
 } = {}) {
   return render(
-    <PosShell
-      catalogService={overrides.catalogService ?? makeCatalogService()}
-      orderService={overrides.orderService ?? makeOrderService()}
-      productionQueueService={overrides.productionQueueService ?? makeProductionQueueService()}
-      currentUser={
-        overrides.currentUser ?? {
-          user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-          organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-          workstation: null,
-          permissions: ['perm.create_order'],
+    <ThemeProvider>
+      <PosShell
+        catalogService={overrides.catalogService ?? makeCatalogService()}
+        orderService={overrides.orderService ?? makeOrderService()}
+        productionQueueService={overrides.productionQueueService ?? makeProductionQueueService()}
+        currentUser={
+          overrides.currentUser ?? {
+            user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+            organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+            workstation: null,
+            permissions: ['perm.create_order'],
+          }
         }
-      }
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={overrides.onOpenDashboard ?? vi.fn()}
-    />,
+        onSignOut={vi.fn()}
+        onOpenAdmin={vi.fn()}
+        onOpenDashboard={overrides.onOpenDashboard ?? vi.fn()}
+      />
+    </ThemeProvider>,
   )
 }
 
@@ -110,6 +113,11 @@ beforeEach(() => {
   window.localStorage.clear()
 })
 
+async function openCheckoutDrawer() {
+  await userEvent.click(screen.getByRole('button', { name: 'Thanh toán' }))
+  return screen.getByLabelText('Ngăn thanh toán')
+}
+
 function makeProductionQueueService(
   overrides: Partial<ProductionQueueService> = {},
 ): ProductionQueueService {
@@ -125,20 +133,22 @@ function makeProductionQueueService(
 
 it('renders POS landmarks, profile identity, and active product grid', async () => {
   render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={makeOrderService()}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
+    <ThemeProvider>
+      <PosShell
+        catalogService={makeCatalogService()}
+        orderService={makeOrderService()}
+        productionQueueService={makeProductionQueueService()}
+        currentUser={{
+          user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+          organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+          workstation: null,
+          permissions: ['perm.create_order'],
+        }}
+        onSignOut={vi.fn()}
+        onOpenAdmin={vi.fn()}
+        onOpenDashboard={vi.fn()}
+      />
+    </ThemeProvider>,
   )
 
   expect(screen.getByLabelText('K01 topbar')).toBeInTheDocument()
@@ -148,17 +158,19 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
   expect(screen.getByLabelText('K01 tab hóa đơn')).toBeInTheDocument()
   expect(screen.getByLabelText('K01 khui vật tư')).toBeInTheDocument()
   expect(screen.getByLabelText('K01 tiện ích')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Khui vật tư' })).toBeDisabled()
   const cartWorkspace = screen.getByLabelText('K02 giỏ hàng')
   const salesWorkspace = screen.getByLabelText('K03 sản phẩm')
   expect(within(cartWorkspace).queryByLabelText('Khách hàng')).not.toBeInTheDocument()
   expect(within(cartWorkspace).getByLabelText('K02-D hàng đợi máy sản xuất')).toBeInTheDocument()
   expect(within(salesWorkspace).getByLabelText('Khách hàng')).toBeInTheDocument()
   expect(await within(salesWorkspace).findByLabelText('Sản phẩm nhanh')).toBeInTheDocument()
-  expect(within(salesWorkspace).getByLabelText('Thanh toán')).toBeInTheDocument()
+  expect(within(salesWorkspace).getByRole('button', { name: 'Thanh toán' })).toBeInTheDocument()
+  expect(screen.queryByLabelText('Ngăn thanh toán')).not.toBeInTheDocument()
   expect(screen.getByText('Hóa đơn 1')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo hóa đơn mới' })).toHaveTextContent('+')
-  expect(screen.getByText('Đã kết nối')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '👤 Cashier' })).toBeInTheDocument()
+  expect(screen.getByLabelText('connection status')).toHaveAttribute('title', 'Đã kết nối')
+  expect(screen.getByRole('button', { name: 'Tài khoản' })).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Sản phẩm nhanh' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: /Mica 3mm/ }))
   const cart = screen.getByLabelText('K02 giỏ hàng')
@@ -189,9 +201,11 @@ it('keeps K01 utility actions visible beside connection and profile', async () =
 
   const actions = screen.getByLabelText('K01 tiện ích')
   expect(within(actions).getByRole('button', { name: 'Lịch sử 10 đơn gần nhất' })).toBeInTheDocument()
-  expect(within(actions).getByRole('button', { name: 'Tải lại giao diện' })).toBeInTheDocument()
-  expect(within(actions).getByText('Đã kết nối')).toBeInTheDocument()
-  expect(within(actions).getByRole('button', { name: '👤 Cashier' })).toBeInTheDocument()
+  expect(within(actions).queryByRole('button', { name: 'Tải lại giao diện' })).not.toBeInTheDocument()
+  expect(within(actions).getByLabelText('connection status')).toHaveAttribute('title', 'Đã kết nối')
+  const userActions = within(actions).getByLabelText('Tài khoản và giao diện')
+  expect(within(userActions).getByRole('button', { name: 'Đổi sang giao diện tối' })).toBeInTheDocument()
+  expect(within(userActions).getByRole('button', { name: 'Tài khoản' })).toBeInTheDocument()
 })
 
 it('uses the QC brand button as a dashboard shortcut', async () => {
@@ -276,22 +290,7 @@ it('requires confirmation before closing a dirty invoice tab', async () => {
 it('resolves prices again with the selected customer', async () => {
   const service = makeCatalogService()
 
-  render(
-    <PosShell
-      catalogService={service}
-      orderService={makeOrderService()}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({ catalogService: service })
 
   await userEvent.type(screen.getByLabelText('Tìm khách'), 'khach')
   await userEvent.click(screen.getByRole('button', { name: 'Tìm khách' }))
@@ -302,22 +301,7 @@ it('resolves prices again with the selected customer', async () => {
 })
 
 it('lets the cashier edit quantity and unit price in the cart', async () => {
-  render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={makeOrderService()}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell()
 
   await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
   const cart = screen.getByLabelText('K02 giỏ hàng')
@@ -328,28 +312,21 @@ it('lets the cashier edit quantity and unit price in the cart', async () => {
   await userEvent.clear(screen.getByLabelText('Đơn giá Mica 3mm'))
   await userEvent.type(screen.getByLabelText('Đơn giá Mica 3mm'), '100000')
 
-  expect(within(cart).getByText('Giá sửa tay')).toBeInTheDocument()
+  expect(screen.getByLabelText('Đơn giá Mica 3mm')).toHaveValue(100000)
   expect(within(cart).getByText('300.000')).toBeInTheDocument()
 })
 
 it('lets operators with apply_discount enter a line discount', async () => {
   const orderService = makeOrderService()
-  render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={orderService}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order', 'perm.apply_discount'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({
+    orderService,
+    currentUser: {
+      user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
+      organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
+      workstation: null,
+      permissions: ['perm.create_order', 'perm.apply_discount'],
+    },
+  })
 
   await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
   await userEvent.clear(screen.getByLabelText('Giảm Mica 3mm'))
@@ -358,9 +335,10 @@ it('lets operators with apply_discount enter a line discount', async () => {
   const cart = screen.getByLabelText('K02 giỏ hàng')
   expect(within(cart).getByText('80.000')).toBeInTheDocument()
 
-  await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
-  await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '80000')
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+  const checkoutDrawer = await openCheckoutDrawer()
+  await userEvent.clear(within(checkoutDrawer).getByLabelText('Tiền mặt trả hóa đơn'))
+  await userEvent.type(within(checkoutDrawer).getByLabelText('Tiền mặt trả hóa đơn'), '80000')
+  await userEvent.click(within(checkoutDrawer).getByRole('button', { name: 'Tạo hóa đơn' }))
 
   expect(orderService.checkout).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -371,22 +349,7 @@ it('lets operators with apply_discount enter a line discount', async () => {
 })
 
 it('hides line discount editing without apply_discount permission', async () => {
-  render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={makeOrderService()}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell()
 
   await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
 
@@ -420,22 +383,7 @@ it('updates automatic cart prices on customer change but preserves manual prices
       }),
   })
 
-  render(
-    <PosShell
-      catalogService={service}
-      orderService={makeOrderService()}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({ catalogService: service })
 
   await userEvent.click(
     within(await screen.findByLabelText('Sản phẩm nhanh')).getByRole('button', {
@@ -451,7 +399,7 @@ it('updates automatic cart prices on customer change but preserves manual prices
 
   expect(await screen.findByText('Đã chọn KH000001 - Khach le')).toBeInTheDocument()
   expect(screen.getByLabelText('Đơn giá Mica 3mm')).toHaveValue(100000)
-  expect(screen.getByText('Giá sửa tay')).toBeInTheDocument()
+  expect(screen.getByLabelText('Đơn giá Mica 3mm')).toHaveValue(100000)
 
   await userEvent.click(
     within(screen.getByLabelText('Sản phẩm nhanh')).getByRole('button', { name: /Mica 3mm/ }),
@@ -510,22 +458,7 @@ it('adds a production queue payload to the local draft cart without checkout', a
     })),
   })
 
-  render(
-    <PosShell
-      catalogService={catalogService}
-      orderService={orderService}
-      productionQueueService={productionQueueService}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({ catalogService, orderService, productionQueueService })
 
   await userEvent.click(
     await screen.findByRole('button', { name: 'Thêm KH000001_DECAL-PP_120x50_x2 vào nháp' }),
@@ -571,30 +504,16 @@ it('reopened quote keeps snapshot price and checks out as a normal draft', async
   })
   const orderService = makeOrderService()
 
-  render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={orderService}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({ orderService })
 
   expect((await screen.findAllByText('Từ báo giá BG000123')).length).toBeGreaterThan(0)
   expect(screen.getByLabelText('Đơn giá Mica 3mm')).toHaveValue(99000)
   expect(screen.getByText('Giá hiện tại khác báo giá.')).toBeInTheDocument()
 
-  await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
-  await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '99000')
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
+  const checkoutDrawer = await openCheckoutDrawer()
+  await userEvent.clear(within(checkoutDrawer).getByLabelText('Tiền mặt trả hóa đơn'))
+  await userEvent.type(within(checkoutDrawer).getByLabelText('Tiền mặt trả hóa đơn'), '99000')
+  await userEvent.click(within(checkoutDrawer).getByRole('button', { name: 'Tạo hóa đơn' }))
 
   expect(orderService.checkout).toHaveBeenCalledWith(
     expect.not.objectContaining({ source_quote_id: 'quote-1' }),
@@ -634,25 +553,11 @@ it('blocks checkout when reopened quote has inactive or missing product warning'
   })
   const orderService = makeOrderService()
 
-  render(
-    <PosShell
-      catalogService={makeCatalogService()}
-      orderService={orderService}
-      productionQueueService={makeProductionQueueService()}
-      currentUser={{
-        user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
-        organization: { id: 'o-1', code: 'VAN-LAM', name: 'Xưởng Văn Lâm' },
-        workstation: null,
-        permissions: ['perm.create_order'],
-      }}
-      onSignOut={vi.fn()}
-      onOpenAdmin={vi.fn()}
-      onOpenDashboard={vi.fn()}
-    />,
-  )
+  renderPosShell({ orderService })
 
   expect(await screen.findByText('Sản phẩm không còn trong danh mục.')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Tạo hóa đơn' })).toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Báo giá' })).toBeDisabled()
+  const checkoutDrawer = await openCheckoutDrawer()
+  expect(within(checkoutDrawer).getByRole('button', { name: 'Tạo hóa đơn' })).toBeDisabled()
+  expect(within(checkoutDrawer).getByRole('button', { name: 'Báo giá' })).toBeDisabled()
   expect(orderService.checkout).not.toHaveBeenCalled()
 })

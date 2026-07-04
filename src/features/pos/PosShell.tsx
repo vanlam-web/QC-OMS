@@ -6,7 +6,9 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
+import { PackageOpen } from 'lucide-react'
 import { ConnectionStatus } from '../../components/ConnectionStatus'
+import { ThemeToggle } from '../../components/ui-shell/ThemeProvider'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { Customer, Product, ResolvedPrice } from '../catalog/types'
@@ -60,6 +62,7 @@ export function PosShell({
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [productSearch, setProductSearch] = useState('')
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const productSearchRef = useRef<HTMLInputElement>(null)
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0] ?? makeInvoiceTab(1)
   const cartLines = activeTab.cartLines
@@ -402,28 +405,26 @@ export function PosShell({
           </button>
         </section>
         <section aria-label="K01 khui vật tư" className="pos-topbar-material">
-          <button disabled type="button">Khui VT</button>
+          <button aria-label="Khui vật tư" disabled title="Khui vật tư" type="button">
+            <PackageOpen aria-hidden="true" size={18} />
+          </button>
         </section>
         <section aria-label="K01 tiện ích" className="pos-topbar-actions">
           <button aria-label="Lịch sử 10 đơn gần nhất" className="pos-icon-button" type="button">
             🕒
           </button>
           <ConnectionStatus connected={connected} />
-          <button
-            aria-label="Tải lại giao diện"
-            className="pos-icon-button"
-            type="button"
-            onClick={() => window.location.reload()}
-          >
-            ↻
-          </button>
-          <ProfileMenu
-            displayName={currentUser.user.display_name}
-            permissions={currentUser.permissions}
-            onSignOut={onSignOut}
-            onOpenAdmin={onOpenAdmin}
-            onOpenDashboard={onOpenDashboard}
-          />
+          <div aria-label="Tài khoản và giao diện" className="shell-user-actions pos-user-actions">
+            <ThemeToggle />
+            <ProfileMenu
+              displayName={currentUser.user.display_name}
+              permissions={currentUser.permissions}
+              compact
+              onSignOut={onSignOut}
+              onOpenAdmin={onOpenAdmin}
+              onOpenDashboard={onOpenDashboard}
+            />
+          </div>
         </section>
       </section>
       <section aria-label="K02 giỏ hàng" className="pos-cart">
@@ -444,7 +445,6 @@ export function PosShell({
                 <th>Giá</th>
                 {canApplyDiscount ? <th>Giảm</th> : null}
                 <th>Thành tiền</th>
-                <th>Nguồn giá</th>
                 <th></th>
               </tr>
             </thead>
@@ -453,7 +453,6 @@ export function PosShell({
                 <tr key={line.id}>
                   <td>
                     <strong>{line.product.name}</strong>
-                    <span>{line.product.code}</span>
                     {line.quoteWarnings?.map((warning) => (
                       <span key={warning.code}>{warning.message}</span>
                     ))}
@@ -498,7 +497,6 @@ export function PosShell({
                     </td>
                   ) : null}
                   <td>{lineTotal(line).toLocaleString('vi-VN')}</td>
-                  <td>{line.isManualPrice ? 'Giá sửa tay' : 'Giá tự động'}</td>
                   <td>
                     <button type="button" onClick={() => removeLine(line.id)}>
                       Xóa
@@ -525,21 +523,37 @@ export function PosShell({
           loading={loadingProducts}
           onSelectProduct={selectProduct}
         />
-        <CheckoutPanel
-          cartLines={cartLines}
-          selectedCustomer={selectedCustomer}
-          orderService={orderService}
-          sourceQuote={sourceQuote}
-          quoteBlockedReason={quoteBlockedReason(cartLines)}
-          onCheckoutSuccess={() => {
-            updateActiveTab((tab) => ({
-              ...tab,
-              sourceQuote: undefined,
-              cartLines: [],
-            }))
-          }}
-        />
+        <button className="pos-checkout-launcher" type="button" onClick={() => setCheckoutOpen(true)}>
+          Thanh toán
+        </button>
       </section>
+      {checkoutOpen ? (
+        <aside aria-label="Ngăn thanh toán" className="pos-checkout-drawer">
+          <button
+            aria-label="Đóng thanh toán"
+            className="pos-checkout-drawer-close"
+            type="button"
+            onClick={() => setCheckoutOpen(false)}
+          >
+            ×
+          </button>
+          <CheckoutPanel
+            cartLines={cartLines}
+            selectedCustomer={selectedCustomer}
+            orderService={orderService}
+            sourceQuote={sourceQuote}
+            quoteBlockedReason={quoteBlockedReason(cartLines)}
+            onCheckoutSuccess={() => {
+              setCheckoutOpen(false)
+              updateActiveTab((tab) => ({
+                ...tab,
+                sourceQuote: undefined,
+                cartLines: [],
+              }))
+            }}
+          />
+        </aside>
+      ) : null}
     </main>
   )
 }
