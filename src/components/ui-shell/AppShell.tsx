@@ -76,27 +76,29 @@ export function AppShell({
         </div>
       </header>
 
-      <div aria-label="Tài khoản và giao diện" className="shell-user-actions">
-        <ThemeToggle />
-        <div className="account-menu">
-          <button
-            aria-expanded={accountOpen}
-            aria-label="Tài khoản"
-            className="account-menu-trigger button button-secondary"
-            title="Tài khoản"
-            type="button"
-            onClick={() => setAccountOpen((current) => !current)}
-          >
-            <UserCircle aria-hidden="true" size={20} />
-          </button>
-          {accountOpen ? (
-            <div className="account-menu-popover" role="menu">
-              <button role="menuitem" type="button" onClick={onSignOut}>
-                <LogOut aria-hidden="true" size={16} />
-                Đăng xuất
-              </button>
-            </div>
-          ) : null}
+      <div className="shell-action-rail">
+        <div aria-label="Tài khoản và giao diện" className="shell-user-actions">
+          <ThemeToggle />
+          <div className="account-menu">
+            <button
+              aria-expanded={accountOpen}
+              aria-label="Tài khoản"
+              className="account-menu-trigger button button-secondary"
+              title="Tài khoản"
+              type="button"
+              onClick={() => setAccountOpen((current) => !current)}
+            >
+              <UserCircle aria-hidden="true" size={20} />
+            </button>
+            {accountOpen ? (
+              <div className="account-menu-popover" role="menu">
+                <button role="menuitem" type="button" onClick={onSignOut}>
+                  <LogOut aria-hidden="true" size={16} />
+                  Đăng xuất
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

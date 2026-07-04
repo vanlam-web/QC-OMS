@@ -111,6 +111,8 @@ button {
 
 .app-shell {
   position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   height: 100vh;
   overflow: hidden;
   background: var(--color-surface-muted);
@@ -202,10 +204,16 @@ button {
   backdrop-filter: blur(12px);
 }
 
+.shell-action-rail {
+  z-index: calc(var(--z-shell) - 1);
+  display: flex;
+  justify-content: flex-end;
+  min-height: 0;
+  padding: var(--space-2) var(--space-4) 0;
+}
+
 .shell-user-actions {
-  position: absolute;
-  top: 4.35rem;
-  right: var(--space-4);
+  position: relative;
   z-index: calc(var(--z-shell) - 1);
   display: flex;
   align-items: center;
@@ -291,6 +299,8 @@ button {
 
 .app-content {
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
 }
 
 .app-content > .dashboard-shell,

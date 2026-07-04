@@ -108,6 +108,9 @@ it('keeps theme and account controls in the outer shell action rail', async () =
   const userActions = screen.getByLabelText('Tài khoản và giao diện')
   expect(userActions).toHaveClass('shell-user-actions')
   expect(userActions.closest('.app-topbar')).toBeNull()
+  const actionRail = userActions.closest('.shell-action-rail')
+  expect(actionRail).not.toBeNull()
+  expect(actionRail?.nextElementSibling).toHaveClass('app-content')
   expect(within(userActions).getByRole('button', { name: 'Đổi sang giao diện tối' })).toBeInTheDocument()
 
   await userEvent.click(within(userActions).getByRole('button', { name: 'Tài khoản' }))
