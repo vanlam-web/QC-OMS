@@ -183,6 +183,7 @@ Hiện tại `/finance` là màn sổ quỹ chính:
 
 - header: tìm công nợ nhanh, nút `Phiếu thu`, `Phiếu chi`, `Xuất file`
 - filter sidebar: summary sổ quỹ, thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
+- filter đã dùng KV shape cho phần đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs
 - main: bảng sổ quỹ, inline detail dòng sổ, pagination footer
 - form tạo/sửa phiếu thu/chi mở inline khi thao tác
 - các khối phụ tài khoản quỹ/công nợ/phiếu thu chi không hiển thị trong thân trang
@@ -206,6 +207,9 @@ Mục tiêu: nhìn và tra cứu sổ quỹ giống KV trước.
 
 - `/finance` ưu tiên sổ quỹ, ẩn panel phụ khỏi thân trang.
 - sidebar filter: quỹ/tài khoản, thời gian, thu/chi, trạng thái, hạch toán.
+- quỹ/tài khoản đã đổi từ select sang radio list; mặc định chọn quỹ tiền mặt nếu có.
+- thu/chi và trạng thái đã đổi từ select sang checkbox group.
+- hạch toán KQKD đã đổi từ select sang segmented tabs.
 - summary: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ.
 - table default cột giống KV cộng quỹ/tài khoản và trạng thái.
 - click dòng mở detail inline.

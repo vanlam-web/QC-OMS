@@ -171,7 +171,7 @@ describe('FinancePage', () => {
 
     expect(service.listCustomerDebts).toHaveBeenLastCalledWith({ search: 'nam', page: 1, page_size: 15 })
 
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại chứng từ' }), 'in')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Phiếu thu' }))
     expect(screen.queryByRole('button', { name: 'Lọc sổ' })).not.toBeInTheDocument()
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
@@ -179,9 +179,9 @@ describe('FinancePage', () => {
       search_scope: 'all',
       from: '2026-07-01',
       to: '2026-07-31',
-      finance_account_id: undefined,
+      finance_account_id: 'cash-1',
       direction: 'in',
-      status: 'all',
+      status: 'posted',
       is_business_accounted: undefined,
       page: 1,
       page_size: 15,
@@ -197,13 +197,17 @@ describe('FinancePage', () => {
     expect(within(sidebar).queryByRole('heading', { name: 'Sổ quỹ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm sổ quỹ')).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm theo')).not.toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Quỹ tiền' })).toHaveClass('management-filter-select')
-    expect(screen.getByRole('combobox', { name: 'Loại chứng từ' })).toHaveClass('management-filter-select')
-    expect(screen.getByRole('combobox', { name: 'Trạng thái sổ quỹ' })).toHaveClass('management-filter-select')
-    expect(screen.getByRole('combobox', { name: 'Hạch toán KQKD' })).toHaveClass('management-filter-select')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quỹ tiền' }), 'bank-1')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Trạng thái sổ quỹ' }), 'posted')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hạch toán KQKD' }), 'false')
+    expect(within(sidebar).getByRole('radio', { name: 'CASH · Quỹ tiền mặt' })).toBeChecked()
+    expect(within(sidebar).getByRole('radio', { name: 'MB01 · MB Bank' })).not.toBeChecked()
+    expect(within(sidebar).queryByRole('combobox', { name: 'Quỹ tiền' })).not.toBeInTheDocument()
+    expect(within(sidebar).queryByRole('combobox', { name: 'Loại chứng từ' })).not.toBeInTheDocument()
+    expect(within(sidebar).queryByRole('combobox', { name: 'Trạng thái sổ quỹ' })).not.toBeInTheDocument()
+    expect(within(sidebar).queryByRole('combobox', { name: 'Hạch toán KQKD' })).not.toBeInTheDocument()
+
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'MB01 · MB Bank' }))
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Phiếu thu' }))
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' }))
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'Không' }))
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: undefined,
@@ -211,12 +215,41 @@ describe('FinancePage', () => {
       from: '2026-07-01',
       to: '2026-07-31',
       finance_account_id: 'bank-1',
-      direction: 'all',
-      status: 'posted',
+      direction: 'in',
+      status: 'all',
       is_business_accounted: false,
       page: 1,
       page_size: 15,
     })
+  })
+
+  it('uses KV-style checkbox defaults for cashbook direction and status filters', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
+
+    expect(within(sidebar).getByRole('checkbox', { name: 'Phiếu thu' })).not.toBeChecked()
+    expect(within(sidebar).getByRole('checkbox', { name: 'Phiếu chi' })).not.toBeChecked()
+    expect(within(sidebar).getByRole('checkbox', { name: 'Đã thanh toán' })).toBeChecked()
+    expect(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' })).not.toBeChecked()
+
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
+      finance_account_id: 'cash-1',
+      direction: 'all',
+      status: 'posted',
+    }))
+
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Phiếu chi' }))
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({ direction: 'out' }))
+
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Phiếu thu' }))
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({ direction: 'all' }))
+
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã thanh toán' }))
+    await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' }))
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'cancelled' }))
   })
 
   it('filters cashbook by date range', async () => {
@@ -250,7 +283,7 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quỹ tiền' }), 'bank-1')
+    await userEvent.click(screen.getByRole('radio', { name: 'MB01 · MB Bank' }))
 
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
     expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc tài chính' })).not.toBeInTheDocument()
