@@ -1,150 +1,132 @@
-# WORKFLOW-SPEC-IMPLEMENT — Quy ước phối hợp các luồng Codex
+# WORKFLOW-SPEC-IMPLEMENT — Quy Ước Phối Hợp Các Luồng Codex
 
-> **Vai trò:** Source of Truth điều phối.
+> **Vai trò:** Source of Truth điều phối giữa Spec / Implement / Review.
 > **Người quyết định:** Owner trực tiếp quyết định thứ tự và nghiệp vụ cuối cùng.
-> **Cập nhật:** 2026-07-03
+> **Cập nhật:** 2026-07-05.
 
 ---
 
-## 1. Mục tiêu
+## Mục Tiêu
 
-Tài liệu này giúp các luồng Codex không quên cách phối hợp sau vài task.
+File này giúp các luồng Codex không lệch mạch sau nhiều task.
 
-Luồng **Spec** giữ Source of Truth nghiệp vụ, rà KiotViet, ghi docs và review implementation theo nghiệp vụ.
+Vai trò:
 
-Luồng **Implement** thi công code, test, PR/deploy và phản hồi blocker kỹ thuật/nghiệp vụ.
+- **Spec:** giữ Source of Truth nghiệp vụ, rà KiotViet khi cần, chốt scope, review implementation theo nghiệp vụ.
+- **Implement:** code, test, commit/PR/deploy, báo blocker kỹ thuật/nghiệp vụ.
+- **Review:** kiểm tra dự án khi Owner yêu cầu, chạy test/build/lint, phát hiện drift/rủi ro và giao lại đúng luồng.
 
-Luồng **Review** kiểm tra dự án khi Owner yêu cầu, chạy test/build/lint, review rủi ro và chuẩn bị tài liệu/handoff để Spec và Implement tiếp tục làm việc.
+Quy trình tự động chi tiết nằm ở [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
 
-Quy trình tự động giao việc, tự review, checklist từng giai đoạn nằm tại
-[WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
+Queue sống nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md). Board item đang mở nằm ở [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md). Issue Review nằm ở [REVIEW-ISSUES.md](./REVIEW-ISSUES.md).
 
-Nguyên tắc phối hợp bắt buộc: luồng nào nhận việc từ luồng khác thì phải báo cáo lại trực tiếp cho luồng đó khi xong, khi bị block, hoặc khi quyết định defer. Owner không phải làm người nhắc hộ hay chuyển lời giữa các luồng.
-
-Bảng điều phối việc đang làm nằm tại [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md). Spec giữ bảng này đủ mới cho các slice/PR quan trọng; Review có quyền flag nếu bảng không khớp thực tế.
-
-Khi sửa lỗi load chậm hoặc tối ưu hiệu năng, đọc và cập nhật [PERFORMANCE-FIX-LOG.md](./PERFORMANCE-FIX-LOG.md) để không test/fix trùng giữa các luồng.
+Khi sửa load chậm hoặc tối ưu hiệu năng, đọc/cập nhật [PERFORMANCE-FIX-LOG.md](./PERFORMANCE-FIX-LOG.md) để không test/fix trùng.
 
 ---
 
-## 2. Thứ tự ưu tiên Source of Truth
+## Thứ Tự Source of Truth
 
-Khi có khác nhau giữa tài liệu, code và chat, dùng thứ tự sau:
+Khi chat, docs và code khác nhau, dùng thứ tự:
 
 1. Quyết định mới nhất của Owner trong chat.
-2. Docs/spec đã commit trên branch spec hoặc `main`.
-3. Implementation plan đã ghi trong `docs/superpowers/plans`.
+2. Source of Truth đã commit trên `main` hoặc branch spec.
+3. Implementation plan trong `docs/superpowers/plans`.
 4. Code hiện tại.
 
 Nếu code lệch docs hoặc quyết định Owner, coi là implementation drift cho tới khi Spec/Owner chốt lại.
 
 ---
 
-## 3. Trước khi implement một slice mới
+## Trước Khi Implement
 
-Implement phải ghi rõ:
+Implement phải biết rõ:
 
 - slice đang làm
 - branch/PR hiện tại
-- file/commit SoT đang theo
-- phần nào trong scope
-- phần nào ngoài scope
+- Source of Truth đang theo
+- in scope
+- out of scope
+- verification cần chạy
 
-Nếu đụng một trong các nhóm sau và chưa rõ, Implement phải hỏi Spec/Owner trước khi code sâu:
+Phải hỏi Spec/Owner trước khi code sâu nếu đụng:
 
 - tiền/quỹ/công nợ
 - kho/stock movement
 - hóa đơn/báo giá/chứng từ
-- dữ liệu khó sửa sau khi đã ghi DB
+- dữ liệu khó sửa sau khi ghi DB
 - API/schema dùng lâu dài
 
-Với wording nhỏ hoặc layout nhỏ, Implement có thể chọn cách đơn giản và ghi rõ trong PR.
+Wording nhỏ hoặc layout nhỏ có thể tự chọn theo pattern codebase, rồi ghi rõ khi report.
 
 ---
 
-## 4. Trong khi implement
+## Spec Review Gate
 
-Implement không cần chờ Spec nếu slice đã rõ.
+PR/slice quan trọng cần Spec review theo nghiệp vụ trước khi gọi là đúng.
 
-Implement không tự mở scope ngoài SoT.
-
-Khi phát hiện thiếu spec, câu hỏi gửi lại phải cụ thể:
-
-- file/API/table/component nào bị ảnh hưởng
-- có những lựa chọn nào
-- lựa chọn nào Implement đề xuất
-- nếu không chốt sẽ có rủi ro gì
-
----
-
-## 5. Spec review gate
-
-Mỗi PR/slice quan trọng cần được Spec review theo nghiệp vụ trước khi gọi là đúng.
-
-Spec phân loại phát hiện:
+Spec phân loại finding:
 
 | Loại | Ý nghĩa |
 |---|---|
-| Must fix before merge/deploy | Sai tiền, kho, công nợ, chứng từ, dữ liệu khó sửa, hoặc trái quyết định Owner |
-| Follow-up acceptable | UI chưa đủ đẹp/đủ sâu nhưng không làm sai dữ liệu và đã ghi rõ là foundation |
-| Future scope | Đúng là chưa làm vì nằm ngoài slice đã chốt |
+| `Must fix before merge` | Sai tiền, kho, công nợ, chứng từ, dữ liệu khó sửa, hoặc trái quyết định Owner |
+| `Follow-up acceptable` | Chưa đủ polish/đủ sâu nhưng không sai dữ liệu và đã ghi rõ là foundation |
+| `Future scope` | Đúng là chưa làm vì ngoài slice đã chốt |
 
-Review nghiệp vụ không thay thế test kỹ thuật. Implement vẫn phải chạy verification theo plan.
-
-Review Thread có thể kiểm tra độc lập trước hoặc sau Spec review, nhưng kết quả Review không tự thay thế quyết định nghiệp vụ của Spec/Owner.
+Review nghiệp vụ không thay test kỹ thuật. Implement vẫn phải chạy verification theo plan.
 
 ---
 
-## 6. Handoff từ Spec sang Implement
-
-Chỉ handoff khi docs/spec liên quan đã được push hoặc đã nằm trên remote.
-
-Format khuyến nghị:
+## Handoff Spec Sang Implement
 
 ```text
-[Spec -> Implement handoff]
+[Spec -> Implement]
 
 Remote branch/commit:
 - ...
 
-What changed in SoT:
+Source of Truth:
 - ...
 
-Files updated:
+In scope:
 - ...
 
-Implementation impact:
+Out of scope:
 - ...
 
-Spec validation:
+Acceptance:
 - ...
 
-Current owner:
+Verification:
+- ...
+
+Must ask Spec before:
+- ...
+
+Luồng đang giữ:
 - Spec
 
-Next owner:
+Luồng nhận tiếp:
 - Implement
 
-Next action:
+Bước tiếp theo:
 - ...
 ```
 
-Sau khi nhận handoff, Implement phải trả lời lại Spec bằng `[Implement -> Spec]` khi:
+Implement phải report lại Spec khi:
 
-- đã mở PR/commit cần Spec review
-- phát hiện blocker/spec thiếu cần Spec chốt
-- quyết định defer hoặc tách scope
+- đã có commit/PR cần review
+- gặp blocker/spec thiếu
+- cần đổi scope
+- quyết định defer
 
-Nếu handoff đến từ Review hoặc ảnh hưởng issue trong [REVIEW-ISSUES.md](./REVIEW-ISSUES.md), Implement cũng phải gửi `[Implement -> Review]`.
+Nếu việc đến từ Review hoặc liên quan [REVIEW-ISSUES.md](./REVIEW-ISSUES.md), Implement cũng report lại Review.
 
 ---
 
-## 7. Handoff từ Implement sang Spec/Owner
-
-Khi cần review hoặc nghiệm thu, Implement gửi:
+## Handoff Implement Sang Spec/Owner
 
 ```text
-[Implement -> Spec review request]
+[Implement -> Spec]
 
 Branch/PR/commit:
 - ...
@@ -152,7 +134,7 @@ Branch/PR/commit:
 Scope implemented:
 - ...
 
-SoT followed:
+Source of Truth followed:
 - ...
 
 Verification:
@@ -164,52 +146,42 @@ Known gaps:
 Questions:
 - ...
 
-Current owner:
+Luồng đang giữ:
 - Implement
 
-Next owner:
+Luồng nhận tiếp:
 - Spec / Review / Owner
 
-Next action:
+Bước tiếp theo:
 - ...
 
-Owner decision needed:
-- Yes / No
+Cần Owner quyết định:
+- Có / Không
 ```
 
-Spec phải trả lời trực tiếp bằng `[Spec -> Implement]` sau khi review nghiệp vụ:
+Spec phải trả lời trực tiếp bằng `[Spec -> Implement]` sau khi review.
 
-- Must fix before merge/deploy
-- Follow-up acceptable
-- Future scope
-- Owner decision needed
-
-Nếu review này liên quan issue Review giao, Spec cũng phải gửi `[Spec -> Review]` để Review re-check và cập nhật tracker.
-
-Nếu Spec approve và việc cần Review gate, report phải ghi `Next owner: Review`. Nếu Spec trả must-fix, report phải ghi `Next owner: Implement`.
+Nếu cần Review gate, report ghi `Luồng nhận tiếp: Review`. Nếu must-fix, report ghi `Luồng nhận tiếp: Implement`.
 
 ---
 
-## 8. Review Thread
+## Review Thread
 
-Owner có thể yêu cầu Review Thread kiểm tra toàn bộ dự án hoặc một slice cụ thể bất kỳ lúc nào.
+Owner có thể yêu cầu Review kiểm tra toàn bộ dự án hoặc một slice cụ thể.
 
-Review Thread chịu trách nhiệm:
+Review chịu trách nhiệm:
 
 - đọc trạng thái repo hiện tại
-- chạy kiểm tra phù hợp: lint, typecheck, build, unit test, database test, function test, e2e nếu môi trường cho phép
-- phân biệt lỗi code, lỗi test, lỗi cấu hình, lỗi docs/spec drift
-- giải thích vấn đề bằng ngôn ngữ dễ hiểu khi Owner yêu cầu
-- chuẩn bị báo cáo/handoff cho Spec hoặc Implement
-- ghi các issue đã giao cho luồng khác vào [REVIEW-ISSUES.md](./REVIEW-ISSUES.md)
-- kiểm tra lại issue sau khi luồng phụ trách báo đã fix hoặc đã quyết định
+- chạy kiểm tra phù hợp
+- phân biệt lỗi code, test, cấu hình, docs/spec drift
+- giải thích bằng ngôn ngữ dễ hiểu khi Owner yêu cầu
+- ghi issue giao cho luồng khác vào [REVIEW-ISSUES.md](./REVIEW-ISSUES.md)
+- re-check sau khi luồng phụ trách báo đã xử lý
 
-Khi Review giao issue cho Spec hoặc Implement, Review phải ghi rõ thread nào cần báo lại. Luồng nhận việc phải gửi `[Spec -> Review]` hoặc `[Implement -> Review]` trực tiếp sau khi xử lý; không chờ Owner nhắc.
-
-Format khuyến nghị:
+Mẫu report:
 
 ```text
-[Review -> Owner/Spec/Implement]
+[Review -> Spec/Implement]
 
 Scope checked:
 - ...
@@ -223,65 +195,45 @@ Result:
 Findings:
 - ...
 
-Likely impact:
-- ...
-
 Recommended next action:
 - ...
 
 Review issue IDs:
 - ...
 
-Needs Spec:
-- ...
-
-Needs Implement:
-- ...
-
-Current owner:
+Luồng đang giữ:
 - Review
 
-Next owner:
+Luồng nhận tiếp:
 - Spec / Implement / Owner
 
-Next action:
+Bước tiếp theo:
 - ...
 ```
 
 ---
 
-## 9. Ưu tiên sửa lệch hiện tại
+## Không Tự Mở Scope
 
-Trước khi mở nhiều feature mới, ưu tiên sửa các điểm nền đã được Spec review:
-
-1. POS phải gửi và lưu `width_m`, `height_m`, `linear_m` khi lưu báo giá và checkout.
-2. Stock movement không được dùng `-quantity` chung cho mọi cách bán; m2/m tới/cuộn/tấm phải có rule đúng hoặc bị giới hạn scope rõ ràng.
-3. Thu nợ độc lập không được tạo hóa đơn `HD...` giả; phải tạo phiếu thu, phân bổ công nợ và sổ quỹ đúng nghiệp vụ.
-4. POS old-debt payment UX/payload phải rõ tổng tiền thực nhận và phần cấn nợ cũ, tránh làm hóa đơn mới bị nợ ngoài ý muốn.
-5. PriceBook formula UI chưa được coi là MVP hoàn chỉnh nếu chưa đủ input công thức tối thiểu đã chốt.
-
----
-
-## 10. Những điều không tự mở
-
-Không tự mở các scope sau nếu Owner chưa chốt:
+Không tự mở nếu Owner chưa chốt:
 
 - auto-match file máy sản xuất với hóa đơn
 - tự trừ kho từ dữ liệu máy sản xuất
 - sửa/hủy hóa đơn có đảo kho/tiền/công nợ
 - HĐĐT/VAT
 - delivery/COD/kênh online
-- product group schema cho PriceBook formula slice đầu
+- loyalty/campaign, HR/payroll/commission
+- schema mới lớn hoặc API nền tảng khó sửa
 
 ---
 
-## 11. Quy tắc nhớ
+## Khi Mất Mạch
 
-Nếu một luồng bị mất mạch, đọc lại theo thứ tự:
+Đọc lại theo thứ tự:
 
 1. File này.
 2. [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md).
-3. [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) nếu đang xử lý lỗi do Review giao.
-4. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
-5. Docs SoT theo module đang làm.
-6. Plan trong `docs/superpowers/plans`.
+3. [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
+4. [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) nếu việc đến từ Review.
+5. Source of Truth theo module đang làm.
+6. Plan lịch sử trong `docs/superpowers/plans` nếu cần truy vết.
