@@ -1,6 +1,6 @@
 begin;
 
-select plan(37);
+select plan(38);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -633,6 +633,20 @@ select throws_ok(
   '22023',
   'revision_reason is required',
   'invoice revision requires a reason'
+);
+
+select throws_ok(
+  $$
+    select public.revise_invoice_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      (select (result->>'order_id')::uuid from checkout_results where name = 'cash_full_paid'),
+      jsonb_build_object('revision_reason', 'Sai giá')
+    )
+  $$,
+  '0A000',
+  'invoice revision is not implemented yet',
+  'invoice revision returns explicit disabled error instead of fake success'
 );
 
 select is(

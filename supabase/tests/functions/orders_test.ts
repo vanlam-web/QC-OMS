@@ -432,3 +432,15 @@ Deno.test("invoice revise requires edit_order_locked and revision_reason", async
 
   assertEquals(missingReason.status, 400);
 });
+
+Deno.test("invoice revise does not return fake success while disabled", async () => {
+  const response = await call(
+    "/api/v1/orders/order-1/revise",
+    { method: "POST", body: JSON.stringify({ revision_reason: "Sai giá" }) },
+    repo(["perm.edit_order_locked"]),
+  );
+  const responseBody = await body(response);
+
+  assertEquals(response.status, 409);
+  assertEquals((responseBody.error as { code: string }).code, "RESOURCE_CONFLICT");
+});
