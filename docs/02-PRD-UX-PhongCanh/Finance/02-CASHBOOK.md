@@ -1,6 +1,5 @@
 # CASHBOOK — UX sổ quỹ và phiếu thu/chi
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo UI:** KiotViet Sổ quỹ tiền mặt.
 
 ---

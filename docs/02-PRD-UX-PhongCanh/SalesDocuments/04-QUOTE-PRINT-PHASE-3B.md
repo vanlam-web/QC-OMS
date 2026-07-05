@@ -1,6 +1,6 @@
 # 04-QUOTE-PRINT-PHASE-3B — In/xem báo giá đơn giản
 
-> **Trạng thái:** Source of Truth implement-ready cho Phase 3B
+> **Vai trò:** Source of Truth implement-ready cho Phase 3B.
 > **Quyết định:** Phase sau 3A làm đơn giản trước, chưa làm hệ thống nhiều mẫu bill phức tạp
 
 ---

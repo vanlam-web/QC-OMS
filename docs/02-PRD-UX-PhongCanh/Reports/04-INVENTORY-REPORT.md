@@ -1,6 +1,5 @@
 # 04-INVENTORY-REPORT — Báo cáo hàng hóa và tồn kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Inventory cuộn/tấm/tấm lỡ của QC-OMS, không copy tồn tổng m2 của KiotViet
 
 ---

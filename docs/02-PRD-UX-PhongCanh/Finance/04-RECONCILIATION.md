@@ -1,6 +1,5 @@
 # RECONCILIATION — UX đối soát cuối ngày
 
-> **Trạng thái:** 🔨 Đang xây dựng
 
 ---
 

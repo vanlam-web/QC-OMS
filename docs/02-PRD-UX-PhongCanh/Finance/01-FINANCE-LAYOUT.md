@@ -1,6 +1,5 @@
 # FINANCE-LAYOUT — Bố cục tổng thể Tài chính
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo UI:** KiotViet Sổ quỹ ở viewport desktop.
 
 ---

@@ -1,6 +1,5 @@
 # 01-DASHBOARD — Tổng quan vận hành
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Tổng quan`
 
 ---

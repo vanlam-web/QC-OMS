@@ -1,6 +1,5 @@
 # 05-FINANCE-REPORT — Báo cáo tài chính quản trị
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Sổ quỹ, công nợ khách hàng, đối soát cuối ngày
 
 ---

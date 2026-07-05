@@ -1,6 +1,5 @@
 # 01-END-OF-DAY — Báo cáo cuối ngày
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Báo cáo > Cuối ngày`
 
 ---

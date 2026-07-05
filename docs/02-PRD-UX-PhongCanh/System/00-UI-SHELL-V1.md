@@ -1,6 +1,6 @@
 # UI Shell v1 — Quy tắc giao diện nền QC-OMS
 
-> **Trạng thái:** Source of Truth cho UI Shell v1
+> **Vai trò:** Source of Truth cho UI Shell v1.
 > **Mục tiêu:** Làm giao diện nhanh nhưng không lệch quỹ đạo; sau này đổi theme/layout không ảnh hưởng nghiệp vụ.
 > **Tham khảo:** KiotViet cho logic vận hành; Material Design, IBM Carbon, Shopify Polaris cho design token/component discipline; WCAG 2.2 cho accessibility.
 

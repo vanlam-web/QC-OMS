@@ -1,6 +1,5 @@
 # CUSTOMER-DEBT — UX công nợ và thu nợ khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 
 ---
 

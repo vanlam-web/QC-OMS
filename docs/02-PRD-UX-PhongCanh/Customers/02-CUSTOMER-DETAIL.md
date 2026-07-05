@@ -1,6 +1,6 @@
 # 02-CUSTOMER-DETAIL — Chi tiết khách hàng
 
-> **Trạng thái:** ✅ V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao để follow-up sau
+> **Mốc chốt:** V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao để follow-up sau.
 
 ---
 

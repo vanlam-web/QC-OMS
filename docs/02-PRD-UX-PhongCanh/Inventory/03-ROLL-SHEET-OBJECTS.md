@@ -1,6 +1,5 @@
 # ROLL-SHEET-OBJECTS — Quản lý cuộn, tấm và tấm lỡ
 
-> **Trạng thái:** 🔨 Đang xây dựng
 
 ---
 

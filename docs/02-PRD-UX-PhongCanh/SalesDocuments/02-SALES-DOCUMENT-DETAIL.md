@@ -1,6 +1,5 @@
 # 02-SALES-DOCUMENT-DETAIL — Chi tiết chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phase hiện tại:** Readonly detail cho `HD...`/`BG...`; báo giá active mở lại được vào POS draft
 
 ---

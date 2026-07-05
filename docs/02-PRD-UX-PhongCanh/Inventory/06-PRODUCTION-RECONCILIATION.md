@@ -1,6 +1,6 @@
 # 06-PRODUCTION-RECONCILIATION.md — Đối soát máy sản xuất
 
-> **Trạng thái:** Source of Truth UI cho lát cắt read-only đầu tiên
+> **Vai trò:** Source of Truth UI cho lát cắt read-only đầu tiên.
 > **Business:** [PRODUCTION-RECONCILIATION.md](../../03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md)
 
 ---

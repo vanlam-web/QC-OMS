@@ -1,6 +1,5 @@
 # STOCKTAKE — UX phiếu kiểm kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo UI:** KiotViet tính năng Kiểm kho; điều chỉnh theo object-level stocktake của QC-OMS.
 
 ---

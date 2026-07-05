@@ -1,6 +1,5 @@
 # 01-SALES-DOCUMENT-LIST — Danh sách chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phase hiện tại:** Đã có readonly list/detail cho `HD...` và `BG...`; báo giá active mở lại được vào POS draft
 > **Tham khảo:** KiotViet `Đơn hàng > Hóa đơn`; không dùng mô hình `Đặt hàng/Giao hàng`
 

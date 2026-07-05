@@ -1,6 +1,6 @@
 # Purchase UI — Nhà cung cấp và nhập hàng
 
-> **Trạng thái:** PRD/UX Source of Truth mức khung
+> **Vai trò:** PRD/UX Source of Truth mức khung.
 > **Business:** [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md)
 
 ---
