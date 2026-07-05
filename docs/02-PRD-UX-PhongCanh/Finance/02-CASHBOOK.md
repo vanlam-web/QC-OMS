@@ -161,12 +161,12 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 | Bộ lọc | Giá trị |
 |---|---|
-| Quỹ tiền | Tiền mặt, từng tài khoản ngân hàng, tổng quỹ |
+| Quỹ tiền | Radio list chọn một: quỹ tiền mặt mặc định, từng tài khoản ngân hàng, tổng quỹ |
 | Thời gian | Hôm nay, hôm qua, tuần này, tuần trước, 7 ngày qua, tháng này, tháng trước, 30 ngày qua, quý này, quý trước, năm nay, năm trước, toàn thời gian, tùy chỉnh |
-| Loại chứng từ | Phiếu thu, phiếu chi |
+| Loại chứng từ | Checkbox group: `Phiếu thu`, `Phiếu chi`; mặc định không tick nghĩa là xem cả hai |
 | Loại thu chi | Chưa có trong UI hiện tại; thuộc slice sau |
-| Trạng thái | Đã ghi sổ, đã hủy |
-| Hạch toán KQKD | Tất cả, có hạch toán, không hạch toán |
+| Trạng thái | Checkbox group: `Đã thanh toán` tick mặc định, `Đã hủy` không tick; tick cả hai hoặc không tick gì tương đương xem tất cả |
+| Hạch toán KQKD | Segmented radio tabs: `Tất cả`, `Có`, `Không` |
 | Người tạo | Chưa có trong UI hiện tại; thuộc slice sau |
 | Người nộp/nhận | Chưa có trong filter UI hiện tại; detail vẫn hiển thị người nộp/nhận |
 | Công nợ đối tác | Có trong form phiếu thu/chi thủ công; filter list thuộc slice sau |
@@ -174,6 +174,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 Ghi chú:
 
 - Filter hiện tại tự gọi lại danh sách sổ quỹ khi đổi thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD.
+- UI filter dùng hình thái giống KiotViet cho những phần đã đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs. Màu sắc vẫn theo design system QC-OMS.
 - `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp; hiện đã có trường khi tạo phiếu thủ công, chưa có filter list.
 - `Người nộp/nhận` cần tìm được theo tên, mã và số điện thoại ở slice sau.
 - Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả; hiện UI sổ quỹ chưa có ô tìm mã phiếu riêng.

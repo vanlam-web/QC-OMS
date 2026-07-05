@@ -85,12 +85,6 @@ function accountTypeText(type: FinanceAccount['account_type']) {
   return type === 'cash' ? 'Tiền mặt' : 'Ngân hàng'
 }
 
-function directionText(direction: CashbookDirection | 'all') {
-  if (direction === 'in') return 'Thu'
-  if (direction === 'out') return 'Chi'
-  return 'Tất cả'
-}
-
 function statusText(status: 'posted' | 'cancelled') {
   return status === 'posted' ? 'Đã ghi' : 'Đã hủy'
 }
@@ -99,6 +93,22 @@ function businessAccountedText(value: CashbookBusinessAccountedFilter) {
   if (value === 'true') return 'Có hạch toán'
   if (value === 'false') return 'Không hạch toán'
   return 'Tất cả'
+}
+
+function nextDirectionSelection(current: CashbookDirection[], value: CashbookDirection) {
+  return current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
+}
+
+function directionFilterFromSelection(selection: CashbookDirection[]): CashbookDirection | 'all' {
+  return selection.length === 1 ? selection[0] : 'all'
+}
+
+function nextStatusSelection(current: CashbookStatus[], value: CashbookStatus) {
+  return current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
+}
+
+function statusFilterFromSelection(selection: CashbookStatus[]): CashbookStatus | 'all' {
+  return selection.length === 1 ? selection[0] : 'all'
 }
 
 function paymentMethodText(value: CashbookEntryDetail['payment_method']) {
@@ -239,12 +249,14 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookTo, setCashbookTo] = useState(() => currentMonthRange().to)
   const [lastCashbookTo, setLastCashbookTo] = useState(() => currentMonthRange().to)
   const [cashbookQuickTimeOpen, setCashbookQuickTimeOpen] = useState(false)
-  const [cashbookAccountId, setCashbookAccountId] = useState('all')
-  const [lastCashbookAccountId, setLastCashbookAccountId] = useState('all')
-  const [cashbookDirection, setCashbookDirection] = useState<CashbookDirection | 'all'>('all')
+  const [cashbookAccountId, setCashbookAccountId] = useState('')
+  const [lastCashbookAccountId, setLastCashbookAccountId] = useState('')
+  const [cashbookDirectionSelection, setCashbookDirectionSelection] = useState<CashbookDirection[]>([])
+  const cashbookDirection = directionFilterFromSelection(cashbookDirectionSelection)
   const [lastCashbookDirection, setLastCashbookDirection] = useState<CashbookDirection | 'all'>('all')
-  const [cashbookStatus, setCashbookStatus] = useState<CashbookStatus | 'all'>('all')
-  const [lastCashbookStatus, setLastCashbookStatus] = useState<CashbookStatus | 'all'>('all')
+  const [cashbookStatusSelection, setCashbookStatusSelection] = useState<CashbookStatus[]>(['posted'])
+  const cashbookStatus = statusFilterFromSelection(cashbookStatusSelection)
+  const [lastCashbookStatus, setLastCashbookStatus] = useState<CashbookStatus | 'all'>('posted')
   const [cashbookBusinessAccounted, setCashbookBusinessAccounted] = useState<CashbookBusinessAccountedFilter>('all')
   const [lastCashbookBusinessAccounted, setLastCashbookBusinessAccounted] = useState<CashbookBusinessAccountedFilter>('all')
   const [cashbookSummary, setCashbookSummary] = useState({ opening_balance: 0, total_in: 0, total_out: 0, ending_balance: 0 })
@@ -426,15 +438,29 @@ export function FinancePage({ service }: { service: FinanceService }) {
     async function loadInitial() {
       setError(null)
       try {
-        const [accountResult, balanceResult, voucherResult, debtResult, cashbookResult] = await Promise.all([
-          service.listAccounts({ is_active: true }),
+        const accountResult = await service.listAccounts({ is_active: true })
+        const defaultCashAccountId = accountResult.items.find((account) => account.account_type === 'cash' && account.is_default_cash)?.id
+          ?? accountResult.items.find((account) => account.account_type === 'cash')?.id
+          ?? 'all'
+        const [balanceResult, voucherResult, debtResult, cashbookResult] = await Promise.all([
           service.listCashbookBalances(),
           service.listCashbookVouchers(),
           service.listCustomerDebts({ page: 1, page_size: pageSizeDefault }),
-          service.listCashbookEntries({ from: currentMonthRange().from, to: currentMonthRange().to, page: 1, page_size: pageSizeDefault }),
+          service.listCashbookEntries({
+            from: currentMonthRange().from,
+            to: currentMonthRange().to,
+            finance_account_id: defaultCashAccountId === 'all' ? undefined : defaultCashAccountId,
+            direction: 'all',
+            status: 'posted',
+            page: 1,
+            page_size: pageSizeDefault,
+          }),
         ])
         if (!active) return
         setAccounts(accountResult.items)
+        setCashbookAccountId(defaultCashAccountId)
+        setLastCashbookAccountId(defaultCashAccountId)
+        setLastCashbookStatus('posted')
         setBalances(balanceResult.items)
         setVouchers(voucherResult.items)
         setDebts(debtResult.items)
@@ -487,6 +513,30 @@ export function FinancePage({ service }: { service: FinanceService }) {
       business_accounted_filter: input.business_accounted_filter ?? cashbookBusinessAccounted,
       page: 1,
     })
+  }
+
+  async function chooseCashbookAccount(nextValue: string) {
+    setCashbookAccountId(nextValue)
+    await applyCashbookFilters({ finance_account_id: nextValue })
+  }
+
+  async function toggleCashbookDirection(nextValue: CashbookDirection) {
+    const nextSelection = nextDirectionSelection(cashbookDirectionSelection, nextValue)
+    const nextFilter = directionFilterFromSelection(nextSelection)
+    setCashbookDirectionSelection(nextSelection)
+    await applyCashbookFilters({ direction: nextFilter })
+  }
+
+  async function toggleCashbookStatus(nextValue: CashbookStatus) {
+    const nextSelection = nextStatusSelection(cashbookStatusSelection, nextValue)
+    const nextFilter = statusFilterFromSelection(nextSelection)
+    setCashbookStatusSelection(nextSelection)
+    await applyCashbookFilters({ status: nextFilter })
+  }
+
+  async function chooseCashbookBusinessAccounted(nextValue: CashbookBusinessAccountedFilter) {
+    setCashbookBusinessAccounted(nextValue)
+    await applyCashbookFilters({ business_accounted_filter: nextValue })
   }
 
   async function openCashbookEntry(entry: CashbookEntry) {
@@ -776,69 +826,83 @@ export function FinancePage({ service }: { service: FinanceService }) {
               ) : null}
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Quỹ tiền">
-              <select
-                aria-label="Quỹ tiền"
-                className="management-filter-select"
-                value={cashbookAccountId}
-                onChange={(event) => {
-                  const nextValue = event.target.value
-                  setCashbookAccountId(nextValue)
-                  void applyCashbookFilters({ finance_account_id: nextValue })
-                }}
-              >
-                <option value="all">Tổng quỹ</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
-                ))}
-              </select>
+              {accounts.map((account) => (
+                <label
+                  className={`management-filter-choice${cashbookAccountId === account.id ? ' management-filter-choice-active' : ''}`}
+                  key={account.id}
+                >
+                  <input
+                    checked={cashbookAccountId === account.id}
+                    name="cashbook-account"
+                    type="radio"
+                    onChange={() => void chooseCashbookAccount(account.id)}
+                  />
+                  <span>{account.code} · {account.name}</span>
+                </label>
+              ))}
+              <label className={`management-filter-choice${cashbookAccountId === 'all' ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookAccountId === 'all'}
+                  name="cashbook-account"
+                  type="radio"
+                  onChange={() => void chooseCashbookAccount('all')}
+                />
+                <span>Tổng quỹ</span>
+              </label>
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Loại chứng từ">
-              <select
-                aria-label="Loại chứng từ"
-                className="management-filter-select"
-                value={cashbookDirection}
-                onChange={(event) => {
-                  const nextValue = event.target.value as CashbookDirection | 'all'
-                  setCashbookDirection(nextValue)
-                  void applyCashbookFilters({ direction: nextValue })
-                }}
-              >
-                <option value="all">{directionText('all')}</option>
-                <option value="in">{directionText('in')}</option>
-                <option value="out">{directionText('out')}</option>
-              </select>
+              <label className={`management-filter-choice${cashbookDirectionSelection.includes('in') ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookDirectionSelection.includes('in')}
+                  type="checkbox"
+                  onChange={() => void toggleCashbookDirection('in')}
+                />
+                <span>Phiếu thu</span>
+              </label>
+              <label className={`management-filter-choice${cashbookDirectionSelection.includes('out') ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookDirectionSelection.includes('out')}
+                  type="checkbox"
+                  onChange={() => void toggleCashbookDirection('out')}
+                />
+                <span>Phiếu chi</span>
+              </label>
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Trạng thái sổ quỹ">
-              <select
-                aria-label="Trạng thái sổ quỹ"
-                className="management-filter-select"
-                value={cashbookStatus}
-                onChange={(event) => {
-                  const nextValue = event.target.value as CashbookStatus | 'all'
-                  setCashbookStatus(nextValue)
-                  void applyCashbookFilters({ status: nextValue })
-                }}
-              >
-                <option value="all">Tất cả</option>
-                <option value="posted">{statusText('posted')}</option>
-                <option value="cancelled">{statusText('cancelled')}</option>
-              </select>
+              <label className={`management-filter-choice${cashbookStatusSelection.includes('posted') ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookStatusSelection.includes('posted')}
+                  type="checkbox"
+                  onChange={() => void toggleCashbookStatus('posted')}
+                />
+                <span>Đã thanh toán</span>
+              </label>
+              <label className={`management-filter-choice${cashbookStatusSelection.includes('cancelled') ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookStatusSelection.includes('cancelled')}
+                  type="checkbox"
+                  onChange={() => void toggleCashbookStatus('cancelled')}
+                />
+                <span>Đã hủy</span>
+              </label>
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Hạch toán KQKD">
-              <select
-                aria-label="Hạch toán KQKD"
-                className="management-filter-select"
-                value={cashbookBusinessAccounted}
-                onChange={(event) => {
-                  const nextValue = event.target.value as CashbookBusinessAccountedFilter
-                  setCashbookBusinessAccounted(nextValue)
-                  void applyCashbookFilters({ business_accounted_filter: nextValue })
-                }}
-              >
-                <option value="all">{businessAccountedText('all')}</option>
-                <option value="true">{businessAccountedText('true')}</option>
-                <option value="false">{businessAccountedText('false')}</option>
-              </select>
+              <div className="management-filter-segmented" role="radiogroup" aria-label="Hạch toán KQKD">
+                {(['all', 'true', 'false'] as CashbookBusinessAccountedFilter[]).map((option) => (
+                  <label
+                    className={cashbookBusinessAccounted === option ? 'management-filter-segmented-active' : undefined}
+                    key={option}
+                  >
+                    <input
+                      checked={cashbookBusinessAccounted === option}
+                      name="cashbook-business-accounted"
+                      type="radio"
+                      onChange={() => void chooseCashbookBusinessAccounted(option)}
+                    />
+                    <span>{option === 'false' ? 'Không' : option === 'true' ? 'Có' : businessAccountedText(option)}</span>
+                  </label>
+                ))}
+              </div>
             </ManagementFilterGroup>
           </form>
         </ManagementFilterSidebar>
