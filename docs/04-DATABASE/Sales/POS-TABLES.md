@@ -449,34 +449,20 @@ Ghi lịch sử đổi trạng thái của báo giá và hóa đơn để truy v
 
 ---
 
-## 11. Production queue placeholder
+## 11. Ranh giới Production queue
 
 ### Mục đích
 
-K02-D dùng hàng đợi máy sản xuất để đưa thông báo/file vào POS và tạo hóa đơn nháp. Chi tiết bảng production queue, event history, claim và restore chưa nằm trong Sales tables; sẽ được thiết kế ở phase Production queue.
+K02-D dùng hàng đợi máy sản xuất để đưa thông báo/file vào POS và thêm dòng vào nháp local. Schema production queue đã có ở migration [202607010001_production_queue.sql](../../../supabase/migrations/202607010001_production_queue.sql), gồm `production_queue_items`, `production_queue_events`, claim và restore transaction.
 
-Sales chỉ lưu kết quả khi nhân viên chốt/lưu báo giá hoặc hóa đơn. Thông báo máy sản xuất không tự tạo `orders`, không tự trừ kho và không tự ghi doanh thu.
+Sales chỉ lưu kết quả khi nhân viên lưu báo giá hoặc checkout hóa đơn. Thông báo máy sản xuất không tự tạo `orders`, không tự trừ kho và không tự ghi doanh thu.
 
-### Realtime channel dự kiến
+### Ranh giới với Sales
 
-| Thành phần | Giá trị |
-|---|---|
-| Channel name | `production_queue` |
-| Type | Broadcast |
-| Visibility | Private |
-
-### Payload tối thiểu dự kiến
-
-```json
-{
-  "production_machine_id": "string",
-  "queue_item_id": "string",
-  "event_type": "queued | claimed | dismissed | restored",
-  "timestamp": "ISO8601"
-}
-```
-
-Payload chính thức xem draft `docs/superpowers/specs/2026-07-01-production-queue-contract-draft.md` trước khi chuyển thành Database/Backend Source of Truth.
+- `production_queue_items` không phải chứng từ bán hàng.
+- `add-to-draft` chỉ trả payload để POS thêm vào nháp local.
+- Khi checkout, dữ liệu đi vào `orders` / `order_items` theo flow POS bình thường.
+- Không FK trực tiếp từ `orders` về queue item trong phạm vi hiện tại; nếu cần trace sâu hơn, mở spec riêng.
 
 ---
 

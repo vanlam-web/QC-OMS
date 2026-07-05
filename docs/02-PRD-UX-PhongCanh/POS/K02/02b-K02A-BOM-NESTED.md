@@ -36,7 +36,7 @@ Khi một mã vật tư trong BOM Cấp 1 có Đơn vị tính là **m²** (Bạ
 
 **Diện tích tiêu hao:** Ô `= X.XX m²` trong BOM tự cập nhật realtime theo `R × D × SL`. Đây là ô chỉ đọc — hiển thị để thu ngân đối chiếu trước khi chốt đơn.
 
-> Công thức trừ kho chi tiết thuộc tầng Business/Backend — xem module Inventory (backlog).
+> Công thức trừ kho chi tiết thuộc tầng Business/Backend; file này chỉ mô tả UI tại POS.
 
 ---
 
@@ -77,7 +77,7 @@ Khi một mã vật tư trong BOM Cấp 1 có Đơn vị tính là **m²** (Bạ
 
 Combo Cấp 2 hiển thị phẳng tại POS — thu ngân thấy 1 dòng. Khi chốt đơn, UI chỉ hiển thị trạng thái xử lý / lỗi trả về từ Backend.
 
-> Chi tiết công thức trừ kho thuộc tầng Business/Backend — xem module Inventory (backlog).
+> Chi tiết công thức trừ kho thuộc tầng Business/Backend; file này chỉ mô tả UI tại POS.
 
 ---
 

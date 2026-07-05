@@ -12,7 +12,7 @@
 |---|---|---|
 | Hồ sơ người dùng | Lấy thông tin nhân viên session | [→ POS-TABLES.md §3](../../../04-DATABASE/Sales/POS-TABLES.md#3-bảng-authusers--người-dùng-supabase-auth) |
 | Danh mục sản phẩm | Gọi danh sách sản phẩm F3 | [→ POS-TABLES.md §4](../../../04-DATABASE/Sales/POS-TABLES.md#4-bảng-publicproducts--sản-phẩm) |
-| Hàng đợi máy sản xuất | Lắng nghe sự kiện máy sản xuất → K02-D | [→ POS-TABLES.md §11](../../../04-DATABASE/Sales/POS-TABLES.md#11-production-queue-placeholder) |
+| Hàng đợi máy sản xuất | Lắng nghe sự kiện máy sản xuất → K02-D | [→ POS-TABLES.md §11](../../../04-DATABASE/Sales/POS-TABLES.md#11-ranh-giới-production-queue) |
 
 ---
 
