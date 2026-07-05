@@ -127,6 +127,10 @@ Sản phẩm này chưa có BOM để trừ vật tư con. Hóa đơn vẫn đư
 
 Nếu BOM làm vật tư thành phần âm tồn, hệ thống cảnh báo nhưng vẫn cho tiếp tục theo nguyên tắc tồn âm MVP đã chốt.
 
+Cảnh báo nên chỉ rõ vật tư nào thiếu để nhân viên biết cần kiểm tra hoặc khui vật tư.
+
+Nếu thiếu vật tư phát sinh khi đang thao tác trong POS, hệ thống có thể hiện nút `Khui vật tư` ngay trên dòng hàng. Nút này chỉ mở luồng Inventory để khui vật tư thiếu; không tự sửa BOM, không tự lưu combo mới và không bắt buộc dùng. Nếu một dòng thiếu nhiều vật tư, nhân viên được chọn một hoặc nhiều vật tư cần khui. Nếu bỏ qua, chứng từ vẫn đi tiếp theo rule cảnh báo/tồn âm.
+
 ---
 
 ## 6. Snapshot chứng từ

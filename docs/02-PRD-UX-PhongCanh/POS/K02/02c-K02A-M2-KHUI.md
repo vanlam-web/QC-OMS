@@ -69,21 +69,28 @@ Khi cắt, hệ thống tính phần còn lại và hiển thị kích thước 
 
 Cảnh báo xuất hiện khi vật tư đang chọn không đủ hoặc tồn vật lý chưa chuẩn hóa.
 
+POS không tự khui vật tư. Khi hệ thống tính toán thấy thiếu vật tư, UI chỉ hiện cảnh báo và nút `Khui vật tư` trên dòng hàng đang thao tác. Nhân viên có thể bấm để xử lý ngay hoặc bỏ qua, đặc biệt khi chỉ đang lập báo giá.
+
 ---
 
 | Tình huống | Xử lý |
 |---|---|
-| Vật tư phụ cần khui mới | Mở `Khui vật tư`; phần dở/cũ về `0`, không tạo cuộn/tấm |
-| Cuộn/tấm đang dùng không đủ | Hiển thị cảnh báo đỏ nhẹ trên dòng hàng hoặc lệnh sản xuất |
+| Vật tư phụ cần khui mới | Hiện nút `Khui vật tư`; nếu bấm thì mở popup khui, phần dở/cũ về `0`, không tạo cuộn/tấm |
+| Cuộn/tấm đang dùng không đủ | Hiển thị cảnh báo đỏ nhẹ trên dòng hàng hoặc lệnh sản xuất; hiện nút `Khui vật tư` nếu có vật tư phù hợp để khui |
 | Có cuộn/tấm khác phù hợp | Đề xuất phương án tốt nhất, nhân viên được đổi |
 | Không có object vật lý phù hợp nhưng còn tồn tạm | Cho tiếp tục theo rule tồn âm/tồn tạm, đồng thời gợi ý mở `Khui vật tư` |
 | Cần ghi nhận cuộn/tấm mới | Mở luồng khui tại [K01/01d-K01-KHUI.md](../K01/01d-K01-KHUI.md) |
+| Một dòng thiếu nhiều vật tư | Nút `Khui vật tư` mở danh sách vật tư thiếu; nhân viên chọn một hoặc nhiều vật tư để khui |
 
 ---
 
 ## 4. Vị trí nút Khui vật tư
 
-**Vị trí:** Thanh công cụ đỉnh (Top Bar) — cố định, hiển thị cho mọi người dùng xưởng.
+**Vị trí thủ công:** Thanh công cụ đỉnh (Top Bar) — cố định, hiển thị cho mọi người dùng xưởng.
+
+**Vị trí gợi ý nhanh:** Ngay trên dòng hàng POS đang thiếu vật tư, gần cảnh báo tồn. Nút chỉ xuất hiện khi hệ thống đã tính ra vật tư thiếu và có thể gợi ý khui.
+
+Sau khi nhân viên xác nhận khui, POS quay lại đúng dòng hàng trước đó, cập nhật tồn/cảnh báo và giữ nguyên dữ liệu đang nhập.
 
 Wireframe chuẩn nằm tại [K01/01-K01-TOPBAR.md](../K01/01-K01-TOPBAR.md). Popup khui chuẩn nằm tại [K01/01d-K01-KHUI.md](../K01/01d-K01-KHUI.md).
 
