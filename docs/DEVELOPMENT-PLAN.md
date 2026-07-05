@@ -2,7 +2,7 @@
 
 > **Vai trò:** Roadmap dài hạn đã chốt; thực thi hiện tại đi theo vertical slices 1A/1B/1C/2A/2B/2C/2D.
 > **Ngày lập:** 2026-06-28
-> **Cập nhật:** 2026-07-01 theo MVP scope và trạng thái main hiện tại
+> **Cập nhật:** 2026-07-05 theo checklist sống hiện tại
 > **Mục tiêu:** Sau mỗi giai đoạn phải có một luồng người dùng hoàn chỉnh, chạy bằng Frontend và Backend thật trên môi trường staging.
 
 ---
@@ -94,19 +94,23 @@ Nguồn theo dõi chi tiết: [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
 | Phase 2B | Đã merge | Production queue/K02-D foundation |
 | Phase 2C | Đã merge | POS line discount handling UI/backend persistence |
 | Phase 2D | Đã merge | Sales Documents readonly list/detail |
+| Phase 3A | Đã merge | Báo giá `BG...` và mở lại vào POS draft |
+| Quote print Phase 3B | Đã merge | In/xem báo giá đơn giản |
+| PriceBook formula MVP | Đã merge | Structured formula, preview/apply, rounding |
+| Purchase P1/P2/P3/P5 | Đã merge | NCC, phiếu nhập hàng thường, post receipt, thanh toán NCC |
 
 ### 3.3. Mapping giữa roadmap logic và lát cắt đã làm
 
 | Roadmap logic | Nội dung roadmap gốc | Trạng thái/lát cắt thực tế |
 |---|---|---|
 | Phase 0 | Đăng nhập, phân quyền, POS Shell | Đã merge |
-| Phase 1 | Hàng hóa, khách hàng, bảng giá | Đã có foundation qua 1A/1B; PriceBook formula nâng cao chưa làm |
+| Phase 1 | Hàng hóa, khách hàng, bảng giá | Đã có foundation 1A/1B và PriceBook formula MVP |
 | Phase 2 | Giỏ hàng và hóa đơn nháp | Đã có POS direct checkout UI; nháp production queue ở 2B |
-| Phase 3 | Báo giá và Bill Preview | Báo giá/bill nâng cao chưa hoàn tất; Sales Documents readonly đã làm sớm ở 2D |
+| Phase 3 | Báo giá và Bill Preview | Báo giá, mở lại báo giá, Sales Documents readonly và quote print đơn giản đã merge |
 | Phase 4 | Thanh toán, kho cơ bản và công nợ | Checkout transaction, inventory/finance foundation đã làm sớm ở 1C/2A |
-| Phase 5 | Combo/BOM và quản lý vật tư | Chưa làm implementation sâu; chỉ có spec/ranh giới |
+| Phase 5 | Combo/BOM và quản lý vật tư | Purchase hàng thường đã merge; cuộn/tấm vật lý và BOM sâu còn phase riêng |
 | Phase 6 | Hàng đợi máy sản xuất realtime | Production queue foundation đã làm sớm ở 2B; ingestion/realtime đầy đủ còn phase sau |
-| Phase 7 | Bill nâng cao và hỗ trợ gửi khách | Chưa làm |
+| Phase 7 | Bill nâng cao và hỗ trợ gửi khách | Quote print đơn giản đã có; gửi tự động/nhiều mẫu còn sau |
 | Phase 8 | Production và vận hành | Đang cập nhật dần theo Supabase Cloud/dev-staging; production hardening còn sau |
 
 ### 3.4. Roadmap logic dài hạn
@@ -399,13 +403,13 @@ Các nội dung sau phải được giải quyết trước hoặc trong giai đ
 | Nội dung | Trạng thái / thời điểm cần chốt |
 |---|---|
 | Cách tổ chức Backend | ✅ Chốt: Supabase Edge Functions + REST `/api/v1`; FE chỉ dùng SDK trực tiếp cho Auth/Realtime |
-| Schema bảng giá dạng JSONB hay bảng chi tiết chuẩn hóa | Trước Giai đoạn 1 |
-| Cơ chế lưu nháp | ✅ Chốt hiện tại: LocalStorage theo máy tại `POS/ARCHITECTURE.md`; rà soát lại trước Giai đoạn 2 |
-| ERD Sales, Inventory và Finance | Trước Giai đoạn 4 |
-| Chính sách tồn âm và cảnh báo thiếu kho | Trước Giai đoạn 4–5 |
-| Hợp đồng dữ liệu thực tế với máy in/CNC | Trước Giai đoạn 6 |
-| Khả năng mở Zalo/Facebook theo môi trường máy POS | Trước Giai đoạn 7 |
-| RPO, RTO và chính sách lưu backup | Trước Giai đoạn 8 |
+| Schema bảng giá | ✅ Đã có PriceBook formula MVP; mở rộng nhóm hàng/filter cần slice riêng |
+| Cơ chế lưu nháp | ✅ Chốt hiện tại: LocalStorage theo máy tại `POS/ARCHITECTURE.md`; server draft chỉ mở khi có SoT mới |
+| ERD Sales, Inventory và Finance | ✅ Đã có foundation; mỗi slice mới phải rà lại schema liên quan |
+| Chính sách tồn âm và cảnh báo thiếu kho | ✅ MVP cho bán thiếu/tồn âm có cảnh báo nhẹ; quy chuẩn cuộn/tấm làm dần |
+| Hợp đồng dữ liệu thực tế với máy in/CNC | Production queue foundation đã có; ingestion/match tự động còn cần chốt |
+| Khả năng mở Zalo/Facebook theo môi trường máy POS | Chưa mở trong MVP; chỉ xem lại khi Owner chốt gửi khách tự động |
+| RPO, RTO và chính sách lưu backup | Cần chốt trước production thật |
 
 ---
 
