@@ -3,6 +3,7 @@ export type CashbookDirection = 'in' | 'out'
 export type CashbookStatus = 'posted' | 'cancelled'
 export type CashbookSourceType = 'payment_receipt_method' | 'cashbook_voucher'
 export type VoucherSourceType = 'payment_receipt' | 'manual_voucher'
+export type CashbookBusinessAccountedFilter = 'all' | 'true' | 'false'
 
 export interface FinanceAccount {
   id: string
@@ -100,6 +101,23 @@ export interface CashbookListResponse {
   page: number
   page_size: number
   total: number
+}
+
+export interface PaymentReceiptAllocation {
+  order_id: string
+  order_code: string
+  order_total_amount: number
+  collected_before: number
+  allocated_amount: number
+  remaining_after: number
+}
+
+export interface CashbookEntryDetail extends CashbookEntry {
+  created_by: { id: string; name: string }
+  counterparty: { type: 'customer' | 'supplier' | 'employee' | 'other' | 'none'; name: string | null; phone: string | null }
+  payment_method: 'cash' | 'bank_transfer' | 'manual'
+  source: { type: 'payment_receipt' | 'manual_voucher'; id: string; code: string; order_code: string | null }
+  allocations: PaymentReceiptAllocation[]
 }
 
 export interface CashbookVoucher {

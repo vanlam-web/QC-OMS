@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { RotateCcw, Search, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailRow,
   ManagementListSurface,
   ManagementPage,
   ManagementRowActionButton,
@@ -12,8 +13,11 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import type {
+  CashbookBusinessAccountedFilter,
   CashbookDirection,
   CashbookEntry,
+  CashbookEntryDetail,
+  CashbookStatus,
   CashbookVoucher,
   CustomerDebtDetail,
   CustomerDebtSummary,
@@ -36,6 +40,18 @@ function directionText(direction: CashbookDirection | 'all') {
 
 function statusText(status: 'posted' | 'cancelled') {
   return status === 'posted' ? 'Đã ghi' : 'Đã hủy'
+}
+
+function businessAccountedText(value: CashbookBusinessAccountedFilter) {
+  if (value === 'true') return 'Có hạch toán'
+  if (value === 'false') return 'Không hạch toán'
+  return 'Tất cả'
+}
+
+function paymentMethodText(value: CashbookEntryDetail['payment_method']) {
+  if (value === 'cash') return 'Tiền mặt'
+  if (value === 'bank_transfer') return 'Ngân hàng'
+  return 'Thủ công'
 }
 
 function dateText(value: string) {
@@ -61,9 +77,17 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookPageSize, setCashbookPageSize] = useState(pageSizeDefault)
   const [cashbookSearch, setCashbookSearch] = useState('')
   const [lastCashbookSearch, setLastCashbookSearch] = useState('')
+  const [cashbookAccountId, setCashbookAccountId] = useState('all')
+  const [lastCashbookAccountId, setLastCashbookAccountId] = useState('all')
   const [cashbookDirection, setCashbookDirection] = useState<CashbookDirection | 'all'>('all')
   const [lastCashbookDirection, setLastCashbookDirection] = useState<CashbookDirection | 'all'>('all')
+  const [cashbookStatus, setCashbookStatus] = useState<CashbookStatus | 'all'>('all')
+  const [lastCashbookStatus, setLastCashbookStatus] = useState<CashbookStatus | 'all'>('all')
+  const [cashbookBusinessAccounted, setCashbookBusinessAccounted] = useState<CashbookBusinessAccountedFilter>('all')
+  const [lastCashbookBusinessAccounted, setLastCashbookBusinessAccounted] = useState<CashbookBusinessAccountedFilter>('all')
   const [cashbookSummary, setCashbookSummary] = useState({ opening_balance: 0, total_in: 0, total_out: 0, ending_balance: 0 })
+  const [selectedCashbookEntry, setSelectedCashbookEntry] = useState<CashbookEntry | null>(null)
+  const [cashbookDetail, setCashbookDetail] = useState<CashbookEntryDetail | null>(null)
   const [vouchers, setVouchers] = useState<CashbookVoucher[]>([])
   const [collectAmount, setCollectAmount] = useState('')
   const [cashAmount, setCashAmount] = useState('')
@@ -100,16 +124,30 @@ export function FinancePage({ service }: { service: FinanceService }) {
     }
   }
 
-  async function loadCashbook(input: { search?: string; direction?: CashbookDirection | 'all'; page?: number; page_size?: number } = {}) {
+  async function loadCashbook(input: {
+    search?: string
+    finance_account_id?: string
+    direction?: CashbookDirection | 'all'
+    status?: CashbookStatus | 'all'
+    business_accounted_filter?: CashbookBusinessAccountedFilter
+    page?: number
+    page_size?: number
+  } = {}) {
     const nextSearch = input.search ?? lastCashbookSearch
+    const nextAccountId = input.finance_account_id ?? lastCashbookAccountId
     const nextDirection = input.direction ?? lastCashbookDirection
+    const nextStatus = input.status ?? lastCashbookStatus
+    const nextBusinessAccounted = input.business_accounted_filter ?? lastCashbookBusinessAccounted
     const nextPage = input.page ?? cashbookPage
     const nextPageSize = input.page_size ?? cashbookPageSize
     setError(null)
     try {
       const result = await service.listCashbookEntries({
         search: nextSearch.trim() || undefined,
+        finance_account_id: nextAccountId === 'all' ? undefined : nextAccountId,
         direction: nextDirection,
+        status: nextStatus,
+        is_business_accounted: nextBusinessAccounted === 'all' ? undefined : nextBusinessAccounted === 'true',
         page: nextPage,
         page_size: nextPageSize,
       })
@@ -119,7 +157,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
       setCashbookPage(result.page)
       setCashbookPageSize(result.page_size)
       setLastCashbookSearch(nextSearch.trim())
+      setLastCashbookAccountId(nextAccountId)
       setLastCashbookDirection(nextDirection)
+      setLastCashbookStatus(nextStatus)
+      setLastCashbookBusinessAccounted(nextBusinessAccounted)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được sổ quỹ.'))
     }
@@ -185,7 +226,25 @@ export function FinancePage({ service }: { service: FinanceService }) {
   async function filterCashbook(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setCashbookPage(1)
-    await loadCashbook({ search: cashbookSearch, direction: cashbookDirection, page: 1 })
+    await loadCashbook({
+      search: cashbookSearch,
+      finance_account_id: cashbookAccountId,
+      direction: cashbookDirection,
+      status: cashbookStatus,
+      business_accounted_filter: cashbookBusinessAccounted,
+      page: 1,
+    })
+  }
+
+  async function openCashbookEntry(entry: CashbookEntry) {
+    setSelectedCashbookEntry(entry)
+    setCashbookDetail(null)
+    setError(null)
+    try {
+      setCashbookDetail(await service.getCashbookEntry(entry.id))
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được chi tiết sổ quỹ.'))
+    }
   }
 
   async function openDebt(debt: CustomerDebtSummary) {
@@ -264,6 +323,47 @@ export function FinancePage({ service }: { service: FinanceService }) {
           <MetricCard label="Công nợ khách" value={<MoneyText value={totalDebtAmount} />} hint="Từ danh sách đang xem" tone={totalDebtAmount > 0 ? 'warning' : 'neutral'} />
           <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc sổ quỹ" tone="info" />
         </MetricGrid>
+      }
+      filter={
+        <form aria-label="Bộ lọc sổ quỹ" className="finance-cashbook-filter" onSubmit={filterCashbook}>
+          <label>
+            Quỹ tiền
+            <select value={cashbookAccountId} onChange={(event) => setCashbookAccountId(event.target.value)}>
+              <option value="all">Tổng quỹ</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Loại chứng từ
+            <select value={cashbookDirection} onChange={(event) => setCashbookDirection(event.target.value as CashbookDirection | 'all')}>
+              <option value="all">{directionText('all')}</option>
+              <option value="in">{directionText('in')}</option>
+              <option value="out">{directionText('out')}</option>
+            </select>
+          </label>
+          <label>
+            Trạng thái sổ quỹ
+            <select value={cashbookStatus} onChange={(event) => setCashbookStatus(event.target.value as CashbookStatus | 'all')}>
+              <option value="all">Tất cả</option>
+              <option value="posted">{statusText('posted')}</option>
+              <option value="cancelled">{statusText('cancelled')}</option>
+            </select>
+          </label>
+          <label>
+            Hạch toán KQKD
+            <select
+              value={cashbookBusinessAccounted}
+              onChange={(event) => setCashbookBusinessAccounted(event.target.value as CashbookBusinessAccountedFilter)}
+            >
+              <option value="all">{businessAccountedText('all')}</option>
+              <option value="true">{businessAccountedText('true')}</option>
+              <option value="false">{businessAccountedText('false')}</option>
+            </select>
+          </label>
+          <button className="button button-primary" type="submit">Lọc sổ</button>
+        </form>
       }
     >
       {error ? <p role="alert">{error}</p> : null}
@@ -452,14 +552,24 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <option value="in">{directionText('in')}</option>
               <option value="out">{directionText('out')}</option>
             </select>
-            <button className="button button-primary" type="submit">Lọc sổ</button>
+            <button className="button button-primary" type="submit">Tìm sổ</button>
             <button
               className="button button-secondary"
               type="button"
               onClick={() => {
                 setCashbookSearch('')
+                setCashbookAccountId('all')
                 setCashbookDirection('all')
-                void loadCashbook({ search: '', direction: 'all', page: 1 })
+                setCashbookStatus('all')
+                setCashbookBusinessAccounted('all')
+                void loadCashbook({
+                  search: '',
+                  finance_account_id: 'all',
+                  direction: 'all',
+                  status: 'all',
+                  business_accounted_filter: 'all',
+                  page: 1,
+                })
               }}
             >
               <RotateCcw aria-hidden="true" size={16} />
@@ -492,15 +602,79 @@ export function FinancePage({ service }: { service: FinanceService }) {
                 </thead>
                 <tbody>
                   {cashbookEntries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td><strong>{entry.code}</strong></td>
-                      <td>{dateText(entry.created_at)}</td>
-                      <td>{entry.finance_account.code} · {entry.finance_account.name}</td>
-                      <td>{directionText(entry.direction)}</td>
-                      <td><MoneyText value={Math.abs(entry.amount_delta)} /></td>
-                      <td>{entry.source_type === 'payment_receipt_method' ? 'Phiếu thu' : 'Phiếu quỹ'}</td>
-                      <td><StatusChip tone={entry.status === 'posted' ? 'success' : 'neutral'}>{statusText(entry.status)}</StatusChip></td>
-                    </tr>
+                    <Fragment key={entry.id}>
+                      <tr>
+                        <td>
+                          <button
+                            aria-label={`Mở chi tiết ${entry.code}`}
+                            className="management-link-button"
+                            type="button"
+                            onClick={() => void openCashbookEntry(entry)}
+                          >
+                            <strong>{entry.code}</strong>
+                          </button>
+                        </td>
+                        <td>{dateText(entry.created_at)}</td>
+                        <td>{entry.finance_account.code} · {entry.finance_account.name}</td>
+                        <td>{directionText(entry.direction)}</td>
+                        <td><MoneyText value={entry.amount_delta} /></td>
+                        <td>{entry.source_type === 'payment_receipt_method' ? 'Phiếu thu' : 'Phiếu quỹ'}</td>
+                        <td><StatusChip tone={entry.status === 'posted' ? 'success' : 'neutral'}>{statusText(entry.status)}</StatusChip></td>
+                      </tr>
+                      {selectedCashbookEntry?.id === entry.id ? (
+                        <ManagementDetailRow colSpan={7} label={`Chi tiết sổ quỹ ${entry.code}`}>
+                          {cashbookDetail === null ? <p>Đang tải chi tiết...</p> : (
+                            <div className="finance-cashbook-detail">
+                              <header>
+                                <div>
+                                  <h3>{cashbookDetail.code}</h3>
+                                  <p>{statusText(cashbookDetail.status)} · {cashbookDetail.is_business_accounted ? 'Có hạch toán' : 'Không hạch toán'}</p>
+                                </div>
+                                <button className="button button-secondary" type="button" onClick={() => setSelectedCashbookEntry(null)}>Đóng</button>
+                              </header>
+                              <dl>
+                                <div><dt>Người tạo</dt><dd>{cashbookDetail.created_by.name}</dd></div>
+                                <div><dt>Thời gian</dt><dd>{dateText(cashbookDetail.created_at)}</dd></div>
+                                <div><dt>Phương thức thanh toán</dt><dd>{paymentMethodText(cashbookDetail.payment_method)}</dd></div>
+                                <div><dt>Người nộp/nhận</dt><dd>{cashbookDetail.counterparty.name ?? '-'}</dd></div>
+                                <div><dt>Số điện thoại</dt><dd>{cashbookDetail.counterparty.phone ?? '-'}</dd></div>
+                                <div><dt>Chứng từ gốc</dt><dd>{cashbookDetail.source.order_code ?? cashbookDetail.source.code}</dd></div>
+                                <div><dt>Ghi chú</dt><dd>{cashbookDetail.note ?? '-'}</dd></div>
+                              </dl>
+                              {cashbookDetail.allocations.length > 0 ? (
+                                <section aria-label="Phân bổ hóa đơn">
+                                  <h4>Phân bổ hóa đơn</h4>
+                                  <ManagementTableViewport>
+                                    <table aria-label="Phân bổ hóa đơn" className="management-table">
+                                      <thead>
+                                        <tr>
+                                          <th>Mã hóa đơn</th>
+                                          <th>Giá trị phiếu</th>
+                                          <th>Đã thu trước</th>
+                                          <th>Giá trị thu</th>
+                                          <th>Còn lại</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {cashbookDetail.allocations.map((allocation) => (
+                                          <tr key={allocation.order_id}>
+                                            <td>{allocation.order_code}</td>
+                                            <td><MoneyText value={allocation.order_total_amount} /></td>
+                                            <td><MoneyText value={allocation.collected_before} /></td>
+                                            <td><MoneyText value={allocation.allocated_amount} /></td>
+                                            <td><MoneyText value={allocation.remaining_after} /></td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </ManagementTableViewport>
+                                </section>
+                              ) : null}
+                            </div>
+                          )}
+                        </ManagementDetailRow>
+                      ) : null}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

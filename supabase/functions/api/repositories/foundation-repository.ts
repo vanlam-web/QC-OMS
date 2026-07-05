@@ -1513,6 +1513,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.financeAccountId !== undefined) query = query.eq("finance_account_id", input.financeAccountId);
       if (input.direction !== undefined) query = query.eq("direction", input.direction);
       if (input.sourceType !== undefined) query = query.eq("source_type", input.sourceType);
+      if (input.status !== undefined) query = query.eq("status", input.status);
       if (input.isBusinessAccounted !== undefined) {
         query = query.eq("is_business_accounted", input.isBusinessAccounted);
       }

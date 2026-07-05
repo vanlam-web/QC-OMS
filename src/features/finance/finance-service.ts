@@ -2,6 +2,8 @@ import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   CashbookDirection,
+  CashbookEntryDetail,
+  CashbookStatus,
   CashbookListResponse,
   CashbookVoucherListResponse,
   CustomerDebtDetail,
@@ -44,6 +46,10 @@ export function createFinanceService(api: FinanceApiRequester) {
       search?: string
       finance_account_id?: string
       direction?: CashbookDirection | 'all'
+      status?: CashbookStatus | 'all'
+      is_business_accounted?: boolean
+      from?: string
+      to?: string
       page?: number
       page_size?: number
     } = {}) => {
@@ -51,11 +57,16 @@ export function createFinanceService(api: FinanceApiRequester) {
       if (input.search) params.set('search', input.search)
       if (input.finance_account_id) params.set('finance_account_id', input.finance_account_id)
       if (input.direction && input.direction !== 'all') params.set('direction', input.direction)
+      if (input.status && input.status !== 'all') params.set('status', input.status)
+      if (input.is_business_accounted !== undefined) params.set('is_business_accounted', String(input.is_business_accounted))
+      if (input.from) params.set('from', input.from)
+      if (input.to) params.set('to', input.to)
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<CashbookListResponse>(`/api/v1/finance/cashbook${query ? `?${query}` : ''}`)
     },
+    getCashbookEntry: (entryId: string) => api.request<CashbookEntryDetail>(`/api/v1/finance/cashbook/${entryId}`),
     listCashbookVouchers: () => api.request<CashbookVoucherListResponse>('/api/v1/finance/cashbook/vouchers'),
   }
 }
