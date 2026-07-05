@@ -116,6 +116,8 @@ Nếu nhân viên chọn **Không lưu — Chỉ trừ kho**, BOM vừa nhập v
 
 Giá bán combo độc lập với tổng giá vật tư thành phần. Tổng giá vật tư nếu có chỉ dùng để tham khảo chi phí.
 
+Nếu hệ thống phát hiện thiếu vật tư trên dòng hàng hoặc thành phần BOM, POS chỉ cảnh báo và có thể hiện nút `Khui vật tư` trên dòng đó. Khui là tùy chọn; không bấm khui thì báo giá vẫn lưu được và hóa đơn vẫn theo rule tồn âm/cảnh báo đã chốt.
+
 ### BR-CHK-05: Lưu đơn hàng
 
 | Trạng thái | Mô tả |
