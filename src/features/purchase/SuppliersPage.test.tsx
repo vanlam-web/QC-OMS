@@ -89,7 +89,7 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(sidebar).toHaveClass('management-filter-sidebar')
   expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
   expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
-  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách nhà cung cấp' })).toHaveClass('management-list-surface')
   expect(screen.getByRole('search', { name: 'Lọc nhà cung cấp' }).closest('.management-page-header')).not.toBeNull()
   expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
@@ -144,7 +144,7 @@ it('filters suppliers by search and status', async () => {
   expect(screen.queryByText('Tìm: Nguyen')).not.toBeInTheDocument()
 })
 
-it('uses supplier sidebar filters and reset action', async () => {
+it('uses supplier sidebar filters without a reset action', async () => {
   const service = makeService()
 
   render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
@@ -163,15 +163,7 @@ it('uses supplier sidebar filters and reset action', async () => {
     status: 'inactive',
   })
   expect(screen.queryByText('Tìm: NCC000031')).not.toBeInTheDocument()
-
-  await userEvent.click(screen.getByRole('button', { name: 'Đặt lại bộ lọc' }))
-
-  expect(service.listSuppliers).toHaveBeenLastCalledWith({
-    page: 1,
-    page_size: 15,
-    search: undefined,
-    status: 'active',
-  })
+  expect(screen.queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
 })
 
 it('uses 15-row pagination range and navigates pages through the list footer', async () => {

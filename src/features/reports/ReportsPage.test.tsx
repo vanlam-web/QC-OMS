@@ -108,17 +108,16 @@ describe('ReportsPage', () => {
     expect(service.listCashbook).toHaveBeenLastCalledWith({ from: '2026-07-01', to: '2026-07-05', page: 1, page_size: 100 })
   })
 
-  it('resets report filters from the shared sidebar action bar', async () => {
+  it('keeps report apply action without a reset shortcut in the shared sidebar action bar', async () => {
     const service = makeService()
     render(<ReportsPage service={service} />)
 
     await screen.findAllByText('HD0001')
     await userEvent.clear(screen.getByLabelText('Từ ngày'))
     await userEvent.type(screen.getByLabelText('Từ ngày'), '2026-07-01')
-    await userEvent.click(screen.getByRole('button', { name: 'Hôm nay' }))
 
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc báo cáo' })
-    expect(within(sidebar).getByRole('button', { name: 'Hôm nay' }).closest('.management-filter-actions')).not.toBeNull()
-    expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, page_size: 100 }))
+    expect(within(sidebar).getByRole('button', { name: 'Xem báo cáo' }).closest('.management-filter-actions')).not.toBeNull()
+    expect(within(sidebar).queryByRole('button', { name: 'Hôm nay' })).not.toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import {
@@ -147,13 +147,6 @@ export function PriceBookPage({
     await load({ search: search.trim(), status, page: 1 })
   }
 
-  async function resetPriceBookFilters() {
-    setSearch('')
-    setStatus('active')
-    setPage(1)
-    await load({ search: '', status: 'active', page: 1 })
-  }
-
   async function goToPage(nextPage: number) {
     await load({ page: nextPage })
   }
@@ -294,13 +287,7 @@ export function PriceBookPage({
           ariaLabel="Bộ lọc bảng giá"
           title="Bộ lọc"
           actions={
-            <>
-              <button className="button button-primary" form="price-book-filter-form" type="submit">Áp dụng bộ lọc</button>
-              <button className="button button-secondary" type="button" onClick={() => void resetPriceBookFilters()}>
-                <RotateCcw aria-hidden="true" size={15} />
-                Đặt lại bộ lọc
-              </button>
-            </>
+            <button className="button button-primary" form="price-book-filter-form" type="submit">Áp dụng bộ lọc</button>
           }
         >
           <button

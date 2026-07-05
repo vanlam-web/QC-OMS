@@ -69,7 +69,7 @@ describe('InventoryPage', () => {
     expect(screen.getByText('DECAL-PP')).toBeInTheDocument()
     expect(screen.getAllByText('Âm kho').length).toBeGreaterThan(0)
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
-    expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+    expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText('Tìm hàng hóa'), 'mica')

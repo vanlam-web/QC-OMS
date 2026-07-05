@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Search, WalletCards, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plus, Save, Search, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
@@ -154,13 +154,6 @@ export function SuppliersPage({
     event.preventDefault()
     setPage(1)
     await loadSuppliers({ search: search.trim(), status, page: 1 })
-  }
-
-  async function resetSupplierFilters() {
-    setSearch('')
-    setStatus('active')
-    setPage(1)
-    await loadSuppliers({ search: '', status: 'active', page: 1 })
   }
 
   async function goToPage(nextPage: number) {
@@ -516,12 +509,6 @@ export function SuppliersPage({
           activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc nhà cung cấp"
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetSupplierFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc nhà cung cấp"

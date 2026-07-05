@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { ChevronRight, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -129,14 +129,6 @@ export function InventoryPage({ service }: { service: InventoryService }) {
     await loadProducts({ search, status, shape, page: 1 })
   }
 
-  async function resetFilters() {
-    setSearch('')
-    setStatus('active')
-    setShape('all')
-    setPage(1)
-    await loadProducts({ search: '', status: 'active', shape: 'all', page: 1 })
-  }
-
   async function openProduct(product: InventoryProduct) {
     setError(null)
     try {
@@ -199,13 +191,7 @@ export function InventoryPage({ service }: { service: InventoryService }) {
         <ManagementFilterSidebar
           ariaLabel="Bộ lọc hàng hóa"
           actions={
-            <>
-              <button className="button button-primary" type="button" onClick={() => void applyFilters()}>Áp dụng bộ lọc</button>
-              <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
-                <RotateCcw aria-hidden="true" size={16} />
-                Đặt lại bộ lọc
-              </button>
-            </>
+            <button className="button button-primary" type="button" onClick={() => void applyFilters()}>Áp dụng bộ lọc</button>
           }
         >
           <ManagementFilterGroup title="Trạng thái hàng hóa">

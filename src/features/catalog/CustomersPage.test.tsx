@@ -179,7 +179,7 @@ it('lists customers in the shared management layout', async () => {
   expect(sidebar).toHaveClass('management-filter-sidebar')
   expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
   expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
-  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
   const summary = screen.getByRole('region', { name: 'Tổng quan khách hàng' })
   expect(summary.closest('.management-filter-column')).not.toBeNull()
   expect(within(summary).queryByText('Tổng KH')).not.toBeInTheDocument()

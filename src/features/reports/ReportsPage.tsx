@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, RotateCcw } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -109,13 +109,6 @@ export function ReportsPage({ service }: { service: ReportService }) {
     await loadReports({ from, to })
   }
 
-  function resetToday() {
-    const range = currentDayRange()
-    setFrom(range.from)
-    setTo(range.to)
-    void loadReports(range)
-  }
-
   return (
     <ManagementPage
       title="Báo cáo"
@@ -131,13 +124,7 @@ export function ReportsPage({ service }: { service: ReportService }) {
         <ManagementFilterSidebar
           ariaLabel="Bộ lọc báo cáo"
           actions={
-            <>
-              <button className="button button-primary" form="reports-filter-form" type="submit">Xem báo cáo</button>
-              <button className="button button-secondary" type="button" onClick={resetToday}>
-                <RotateCcw aria-hidden="true" size={16} />
-                Hôm nay
-              </button>
-            </>
+            <button className="button button-primary" form="reports-filter-form" type="submit">Xem báo cáo</button>
           }
         >
           <form id="reports-filter-form" aria-label="Lọc báo cáo" className="management-filter-sidebar-form" onSubmit={filterReports}>

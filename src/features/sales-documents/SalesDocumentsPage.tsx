@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Search } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Search } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
@@ -300,39 +300,6 @@ export function SalesDocumentsPage({
     await loadDocuments({ search: trimmed, page: 1 })
   }
 
-  async function resetFilters() {
-    const monthRange = currentMonthRange()
-    setSearch('')
-    setLastSearch('')
-    setTypeFilter('all')
-    setStatusFilter('all')
-    setPaymentStatusFilter('all')
-    setPaymentMethodFilter('all')
-    setSellerFilter('all')
-    setPriceListFilter('all')
-    setTimeFilter('month')
-    setDateFrom(monthRange.from)
-    setDateTo(monthRange.to)
-    setQuickTimeOpen(false)
-    setSelected(null)
-    setLoadingDocumentId(null)
-    setDetailError(null)
-    setDetailErrorDocumentId(null)
-    await loadDocuments({
-      search: '',
-      type: 'all',
-      status: 'all',
-      paymentStatus: 'all',
-      paymentMethod: 'all',
-      seller: 'all',
-      priceList: 'all',
-      time: 'month',
-      from: monthRange.from,
-      to: monthRange.to,
-      page: 1,
-    })
-  }
-
   async function applyTypeFilter(nextType: typeof typeFilter) {
     setTypeFilter(nextType)
     setSelected(null)
@@ -499,12 +466,6 @@ export function SalesDocumentsPage({
           ariaLabel="Bộ lọc chứng từ bán hàng"
           popoverOpen={quickTimeOpen}
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc chứng từ bán hàng"

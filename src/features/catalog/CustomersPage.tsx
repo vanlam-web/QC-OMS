@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { BarChart3, ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { BarChart3, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { MetricCard, MetricGrid, MoneyText } from '../../components/ui-shell/primitives'
 import { formatApiError } from '../../lib/api/error-message'
 import {
@@ -118,12 +118,6 @@ export function CustomersPage({
     await load({ search: trimmed, page: 1 })
   }
 
-  async function resetCustomerFilters() {
-    setSearch('')
-    setPage(1)
-    await load({ search: '', page: 1 })
-  }
-
   async function goToPage(nextPage: number) {
     await load({ page: nextPage })
   }
@@ -240,12 +234,6 @@ export function CustomersPage({
           activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc khách hàng"
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetCustomerFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc khách hàng"

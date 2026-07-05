@@ -123,7 +123,7 @@ it('lists products and creates a product', async () => {
   expect(sidebar).toHaveClass('management-filter-sidebar')
   expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
   expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
-  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Danh sách hàng hóa' })).toHaveClass('management-list-surface')
   expect(screen.queryByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
