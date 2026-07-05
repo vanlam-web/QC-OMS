@@ -68,10 +68,13 @@ describe('InventoryPage', () => {
     expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
     expect(screen.getByText('DECAL-PP')).toBeInTheDocument()
     expect(screen.getAllByText('Âm kho').length).toBeGreaterThan(0)
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+    expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+    expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText('Tìm hàng hóa'), 'mica')
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại hàng' }), 'normal')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
+    await userEvent.click(within(sidebar).getByRole('button', { name: 'Áp dụng bộ lọc' }))
 
     expect(service.listInventoryProducts).toHaveBeenLastCalledWith({
       search: 'mica',

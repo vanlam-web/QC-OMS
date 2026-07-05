@@ -3,7 +3,8 @@ import { CalendarDays, RotateCcw } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
-  ManagementCompactToolbar,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
   ManagementListSurface,
   ManagementPage,
   ManagementTableViewport,
@@ -118,23 +119,6 @@ export function ReportsPage({ service }: { service: ReportService }) {
   return (
     <ManagementPage
       title="Báo cáo"
-      actions={
-        <ManagementCompactToolbar ariaLabel="Lọc báo cáo" onSubmit={filterReports}>
-          <label className="management-compact-search">
-            <span className="management-compact-search-leading"><CalendarDays aria-hidden="true" size={16} /></span>
-            <input aria-label="Từ ngày" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
-          </label>
-          <label className="management-compact-search">
-            <span className="management-compact-search-leading"><CalendarDays aria-hidden="true" size={16} /></span>
-            <input aria-label="Đến ngày" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
-          </label>
-          <button className="button button-primary" type="submit">Xem báo cáo</button>
-          <button className="button button-secondary" type="button" onClick={resetToday}>
-            <RotateCcw aria-hidden="true" size={16} />
-            Hôm nay
-          </button>
-        </ManagementCompactToolbar>
-      }
       kpis={
         <MetricGrid ariaLabel="Tổng quan báo cáo">
           <MetricCard label="Doanh thu" value={<MoneyText value={salesTotal} />} hint={`${loadedRange.from} đến ${loadedRange.to}`} tone="success" />
@@ -142,6 +126,35 @@ export function ReportsPage({ service }: { service: ReportService }) {
           <MetricCard label="Còn nợ" value={<MoneyText value={debtTotal} />} hint="Tổng công nợ hiện tại" tone={debtTotal > 0 ? 'warning' : 'neutral'} />
           <MetricCard label="Âm kho" value={negativeStockCount} hint="Mặt hàng cần kiểm tra" tone={negativeStockCount > 0 ? 'danger' : 'success'} />
         </MetricGrid>
+      }
+      filter={
+        <ManagementFilterSidebar
+          ariaLabel="Bộ lọc báo cáo"
+          actions={
+            <>
+              <button className="button button-primary" form="reports-filter-form" type="submit">Xem báo cáo</button>
+              <button className="button button-secondary" type="button" onClick={resetToday}>
+                <RotateCcw aria-hidden="true" size={16} />
+                Hôm nay
+              </button>
+            </>
+          }
+        >
+          <form id="reports-filter-form" aria-label="Lọc báo cáo" className="management-filter-sidebar-form" onSubmit={filterReports}>
+            <ManagementFilterGroup title="Thời gian">
+              <label>
+                <span className="management-compact-search-leading"><CalendarDays aria-hidden="true" size={16} /></span>
+                Từ ngày
+                <input aria-label="Từ ngày" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+              </label>
+              <label>
+                <span className="management-compact-search-leading"><CalendarDays aria-hidden="true" size={16} /></span>
+                Đến ngày
+                <input aria-label="Đến ngày" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+              </label>
+            </ManagementFilterGroup>
+          </form>
+        </ManagementFilterSidebar>
       }
     >
       {error ? <p role="alert">{error}</p> : null}

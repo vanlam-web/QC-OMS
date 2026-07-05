@@ -72,6 +72,12 @@ it('keeps management filter selects styled as shared compact controls', () => {
   expect(rule).toContain('box-shadow: var(--shadow-sm)')
 })
 
+it('lets feature forms live inside the shared filter sidebar without custom layout CSS', () => {
+  expect(cssRule('.management-filter-sidebar-form')).toContain('display: contents')
+  expect(cssRule('.management-filter-actions')).toContain('position: sticky')
+  expect(cssRule('.finance-cashbook-filter')).toBe('')
+})
+
 it('right aligns money values in shared tables', () => {
   expect(cssRule('td:has(.money-text)')).toContain('text-align: right')
   expect(cssRule('.money-text')).toContain('font-variant-numeric: tabular-nums')

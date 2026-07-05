@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ReportsPage } from './ReportsPage'
@@ -96,6 +96,8 @@ describe('ReportsPage', () => {
     render(<ReportsPage service={service} />)
 
     await screen.findAllByText('HD0001')
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc báo cáo' })
+    expect(within(sidebar).getByRole('heading', { name: 'Thời gian' })).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Từ ngày'))
     await userEvent.type(screen.getByLabelText('Từ ngày'), '2026-07-01')
     await userEvent.clear(screen.getByLabelText('Đến ngày'))
@@ -104,5 +106,19 @@ describe('ReportsPage', () => {
 
     expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ from: '2026-07-01', to: '2026-07-05', page: 1, page_size: 100 })
     expect(service.listCashbook).toHaveBeenLastCalledWith({ from: '2026-07-01', to: '2026-07-05', page: 1, page_size: 100 })
+  })
+
+  it('resets report filters from the shared sidebar action bar', async () => {
+    const service = makeService()
+    render(<ReportsPage service={service} />)
+
+    await screen.findAllByText('HD0001')
+    await userEvent.clear(screen.getByLabelText('Từ ngày'))
+    await userEvent.type(screen.getByLabelText('Từ ngày'), '2026-07-01')
+    await userEvent.click(screen.getByRole('button', { name: 'Hôm nay' }))
+
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc báo cáo' })
+    expect(within(sidebar).getByRole('button', { name: 'Hôm nay' }).closest('.management-filter-actions')).not.toBeNull()
+    expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, page_size: 100 }))
   })
 })

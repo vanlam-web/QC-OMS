@@ -121,6 +121,10 @@ export function InventoryPage({ service }: { service: InventoryService }) {
 
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    await applyFilters()
+  }
+
+  async function applyFilters() {
     setPage(1)
     await loadProducts({ search, status, shape, page: 1 })
   }
@@ -182,7 +186,6 @@ export function InventoryPage({ service }: { service: InventoryService }) {
             leadingIcon={<Search aria-hidden="true" size={16} />}
             onChange={setSearch}
           />
-          <button className="button button-primary" type="submit">Lọc</button>
         </ManagementCompactToolbar>
       }
       kpis={
@@ -196,10 +199,13 @@ export function InventoryPage({ service }: { service: InventoryService }) {
         <ManagementFilterSidebar
           ariaLabel="Bộ lọc hàng hóa"
           actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
-              <RotateCcw aria-hidden="true" size={16} />
-              Đặt lại
-            </button>
+            <>
+              <button className="button button-primary" type="button" onClick={() => void applyFilters()}>Áp dụng bộ lọc</button>
+              <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
+                <RotateCcw aria-hidden="true" size={16} />
+                Đặt lại bộ lọc
+              </button>
+            </>
           }
         >
           <ManagementFilterGroup title="Trạng thái hàng hóa">

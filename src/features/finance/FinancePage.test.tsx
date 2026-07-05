@@ -152,8 +152,8 @@ describe('FinancePage', () => {
     expect(service.listCustomerDebts).toHaveBeenLastCalledWith({ search: 'nam', page: 1, page_size: 15 })
 
     await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'PT0001')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hướng thu chi' }), 'in')
-    await userEvent.click(screen.getByRole('button', { name: 'Tìm sổ' }))
+    await userEvent.selectOptions(screen.getByLabelText('Loại chứng từ'), 'in')
+    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: 'PT0001',
@@ -174,6 +174,8 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
+    expect(within(sidebar).getByRole('heading', { name: 'Sổ quỹ' })).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText('Quỹ tiền'), 'bank-1')
     await userEvent.selectOptions(screen.getByLabelText('Trạng thái sổ quỹ'), 'posted')
     await userEvent.selectOptions(screen.getByLabelText('Hạch toán KQKD'), 'false')
@@ -210,6 +212,31 @@ describe('FinancePage', () => {
       from: '2026-07-01',
       to: '2026-07-31',
     }))
+  })
+
+  it('resets cashbook filters from the shared sidebar action bar', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'PC000001')
+    await userEvent.selectOptions(screen.getByLabelText('Quỹ tiền'), 'bank-1')
+    await userEvent.click(screen.getByRole('button', { name: 'Đặt lại bộ lọc tài chính' }))
+
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
+    expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc tài chính' }).closest('.management-filter-actions')).not.toBeNull()
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
+      search: undefined,
+      search_scope: 'all',
+      from: undefined,
+      to: undefined,
+      finance_account_id: undefined,
+      direction: 'all',
+      status: 'all',
+      is_business_accounted: undefined,
+      page: 1,
+      page_size: 15,
+    })
   })
 
   it('toggles cashbook columns and exports visible rows', async () => {
