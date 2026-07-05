@@ -1338,6 +1338,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.status !== undefined) query = query.eq("status", input.status);
       if (input.customerId !== undefined) query = query.eq("customer_id", input.customerId);
       if (input.paymentStatus !== undefined) query = query.eq("payment_status", input.paymentStatus);
+      if (input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
+      if (input.priceListId !== undefined) query = query.eq("price_list_id", input.priceListId);
+      if (input.paymentMethod !== undefined) {
+        const orderIds = await loadSalesDocumentOrderIdsByPaymentMethod(client, input.organizationId, input.paymentMethod);
+        if (orderIds.length === 0) return { items: [], total: 0 };
+        query = query.in("id", orderIds);
+      }
       if (input.from !== undefined) query = query.gte("created_at", input.from);
       if (input.to !== undefined) query = query.lte("created_at", input.to);
       if (input.search === undefined) {
@@ -1383,9 +1390,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const sellers = await loadSellerMap(client, [order.created_by]);
       const base = toSalesDocumentListItem(order, sellers);
-      const [items, priceList] = await Promise.all([
+      const [items, priceList, paymentReceipts, debtEntries, stockMovements, history] = await Promise.all([
         loadSalesDocumentItems(client, input.organizationId, input.orderId),
         loadSalesDocumentPriceList(client, input.organizationId, order.price_list_id),
+        loadSalesDocumentPaymentReceipts(client, input.organizationId, input.orderId),
+        loadSalesDocumentDebtEntries(client, input.organizationId, input.orderId),
+        loadSalesDocumentStockMovements(client, input.organizationId, input.orderId),
+        loadSalesDocumentHistory(client, input.organizationId, input.orderId),
       ]);
 
       return {
@@ -1393,10 +1404,10 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         price_list: priceList,
         change_returned_amount: Number(order.change_returned_amount),
         items,
-        payment_receipts: [],
-        debt_entries: [],
-        stock_movements: [],
-        history: [],
+        payment_receipts: paymentReceipts,
+        debt_entries: debtEntries,
+        stock_movements: stockMovements,
+        history,
       };
     },
     async listFinanceAccounts(input): Promise<FinanceAccountData[]> {
@@ -2487,6 +2498,23 @@ function toSalesDocumentListItem(
     payment_status: String(row.payment_status) as "not_applicable" | "unpaid" | "partial" | "paid",
     note: row.note === null ? null : String(row.note ?? ""),
   };
+}
+
+async function loadSalesDocumentOrderIdsByPaymentMethod(
+  client: DatabaseClient,
+  organizationId: string,
+  paymentMethod: "cash" | "bank_transfer",
+): Promise<string[]> {
+  const { data, error } = await client
+    .from("payment_receipts")
+    .select("order_id, payment_receipt_methods!inner(method_type)")
+    .eq("organization_id", organizationId)
+    .eq("status", "posted")
+    .not("order_id", "is", null)
+    .eq("payment_receipt_methods.method_type", paymentMethod);
+  if (error !== null) throw error;
+
+  return Array.from(new Set((data ?? []).map((row) => String(row.order_id)).filter((orderId) => orderId.length > 0)));
 }
 
 async function loadSalesDocumentItems(

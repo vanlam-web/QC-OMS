@@ -220,6 +220,8 @@ function SalesDocumentsRoute() {
   const navigate = useNavigate()
   const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
   const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
+  const userService = useMemo(() => createBrowserFoundationService(getAccessToken), [getAccessToken])
+  const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to="/login" replace />
@@ -235,6 +237,8 @@ function SalesDocumentsRoute() {
       <SalesDocumentsPage
         service={service}
         orderService={orderService}
+        userService={userService}
+        catalogService={catalogService}
         onCreateSalesDocument={() => navigate('/pos')}
         onOpenDashboard={() => navigate('/dashboard')}
         onOpenQuoteInPos={(payload) => {

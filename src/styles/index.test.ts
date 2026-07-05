@@ -58,6 +58,20 @@ it('keeps management KPI summaries compact above filters', () => {
   expect(cssRule('.management-filter-group h2')).toContain('line-height: 1.25')
 })
 
+it('keeps management filter selects styled as shared compact controls', () => {
+  const rule = cssRule('.management-filter-select')
+
+  expect(rule).toContain('appearance: none')
+  expect(rule).toContain('min-height: 2.5rem')
+  expect(rule).toContain('border: 1px solid var(--color-border)')
+  expect(rule).toContain('border-radius: var(--radius-sm)')
+  expect(rule).toContain('background-color: var(--color-surface)')
+  expect(rule).toContain('background-image:')
+  expect(rule).toContain('background-position: right var(--space-2) center')
+  expect(rule).toContain('padding: 0 calc(var(--space-4) + 1.25rem) 0 var(--space-3)')
+  expect(rule).toContain('box-shadow: var(--shadow-sm)')
+})
+
 it('right aligns money values in shared tables', () => {
   expect(cssRule('td:has(.money-text)')).toContain('text-align: right')
   expect(cssRule('.money-text')).toContain('font-variant-numeric: tabular-nums')
