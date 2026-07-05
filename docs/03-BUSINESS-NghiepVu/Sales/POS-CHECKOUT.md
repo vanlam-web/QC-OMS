@@ -148,7 +148,7 @@ Sau khi thanh toán thành công, hệ thống mở **Bill Preview / Print Popup
 - Giai đoạn đầu ưu tiên gửi ảnh bill; tin nhắn text không bắt buộc.
 - Hệ thống không tự gửi thay nhân viên. Nhân viên phải kiểm tra đúng nơi gửi và tự bấm gửi.
 
-> Mẫu bill và UX gửi bill xem `02-PRD-UX-PhongCanh/POS/K03/04-K03D-THANH-TOAN.md`.
+> Quy tắc bill, mẫu in, máy in và gửi bill xem [POS-BILL-PRINT-MESSAGING.md](./POS-BILL-PRINT-MESSAGING.md). UX chi tiết xem `02-PRD-UX-PhongCanh/POS/K03/04-K03D-THANH-TOAN.md`.
 
 ---
 

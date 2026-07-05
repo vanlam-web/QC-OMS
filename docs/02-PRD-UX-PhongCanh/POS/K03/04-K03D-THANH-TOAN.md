@@ -182,6 +182,10 @@ Nhân viên bấm [THANH TOÁN] (F9)
 - Hệ thống không lưu lịch sử gửi bill trong POS.
 - Nếu không mở được nơi gửi, hệ thống hiển thị lỗi rõ nguyên nhân nếu xác định được, ví dụ: link sai, không tìm thấy khách/nhóm, người nhận chặn, chưa đăng nhập ứng dụng gửi, hoặc trình duyệt/ứng dụng không cho mở link.
 - Kênh gửi bill lấy từ cấu hình gửi tin nhắn trong hồ sơ khách hàng: Zalo cá nhân, nhóm Zalo hoặc Facebook. Nếu chưa kích hoạt ở khách hàng thì không hiện popup gửi.
+- Mỗi khách chỉ có một kênh gửi bill mặc định tại một thời điểm. UI có thể dùng dropdown hoặc tick chọn một kênh.
+- Lựa chọn bill và máy in được lưu theo khách để lần sau tự gợi ý đúng mẫu bill/máy in khách thường dùng.
+
+> Quy tắc nghiệp vụ đầy đủ xem [POS-BILL-PRINT-MESSAGING.md](../../../03-BUSINESS-NghiepVu/Sales/POS-BILL-PRINT-MESSAGING.md).
 
 ### V.1. Ghi chú kỹ thuật cho gửi bill
 
