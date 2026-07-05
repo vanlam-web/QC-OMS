@@ -1,59 +1,38 @@
 # PHẦN 6: TÍCH HỢP (INTEGRATION)
 
-> **Source of Truth** cho mọi tích hợp với hệ thống bên ngoài.
+> Source of Truth cho kết nối với hệ thống bên ngoài, import/export, webhook, printer, QR, banking, Zalo/SMS/email và AI/LLM.
+>
+> File này chỉ là index. Việc đang làm / queue hiện tại nằm ở [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md).
 
----
+## Đọc Trước Khi Sửa Integration
 
-## Mục đích
+| Cần biết | File |
+|---|---|
+| Quy tắc tầng Integration | [_RULES.md](./_RULES.md) |
+| Quy ước integration chung | [INTEGRATION_CONVENTIONS.md](./INTEGRATION_CONVENTIONS.md) |
+| Việc đang làm / queue hiện tại | [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md) |
+| Nghiệp vụ nguồn | [../03-BUSINESS-NghiepVu/README.md](../03-BUSINESS-NghiepVu/README.md) |
+| Backend/API nguồn | [../05-BACKEND-MayChu/README.md](../05-BACKEND-MayChu/README.md) |
 
-Folder này trả lời các câu hỏi:
+## Entry Chính
 
-- Hệ thống kết nối với dịch vụ nào?
-- Mục đích của kết nối là gì?
-- Dữ liệu trao đổi như thế nào?
-- Khi nào thực hiện tích hợp?
+| File | Vai trò |
+|---|---|
+| [INTEGRATION_CONVENTIONS.md](./INTEGRATION_CONVENTIONS.md) | Quy ước chung cho Zalo, printer, QR, email, webhook, AI/LLM |
+| [Legacy-QuanLyXuong/README.md](./Legacy-QuanLyXuong/README.md) | Ngữ cảnh hệ QuanLyXuong cũ để học luồng và di trú |
 
----
+## Phạm Vi Tầng
 
-## Phạm vi tầng
+| Loại | Ghi ở Integration |
+|---|---|
+| Chỉ ghi | Printer, QR, email, SMS/Zalo, banking, AI/LLM, webhook, external API, đồng bộ dữ liệu, queue/message broker, file import/export |
+| Chỉ tham chiếu | PRD/UX, business rule, database, backend/API |
+| Không ghi | Vision, feature spec đầy đủ, UI/wireframe, business rule đầy đủ, schema, backend workflow nội bộ, frontend code, hạ tầng |
 
-| Phân loại | Nội dung |
-|-----------|----------|
-| **CHỈ GHI** | Printer Integration · QR Code · Email · SMS / Zalo · Banking · AI / LLM · Webhook · External API · Đồng bộ dữ liệu · Queue / Message Broker · File Import/Export |
-| **THAM CHIẾU** | Feature · Business Rule · Database · Backend — chỉ để giải thích mục đích Integration |
-| **KHÔNG GHI** | Vision · Feature Specification · UI/Wireframe · Business Rule đầy đủ · Database Schema · Backend Workflow nội bộ · Frontend Code · Hạ tầng triển khai |
+## Quy Ước
 
----
+- Chỉ đặc tả integration khi nghiệp vụ và API nội bộ liên quan đã đủ rõ.
+- Không dùng README này làm danh sách planned integration.
+- Khi cần mở integration mới, thêm file/subfolder riêng và link vào index này.
 
-## Thứ tự phát triển
-
-Theo nguyên tắc top-down, **06-INTEGRATION chỉ được thiết kế khi**:
-
-1. ✅ 03-BUSINESS đã có Business Rule rõ ràng
-2. ✅ 05-BACKEND đã có API Specification
-
----
-
-## Nội dung đã có
-
-| File | Mô tả | Trạng thái |
-|------|--------|------------|
-| `INTEGRATION_CONVENTIONS.md` | Quy ước chung: Zalo, Printer, QR, Email, Webhook, AI/LLM | ✅ Hoàn tất |
-| [Legacy-QuanLyXuong/README.md](./Legacy-QuanLyXuong/README.md) | Ngu canh he QuanLyXuong cu de QC-OMS hoc luong va di tru | Dang xay dung |
-
----
-
-## Nội dung dự kiến
-
-| Hệ thống | Mô tả | Trạng thái |
-|-----------|--------|------------|
-| **Zalo** | Gửi bill qua Zalo sau thanh toán | ⬜ Chi tiết sắp tới |
-| **Printer** | In bill, in tem trên máy in qua USB/LAN | ⬜ Chi tiết sắp tới |
-| **Webhook** | Thông báo sự kiện ra bên ngoài | ⬜ Chi tiết sắp tới |
-| **AI / LLM** | Hỗ trợ nhập liệu, gợi ý sản phẩm | ⬜ Chi tiết sắp tới |
-
-> Các integration cụ thể sẽ được tách thành sub-folder riêng khi chi tiết đủ lớn.
-
----
-
-← [ Quay về README chính](../README.md)
+← [Quay về README chính](../README.md)
