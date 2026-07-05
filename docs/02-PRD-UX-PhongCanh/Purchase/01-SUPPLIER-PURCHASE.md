@@ -193,17 +193,17 @@ Không hiển thị menu/chức năng trong lát cắt đầu tiên:
 
 | Slice | UI bật | UI chưa bật |
 |---|---|---|
-| P1 Supplier foundation | Danh sách NCC, tạo/sửa NCC, liên kết khách hàng | Tab phiếu nhập/công nợ có thể empty/readonly 0 |
-| P2 Purchase draft/list/detail | Danh sách phiếu nhập, tạo/sửa draft hàng thường | Nút Hoàn thành có thể disabled nếu P3 chưa có |
-| P3 Post normal receipt | Nút Hoàn thành cho hàng thường, cập nhật giá nhập cuối | Cuộn/tấm vật lý nếu P4 chưa có |
+| P1 Supplier foundation | Danh sách NCC, tạo/sửa NCC, liên kết khách hàng | Đã merge |
+| P2 Purchase draft/list/detail | Danh sách phiếu nhập, tạo/sửa draft hàng thường | Đã merge |
+| P3 Post normal receipt | Nút Hoàn thành cho hàng thường, cập nhật giá nhập cuối | Đã merge cho hàng thường |
 | P4 Roll/sheet purchase | Form nhập cuộn/tấm vật lý | Sửa posted nâng cao |
-| P5 Supplier payments | Trả tiền NCC sau phiếu nhập, lịch sử thanh toán NCC | Trả nhiều tài khoản trong một lần |
+| P5 Supplier payments | Trả tiền NCC sau phiếu nhập, lịch sử thanh toán NCC | Đã merge; trả nhiều tài khoản trong một lần để sau |
 
-Trong P1/P2, UI không được hiển thị nút chức năng chưa làm như thể đã chạy được. Nếu cần giữ vị trí, dùng disabled state kèm tooltip ngắn.
+Quy tắc chung: UI không hiển thị nút chức năng chưa chạy được như thể đã chạy được. Nếu cần giữ vị trí, dùng disabled state kèm tooltip ngắn.
 
-### 9.1. Supplier foundation P1 implement-ready
+### 9.1. Supplier foundation P1
 
-P1 đủ nhỏ để làm độc lập:
+P1 đã merge. Phạm vi nền:
 
 - route/list NCC
 - form thêm/sửa NCC
@@ -219,9 +219,9 @@ Acceptance UI:
 - gắn khách hàng liên kết và mở link qua hồ sơ khách
 - NCC inactive không xuất hiện trong chọn NCC mặc định khi tạo phiếu nhập sau này
 
-### 9.2. Purchase draft P2 implement-ready
+### 9.2. Purchase draft P2
 
-P2 đủ nhỏ nếu chỉ làm hàng thường:
+P2 đã merge cho hàng thường. Phạm vi:
 
 - form tạo phiếu nhập draft
 - chọn NCC
@@ -230,13 +230,13 @@ P2 đủ nhỏ nếu chỉ làm hàng thường:
 - tổng tiền hàng, giảm giá phiếu, cần trả, đã trả tạm, còn phải trả
 - lưu draft, sửa draft
 
-Chưa post tồn/kế toán nếu P3 chưa làm. Draft chỉ là dữ liệu nháp server.
+Draft chỉ là dữ liệu nháp server; không post tồn/kế toán cho tới khi người dùng hoàn thành phiếu.
 
 P2 dùng kho mặc định. Quy tắc có cho sửa mã `PN...` khi draft hay không cần tham khảo KiotViet trước khi chốt.
 
-### 9.3. Supplier payment P5 implement-ready
+### 9.3. Supplier payment P5
 
-P5 là hướng ưu tiên sau P3. KiotViet audit 2026-07-02 đã xác nhận mã thanh toán NCC dạng `PCPN...`, lịch sử thanh toán nằm trong chi tiết phiếu nhập, và action thanh toán nằm trong tab công nợ NCC.
+P5 đã merge. KiotViet audit 2026-07-02 đã xác nhận mã thanh toán NCC dạng `PCPN...`, lịch sử thanh toán nằm trong chi tiết phiếu nhập, và action thanh toán nằm trong tab công nợ NCC.
 
 Quyết định Owner đã chốt:
 
@@ -249,7 +249,7 @@ Quyết định Owner đã chốt:
 - UI có đường trả từ chi tiết NCC và từ chi tiết phiếu nhập posted còn nợ
 - chi tiết phiếu nhập posted có lịch sử thanh toán NCC tối thiểu
 
-P5 không làm:
+Ngoài phạm vi P5 hiện tại:
 
 - trả nhiều tài khoản trong một lần
 - tự phân bổ cứng vào phiếu nợ cũ nhất
@@ -258,7 +258,7 @@ P5 không làm:
 
 ### 9.4. Roll/sheet purchase P4 chốt nền
 
-P4 đã được Spec audit code 2026-07-02 và có thể handoff implement sau docs sync. UI không bắt người dùng nhập/quản lý mã từng cuộn/tấm; mã vật lý nếu DB cần sẽ do backend tự sinh.
+P4 đã được Spec audit code 2026-07-02 và là candidate tiếp theo sau khi khớp lại code hiện tại. UI không bắt người dùng nhập/quản lý mã từng cuộn/tấm; mã vật lý nếu DB cần sẽ do backend tự sinh.
 
 - cuộn hỗ trợ cả nhiều cuộn cùng thông số và từng cuộn khác chiều dài
 - không cần mã từng cuộn rườm rà trong MVP

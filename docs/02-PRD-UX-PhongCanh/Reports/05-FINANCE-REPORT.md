@@ -91,7 +91,7 @@ Nếu lệch, nhân viên tạo phiếu thu/chi thủ công có lý do; báo cá
 
 - Báo cáo thuế/VAT/HĐĐT.
 - Báo cáo lợi nhuận kế toán đầy đủ.
-- Công nợ nhà cung cấp nếu Purchase chưa làm.
+- Báo cáo công nợ nhà cung cấp nâng cao.
 - Khách trả trước/số dư âm.
 - Tự động phân loại chi phí kế toán phức tạp.
 

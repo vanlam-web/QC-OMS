@@ -1,19 +1,19 @@
 # 04-QUOTE-PRINT-PHASE-3B — In/xem báo giá đơn giản
 
-> **Vai trò:** Source of Truth implement-ready cho Phase 3B.
-> **Quyết định:** Phase sau 3A làm đơn giản trước, chưa làm hệ thống nhiều mẫu bill phức tạp
+> **Vai trò:** Source of Truth cho in/xem báo giá đơn giản đã merge.
+> **Quyết định:** Làm mẫu báo giá mặc định trước, chưa làm hệ thống nhiều mẫu bill phức tạp.
 
 ---
 
 ## 1. Phạm vi
 
-Phase 3B cho báo giá chỉ cần:
+Phạm vi hiện tại cho báo giá:
 
 - mở xem mẫu báo giá mặc định từ chứng từ `BG...`
 - in từ trình duyệt bằng `window.print()` hoặc cơ chế print native tương đương
 - dùng dữ liệu snapshot của báo giá, không tự cập nhật theo bảng giá/danh mục hiện tại
 
-Chưa làm:
+Ngoài phạm vi hiện tại:
 
 - export PDF/ảnh ổn định ở backend
 - nhiều mẫu báo giá tùy biến
@@ -32,7 +32,7 @@ Tại chi tiết báo giá:
 |---|---|
 | `Xem/In báo giá` | Mở màn/preview mẫu báo giá mặc định và cho in bằng trình duyệt |
 
-Danh sách báo giá có thể có action nhanh nếu dễ làm, nhưng không bắt buộc. Không thêm nút `Tải/Xuất` trong Phase 3B để tránh kéo thêm PDF/export.
+Danh sách báo giá có thể có action nhanh nếu dễ làm, nhưng không bắt buộc. Không thêm nút `Tải/Xuất` trong phạm vi hiện tại để tránh kéo thêm PDF/export.
 
 Nếu cần gửi cho khách, nhân viên dùng print dialog của trình duyệt để in/lưu PDF thủ công hoặc chụp/gửi thủ công bên ngoài hệ thống.
 
@@ -40,7 +40,7 @@ Nếu cần gửi cho khách, nhân viên dùng print dialog của trình duyệ
 
 ## 2.1. Cách triển khai UI đề xuất
 
-Phase 3B ưu tiên frontend-only print view:
+Luồng in/xem báo giá ưu tiên frontend-only print view:
 
 - dùng dữ liệu chi tiết báo giá đã có trong Sales Documents
 - mở route/modal print riêng, ví dụ `/sales-documents/:id/quote-print` hoặc print panel trong detail
@@ -48,11 +48,11 @@ Phase 3B ưu tiên frontend-only print view:
 - nút `In` gọi print dialog của trình duyệt
 - CSS có `@media print` để chỉ in phần báo giá, ẩn nav/sidebar/button
 
-Không cần API render PDF, không cần lưu file, không cần lưu lịch sử in/gửi trong Phase 3B.
+Không cần API render PDF, không cần lưu file, không cần lưu lịch sử in/gửi trong phạm vi hiện tại.
 
 Đề xuất cụ thể cho implement:
 
-| Phần | Quyết định Phase 3B |
+| Phần | Quyết định hiện tại |
 |---|---|
 | Route | Ưu tiên route riêng `/sales-documents/:id/quote-print` để dễ test và print CSS |
 | Nguồn dữ liệu | Dùng API chi tiết Sales Documents hiện có; nếu thiếu field snapshot thì bổ sung response, không thêm endpoint PDF |
@@ -105,7 +105,7 @@ Ghi chú: ...
 Giá trị báo giá chỉ dùng để xác nhận nội dung trước khi bán.
 ```
 
-Không cần logo/ảnh nền/mẫu đẹp trong Phase 3B. Nếu sau này cần mẫu thương hiệu hơn, mở phase template riêng.
+Không cần logo/ảnh nền/mẫu đẹp trong phạm vi hiện tại. Nếu sau này cần mẫu thương hiệu hơn, mở phase template riêng.
 
 ### 3.2. Dòng hàng và kích thước
 
@@ -127,10 +127,10 @@ Không ghép kích thước thành text tùy tiện nếu snapshot đã có fiel
 ## 4. Quy tắc dữ liệu
 
 - Mẫu báo giá dùng snapshot tại thời điểm lưu báo giá.
-- Báo giá Phase 3A không có revision/converted; in đúng snapshot báo giá đang mở.
+- Báo giá hiện tại không có revision/converted; in đúng snapshot báo giá đang mở.
 - In/xem báo giá không làm thay đổi trạng thái báo giá.
 - In/xem báo giá không ghi sổ quỹ, công nợ, tồn kho hoặc doanh thu.
-- Không ghi log/lịch sử gửi/in bắt buộc trong Phase 3B.
+- Không ghi log/lịch sử gửi/in bắt buộc trong phạm vi hiện tại.
 - Không tự resolve lại giá hiện tại khi in.
 - Nếu báo giá có dòng sản phẩm inactive/missing, bản in vẫn hiển thị snapshot đã lưu; cảnh báo xử lý checkout thuộc flow mở lại POS, không thuộc bản in.
 
@@ -138,7 +138,7 @@ Không ghép kích thước thành text tùy tiện nếu snapshot đã có fiel
 
 ## 4.1. Backend và database
 
-Phase 3B không yêu cầu schema mới.
+Phạm vi hiện tại không yêu cầu schema mới.
 
 Backend chỉ cần đảm bảo endpoint đọc chi tiết chứng từ/báo giá trả đủ snapshot để frontend dựng mẫu in:
 
@@ -149,7 +149,7 @@ Backend chỉ cần đảm bảo endpoint đọc chi tiết chứng từ/báo gi
 
 Không thêm endpoint render PDF/ảnh nếu chưa cần.
 
-Nếu API chi tiết hiện chưa trả đủ thông tin cửa hàng, frontend có thể dùng config/app context hiện có. Không tạo bảng cấu hình mới chỉ vì in báo giá Phase 3B.
+Nếu API chi tiết hiện chưa trả đủ thông tin cửa hàng, frontend có thể dùng config/app context hiện có. Không tạo bảng cấu hình mới chỉ vì in báo giá mặc định.
 
 Nếu API thiếu field snapshot quan trọng như kích thước/m2/mét tới/chiết khấu dòng, implement được phép mở rộng response readonly từ dữ liệu đã có trong `orders/order_items`; không thay đổi lifecycle báo giá.
 
@@ -180,13 +180,13 @@ Trạng thái UI:
 ## 5. Acceptance Criteria
 
 - Từ chi tiết báo giá `BG...`, nhân viên mở được mẫu báo giá mặc định.
-- Route print chỉ dùng cho báo giá; hóa đơn `HD...` không bị lẫn scope Phase 3B.
+- Route print chỉ dùng cho báo giá; hóa đơn `HD...` không bị lẫn phạm vi.
 - Mẫu hiển thị đúng snapshot, gồm kích thước/diện tích/mét tới và chiết khấu nếu có.
 - In qua trình duyệt được ở mức cơ bản.
 - Print CSS ẩn nav/sidebar/button, chỉ in nội dung báo giá.
 - Không gọi API render PDF/ảnh và không tạo schema mới.
-- Không có cấu hình nhiều mẫu trong Phase 3B.
-- Không tự gửi báo giá cho khách trong Phase 3B.
+- Không có cấu hình nhiều mẫu trong phạm vi hiện tại.
+- Không tự gửi báo giá cho khách trong phạm vi hiện tại.
 - Không tạo stock/cash/debt/revenue/log gửi khi chỉ xem/in báo giá.
 
 ## 6. Verification gợi ý cho implement
@@ -195,7 +195,7 @@ Local/unit:
 
 - Test component render với quote snapshot có dòng thường.
 - Test component render với dòng có `area_m2` hoặc `linear_m`.
-- Test route không cho in hóa đơn `HD...` trong Phase 3B.
+- Test route không cho in hóa đơn `HD...` trong phạm vi báo giá.
 - Test nút `In` gọi `window.print()` bằng mock.
 
 E2E/smoke:

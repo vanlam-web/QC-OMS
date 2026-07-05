@@ -37,7 +37,7 @@ SalesDocuments hiện vẫn không phải module quản lý đầy đủ. Nó gi
 |---|---|
 | [01-SALES-DOCUMENT-LIST.md](./01-SALES-DOCUMENT-LIST.md) | Danh sách báo giá/hóa đơn, bộ lọc, cột, thao tác nhanh |
 | [02-SALES-DOCUMENT-DETAIL.md](./02-SALES-DOCUMENT-DETAIL.md) | Chi tiết chứng từ readonly hiện tại; mô tả sửa/hủy/in lại là future phase |
-| [04-QUOTE-PRINT-PHASE-3B.md](./04-QUOTE-PRINT-PHASE-3B.md) | Source of Truth implement-ready cho in/xem báo giá đơn giản |
+| [04-QUOTE-PRINT-PHASE-3B.md](./04-QUOTE-PRINT-PHASE-3B.md) | Source of Truth cho in/xem báo giá đơn giản đã merge |
 
 ---
 

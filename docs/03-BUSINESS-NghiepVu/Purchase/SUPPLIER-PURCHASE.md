@@ -210,13 +210,13 @@ Quyết định Owner 2026-07-02:
 
 ### BR-PUR-12: Phân bổ trả nợ NCC
 
-Mặc định đề xuất cũ là tiền trả NCC được phân bổ vào phiếu nhập nợ cũ nhất trước. Quyết định Owner 2026-07-02 cho P5: khi trả tiền NCC sau phiếu nhập, người dùng chọn phiếu nhập cụ thể để trả, không tự phân bổ cứng vào phiếu cũ nhất.
+Mặc định đề xuất cũ là tiền trả NCC được phân bổ vào phiếu nhập nợ cũ nhất trước. Quyết định Owner 2026-07-02 cho P5 đã merge: khi trả tiền NCC sau phiếu nhập, người dùng chọn phiếu nhập cụ thể để trả, không tự phân bổ cứng vào phiếu cũ nhất.
 
-Quy tắc này đi cùng hướng công nợ khách đã chốt: trả nợ theo chứng từ, ưu tiên chứng từ cũ nhất để dễ đối soát.
+Quy tắc này đi cùng hướng công nợ khách đã chốt: trả nợ theo chứng từ. UI có thể gợi ý chứng từ cũ nhất để dễ đối soát, nhưng người dùng vẫn chọn phiếu cụ thể.
 
 Quyết định Owner 2026-07-02 cho P5:
 
-- P5 là slice tiếp theo được ưu tiên sau P3.
+- P5 đã merge sau P3.
 - Cho phép trả một phần công nợ NCC.
 - Không cho trả thừa trong luồng trả NCC sau phiếu nhập. Số âm ở P3 chỉ dùng cho tình huống đối tác vừa là NCC vừa là khách hàng và cần đối soát; P5 không mở workflow trả trước/trả thừa NCC.
 - Một lần trả NCC dùng một phương thức: tiền mặt hoặc chuyển khoản.
@@ -264,13 +264,13 @@ Quyết định QC-OMS cho P5:
 
 ---
 
-## 9. Đề xuất chia lát cắt implement
+## 9. Lát cắt Purchase
 
-Purchase/Supplier chạm Inventory, Finance và PriceBook, nên không nên làm một PR lớn.
+Purchase/Supplier chạm Inventory, Finance và PriceBook, nên được chia nhỏ để kiểm soát rủi ro. P1/P2/P3/P5 đã merge; P4 còn là candidate khi cần nhập cuộn/tấm vật lý.
 
 ### Slice P1 — Supplier foundation
 
-Phạm vi:
+Đã merge. Phạm vi:
 
 - bảng `suppliers`
 - CRUD NCC tối thiểu
@@ -294,7 +294,7 @@ Acceptance:
 
 ### Slice P2 — Purchase receipt draft/list/detail
 
-Phạm vi:
+Đã merge cho hàng thường. Phạm vi:
 
 - tạo phiếu nhập `draft`
 - sửa draft
@@ -317,7 +317,7 @@ Acceptance:
 
 ### Slice P3 — Post receipt cho hàng thường
 
-Phạm vi:
+Đã merge. Phạm vi:
 
 - `POST /purchase/receipts/{id}/post`
 - transaction tăng tồn hàng `normal`
@@ -345,7 +345,7 @@ Acceptance:
 
 ### Slice P4 — Roll/sheet purchase objects
 
-Phạm vi:
+Candidate tiếp theo sau khi khớp lại code hiện tại. Phạm vi:
 
 - nhập cuộn/tấm theo vật lý
 - tạo roll/sheet object hoặc lot theo Inventory schema hiện có
@@ -375,7 +375,7 @@ Spec audit code 2026-07-02:
 - Giá vốn: `purchase_receipt_items.unit_cost` là đơn giá nhập của đơn vị mua; P4 phải lưu đủ metadata trong `physical_payload` để sau này đối chiếu unit cost theo cuộn/tấm. Không thêm phương pháp giá vốn nâng cao trong P4.
 - Stock movement khi post P4 phải gắn object id: roll dùng `inventory_object_type = roll`, `inventory_roll_id`; sheet dùng `inventory_object_type = sheet`, `inventory_sheet_id`.
 
-P4 implement-ready acceptance:
+P4 acceptance khi làm:
 
 - Draft cho phép dòng `roll`/`sheet` với `physical_payload` hợp lệ.
 - Post một phiếu có roll/sheet tạo object vật lý và stock movement trong cùng transaction.
@@ -387,7 +387,7 @@ P4 implement-ready acceptance:
 
 ### Slice P5 — Supplier payments
 
-Phạm vi:
+Đã merge. Phạm vi:
 
 - trả tiền NCC sau phiếu nhập
 - người dùng chọn phiếu nhập cụ thể để trả

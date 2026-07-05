@@ -21,7 +21,7 @@
 | `POST` | `/v1/purchase/receipts/{id}/cancel` | Hủy phiếu |
 | `POST` | `/v1/suppliers/{id}/payments` | Trả tiền NCC |
 
-Không cần implement tất cả endpoint trong một slice. Ưu tiên P1/P2/P3 theo [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md#9-đề-xuất-chia-lát-cắt-implement).
+Không cần implement tất cả endpoint trong một slice. P1/P2/P3/P5 đã merge; P4 cuộn/tấm là candidate riêng theo [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md#9-lát-cắt-purchase).
 
 ## 2. Supplier/customer link
 
@@ -134,7 +134,7 @@ Tạo phiếu nhập draft.
 
 Rules:
 
-- P2 chỉ cần hỗ trợ hàng thường nếu roll/sheet object model chưa làm.
+- Draft hiện tại hỗ trợ hàng thường; roll/sheet object model thuộc P4.
 - `quantity > 0`, `unit_cost >= 0`, discount không âm.
 - Backend tính `subtotal_amount`, `payable_amount`, `remaining_amount`; không tin tổng tiền từ client.
 - Draft không tạo stock movement, payable, cashbook.
