@@ -83,6 +83,11 @@ export function createFinanceService(api: FinanceApiRequester) {
       api.request<CashbookVoucher>(`/api/v1/finance/cashbook-vouchers/${voucherId}/cancel`, {
         method: 'POST',
       }),
+    reviseCashbookVoucher: (voucherId: string, input: CreateCashbookVoucherInput) =>
+      api.request<CashbookVoucher>(`/api/v1/finance/cashbook-vouchers/${voucherId}/revise`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
   }
 }
 

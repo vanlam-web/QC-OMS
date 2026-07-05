@@ -1532,6 +1532,23 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         amount: Number(data.amount ?? 0),
       };
     },
+    async reviseCashbookVoucher(input): Promise<CashbookVoucherData> {
+      const { data, error } = await client.rpc("revise_cashbook_voucher_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_voucher_id: input.voucherId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("CASHBOOK_VOUCHER_REVISE_RESULT_INVALID");
+      return {
+        id: String(data.id ?? ""),
+        code: String(data.code ?? ""),
+        source_type: "manual_voucher",
+        status: String(data.status ?? "posted") as "posted" | "cancelled",
+        amount: Number(data.amount ?? 0),
+      };
+    },
     async listCashbookEntries(input): Promise<CashbookListData> {
       let query = client
         .from("cashbook_entries")

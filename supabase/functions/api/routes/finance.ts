@@ -16,6 +16,7 @@ import {
   listFinanceAccounts,
   listRetailDebts,
   listReconciliations,
+  reviseCashbookVoucher,
 } from "../use-cases/finance.ts";
 
 export interface FinanceRouteDependencies {
@@ -97,6 +98,14 @@ export async function handleFinance(
   if (cashbookVoucherCancelMatch !== null && request.method === "POST") {
     return successResponse(
       await cancelCashbookVoucher(dependencies.repository, context, cashbookVoucherCancelMatch[1]),
+      traceId,
+    );
+  }
+
+  const cashbookVoucherReviseMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook-vouchers\/([^/]+)\/revise$/);
+  if (cashbookVoucherReviseMatch !== null && request.method === "POST") {
+    return successResponse(
+      await reviseCashbookVoucher(dependencies.repository, context, cashbookVoucherReviseMatch[1], await request.json()),
       traceId,
     );
   }

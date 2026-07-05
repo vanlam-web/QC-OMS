@@ -112,6 +112,12 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
       ...manualVoucher,
       status: 'cancelled' as const,
     })),
+    reviseCashbookVoucher: vi.fn(async () => ({
+      ...manualVoucher,
+      id: 'voucher-3',
+      code: 'PC000001.01',
+      amount: 50000,
+    })),
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
     getCashbookEntry: vi.fn(async () => cashbookDetail),
     listCashbookEntries: vi.fn(async () => ({
@@ -271,6 +277,34 @@ describe('FinancePage', () => {
     expect(service.cancelCashbookVoucher).toHaveBeenCalledWith('voucher-2')
     await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
     expect(screen.getByRole('status')).toHaveTextContent('Đã hủy phiếu PC000001')
+  })
+
+  it('revises a posted manual cashbook voucher as a new version and reloads cashbook data', async () => {
+    const service = makeService({
+      listCashbookVouchers: vi.fn(async () => ({ items: [manualVoucher], total: 1 })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sửa phiếu PC000001' }))
+    const form = await screen.findByRole('form', { name: 'Sửa phiếu PC000001' })
+
+    await userEvent.clear(within(form).getByLabelText('Số tiền'))
+    await userEvent.type(within(form).getByLabelText('Số tiền'), '50000')
+    await userEvent.clear(within(form).getByLabelText('Lý do'))
+    await userEvent.type(within(form).getByLabelText('Lý do'), 'Sửa phiếu chi')
+    await userEvent.click(within(form).getByRole('button', { name: 'Lưu bản sửa' }))
+
+    expect(service.reviseCashbookVoucher).toHaveBeenCalledWith('voucher-2', {
+      voucher_direction: 'out',
+      voucher_type: 'operating_expense',
+      finance_account_id: 'cash-1',
+      amount: 50000,
+      is_business_accounted: true,
+      counterparty_type: 'none',
+      reason: 'Sửa phiếu chi',
+    })
+    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('status')).toHaveTextContent('Đã sửa phiếu PC000001.01')
   })
 
   it('opens cashbook entry detail with allocation rows', async () => {
