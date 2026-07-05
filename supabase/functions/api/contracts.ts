@@ -967,6 +967,7 @@ export interface FoundationRepository {
     organizationId: string;
     financeAccountId?: string;
     search?: string;
+    searchScope?: "code" | "note" | "transfer_content";
     direction?: "in" | "out";
     sourceType?: "payment_receipt_method" | "cashbook_voucher";
     status?: "posted" | "cancelled";

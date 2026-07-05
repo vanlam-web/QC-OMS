@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { RotateCcw, Search, WalletCards } from 'lucide-react'
+import { Columns3, Download, RotateCcw, Search, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -14,9 +14,11 @@ import {
 } from '../../components/ui-shell/management-layout'
 import type {
   CashbookBusinessAccountedFilter,
+  CashbookColumnKey,
   CashbookDirection,
   CashbookEntry,
   CashbookEntryDetail,
+  CashbookSearchScope,
   CashbookStatus,
   CashbookVoucher,
   CustomerDebtDetail,
@@ -25,8 +27,28 @@ import type {
   CashbookBalance,
 } from './types'
 import type { FinanceService } from './finance-service'
+import { buildCashbookCsv } from './finance-service'
 
 const pageSizeDefault = 15
+const defaultCashbookColumns: CashbookColumnKey[] = [
+  'code',
+  'created_at',
+  'finance_account',
+  'source_type',
+  'amount_delta',
+  'status',
+]
+const cashbookColumnDefinitions: Array<{ key: CashbookColumnKey; label: string }> = [
+  { key: 'code', label: 'Mã phiếu' },
+  { key: 'created_at', label: 'Thời gian' },
+  { key: 'source_type', label: 'Nguồn' },
+  { key: 'counterparty', label: 'Người nộp/nhận' },
+  { key: 'finance_account', label: 'Quỹ/tài khoản' },
+  { key: 'amount_delta', label: 'Giá trị' },
+  { key: 'status', label: 'Trạng thái' },
+  { key: 'note', label: 'Ghi chú' },
+  { key: 'is_business_accounted', label: 'Hạch toán KQKD' },
+]
 
 function accountTypeText(type: FinanceAccount['account_type']) {
   return type === 'cash' ? 'Tiền mặt' : 'Ngân hàng'
@@ -54,6 +76,10 @@ function paymentMethodText(value: CashbookEntryDetail['payment_method']) {
   return 'Thủ công'
 }
 
+function sourceTypeText(value: CashbookEntry['source_type']) {
+  return value === 'payment_receipt_method' ? 'Phiếu thu' : 'Phiếu quỹ'
+}
+
 function dateText(value: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return 'Chưa có'
@@ -77,6 +103,12 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookPageSize, setCashbookPageSize] = useState(pageSizeDefault)
   const [cashbookSearch, setCashbookSearch] = useState('')
   const [lastCashbookSearch, setLastCashbookSearch] = useState('')
+  const [cashbookSearchScope, setCashbookSearchScope] = useState<CashbookSearchScope>('all')
+  const [lastCashbookSearchScope, setLastCashbookSearchScope] = useState<CashbookSearchScope>('all')
+  const [cashbookFrom, setCashbookFrom] = useState('')
+  const [lastCashbookFrom, setLastCashbookFrom] = useState('')
+  const [cashbookTo, setCashbookTo] = useState('')
+  const [lastCashbookTo, setLastCashbookTo] = useState('')
   const [cashbookAccountId, setCashbookAccountId] = useState('all')
   const [lastCashbookAccountId, setLastCashbookAccountId] = useState('all')
   const [cashbookDirection, setCashbookDirection] = useState<CashbookDirection | 'all'>('all')
@@ -88,6 +120,8 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookSummary, setCashbookSummary] = useState({ opening_balance: 0, total_in: 0, total_out: 0, ending_balance: 0 })
   const [selectedCashbookEntry, setSelectedCashbookEntry] = useState<CashbookEntry | null>(null)
   const [cashbookDetail, setCashbookDetail] = useState<CashbookEntryDetail | null>(null)
+  const [showCashbookColumns, setShowCashbookColumns] = useState(false)
+  const [visibleCashbookColumns, setVisibleCashbookColumns] = useState<CashbookColumnKey[]>(defaultCashbookColumns)
   const [vouchers, setVouchers] = useState<CashbookVoucher[]>([])
   const [collectAmount, setCollectAmount] = useState('')
   const [cashAmount, setCashAmount] = useState('')
@@ -126,6 +160,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   async function loadCashbook(input: {
     search?: string
+    search_scope?: CashbookSearchScope
+    from?: string
+    to?: string
     finance_account_id?: string
     direction?: CashbookDirection | 'all'
     status?: CashbookStatus | 'all'
@@ -134,6 +171,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
     page_size?: number
   } = {}) {
     const nextSearch = input.search ?? lastCashbookSearch
+    const nextSearchScope = input.search_scope ?? lastCashbookSearchScope
+    const nextFrom = input.from ?? lastCashbookFrom
+    const nextTo = input.to ?? lastCashbookTo
     const nextAccountId = input.finance_account_id ?? lastCashbookAccountId
     const nextDirection = input.direction ?? lastCashbookDirection
     const nextStatus = input.status ?? lastCashbookStatus
@@ -144,6 +184,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
     try {
       const result = await service.listCashbookEntries({
         search: nextSearch.trim() || undefined,
+        search_scope: nextSearchScope,
+        from: nextFrom.trim() || undefined,
+        to: nextTo.trim() || undefined,
         finance_account_id: nextAccountId === 'all' ? undefined : nextAccountId,
         direction: nextDirection,
         status: nextStatus,
@@ -157,6 +200,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
       setCashbookPage(result.page)
       setCashbookPageSize(result.page_size)
       setLastCashbookSearch(nextSearch.trim())
+      setLastCashbookSearchScope(nextSearchScope)
+      setLastCashbookFrom(nextFrom.trim())
+      setLastCashbookTo(nextTo.trim())
       setLastCashbookAccountId(nextAccountId)
       setLastCashbookDirection(nextDirection)
       setLastCashbookStatus(nextStatus)
@@ -228,6 +274,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
     setCashbookPage(1)
     await loadCashbook({
       search: cashbookSearch,
+      search_scope: cashbookSearchScope,
+      from: cashbookFrom,
+      to: cashbookTo,
       finance_account_id: cashbookAccountId,
       direction: cashbookDirection,
       status: cashbookStatus,
@@ -245,6 +294,49 @@ export function FinancePage({ service }: { service: FinanceService }) {
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết sổ quỹ.'))
     }
+  }
+
+  function toggleCashbookColumn(column: CashbookColumnKey) {
+    setVisibleCashbookColumns((current) =>
+      current.includes(column)
+        ? current.filter((item) => item !== column)
+        : [...current, column],
+    )
+  }
+
+  function exportCashbook() {
+    const csv = buildCashbookCsv(cashbookEntries ?? [])
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'so-quy.csv'
+    anchor.click()
+    URL.revokeObjectURL(url)
+    setMessage('Đã tạo file sổ quỹ.')
+  }
+
+  function cashbookCell(entry: CashbookEntry, column: CashbookColumnKey) {
+    if (column === 'code') {
+      return (
+        <button
+          aria-label={`Mở chi tiết ${entry.code}`}
+          className="management-link-button"
+          type="button"
+          onClick={() => void openCashbookEntry(entry)}
+        >
+          <strong>{entry.code}</strong>
+        </button>
+      )
+    }
+    if (column === 'created_at') return dateText(entry.created_at)
+    if (column === 'finance_account') return `${entry.finance_account.code} · ${entry.finance_account.name}`
+    if (column === 'source_type') return sourceTypeText(entry.source_type)
+    if (column === 'counterparty') return '-'
+    if (column === 'amount_delta') return <MoneyText value={entry.amount_delta} />
+    if (column === 'status') return <StatusChip tone={entry.status === 'posted' ? 'success' : 'neutral'}>{statusText(entry.status)}</StatusChip>
+    if (column === 'note') return entry.note ?? '-'
+    return entry.is_business_accounted ? 'Có' : 'Không'
   }
 
   async function openDebt(debt: CustomerDebtSummary) {
@@ -326,6 +418,23 @@ export function FinancePage({ service }: { service: FinanceService }) {
       }
       filter={
         <form aria-label="Bộ lọc sổ quỹ" className="finance-cashbook-filter" onSubmit={filterCashbook}>
+          <label>
+            Tìm theo
+            <select value={cashbookSearchScope} onChange={(event) => setCashbookSearchScope(event.target.value as CashbookSearchScope)}>
+              <option value="all">Tất cả</option>
+              <option value="code">Mã phiếu</option>
+              <option value="note">Ghi chú</option>
+              <option value="transfer_content">Nội dung chuyển khoản</option>
+            </select>
+          </label>
+          <label>
+            Từ ngày
+            <input type="date" value={cashbookFrom} onChange={(event) => setCashbookFrom(event.target.value)} />
+          </label>
+          <label>
+            Đến ngày
+            <input type="date" value={cashbookTo} onChange={(event) => setCashbookTo(event.target.value)} />
+          </label>
           <label>
             Quỹ tiền
             <select value={cashbookAccountId} onChange={(event) => setCashbookAccountId(event.target.value)}>
@@ -558,12 +667,18 @@ export function FinancePage({ service }: { service: FinanceService }) {
               type="button"
               onClick={() => {
                 setCashbookSearch('')
+                setCashbookSearchScope('all')
+                setCashbookFrom('')
+                setCashbookTo('')
                 setCashbookAccountId('all')
                 setCashbookDirection('all')
                 setCashbookStatus('all')
                 setCashbookBusinessAccounted('all')
                 void loadCashbook({
                   search: '',
+                  search_scope: 'all',
+                  from: '',
+                  to: '',
                   finance_account_id: 'all',
                   direction: 'all',
                   status: 'all',
@@ -575,8 +690,31 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <RotateCcw aria-hidden="true" size={16} />
               Đặt lại
             </button>
+            <button className="button button-secondary" type="button" onClick={() => setShowCashbookColumns((value) => !value)}>
+              <Columns3 aria-hidden="true" size={16} />
+              Cột
+            </button>
+            <button className="button button-secondary" type="button" onClick={exportCashbook}>
+              <Download aria-hidden="true" size={16} />
+              Xuất file
+            </button>
           </ManagementCompactToolbar>
         </header>
+        {showCashbookColumns ? (
+          <section aria-label="Chọn cột sổ quỹ" className="finance-cashbook-columns">
+            {cashbookColumnDefinitions.map((column) => (
+              <label key={column.key}>
+                <input
+                  checked={visibleCashbookColumns.includes(column.key)}
+                  disabled={column.key === 'code'}
+                  type="checkbox"
+                  onChange={() => toggleCashbookColumn(column.key)}
+                />
+                {column.label}
+              </label>
+            ))}
+          </section>
+        ) : null}
         <MetricGrid ariaLabel="Tổng sổ quỹ">
           <MetricCard label="Quỹ đầu kỳ" value={<MoneyText value={cashbookSummary.opening_balance} />} hint="Theo bộ lọc" tone="neutral" />
           <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc" tone="success" />
@@ -591,38 +729,21 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <table aria-label="Sổ quỹ" className="management-table">
                 <thead>
                   <tr>
-                    <th>Mã phiếu</th>
-                    <th>Thời gian</th>
-                    <th>Quỹ/tài khoản</th>
-                    <th>Loại thu chi</th>
-                    <th>Giá trị</th>
-                    <th>Nguồn</th>
-                    <th>Trạng thái</th>
+                    {visibleCashbookColumns.map((column) => (
+                      <th key={column}>{cashbookColumnDefinitions.find((definition) => definition.key === column)?.label}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {cashbookEntries.map((entry) => (
                     <Fragment key={entry.id}>
                       <tr>
-                        <td>
-                          <button
-                            aria-label={`Mở chi tiết ${entry.code}`}
-                            className="management-link-button"
-                            type="button"
-                            onClick={() => void openCashbookEntry(entry)}
-                          >
-                            <strong>{entry.code}</strong>
-                          </button>
-                        </td>
-                        <td>{dateText(entry.created_at)}</td>
-                        <td>{entry.finance_account.code} · {entry.finance_account.name}</td>
-                        <td>{directionText(entry.direction)}</td>
-                        <td><MoneyText value={entry.amount_delta} /></td>
-                        <td>{entry.source_type === 'payment_receipt_method' ? 'Phiếu thu' : 'Phiếu quỹ'}</td>
-                        <td><StatusChip tone={entry.status === 'posted' ? 'success' : 'neutral'}>{statusText(entry.status)}</StatusChip></td>
+                        {visibleCashbookColumns.map((column) => (
+                          <td key={column}>{cashbookCell(entry, column)}</td>
+                        ))}
                       </tr>
                       {selectedCashbookEntry?.id === entry.id ? (
-                        <ManagementDetailRow colSpan={7} label={`Chi tiết sổ quỹ ${entry.code}`}>
+                        <ManagementDetailRow colSpan={visibleCashbookColumns.length} label={`Chi tiết sổ quỹ ${entry.code}`}>
                           {cashbookDetail === null ? <p>Đang tải chi tiết...</p> : (
                             <div className="finance-cashbook-detail">
                               <header>

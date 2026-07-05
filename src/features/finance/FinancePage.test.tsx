@@ -132,6 +132,9 @@ describe('FinancePage', () => {
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: 'PT0001',
+      search_scope: 'all',
+      from: undefined,
+      to: undefined,
       finance_account_id: undefined,
       direction: 'in',
       status: 'all',
@@ -153,6 +156,9 @@ describe('FinancePage', () => {
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: undefined,
+      search_scope: 'all',
+      from: undefined,
+      to: undefined,
       finance_account_id: 'bank-1',
       direction: 'all',
       status: 'posted',
@@ -160,6 +166,47 @@ describe('FinancePage', () => {
       page: 1,
       page_size: 15,
     })
+  })
+
+  it('filters cashbook by search scope and date range', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    await userEvent.selectOptions(screen.getByLabelText('Tìm theo'), 'code')
+    await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'CTM001180')
+    await userEvent.type(screen.getByLabelText('Từ ngày'), '2026-07-01')
+    await userEvent.type(screen.getByLabelText('Đến ngày'), '2026-07-31')
+    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
+
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: 'CTM001180',
+      search_scope: 'code',
+      from: '2026-07-01',
+      to: '2026-07-31',
+    }))
+  })
+
+  it('toggles cashbook columns and exports visible rows', async () => {
+    const service = makeService()
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:cashbook')
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    await userEvent.click(screen.getByRole('button', { name: 'Cột' }))
+    await userEvent.click(screen.getByLabelText('Ghi chú'))
+    expect(screen.getByRole('columnheader', { name: 'Ghi chú' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Xuất file' }))
+    expect(screen.getByRole('status')).toHaveTextContent('Đã tạo file sổ quỹ')
+    expect(createObjectURL).toHaveBeenCalled()
+    expect(click).toHaveBeenCalled()
+
+    createObjectURL.mockRestore()
+    revokeObjectURL.mockRestore()
+    click.mockRestore()
   })
 
   it('opens cashbook entry detail with allocation rows', async () => {
