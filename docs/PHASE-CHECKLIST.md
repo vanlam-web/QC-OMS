@@ -37,7 +37,7 @@ Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm t
 
 ## Phase 0 — Foundation
 
-Status: ✅ Hoàn thành và đã merge vào `main`
+Tình trạng: ✅ Hoàn thành và đã merge vào `main`
 
 ### Đã hoàn thành
 
@@ -120,7 +120,7 @@ Status: ✅ Hoàn thành và đã merge vào `main`
 
 ## Phase 1A — Foundation UI + Catalog/Pricing
 
-Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
 ### Đã hoàn thành
 
@@ -182,7 +182,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 1B — Customer selection and customer pricing
 
-Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
 ### Đã hoàn thành
 
@@ -231,7 +231,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 1C — Order checkout transaction foundation
 
-Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -338,7 +338,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, server shared-dev đã smoke P
 
 ## Phase 2A — POS direct checkout UI
 
-Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -391,7 +391,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ## Phase 2B — Production queue / K02-D foundation
 
-Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ### Source of Truth đã sync vào plan
 
@@ -455,7 +455,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`, cloud staging smoke PASS
 
 ## Phase 2C — POS line discount handling
 
-Status: ✅ Hoàn thành, đã merge vào `main`
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`
 
 ### Phạm vi Phase 2C
 
@@ -478,7 +478,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`
 
 ## Phase 2D — Sales Documents readonly module
 
-Status: ✅ Hoàn thành, đã merge vào `main`
+Tình trạng: ✅ Hoàn thành, đã merge vào `main`
 
 ### Phạm vi Phase 2D
 
@@ -505,7 +505,7 @@ Status: ✅ Hoàn thành, đã merge vào `main`
 
 ## Phase 2 — POS business UI
 
-Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
+Tình trạng: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 
 - [x] Product quick grid cơ bản.
 - [x] Cart lines.
@@ -528,7 +528,7 @@ Status: ✅ Hoàn thành tới lát cắt Phase 2D đã merge
 
 ## Phase 3A — Quote BG + reopen into POS draft
 
-Status: ✅ Hoàn thành và đã merge vào `main` qua PR #15
+Tình trạng: ✅ Hoàn thành và đã merge vào `main` qua PR #15
 
 ### Phạm vi đã hoàn thành
 
@@ -552,7 +552,7 @@ Status: ✅ Hoàn thành và đã merge vào `main` qua PR #15
 
 ## Phase 3B — Simple quote print
 
-Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
+Tình trạng: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
 
 ### Phạm vi dự kiến
 
@@ -572,7 +572,7 @@ Status: ⏭️ Sẵn sàng lập plan sau Phase 3A nếu cần in báo giá ngay
 
 ## PriceBook formula MVP
 
-Status: ✅ Hoàn thành và đã merge vào `main` qua PR #17 và PR #20 correction
+Tình trạng: ✅ Hoàn thành và đã merge vào `main` qua PR #17 và PR #20 correction
 
 ### Phạm vi đã hoàn thành
 
@@ -611,7 +611,7 @@ Status: ✅ Hoàn thành và đã merge vào `main` qua PR #17 và PR #20 correc
 
 ## Implementation-ready queue
 
-Status: 🔄 Dùng để ba luồng Codex Spec / Implement / Review làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
+Tình trạng: 🔄 Dùng để ba luồng Codex Spec / Implement / Review làm việc liên tục hơn; Owner trực tiếp quyết thứ tự cuối cùng.
 
 Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ SoT hoặc gần đủ SoT để implement có thể chuẩn bị plan khi xong việc đang làm.
 
