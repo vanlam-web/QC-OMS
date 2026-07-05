@@ -662,7 +662,7 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
 - Purchase return/trả hàng nhập.
 - Máy sản xuất tự động trừ kho hoặc tự match file với bill.
 - HĐĐT/VAT, delivery/COD, kênh online.
-- Refactor lớn `docs/README.md`; trước mắt dùng `PHASE-CHECKLIST.md` làm trạng thái sống.
+- [x] Root `docs/README.md` đã gọn lại thành index điều hướng; không giữ status chi tiết ở đó nữa.
 
 ## Lệnh thường dùng
 
