@@ -37,8 +37,8 @@ Toàn bộ ưu tiên đã được xử lý:
 |---|---|---|
 | 1 | Sửa tiêu đề lỗi `ARCHITECTURE.md` (dòng 1: `# [ARCHITECTURE.md]...`) | ✅ Đã xóa dòng 1, giữ tiêu đề đúng |
 | 2 | Sửa tiêu đề lỗi `DOCUMENT_RULES.md` (dòng 1: `# DOCUMENT_[RULES.md]...`) | ✅ Đã xóa dòng 1, giữ tiêu đề đúng |
-| 3 | Cập nhật trạng thái `04-DATABASE/README.md` | ✅ Đổi `⬜ Chưa bắt đầu` → `🔨 Đang xây dựng (Sales)`, cập nhật bảng domain |
-| 4 | Cập nhật trạng thái `05-BACKEND/README.md` | ✅ Đổi `⬜ Chưa bắt đầu` → `🔨 Đang xây dựng (POS)`, cập nhật bảng module |
+| 3 | Cập nhật metadata `04-DATABASE/README.md` | ✅ Cập nhật bảng domain theo thời điểm audit |
+| 4 | Cập nhật metadata `05-BACKEND/README.md` | ✅ Cập nhật bảng module theo thời điểm audit |
 | 5 | Tạo `03-BUSINESS-NghiepVu/README.md` | ✅ Entry point cho tầng Business |
 | 6 | Tạo `06-INTEGRATION-KetHop/README.md` | ✅ Entry point cho tầng Integration |
 | 7 | Tạo `07-DEPLOYMENT-TrienKhai/README.md` | ✅ Entry point cho tầng Deployment |
@@ -111,18 +111,6 @@ Toàn bộ ưu tiên đã được xử lý:
 
 ---
 
-## CÁC VẤN ĐỀ ĐÃ GHI NHẬN (CHƯA XỬ LÝ — CẦN CHIẾN LƯỢC DÀI HẠN)
+## Ghi chú hiện tại
 
-| # | Vấn đề | Mức độ | Ghi chú |
-|---|---|---|---|
-| 1 | Chưa có ERD diagram (`04-DATABASE/01-ERD.md`) | Cao | Cần thiết kế toàn bộ schema trước |
-| 2 | Chưa có RLS documentation (`04-DATABASE/03-RLS.md`) | Cao | Phụ thuộc ERD |
-| 3 | Chưa có Domain Inventory trong `03-BUSINESS/` | Cao | Phụ thuộc PRD-UX mở rộng |
-| 4 | Chưa có Domain Finance trong `03-BUSINESS/` | Cao | Phụ thuộc PRD-UX mở rộng |
-| 5 | Chưa có Domain Workstation trong `03-BUSINESS/` | Cao | Phụ thuộc PRD-UX mở rộng |
-| 6 | Chưa có Backend API thực tế (Order, Checkout, Inventory) | Cao | Cần đợi Business + Database hoàn tất |
-| 7 | 7+ bảng Database còn thiếu (orders, order_items, inventory...) | Cao | Phụ thuộc Business domain |
-
----
-
-*Lần cập nhật tiếp theo: khi có thay đổi lớn về cấu trúc folder hoặc thêm file mới.*
+File này chỉ còn giá trị lịch sử audit. Backlog và trạng thái sống hiện tại nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
