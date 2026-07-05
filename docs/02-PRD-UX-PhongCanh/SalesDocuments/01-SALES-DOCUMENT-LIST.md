@@ -142,15 +142,15 @@ Nếu POS/báo giá/hóa đơn không chọn khách, backend phải gán chứng
 
 ### 5.2. Ngoài phạm vi hiện tại
 
-Các thao tác sau là thiết kế tương lai, không coi là đã có hiện tại:
+Các thao tác sau nằm ngoài phạm vi hiện tại, không coi là đã có trong implementation:
 
 | Trạng thái | Thao tác ngoài phạm vi hiện tại |
 |---|---|
-| Báo giá | Hủy báo giá nếu Owner chốt sau |
+| Báo giá | Hủy báo giá nếu Owner chốt nghiệp vụ riêng |
 | Hóa đơn hoàn thành | In lại bill, sửa hóa đơn, hủy hóa đơn |
 | Hóa đơn đã hủy | In/xem lịch sử; không cho sửa tiếp |
 
-Quy tắc sửa/hủy hóa đơn khi làm sau:
+Quy tắc sửa/hủy hóa đơn khi mở phạm vi:
 
 - Không sửa đè hóa đơn đã chốt.
 - Bấm **Sửa hóa đơn** mở chứng từ tại POS như một bản nháp sửa.

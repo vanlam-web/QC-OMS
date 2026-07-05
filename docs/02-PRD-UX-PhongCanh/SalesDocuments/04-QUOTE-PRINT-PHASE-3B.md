@@ -105,7 +105,7 @@ Ghi chú: ...
 Giá trị báo giá chỉ dùng để xác nhận nội dung trước khi bán.
 ```
 
-Không cần logo/ảnh nền/mẫu đẹp trong phạm vi hiện tại. Nếu sau này cần mẫu thương hiệu hơn, mở phase template riêng.
+Không cần logo/ảnh nền/mẫu đẹp trong phạm vi hiện tại. Nếu cần mẫu thương hiệu hơn, mở phase template riêng.
 
 ### 3.2. Dòng hàng và kích thước
 

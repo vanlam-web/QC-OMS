@@ -170,7 +170,7 @@ Nếu thiếu `daixrong` hoặc sai định dạng kích thước (ví dụ `120
 - Chỉ khi kích thước đã hợp lệ mới cho bấm `[+]`.
 - `[🗑]` vẫn dùng được nếu nhân viên không muốn xử lý thông báo đó.
 - Không sửa ngược tên file gốc từ máy sản xuất; tên file gốc được giữ để đối chiếu.
-- Nếu sau này có tầng lưu trữ/DB cho hàng đợi, có thể lưu cả tên file gốc và giá trị đã sửa. Cơ chế lưu này chưa đặc tả trong phạm vi POS hiện tại.
+- Nếu mở tầng lưu trữ/DB cho hàng đợi, có thể lưu cả tên file gốc và giá trị đã sửa. Cơ chế lưu này nằm ngoài phạm vi POS hiện tại.
 
 Tạm thời chưa đặc tả Database cho luồng này: không tạo bảng mới, không chốt schema hàng đợi, không chốt schema cấu hình khách hàng/hàng hóa được phép.
 

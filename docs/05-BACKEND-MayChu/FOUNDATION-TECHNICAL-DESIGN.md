@@ -196,7 +196,7 @@ Ràng buộc:
 - Giai đoạn 0 dùng transaction khi tạo user kèm profile và permissions.
 - Nếu tạo Auth user thành công nhưng ghi profile thất bại, Backend phải thực hiện cleanup hoặc đánh dấu lỗi để retry an toàn.
 - Endpoint thay permission ghi trạng thái mới và audit log trong cùng transaction Database.
-- Checkout và các use case tài chính tương lai bắt buộc có idempotency key; contract cụ thể sẽ được chốt trước Giai đoạn 4.
+- Checkout và các use case tài chính ghi nhiều bảng bắt buộc có idempotency key; contract cụ thể chốt trong slice liên quan.
 
 ---
 

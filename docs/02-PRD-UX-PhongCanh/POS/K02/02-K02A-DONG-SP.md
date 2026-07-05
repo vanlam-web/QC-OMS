@@ -63,7 +63,7 @@
 6. **Đệ quy rút gọn — Combo Cấp 1 vs Cấp 2:**
    - **Combo Cấp 1:** Được mở khoang `[🛠️ Sửa BOM]`, chỉnh sửa đầy đủ vật tư chính/phụ.
    - **Combo Cấp 2:** Khoá tuyệt đối — hiển thị phẳng như hàng thường, chỉ cho sửa SL. Không hiện cấu trúc cây, không hiện nút Sửa BOM.
-7. **Deep-Scan khi thanh toán:** Không bắt buộc cho combo lồng nhau trong MVP. Chỉ bật khi phase BOM sau này đã chốt cấu hình nhiều cấp, version và chống vòng lặp.
+7. **Deep-Scan khi thanh toán:** Không bắt buộc cho combo lồng nhau trong MVP. Chỉ bật khi BOM nhiều cấp đã có cấu hình, version và chống vòng lặp.
 8. **Quy đổi đơn vị:** POS vẫn hiển thị và thu tiền theo `m²`; quy đổi tồn kho thực tế do Backend xử lý.
 9. **Tấm lỡ khổ:** PRD chỉ hiển thị cảnh báo / lựa chọn thao tác nếu Backend xác định cần dùng tấm lỡ hoặc tấm nguyên.
 10. **Khui động tự do:** Nút `[🍾 KHUI VẬT TƯ]` nằm trên Top Bar hệ thống, độc lập với giỏ hàng POS. Dùng khi cuộn/tấm hỏng ngoài ý muốn hoặc cần khui độc lập không gắn đơn.

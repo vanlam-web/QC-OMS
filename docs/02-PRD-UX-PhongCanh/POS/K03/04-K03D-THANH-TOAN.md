@@ -186,7 +186,7 @@ Nhân viên bấm [THANH TOÁN] (F9)
 
 - Sinh ảnh bill từ mẫu bill HTML là khả thi cho giai đoạn đầu.
 - Giai đoạn đầu ưu tiên sinh ảnh ở Frontend để triển khai nhanh.
-- Nếu sau này ảnh bill sai font, sai layout hoặc hiệu năng kém, cân nhắc chuyển sang render ảnh bill ở Backend.
+- Nếu ảnh bill sai font, sai layout hoặc hiệu năng kém, cân nhắc chuyển sang render ảnh bill ở Backend trong slice riêng.
 - Giai đoạn đầu ưu tiên chạy trên Chrome.
 - Mỗi máy POS chỉ cấu hình một kiểu mở Zalo: **Zalo PC** hoặc **Zalo Web**.
 - Khi khách dùng kênh Zalo, hệ thống mở theo kiểu Zalo đã cấu hình cho máy POS đó; không tự đổi qua kiểu Zalo khác trong cùng máy.
