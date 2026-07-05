@@ -87,6 +87,14 @@ const voucher: CashbookVoucher = {
   amount: 500000,
 }
 
+const manualVoucher: CashbookVoucher = {
+  id: 'voucher-2',
+  code: 'PC000001',
+  source_type: 'manual_voucher',
+  status: 'posted',
+  amount: 45000,
+}
+
 function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
   return {
     listAccounts: vi.fn(async () => ({ items: accounts })),
@@ -99,6 +107,10 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
       source_type: 'manual_voucher' as const,
       status: 'posted' as const,
       amount: 45000,
+    })),
+    cancelCashbookVoucher: vi.fn(async () => ({
+      ...manualVoucher,
+      status: 'cancelled' as const,
     })),
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
     getCashbookEntry: vi.fn(async () => cashbookDetail),
@@ -246,6 +258,19 @@ describe('FinancePage', () => {
     })
     await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
     expect(screen.getByRole('status')).toHaveTextContent('Đã tạo phiếu PC000001')
+  })
+
+  it('cancels a posted manual cashbook voucher and reloads cashbook data', async () => {
+    const service = makeService({
+      listCashbookVouchers: vi.fn(async () => ({ items: [voucher, manualVoucher], total: 2 })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Hủy phiếu PC000001' }))
+
+    expect(service.cancelCashbookVoucher).toHaveBeenCalledWith('voucher-2')
+    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('status')).toHaveTextContent('Đã hủy phiếu PC000001')
   })
 
   it('opens cashbook entry detail with allocation rows', async () => {

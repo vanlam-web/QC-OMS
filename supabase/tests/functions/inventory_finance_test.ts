@@ -339,6 +339,50 @@ Deno.test("manual cashbook voucher creation validates payload and calls reposito
   });
 });
 
+Deno.test("manual cashbook voucher cancel requires finance permission", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/cancel",
+    { method: "POST" },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher cancel calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/cancel",
+    { method: "POST" },
+    repo(["perm.manage_finance"], {
+      cancelCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-1",
+          code: "PC000001",
+          source_type: "manual_voucher",
+          status: "cancelled",
+          amount: 45000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    voucherId: "voucher-1",
+  });
+  assertEquals(await data(response), {
+    id: "voucher-1",
+    code: "PC000001",
+    source_type: "manual_voucher",
+    status: "cancelled",
+    amount: 45000,
+  });
+});
+
 Deno.test("source-linked cashbook vouchers cannot be edited independently", async () => {
   const response = await call(
     "/api/v1/finance/cashbook-vouchers/source-linked-1/revise",
