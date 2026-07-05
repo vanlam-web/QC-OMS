@@ -93,6 +93,13 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
     listCustomerDebts: vi.fn(async () => ({ items: [debt], page: 1, page_size: 15, total: 1 })),
     getCustomerDebt: vi.fn(async () => debtDetail),
     collectCustomerDebt: vi.fn(async () => ({ payment_receipt_id: 'receipt-1', allocated_amount: 500000 })),
+    createCashbookVoucher: vi.fn(async () => ({
+      id: 'voucher-2',
+      code: 'PC000001',
+      source_type: 'manual_voucher' as const,
+      status: 'posted' as const,
+      amount: 45000,
+    })),
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
     getCashbookEntry: vi.fn(async () => cashbookDetail),
     listCashbookEntries: vi.fn(async () => ({
@@ -207,6 +214,38 @@ describe('FinancePage', () => {
     createObjectURL.mockRestore()
     revokeObjectURL.mockRestore()
     click.mockRestore()
+  })
+
+  it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Phiếu chi' }))
+    const form = await screen.findByRole('form', { name: 'Tạo phiếu chi' })
+
+    await userEvent.selectOptions(within(form).getByLabelText('Quỹ/tài khoản'), 'cash-1')
+    await userEvent.selectOptions(within(form).getByLabelText('Loại phiếu'), 'operating_expense')
+    await userEvent.type(within(form).getByLabelText('Số tiền'), '45000')
+    await userEvent.selectOptions(within(form).getByLabelText('Đối tượng'), 'employee')
+    await userEvent.type(within(form).getByLabelText('Người nộp/nhận'), 'Nguyen Van A')
+    await userEvent.type(within(form).getByLabelText('Số điện thoại'), '0900000000')
+    await userEvent.click(within(form).getByLabelText('Không hạch toán KQKD'))
+    await userEvent.type(within(form).getByLabelText('Lý do'), 'Mua văn phòng phẩm')
+    await userEvent.click(within(form).getByRole('button', { name: 'Lưu phiếu chi' }))
+
+    expect(service.createCashbookVoucher).toHaveBeenCalledWith({
+      voucher_direction: 'out',
+      voucher_type: 'operating_expense',
+      finance_account_id: 'cash-1',
+      amount: 45000,
+      is_business_accounted: false,
+      counterparty_type: 'employee',
+      counterparty_name: 'Nguyen Van A',
+      counterparty_phone: '0900000000',
+      reason: 'Mua văn phòng phẩm',
+    })
+    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('status')).toHaveTextContent('Đã tạo phiếu PC000001')
   })
 
   it('opens cashbook entry detail with allocation rows', async () => {

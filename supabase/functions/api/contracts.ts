@@ -963,6 +963,11 @@ export interface FoundationRepository {
     actorUserId: string;
     payload: Record<string, unknown>;
   }): Promise<DebtCollectionResultData>;
+  createCashbookVoucher(input: {
+    organizationId: string;
+    actorUserId: string;
+    payload: Record<string, unknown>;
+  }): Promise<CashbookVoucherData>;
   listCashbookEntries(input: {
     organizationId: string;
     financeAccountId?: string;

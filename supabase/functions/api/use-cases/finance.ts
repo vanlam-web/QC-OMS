@@ -97,6 +97,24 @@ export async function collectCustomerDebt(
   }
 }
 
+export async function createCashbookVoucher(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  body: unknown,
+): Promise<CashbookVoucherData> {
+  requireAnyPermission(context, ["perm.manage_finance"]);
+  const payload = parseCashbookVoucherPayload(body);
+  try {
+    return await repository.createCashbookVoucher({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
 export async function listCashbookBalances(
   repository: FoundationRepository,
   context: FinanceContext,
@@ -193,6 +211,43 @@ function parseDebtCollectionPayload(body: unknown): Record<string, unknown> {
   };
 }
 
+function parseCashbookVoucherPayload(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) throw validationError();
+  const direction = parseRequiredEnum(body.voucher_direction, ["in", "out"]);
+  const voucherType = parseRequiredEnum(body.voucher_type, [
+    "other_income",
+    "material_purchase",
+    "customer_refund",
+    "operating_expense",
+    "other_expense",
+  ]);
+  if (direction === "in" && voucherType !== "other_income") throw validationError();
+  if (direction === "out" && voucherType === "other_income") throw validationError();
+  if (!isNonEmptyString(body.finance_account_id)) throw validationError();
+  const amount = parseMoney(body.amount);
+  if (amount <= 0) throw validationError();
+  const counterpartyType = parseOptionalEnumValue(body.counterparty_type, [
+    "customer",
+    "supplier",
+    "employee",
+    "other",
+    "none",
+  ]) ?? "none";
+  if (!isNonEmptyString(body.reason)) throw validationError();
+
+  return {
+    voucher_direction: direction,
+    voucher_type: voucherType,
+    finance_account_id: body.finance_account_id.trim(),
+    amount,
+    is_business_accounted: typeof body.is_business_accounted === "boolean" ? body.is_business_accounted : true,
+    counterparty_type: counterpartyType,
+    counterparty_name: isNonEmptyString(body.counterparty_name) ? body.counterparty_name.trim() : null,
+    counterparty_phone: isNonEmptyString(body.counterparty_phone) ? body.counterparty_phone.trim() : null,
+    reason: body.reason.trim(),
+  };
+}
+
 function parsePagedSearch(url: URL): { search?: string; page: number; pageSize: number } {
   const search = url.searchParams.get("search")?.trim();
   const page = Number(url.searchParams.get("page") ?? "1");
@@ -208,6 +263,19 @@ function parseOptionalEnum<T extends string>(value: string | null, allowed: read
   if (value === null || value === "") return undefined;
   if ((allowed as readonly string[]).includes(value)) return value as T;
   throw validationError();
+}
+
+function parseOptionalEnumValue<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "string") throw validationError();
+  if ((allowed as readonly string[]).includes(value)) return value as T;
+  throw validationError();
+}
+
+function parseRequiredEnum<T extends string>(value: unknown, allowed: readonly T[]): T {
+  const parsed = parseOptionalEnumValue(value, allowed);
+  if (parsed === undefined) throw validationError();
+  return parsed;
 }
 
 function parseOptionalBoolean(value: string | null): boolean | undefined {

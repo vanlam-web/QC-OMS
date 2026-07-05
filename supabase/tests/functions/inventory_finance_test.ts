@@ -263,6 +263,82 @@ Deno.test("debt collection rejects overpayment", async () => {
   assertEquals(response.status, 400);
 });
 
+Deno.test("manual cashbook voucher creation requires finance permission", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 45000,
+        reason: "Mua văn phòng phẩm",
+      }),
+    },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher creation validates payload and calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 45000,
+        is_business_accounted: false,
+        counterparty_type: "employee",
+        counterparty_name: "Nguyen Van A",
+        counterparty_phone: "0900000000",
+        reason: "Mua văn phòng phẩm",
+      }),
+    },
+    repo(["perm.manage_finance"], {
+      createCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-1",
+          code: "PC000001",
+          source_type: "manual_voucher",
+          status: "posted",
+          amount: 45000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    payload: {
+      voucher_direction: "out",
+      voucher_type: "operating_expense",
+      finance_account_id: "cash-1",
+      amount: 45000,
+      is_business_accounted: false,
+      counterparty_type: "employee",
+      counterparty_name: "Nguyen Van A",
+      counterparty_phone: "0900000000",
+      reason: "Mua văn phòng phẩm",
+    },
+  });
+  assertEquals(await data(response), {
+    id: "voucher-1",
+    code: "PC000001",
+    source_type: "manual_voucher",
+    status: "posted",
+    amount: 45000,
+  });
+});
+
 Deno.test("source-linked cashbook vouchers cannot be edited independently", async () => {
   const response = await call(
     "/api/v1/finance/cashbook-vouchers/source-linked-1/revise",

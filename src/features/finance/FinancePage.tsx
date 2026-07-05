@@ -21,6 +21,7 @@ import type {
   CashbookSearchScope,
   CashbookStatus,
   CashbookVoucher,
+  CreateCashbookVoucherInput,
   CustomerDebtDetail,
   CustomerDebtSummary,
   FinanceAccount,
@@ -80,6 +81,16 @@ function sourceTypeText(value: CashbookEntry['source_type']) {
   return value === 'payment_receipt_method' ? 'Phiếu thu' : 'Phiếu quỹ'
 }
 
+function voucherTypeOptions(direction: CashbookDirection): Array<{ value: CreateCashbookVoucherInput['voucher_type']; label: string }> {
+  if (direction === 'in') return [{ value: 'other_income', label: 'Thu nhập khác' }]
+  return [
+    { value: 'material_purchase', label: 'Vật tư' },
+    { value: 'customer_refund', label: 'Hoàn tiền khách' },
+    { value: 'operating_expense', label: 'Chi phí vận hành' },
+    { value: 'other_expense', label: 'Chi khác' },
+  ]
+}
+
 function dateText(value: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return 'Chưa có'
@@ -123,6 +134,16 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [showCashbookColumns, setShowCashbookColumns] = useState(false)
   const [visibleCashbookColumns, setVisibleCashbookColumns] = useState<CashbookColumnKey[]>(defaultCashbookColumns)
   const [vouchers, setVouchers] = useState<CashbookVoucher[]>([])
+  const [voucherMode, setVoucherMode] = useState<CashbookDirection | null>(null)
+  const [voucherAccountId, setVoucherAccountId] = useState('')
+  const [voucherType, setVoucherType] = useState<CreateCashbookVoucherInput['voucher_type']>('other_income')
+  const [voucherAmount, setVoucherAmount] = useState('')
+  const [voucherBusinessAccounted, setVoucherBusinessAccounted] = useState(true)
+  const [voucherCounterpartyType, setVoucherCounterpartyType] = useState<CreateCashbookVoucherInput['counterparty_type']>('none')
+  const [voucherCounterpartyName, setVoucherCounterpartyName] = useState('')
+  const [voucherCounterpartyPhone, setVoucherCounterpartyPhone] = useState('')
+  const [voucherReason, setVoucherReason] = useState('')
+  const [savingVoucher, setSavingVoucher] = useState(false)
   const [collectAmount, setCollectAmount] = useState('')
   const [cashAmount, setCashAmount] = useState('')
   const [bankAmount, setBankAmount] = useState('')
@@ -134,8 +155,24 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [error, setError] = useState<string | null>(null)
 
   const activeBankAccounts = accounts.filter((account) => account.is_active && account.account_type === 'bank')
+  const activeAccounts = accounts.filter((account) => account.is_active)
   const totalDebtAmount = debts?.reduce((sum, debt) => sum + debt.total_debt, 0) ?? 0
   const totalBalanceAmount = balances.reduce((sum, balance) => sum + balance.balance, 0)
+
+  function openVoucherForm(direction: CashbookDirection) {
+    const options = voucherTypeOptions(direction)
+    setVoucherMode(direction)
+    setVoucherAccountId(accounts.find((account) => account.is_active)?.id ?? '')
+    setVoucherType(options[0].value)
+    setVoucherAmount('')
+    setVoucherBusinessAccounted(direction === 'out')
+    setVoucherCounterpartyType('none')
+    setVoucherCounterpartyName('')
+    setVoucherCounterpartyPhone('')
+    setVoucherReason('')
+    setError(null)
+    setMessage(null)
+  }
 
   async function loadDebts(input: { search?: string; page?: number; page_size?: number } = {}) {
     const nextSearch = input.search ?? lastDebtSearch
@@ -394,20 +431,67 @@ export function FinancePage({ service }: { service: FinanceService }) {
     }
   }
 
+  async function createManualVoucher(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (voucherMode === null) return
+    const amount = Number(voucherAmount || 0)
+    if (voucherAccountId === '') {
+      setError('Chọn quỹ/tài khoản cho phiếu thu chi.')
+      return
+    }
+    if (amount <= 0) {
+      setError('Số tiền phiếu phải lớn hơn 0.')
+      return
+    }
+    if (voucherReason.trim() === '') {
+      setError('Nhập lý do cho phiếu thu chi.')
+      return
+    }
+    setSavingVoucher(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const result = await service.createCashbookVoucher({
+        voucher_direction: voucherMode,
+        voucher_type: voucherType,
+        finance_account_id: voucherAccountId,
+        amount,
+        is_business_accounted: voucherBusinessAccounted,
+        counterparty_type: voucherCounterpartyType,
+        ...(voucherCounterpartyName.trim() ? { counterparty_name: voucherCounterpartyName.trim() } : {}),
+        ...(voucherCounterpartyPhone.trim() ? { counterparty_phone: voucherCounterpartyPhone.trim() } : {}),
+        reason: voucherReason.trim(),
+      })
+      setMessage(`Đã tạo phiếu ${result.code}.`)
+      setVoucherMode(null)
+      await Promise.all([loadCashbook({ page: 1 }), loadReferenceData()])
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tạo được phiếu thu chi.'))
+    } finally {
+      setSavingVoucher(false)
+    }
+  }
+
   return (
     <ManagementPage
       title="Sổ quỹ"
       actions={
-        <ManagementCompactToolbar ariaLabel="Lọc công nợ khách hàng" onSubmit={filterDebts}>
-          <ManagementCompactSearch
-            label="Tìm công nợ"
-            placeholder="Tên, mã khách, mã hóa đơn"
-            value={debtSearch}
-            leadingIcon={<Search aria-hidden="true" size={16} />}
-            onChange={setDebtSearch}
-          />
-          <button className="button button-primary" type="submit">Lọc công nợ</button>
-        </ManagementCompactToolbar>
+        <div className="finance-page-actions">
+          <ManagementCompactToolbar ariaLabel="Lọc công nợ khách hàng" onSubmit={filterDebts}>
+            <ManagementCompactSearch
+              label="Tìm công nợ"
+              placeholder="Tên, mã khách, mã hóa đơn"
+              value={debtSearch}
+              leadingIcon={<Search aria-hidden="true" size={16} />}
+              onChange={setDebtSearch}
+            />
+            <button className="button button-primary" type="submit">Lọc công nợ</button>
+          </ManagementCompactToolbar>
+          <div className="finance-voucher-actions" aria-label="Tạo phiếu thu chi">
+            <button className="button button-secondary" type="button" onClick={() => openVoucherForm('in')}>Phiếu thu</button>
+            <button className="button button-secondary" type="button" onClick={() => openVoucherForm('out')}>Phiếu chi</button>
+          </div>
+        </div>
       }
       kpis={
         <MetricGrid ariaLabel="Tổng quan sổ quỹ">
@@ -477,6 +561,80 @@ export function FinancePage({ service }: { service: FinanceService }) {
     >
       {error ? <p role="alert">{error}</p> : null}
       {message ? <p role="status">{message}</p> : null}
+
+      {voucherMode !== null ? (
+        <section aria-label={`Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}`} className="management-inline-detail finance-voucher-panel">
+          <header>
+            <div>
+              <h2>Tạo phiếu {voucherMode === 'in' ? 'thu' : 'chi'}</h2>
+              <p>{voucherMode === 'in' ? 'Ghi tăng quỹ' : 'Ghi giảm quỹ'} ngay khi lưu.</p>
+            </div>
+            <button className="button button-secondary" type="button" onClick={() => setVoucherMode(null)}>Đóng</button>
+          </header>
+          <form aria-label={`Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}`} className="management-detail-form" onSubmit={createManualVoucher}>
+            <label>
+              Quỹ/tài khoản
+              <select value={voucherAccountId} onChange={(event) => setVoucherAccountId(event.target.value)}>
+                <option value="">Chọn quỹ</option>
+                {activeAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Loại phiếu
+              <select
+                value={voucherType}
+                onChange={(event) => setVoucherType(event.target.value as CreateCashbookVoucherInput['voucher_type'])}
+              >
+                {voucherTypeOptions(voucherMode).map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Số tiền
+              <input min="1" type="number" value={voucherAmount} onChange={(event) => setVoucherAmount(event.target.value)} />
+            </label>
+            <label>
+              Đối tượng
+              <select
+                value={voucherCounterpartyType}
+                onChange={(event) => setVoucherCounterpartyType(event.target.value as CreateCashbookVoucherInput['counterparty_type'])}
+              >
+                <option value="none">Không có</option>
+                <option value="customer">Khách hàng</option>
+                <option value="supplier">Nhà cung cấp</option>
+                <option value="employee">Nhân viên</option>
+                <option value="other">Khác</option>
+              </select>
+            </label>
+            <label>
+              Người nộp/nhận
+              <input value={voucherCounterpartyName} onChange={(event) => setVoucherCounterpartyName(event.target.value)} />
+            </label>
+            <label>
+              Số điện thoại
+              <input value={voucherCounterpartyPhone} onChange={(event) => setVoucherCounterpartyPhone(event.target.value)} />
+            </label>
+            <label>
+              <input
+                checked={!voucherBusinessAccounted}
+                type="checkbox"
+                onChange={(event) => setVoucherBusinessAccounted(!event.target.checked)}
+              />
+              Không hạch toán KQKD
+            </label>
+            <label>
+              Lý do
+              <input value={voucherReason} onChange={(event) => setVoucherReason(event.target.value)} />
+            </label>
+            <button className="button button-primary" disabled={savingVoucher} type="submit">
+              Lưu phiếu {voucherMode === 'in' ? 'thu' : 'chi'}
+            </button>
+          </form>
+        </section>
+      ) : null}
 
       <ManagementListSurface ariaLabel="Tài khoản quỹ">
         <h2>Tài khoản quỹ</h2>

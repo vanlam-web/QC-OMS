@@ -139,6 +139,18 @@ export interface CashbookVoucher {
   amount: number
 }
 
+export interface CreateCashbookVoucherInput {
+  voucher_direction: CashbookDirection
+  voucher_type: 'other_income' | 'material_purchase' | 'customer_refund' | 'operating_expense' | 'other_expense'
+  finance_account_id: string
+  amount: number
+  is_business_accounted?: boolean
+  counterparty_type?: 'customer' | 'supplier' | 'employee' | 'other' | 'none'
+  counterparty_name?: string
+  counterparty_phone?: string
+  reason: string
+}
+
 export interface CashbookVoucherListResponse {
   items: CashbookVoucher[]
   total: number

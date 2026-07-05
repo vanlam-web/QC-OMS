@@ -4,6 +4,7 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   collectCustomerDebt,
+  createCashbookVoucher,
   getCashbookEntry,
   getCustomerDebt,
   getPaymentReceipt,
@@ -81,6 +82,14 @@ export async function handleFinance(
 
   if (url.pathname === "/api/v1/finance/cashbook/vouchers" && request.method === "GET") {
     return successResponse(await listCashbookVouchers(dependencies.repository, context), traceId);
+  }
+
+  if (url.pathname === "/api/v1/finance/cashbook-vouchers" && request.method === "POST") {
+    return successResponse(
+      await createCashbookVoucher(dependencies.repository, context, await request.json()),
+      traceId,
+      { status: 201 },
+    );
   }
 
   const cashbookEntryMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook\/([^/]+)$/);

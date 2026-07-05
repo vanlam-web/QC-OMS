@@ -77,6 +77,47 @@ describe('finance-service', () => {
     ])
   })
 
+  it('posts manual cashbook voucher payload', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: FinanceApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return { id: 'voucher-1', code: 'PC000001', source_type: 'manual_voucher', status: 'posted', amount: 45000 } as T
+    }
+    const service = createFinanceService({ request })
+
+    await service.createCashbookVoucher({
+      voucher_direction: 'out',
+      voucher_type: 'operating_expense',
+      finance_account_id: 'cash-1',
+      amount: 45000,
+      is_business_accounted: false,
+      counterparty_type: 'employee',
+      counterparty_name: 'Nguyen Van A',
+      counterparty_phone: '0900000000',
+      reason: 'Mua văn phòng phẩm',
+    })
+
+    expect(calls).toEqual([
+      [
+        '/api/v1/finance/cashbook-vouchers',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            voucher_direction: 'out',
+            voucher_type: 'operating_expense',
+            finance_account_id: 'cash-1',
+            amount: 45000,
+            is_business_accounted: false,
+            counterparty_type: 'employee',
+            counterparty_name: 'Nguyen Van A',
+            counterparty_phone: '0900000000',
+            reason: 'Mua văn phòng phẩm',
+          }),
+        },
+      ],
+    ])
+  })
+
   it('builds a cashbook CSV from visible rows', () => {
     expect(buildCashbookCsv([
       {
