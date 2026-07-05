@@ -1,7 +1,8 @@
-# Overview — Tổng quan vận hành
+# Overview — Tổng Quan Vận Hành
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Tham khảo:** KiotViet `Tổng quan`, lược bỏ trả hàng, chấm công, vay vốn và marketing widget
+> Index cho đặc tả UI Overview. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+>
+> Tham khảo: KiotViet `Tổng quan`, lược bỏ trả hàng, chấm công, vay vốn và marketing widget.
 
 ---
 
@@ -13,7 +14,7 @@ Màn này không thay thế các báo cáo chi tiết. Khi cần phân tích sâ
 
 ---
 
-## 2. Tài Liệu Con
+## 2. Entry Chính
 
 - [01-DASHBOARD.md](./01-DASHBOARD.md)
 

@@ -1,7 +1,8 @@
-# PriceBook — Quản lý bảng giá
+# PriceBook — Quản Lý Bảng Giá
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Phạm vi:** Bảng giá chung, bảng giá theo nhóm khách và giá sản phẩm trong từng bảng
+> Index cho đặc tả UI PriceBook. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+>
+> Phạm vi: bảng giá chung, bảng giá theo nhóm khách và giá sản phẩm trong từng bảng.
 
 ---
 
@@ -13,7 +14,7 @@ Giá sửa tay theo khách + sản phẩm là lịch sử gợi ý trong POS, kh
 
 ---
 
-## 2. File trong module
+## 2. Entry Chính
 
 | File | Nội dung |
 |---|---|
@@ -22,11 +23,13 @@ Giá sửa tay theo khách + sản phẩm là lịch sử gợi ý trong POS, kh
 
 ---
 
-## 3. Liên kết Source of Truth
+## 3. Tham Chiếu
 
-- Business giá bán: [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md)
-- Database Sales: [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md)
-- Backend Pricing API: [CUSTOMER-PRODUCT-PRICING-API.md](../../05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md)
+| Nguồn | File |
+|---|---|
+| Business giá bán | [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md) |
+| Database Sales | [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md) |
+| Backend Pricing API | [CUSTOMER-PRODUCT-PRICING-API.md](../../05-BACKEND-MayChu/POS/CUSTOMER-PRODUCT-PRICING-API.md) |
 
 ---
 
@@ -36,3 +39,5 @@ Giá sửa tay theo khách + sản phẩm là lịch sử gợi ý trong POS, kh
 - Chiết khấu riêng ngoài bảng giá.
 - Công thức cập nhật giá hàng loạt kiểu nâng/xả giá theo phần trăm.
 - Lịch sử thay đổi giá chi tiết theo từng lần sửa.
+
+← [Quay về PRD/UX README](../README.md)

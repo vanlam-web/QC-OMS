@@ -1,7 +1,8 @@
-# System — Tài khoản, quyền và máy trạm
+# System — Tài Khoản, Quyền Và Máy Trạm
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Nguồn:** `05-BACKEND-MayChu/POS/AUTH.md`, `04-DATABASE/System/AUTH-PERMISSIONS.md`
+> Index cho đặc tả UI System. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+>
+> Nguồn: [POS/AUTH.md](../../05-BACKEND-MayChu/POS/AUTH.md), [AUTH-PERMISSIONS.md](../../04-DATABASE/System/AUTH-PERMISSIONS.md).
 
 ---
 
@@ -40,3 +41,5 @@ Không copy các thiết lập KiotViet không dùng trong xưởng:
 
 - [01-USERS-PERMISSIONS.md](./01-USERS-PERMISSIONS.md)
 - [02-SYSTEM-SETTINGS.md](./02-SYSTEM-SETTINGS.md)
+
+← [Quay về PRD/UX README](../README.md)

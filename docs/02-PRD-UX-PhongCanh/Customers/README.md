@@ -1,7 +1,8 @@
-# Customers — Quản lý khách hàng
+# Customers — Quản Lý Khách Hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Phạm vi:** Danh sách khách hàng, hồ sơ khách, nhóm khách, lịch sử bán và công nợ
+> Index cho đặc tả UI Customers. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+>
+> Phạm vi: danh sách khách hàng, hồ sơ khách, nhóm khách, lịch sử bán và công nợ.
 
 ---
 
@@ -13,7 +14,7 @@ POS chỉ cần thêm nhanh/chọn khách để bán hàng. Trang Customers dùn
 
 ---
 
-## 2. File trong module
+## 2. Entry Chính
 
 | File | Nội dung |
 |---|---|
@@ -22,12 +23,14 @@ POS chỉ cần thêm nhanh/chọn khách để bán hàng. Trang Customers dùn
 
 ---
 
-## 3. Liên kết Source of Truth
+## 3. Tham Chiếu
 
-- Business khách hàng POS: [POS-CUSTOMER.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md)
-- Business giá bán POS: [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md)
-- Business công nợ: [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
-- Finance công nợ UX: [Finance/03-CUSTOMER-DEBT.md](../Finance/03-CUSTOMER-DEBT.md)
+| Nguồn | File |
+|---|---|
+| Business khách hàng POS | [POS-CUSTOMER.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md) |
+| Business giá bán POS | [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md) |
+| Business công nợ | [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) |
+| Finance công nợ UX | [Finance/03-CUSTOMER-DEBT.md](../Finance/03-CUSTOMER-DEBT.md) |
 
 ---
 
@@ -38,3 +41,5 @@ POS chỉ cần thêm nhanh/chọn khách để bán hàng. Trang Customers dùn
 - Hóa đơn điện tử/VAT.
 - Zalo shop/website bán hàng.
 - Phân công người phụ trách khách hàng.
+
+← [Quay về PRD/UX README](../README.md)
