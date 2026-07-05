@@ -5,7 +5,6 @@
 > **Ngày đối chiếu:** 2026-06-27
 > **Phạm vi:** Đối chiếu giữa 2 audit độc lập (Cursor & Codex) trên `docs/`
 > **File tham chiếu:** `docs/AUDIT_REPORT.md` (giữ nguyên, không ghi đè)
-> **Trạng thái:** **HISTORICAL — PATCH WAVES COMPLETED WHERE MARKED BELOW**
 > **Người lập:** Cursor
 
 ---

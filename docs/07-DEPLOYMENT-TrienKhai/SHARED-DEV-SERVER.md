@@ -1,6 +1,6 @@
 # Optional internal shared-dev server
 
-> **Trạng thái:** Legacy/optional fallback nội bộ. Không phải backend mặc định hiện tại.
+> **Vai trò:** Legacy/optional fallback nội bộ. Không phải backend mặc định hiện tại.
 
 Backend chính cho dev/staging hiện tại là Supabase Cloud. Tài liệu này chỉ giữ lại cách chạy một Supabase local chung trong LAN/Tailscale khi cần phương án phụ, demo nội bộ, hoặc kiểm thử không muốn dùng Cloud.
 

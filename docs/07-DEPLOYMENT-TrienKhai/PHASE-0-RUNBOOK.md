@@ -1,6 +1,6 @@
 # Phase 0 Runbook
 
-> **Trạng thái hiện tại:** backend chính cho dev/staging là Supabase Cloud. Docker/Supabase local chỉ dùng khi cần isolated local database/test.
+> **Hiện tại:** backend chính cho dev/staging là Supabase Cloud. Docker/Supabase local chỉ dùng khi cần isolated local database/test.
 
 ## Dev/staging verification with Supabase Cloud
 

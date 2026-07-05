@@ -1,6 +1,6 @@
 # KẾ HOẠCH PHÁT TRIỂN QC-OMS — FE + BE THEO TỪNG GIAI ĐOẠN
 
-> **Trạng thái:** ✅ Roadmap dài hạn đã chốt; thực thi hiện tại đi theo vertical slices 1A/1B/1C/2A/2B/2C/2D
+> **Vai trò:** Roadmap dài hạn đã chốt; thực thi hiện tại đi theo vertical slices 1A/1B/1C/2A/2B/2C/2D.
 > **Ngày lập:** 2026-06-28
 > **Cập nhật:** 2026-07-01 theo MVP scope và trạng thái main hiện tại
 > **Mục tiêu:** Sau mỗi giai đoạn phải có một luồng người dùng hoàn chỉnh, chạy bằng Frontend và Backend thật trên môi trường staging.

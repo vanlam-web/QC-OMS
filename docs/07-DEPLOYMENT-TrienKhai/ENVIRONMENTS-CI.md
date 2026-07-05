@@ -1,6 +1,6 @@
 # ENVIRONMENTS & CI/CD — Nền tảng triển khai QC-OMS
 
-> **Trạng thái:** ✅ Cập nhật theo quyết định Supabase Cloud backend chính
+> **Mốc cập nhật:** theo quyết định Supabase Cloud backend chính.
 > **Phạm vi:** Dev, staging, production baseline và pipeline.
 
 ---
