@@ -520,11 +520,18 @@ button {
 }
 
 .management-filter-actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   border-top: 1px solid var(--color-border-muted);
+  background: var(--color-surface-raised);
   padding-top: var(--space-3);
+}
+
+.management-filter-sidebar-form {
+  display: contents;
 }
 
 .management-filter-expand-button:hover,
@@ -1094,25 +1101,9 @@ button {
   padding-top: var(--space-4);
 }
 
-.finance-cashbook-filter {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.finance-cashbook-filter label,
 .finance-cashbook-detail dl > div {
   display: grid;
   gap: var(--space-1);
-}
-
-.finance-cashbook-filter input,
-.finance-cashbook-filter select {
-  min-height: 2.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  padding: 0 var(--space-2);
 }
 
 .finance-cashbook-columns {

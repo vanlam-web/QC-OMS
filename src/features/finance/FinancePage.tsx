@@ -6,6 +6,8 @@ import {
   ManagementCompactSearch,
   ManagementCompactToolbar,
   ManagementDetailRow,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
   ManagementListSurface,
   ManagementPage,
   ManagementRowActionButton,
@@ -362,6 +364,29 @@ export function FinancePage({ service }: { service: FinanceService }) {
     })
   }
 
+  function resetCashbookFilters() {
+    setCashbookSearch('')
+    setCashbookSearchScope('all')
+    setCashbookFrom('')
+    setCashbookTo('')
+    setCashbookAccountId('all')
+    setCashbookDirection('all')
+    setCashbookStatus('all')
+    setCashbookBusinessAccounted('all')
+    setCashbookPage(1)
+    void loadCashbook({
+      search: '',
+      search_scope: 'all',
+      from: '',
+      to: '',
+      finance_account_id: 'all',
+      direction: 'all',
+      status: 'all',
+      business_accounted_filter: 'all',
+      page: 1,
+    })
+  }
+
   async function openCashbookEntry(entry: CashbookEntry) {
     setSelectedCashbookEntry(entry)
     setCashbookDetail(null)
@@ -558,62 +583,83 @@ export function FinancePage({ service }: { service: FinanceService }) {
         </MetricGrid>
       }
       filter={
-        <form aria-label="Bộ lọc sổ quỹ" className="finance-cashbook-filter" onSubmit={filterCashbook}>
-          <label>
-            Tìm theo
-            <select value={cashbookSearchScope} onChange={(event) => setCashbookSearchScope(event.target.value as CashbookSearchScope)}>
-              <option value="all">Tất cả</option>
-              <option value="code">Mã phiếu</option>
-              <option value="note">Ghi chú</option>
-              <option value="transfer_content">Nội dung chuyển khoản</option>
-            </select>
-          </label>
-          <label>
-            Từ ngày
-            <input type="date" value={cashbookFrom} onChange={(event) => setCashbookFrom(event.target.value)} />
-          </label>
-          <label>
-            Đến ngày
-            <input type="date" value={cashbookTo} onChange={(event) => setCashbookTo(event.target.value)} />
-          </label>
-          <label>
-            Quỹ tiền
-            <select value={cashbookAccountId} onChange={(event) => setCashbookAccountId(event.target.value)}>
-              <option value="all">Tổng quỹ</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Loại chứng từ
-            <select value={cashbookDirection} onChange={(event) => setCashbookDirection(event.target.value as CashbookDirection | 'all')}>
-              <option value="all">{directionText('all')}</option>
-              <option value="in">{directionText('in')}</option>
-              <option value="out">{directionText('out')}</option>
-            </select>
-          </label>
-          <label>
-            Trạng thái sổ quỹ
-            <select value={cashbookStatus} onChange={(event) => setCashbookStatus(event.target.value as CashbookStatus | 'all')}>
-              <option value="all">Tất cả</option>
-              <option value="posted">{statusText('posted')}</option>
-              <option value="cancelled">{statusText('cancelled')}</option>
-            </select>
-          </label>
-          <label>
-            Hạch toán KQKD
-            <select
-              value={cashbookBusinessAccounted}
-              onChange={(event) => setCashbookBusinessAccounted(event.target.value as CashbookBusinessAccountedFilter)}
-            >
-              <option value="all">{businessAccountedText('all')}</option>
-              <option value="true">{businessAccountedText('true')}</option>
-              <option value="false">{businessAccountedText('false')}</option>
-            </select>
-          </label>
-          <button className="button button-primary" type="submit">Lọc sổ</button>
-        </form>
+        <ManagementFilterSidebar
+          ariaLabel="Bộ lọc tài chính"
+          actions={
+            <>
+              <button className="button button-primary" form="cashbook-filter-form" type="submit">Lọc sổ</button>
+              <button className="button button-secondary" type="button" onClick={resetCashbookFilters}>
+                <RotateCcw aria-hidden="true" size={16} />
+                Đặt lại bộ lọc tài chính
+              </button>
+            </>
+          }
+        >
+          <form id="cashbook-filter-form" aria-label="Bộ lọc sổ quỹ" className="management-filter-sidebar-form" onSubmit={filterCashbook}>
+            <ManagementFilterGroup title="Sổ quỹ">
+              <ManagementCompactSearch
+                label="Tìm sổ quỹ"
+                placeholder="Mã phiếu, ghi chú"
+                value={cashbookSearch}
+                leadingIcon={<Search aria-hidden="true" size={16} />}
+                onChange={setCashbookSearch}
+              />
+              <label>
+                Tìm theo
+                <select value={cashbookSearchScope} onChange={(event) => setCashbookSearchScope(event.target.value as CashbookSearchScope)}>
+                  <option value="all">Tất cả</option>
+                  <option value="code">Mã phiếu</option>
+                  <option value="note">Ghi chú</option>
+                  <option value="transfer_content">Nội dung chuyển khoản</option>
+                </select>
+              </label>
+              <label>
+                Từ ngày
+                <input type="date" value={cashbookFrom} onChange={(event) => setCashbookFrom(event.target.value)} />
+              </label>
+              <label>
+                Đến ngày
+                <input type="date" value={cashbookTo} onChange={(event) => setCashbookTo(event.target.value)} />
+              </label>
+              <label>
+                Quỹ tiền
+                <select value={cashbookAccountId} onChange={(event) => setCashbookAccountId(event.target.value)}>
+                  <option value="all">Tổng quỹ</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Loại chứng từ
+                <select value={cashbookDirection} onChange={(event) => setCashbookDirection(event.target.value as CashbookDirection | 'all')}>
+                  <option value="all">{directionText('all')}</option>
+                  <option value="in">{directionText('in')}</option>
+                  <option value="out">{directionText('out')}</option>
+                </select>
+              </label>
+              <label>
+                Trạng thái sổ quỹ
+                <select value={cashbookStatus} onChange={(event) => setCashbookStatus(event.target.value as CashbookStatus | 'all')}>
+                  <option value="all">Tất cả</option>
+                  <option value="posted">{statusText('posted')}</option>
+                  <option value="cancelled">{statusText('cancelled')}</option>
+                </select>
+              </label>
+              <label>
+                Hạch toán KQKD
+                <select
+                  value={cashbookBusinessAccounted}
+                  onChange={(event) => setCashbookBusinessAccounted(event.target.value as CashbookBusinessAccountedFilter)}
+                >
+                  <option value="all">{businessAccountedText('all')}</option>
+                  <option value="true">{businessAccountedText('true')}</option>
+                  <option value="false">{businessAccountedText('false')}</option>
+                </select>
+              </label>
+            </ManagementFilterGroup>
+          </form>
+        </ManagementFilterSidebar>
       }
     >
       {error ? <p role="alert">{error}</p> : null}
@@ -876,53 +922,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
       <ManagementListSurface ariaLabel="Sổ quỹ">
         <header className="finance-section-header">
           <h2>Sổ quỹ</h2>
-          <ManagementCompactToolbar ariaLabel="Lọc sổ quỹ" onSubmit={filterCashbook}>
-            <ManagementCompactSearch
-              label="Tìm sổ quỹ"
-              placeholder="Mã phiếu, ghi chú"
-              value={cashbookSearch}
-              leadingIcon={<Search aria-hidden="true" size={16} />}
-              onChange={setCashbookSearch}
-            />
-            <select
-              aria-label="Hướng thu chi"
-              className="management-filter-select"
-              value={cashbookDirection}
-              onChange={(event) => setCashbookDirection(event.target.value as CashbookDirection | 'all')}
-            >
-              <option value="all">{directionText('all')}</option>
-              <option value="in">{directionText('in')}</option>
-              <option value="out">{directionText('out')}</option>
-            </select>
-            <button className="button button-primary" type="submit">Tìm sổ</button>
-            <button
-              className="button button-secondary"
-              type="button"
-              onClick={() => {
-                setCashbookSearch('')
-                setCashbookSearchScope('all')
-                setCashbookFrom('')
-                setCashbookTo('')
-                setCashbookAccountId('all')
-                setCashbookDirection('all')
-                setCashbookStatus('all')
-                setCashbookBusinessAccounted('all')
-                void loadCashbook({
-                  search: '',
-                  search_scope: 'all',
-                  from: '',
-                  to: '',
-                  finance_account_id: 'all',
-                  direction: 'all',
-                  status: 'all',
-                  business_accounted_filter: 'all',
-                  page: 1,
-                })
-              }}
-            >
-              <RotateCcw aria-hidden="true" size={16} />
-              Đặt lại
-            </button>
+          <div className="finance-page-actions" aria-label="Tùy chọn sổ quỹ">
             <button className="button button-secondary" type="button" onClick={() => setShowCashbookColumns((value) => !value)}>
               <Columns3 aria-hidden="true" size={16} />
               Cột
@@ -931,7 +931,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <Download aria-hidden="true" size={16} />
               Xuất file
             </button>
-          </ManagementCompactToolbar>
+          </div>
         </header>
         {showCashbookColumns ? (
           <section aria-label="Chọn cột sổ quỹ" className="finance-cashbook-columns">
