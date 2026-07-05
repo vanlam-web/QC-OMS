@@ -17,6 +17,8 @@ import { formatApiError } from '../../lib/api/error-message'
 import type { SalesDocumentDetail, SalesDocumentListItem } from './types'
 import type { SalesDocumentService } from './sales-document-service'
 import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
+import type { CatalogService } from '../catalog/catalog-service'
+import type { FoundationService } from '../users/foundation-service'
 
 function dateTime(value: string) {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -130,15 +132,22 @@ interface SalesDocumentsState {
   pageSize: number
 }
 
+type PaymentStatusFilter = 'all' | 'unpaid' | 'partial' | 'paid'
+type PaymentMethodFilter = 'all' | 'cash' | 'bank_transfer'
+
 export function SalesDocumentsPage({
   service,
   orderService,
+  userService,
+  catalogService,
   onCreateSalesDocument,
   onOpenQuoteInPos,
   onOpenQuotePrint,
 }: {
   service: SalesDocumentService
   orderService?: Pick<OrderService, 'getQuoteReopenPayload'>
+  userService?: Pick<FoundationService, 'listUsers'>
+  catalogService?: Pick<CatalogService, 'listPriceLists'>
   onCreateSalesDocument?: () => void
   onOpenDashboard: () => void
   onOpenQuoteInPos?: (payload: QuoteReopenPayload) => void
@@ -149,6 +158,12 @@ export function SalesDocumentsPage({
   const [lastSearch, setLastSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'invoice' | 'quote'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatusFilter>('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilter>('all')
+  const [sellerFilter, setSellerFilter] = useState('all')
+  const [priceListFilter, setPriceListFilter] = useState('all')
+  const [sellerOptions, setSellerOptions] = useState<Array<{ id: string; name: string }>>([])
+  const [priceListOptions, setPriceListOptions] = useState<Array<{ id: string; name: string }>>([])
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('month')
   const [dateFrom, setDateFrom] = useState(() => currentMonthRange().from)
   const [dateTo, setDateTo] = useState(() => currentMonthRange().to)
@@ -165,6 +180,10 @@ export function SalesDocumentsPage({
     search?: string
     type?: typeof typeFilter
     status?: typeof statusFilter
+    paymentStatus?: PaymentStatusFilter
+    paymentMethod?: PaymentMethodFilter
+    seller?: string
+    priceList?: string
     time?: typeof timeFilter
     from?: string
     to?: string
@@ -174,6 +193,10 @@ export function SalesDocumentsPage({
     const nextSearch = input.search ?? lastSearch
     const nextType = input.type ?? typeFilter
     const nextStatus = input.status ?? statusFilter
+    const nextPaymentStatus = input.paymentStatus ?? paymentStatusFilter
+    const nextPaymentMethod = input.paymentMethod ?? paymentMethodFilter
+    const nextSeller = input.seller ?? sellerFilter
+    const nextPriceList = input.priceList ?? priceListFilter
     const nextTime = input.time ?? timeFilter
     const nextFrom = input.from ?? dateFrom
     const nextTo = input.to ?? dateTo
@@ -185,6 +208,10 @@ export function SalesDocumentsPage({
         ...(nextSearch ? { search: nextSearch } : {}),
         ...(nextType === 'all' ? {} : { type: nextType }),
         ...(nextStatus === 'all' ? {} : { status: nextStatus }),
+        ...(nextPaymentStatus === 'all' ? {} : { payment_status: nextPaymentStatus }),
+        ...(nextPaymentMethod === 'all' ? {} : { payment_method: nextPaymentMethod }),
+        ...(nextSeller === 'all' ? {} : { created_by: nextSeller }),
+        ...(nextPriceList === 'all' ? {} : { price_list_id: nextPriceList }),
         ...(nextTime !== 'all' && nextFrom ? { from: nextFrom } : {}),
         ...(nextTime !== 'all' && nextTo ? { to: nextTo } : {}),
         page: nextPage,
@@ -241,6 +268,26 @@ export function SalesDocumentsPage({
     }
   }, [service])
 
+  useEffect(() => {
+    let active = true
+
+    async function loadFilterOptions() {
+      const [users, priceLists] = await Promise.all([
+        userService?.listUsers({ status: 'active' }),
+        catalogService?.listPriceLists(),
+      ])
+      if (!active) return
+      setSellerOptions((users?.items ?? []).map((user) => ({ id: user.id, name: user.display_name })))
+      setPriceListOptions((priceLists?.items ?? []).filter((priceList) => priceList.is_active).map((priceList) => ({ id: priceList.id, name: priceList.name })))
+    }
+
+    void loadFilterOptions()
+
+    return () => {
+      active = false
+    }
+  }, [catalogService, userService])
+
   async function searchDocuments(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = search.trim()
@@ -259,6 +306,10 @@ export function SalesDocumentsPage({
     setLastSearch('')
     setTypeFilter('all')
     setStatusFilter('all')
+    setPaymentStatusFilter('all')
+    setPaymentMethodFilter('all')
+    setSellerFilter('all')
+    setPriceListFilter('all')
     setTimeFilter('month')
     setDateFrom(monthRange.from)
     setDateTo(monthRange.to)
@@ -267,7 +318,19 @@ export function SalesDocumentsPage({
     setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
-    await loadDocuments({ search: '', type: 'all', status: 'all', time: 'month', from: monthRange.from, to: monthRange.to, page: 1 })
+    await loadDocuments({
+      search: '',
+      type: 'all',
+      status: 'all',
+      paymentStatus: 'all',
+      paymentMethod: 'all',
+      seller: 'all',
+      priceList: 'all',
+      time: 'month',
+      from: monthRange.from,
+      to: monthRange.to,
+      page: 1,
+    })
   }
 
   async function applyTypeFilter(nextType: typeof typeFilter) {
@@ -286,6 +349,42 @@ export function SalesDocumentsPage({
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ status: nextStatus, page: 1 })
+  }
+
+  async function applyPaymentStatusFilter(nextPaymentStatus: PaymentStatusFilter) {
+    setPaymentStatusFilter(nextPaymentStatus)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ paymentStatus: nextPaymentStatus, page: 1 })
+  }
+
+  async function applyPaymentMethodFilter(nextPaymentMethod: PaymentMethodFilter) {
+    setPaymentMethodFilter(nextPaymentMethod)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ paymentMethod: nextPaymentMethod, page: 1 })
+  }
+
+  async function applySellerFilter(nextSeller: string) {
+    setSellerFilter(nextSeller)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ seller: nextSeller, page: 1 })
+  }
+
+  async function applyPriceListFilter(nextPriceList: string) {
+    setPriceListFilter(nextPriceList)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ priceList: nextPriceList, page: 1 })
   }
 
   async function applyQuickTimeFilter(nextTime: Exclude<TimeFilter, 'custom'>) {
@@ -350,7 +449,7 @@ export function SalesDocumentsPage({
   const total = state?.total ?? 0
   const page = state?.page ?? 1
   const pageSize = state?.pageSize ?? salesDocumentsPageSize
-  const hasFilter = lastSearch.length > 0 || typeFilter !== 'all' || statusFilter !== 'all' || timeFilter !== 'month'
+  const hasFilter = lastSearch.length > 0 || typeFilter !== 'all' || statusFilter !== 'all' || paymentStatusFilter !== 'all' || paymentMethodFilter !== 'all' || sellerFilter !== 'all' || priceListFilter !== 'all' || timeFilter !== 'month'
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
@@ -360,6 +459,10 @@ export function SalesDocumentsPage({
     ...(timeFilter !== 'month' && timeFilter !== 'custom' ? [`Thời gian: ${quickTimeLabels[timeFilter]}`] : []),
     ...(typeFilter !== 'all' ? [`Loại: ${documentTypeFilterLabel(typeFilter)}`] : []),
     ...(statusFilter !== 'all' ? [`Trạng thái: ${lifecycleFilterLabel(statusFilter)}`] : []),
+    ...(paymentStatusFilter !== 'all' ? [`Thanh toán: ${paymentStatusFilterLabel(paymentStatusFilter)}`] : []),
+    ...(paymentMethodFilter !== 'all' ? [`PTTT: ${paymentMethodFilterLabel(paymentMethodFilter)}`] : []),
+    ...(sellerFilter !== 'all' ? [`Người bán: ${sellerOptions.find((seller) => seller.id === sellerFilter)?.name ?? sellerFilter}`] : []),
+    ...(priceListFilter !== 'all' ? [`Bảng giá: ${priceListOptions.find((priceList) => priceList.id === priceListFilter)?.name ?? priceListFilter}`] : []),
   ].join(' • ')
   const documentTotalAmount = documents.reduce((sum, document) => sum + document.total_amount, 0)
   const documentDebtAmount = documents.reduce((sum, document) => sum + document.debt_amount, 0)
@@ -492,36 +595,80 @@ export function SalesDocumentsPage({
             ) : null}
           </ManagementFilterGroup>
           <ManagementFilterGroup title="Loại chứng từ">
-            <label>
-              <input checked={typeFilter === 'all'} name="sales-document-type" type="radio" onChange={() => void applyTypeFilter('all')} />
-              Tất cả
-            </label>
-            <label>
-              <input checked={typeFilter === 'invoice'} name="sales-document-type" type="radio" onChange={() => void applyTypeFilter('invoice')} />
-              Hóa đơn
-            </label>
-            <label>
-              <input checked={typeFilter === 'quote'} name="sales-document-type" type="radio" onChange={() => void applyTypeFilter('quote')} />
-              Báo giá
-            </label>
+            <select
+              aria-label="Loại chứng từ"
+              className="management-filter-select"
+              value={typeFilter}
+              onChange={(event) => void applyTypeFilter(event.target.value as typeof typeFilter)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="invoice">Hóa đơn</option>
+              <option value="quote">Báo giá</option>
+            </select>
           </ManagementFilterGroup>
-          <ManagementFilterGroup title="Trạng thái">
-            <label>
-              <input checked={statusFilter === 'all'} name="sales-document-status" type="radio" onChange={() => void applyStatusFilter('all')} />
-              Tất cả
-            </label>
-            <label>
-              <input checked={statusFilter === 'active'} name="sales-document-status" type="radio" onChange={() => void applyStatusFilter('active')} />
-              Đang hiệu lực
-            </label>
-            <label>
-              <input checked={statusFilter === 'completed'} name="sales-document-status" type="radio" onChange={() => void applyStatusFilter('completed')} />
-              Hoàn tất
-            </label>
-            <label>
-              <input checked={statusFilter === 'cancelled'} name="sales-document-status" type="radio" onChange={() => void applyStatusFilter('cancelled')} />
-              Đã hủy
-            </label>
+          <ManagementFilterGroup title="Trạng thái chứng từ">
+            <select
+              aria-label="Trạng thái chứng từ"
+              className="management-filter-select"
+              value={statusFilter}
+              onChange={(event) => void applyStatusFilter(event.target.value as typeof statusFilter)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="active">Đang hiệu lực</option>
+              <option value="completed">Hoàn tất</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Thanh toán">
+            <select
+              aria-label="Thanh toán"
+              className="management-filter-select"
+              value={paymentStatusFilter}
+              onChange={(event) => void applyPaymentStatusFilter(event.target.value as PaymentStatusFilter)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="unpaid">Chưa thanh toán</option>
+              <option value="partial">Thanh toán một phần</option>
+              <option value="paid">Đã thanh toán</option>
+            </select>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Phương thức thanh toán">
+            <select
+              aria-label="Phương thức thanh toán"
+              className="management-filter-select"
+              value={paymentMethodFilter}
+              onChange={(event) => void applyPaymentMethodFilter(event.target.value as PaymentMethodFilter)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="cash">Tiền mặt</option>
+              <option value="bank_transfer">Chuyển khoản</option>
+            </select>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Người bán">
+            <select
+              aria-label="Người bán"
+              className="management-filter-select"
+              value={sellerFilter}
+              onChange={(event) => void applySellerFilter(event.target.value)}
+            >
+              <option value="all">Tất cả</option>
+              {sellerOptions.map((seller) => (
+                <option key={seller.id} value={seller.id}>{seller.name}</option>
+              ))}
+            </select>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Bảng giá">
+            <select
+              aria-label="Bảng giá"
+              className="management-filter-select"
+              value={priceListFilter}
+              onChange={(event) => void applyPriceListFilter(event.target.value)}
+            >
+              <option value="all">Tất cả</option>
+              {priceListOptions.map((priceList) => (
+                <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
+              ))}
+            </select>
           </ManagementFilterGroup>
         </ManagementFilterSidebar>
       }
@@ -803,4 +950,17 @@ function lifecycleFilterLabel(value: 'active' | 'completed' | 'cancelled') {
   if (value === 'active') return 'Đang hiệu lực'
   if (value === 'completed') return 'Hoàn tất'
   return 'Đã hủy'
+}
+
+function paymentStatusFilterLabel(value: PaymentStatusFilter) {
+  if (value === 'unpaid') return 'Chưa thanh toán'
+  if (value === 'partial') return 'Thanh toán một phần'
+  if (value === 'paid') return 'Đã thanh toán'
+  return 'Tất cả'
+}
+
+function paymentMethodFilterLabel(value: PaymentMethodFilter) {
+  if (value === 'cash') return 'Tiền mặt'
+  if (value === 'bank_transfer') return 'Chuyển khoản'
+  return 'Tất cả'
 }

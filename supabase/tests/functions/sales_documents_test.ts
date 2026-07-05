@@ -73,7 +73,10 @@ const documentDetail: SalesDocumentDetailData = {
     {
       id: "receipt-1",
       code: "TTHD010985",
+      status: "posted",
+      receipt_type: "sale_payment",
       total_received_amount: 0,
+      created_at: "2026-06-30T17:08:00Z",
       methods: [],
       allocations: [],
     },
@@ -195,6 +198,27 @@ Deno.test("sales document list accepts customer filter for customer history", as
   assertEquals(receivedInputs[0].customerId, "customer-1");
   assertEquals(receivedInputs[0].page, 1);
   assertEquals(receivedInputs[0].pageSize, 10);
+});
+
+Deno.test("sales document list accepts supported KiotViet-style filters", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const response = await call(
+    "/api/v1/sales-documents?status=completed&payment_status=paid&payment_method=bank_transfer&created_by=90000000-0000-4000-8000-000000000001&price_list_id=price-list-1",
+    { method: "GET" },
+    repo(["perm.create_order"], {
+      listSalesDocuments: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve({ items: [documentListItem], total: 1 });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(receivedInputs[0].status, "completed");
+  assertEquals(receivedInputs[0].paymentStatus, "paid");
+  assertEquals(receivedInputs[0].paymentMethod, "bank_transfer");
+  assertEquals(receivedInputs[0].createdBy, actorId);
+  assertEquals(receivedInputs[0].priceListId, "price-list-1");
 });
 
 Deno.test("sales document detail returns snapshots, payments, debt and stock movements", async () => {

@@ -839,6 +839,9 @@ export interface FoundationRepository {
     status?: "active" | "converted" | "completed" | "cancelled";
     customerId?: string;
     paymentStatus?: "not_applicable" | "unpaid" | "partial" | "paid";
+    paymentMethod?: "cash" | "bank_transfer";
+    createdBy?: string;
+    priceListId?: string;
     from?: string;
     to?: string;
     page: number;

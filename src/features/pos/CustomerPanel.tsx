@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { CatalogService } from '../catalog/catalog-service'
@@ -13,15 +13,11 @@ export function CustomerPanel({
   selectedCustomer: Customer | null
   onSelectCustomer: (customer: Customer | null) => void
 }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => selectedCustomer?.name ?? '')
   const [results, setResults] = useState<Customer[]>([])
   const [createOpen, setCreateOpen] = useState(false)
   const [form, setForm] = useState({ code: '', name: '', phone: '' })
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (selectedCustomer !== null) setSearch(selectedCustomer.name)
-  }, [selectedCustomer])
 
   async function searchCustomers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

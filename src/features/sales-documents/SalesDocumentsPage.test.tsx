@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { SalesDocumentsPage } from './SalesDocumentsPage'
 import type { SalesDocumentDetail, SalesDocumentService } from './sales-document-service'
 import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
+import type { CatalogService } from '../catalog/catalog-service'
+import type { FoundationService } from '../users/foundation-service'
 
 const listItem = {
   id: 'order-1',
@@ -171,6 +173,41 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
   } as unknown as OrderService
 }
 
+function makeFoundationService(overrides: Partial<FoundationService> = {}): Pick<FoundationService, 'listUsers'> {
+  return {
+    listUsers: vi.fn(async () => ({
+      items: [
+        {
+          id: 'seller-1',
+          email: 'admin@example.test',
+          display_name: 'Admin',
+          status: 'active',
+          permissions: ['perm.create_order'],
+        },
+      ],
+      total: 1,
+    })),
+    ...overrides,
+  } as Pick<FoundationService, 'listUsers'>
+}
+
+function makeCatalogService(overrides: Partial<CatalogService> = {}): Pick<CatalogService, 'listPriceLists'> {
+  return {
+    listPriceLists: vi.fn(async () => ({
+      items: [
+        {
+          id: 'pl-1',
+          code: 'BGCHUNG',
+          name: 'Bảng giá chung',
+          is_default: true,
+          is_active: true,
+        },
+      ],
+    })),
+    ...overrides,
+  } as Pick<CatalogService, 'listPriceLists'>
+}
+
 async function clickDocumentRow(code: string) {
   const table = await screen.findByRole('table', { name: 'Danh sách chứng từ bán hàng' })
   const codeCell = await within(table).findByText(code, { selector: 'tbody td:first-child strong' })
@@ -199,12 +236,11 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(within(summary).getByText('Tổng tiền')).toBeInTheDocument()
   expect(within(summary).getByText('Còn nợ')).toBeInTheDocument()
   const typeFilterGroup = within(sidebar).getByRole('region', { name: 'Loại chứng từ' })
-  const statusFilterGroup = within(sidebar).getByRole('region', { name: 'Trạng thái' })
-  expect(within(typeFilterGroup).getByRole('radio', { name: 'Tất cả' })).toBeInTheDocument()
-  expect(within(typeFilterGroup).getByRole('radio', { name: 'Hóa đơn' })).toBeInTheDocument()
-  expect(within(typeFilterGroup).getByRole('radio', { name: 'Báo giá' })).toBeInTheDocument()
-  expect(within(statusFilterGroup).getByRole('radio', { name: 'Tất cả' })).toBeInTheDocument()
-  expect(within(statusFilterGroup).getByRole('radio', { name: 'Đang hiệu lực' })).toBeInTheDocument()
+  const statusFilterGroup = within(sidebar).getByRole('region', { name: 'Trạng thái chứng từ' })
+  expect(within(typeFilterGroup).getByRole('combobox', { name: 'Loại chứng từ' })).toHaveValue('all')
+  expect(within(typeFilterGroup).queryByRole('radio')).not.toBeInTheDocument()
+  expect(within(statusFilterGroup).getByRole('combobox', { name: 'Trạng thái chứng từ' })).toHaveValue('all')
+  expect(within(statusFilterGroup).queryByRole('radio')).not.toBeInTheDocument()
   expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' })).toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Danh sách chứng từ' })).not.toBeInTheDocument()
   expect(screen.queryByText('Tìm nhanh mã hóa đơn/báo giá, khách hàng hoặc ghi chú theo dữ liệu API hiện có.')).not.toBeInTheDocument()
@@ -391,8 +427,8 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   )
 
   await screen.findByText('BG000123')
-  await userEvent.click(screen.getByRole('radio', { name: 'Báo giá' }))
-  await userEvent.click(screen.getByRole('radio', { name: 'Đang hiệu lực' }))
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại chứng từ' }), 'quote')
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Trạng thái chứng từ' }), 'active')
 
   expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
     from: expect.stringMatching(/^\d{4}-\d{2}-01$/),
@@ -409,6 +445,74 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   expect(screen.queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'In' })).not.toBeInTheDocument()
+})
+
+it('filters sales documents by supported invoice payment seller and price list fields', async () => {
+  const service = makeService()
+  const userService = makeFoundationService()
+  const catalogService = makeCatalogService()
+  render(
+    <SalesDocumentsPage
+      service={service}
+      userService={userService}
+      catalogService={catalogService}
+      onOpenDashboard={vi.fn()}
+    />,
+  )
+
+  await screen.findByText('HD010985')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
+
+  const statusGroup = within(sidebar).getByRole('region', { name: 'Trạng thái chứng từ' })
+  expect(within(statusGroup).getByRole('combobox', { name: 'Trạng thái chứng từ' })).toBeInTheDocument()
+  expect(within(statusGroup).getByRole('option', { name: 'Hoàn tất' })).toBeInTheDocument()
+  expect(within(statusGroup).getByRole('option', { name: 'Đã hủy' })).toBeInTheDocument()
+  expect(within(statusGroup).queryByRole('option', { name: 'Không giao được' })).not.toBeInTheDocument()
+  expect(within(statusGroup).queryByRole('option', { name: 'Đang xử lý' })).not.toBeInTheDocument()
+  expect(within(statusGroup).queryByRole('radio')).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(statusGroup).getByRole('combobox', { name: 'Trạng thái chứng từ' }), 'completed')
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    status: 'completed',
+    page: 1,
+    page_size: 15,
+  }))
+
+  const paymentStatusGroup = within(sidebar).getByRole('region', { name: 'Thanh toán' })
+  await userEvent.selectOptions(within(paymentStatusGroup).getByRole('combobox', { name: 'Thanh toán' }), 'paid')
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    status: 'completed',
+    payment_status: 'paid',
+    page: 1,
+    page_size: 15,
+  }))
+
+  const paymentMethodGroup = within(sidebar).getByRole('region', { name: 'Phương thức thanh toán' })
+  await userEvent.selectOptions(within(paymentMethodGroup).getByRole('combobox', { name: 'Phương thức thanh toán' }), 'bank_transfer')
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    payment_method: 'bank_transfer',
+    payment_status: 'paid',
+    status: 'completed',
+  }))
+
+  const sellerGroup = within(sidebar).getByRole('region', { name: 'Người bán' })
+  await userEvent.selectOptions(await within(sellerGroup).findByRole('combobox', { name: 'Người bán' }), 'seller-1')
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    created_by: 'seller-1',
+    payment_method: 'bank_transfer',
+    payment_status: 'paid',
+    status: 'completed',
+  }))
+
+  const priceListGroup = within(sidebar).getByRole('region', { name: 'Bảng giá' })
+  await userEvent.selectOptions(await within(priceListGroup).findByRole('combobox', { name: 'Bảng giá' }), 'pl-1')
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    created_by: 'seller-1',
+    price_list_id: 'pl-1',
+    payment_method: 'bank_transfer',
+    payment_status: 'paid',
+    status: 'completed',
+  }))
 })
 
 it('stores reopen payload through callback when opening active quote in POS', async () => {

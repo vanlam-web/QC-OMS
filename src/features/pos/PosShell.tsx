@@ -524,8 +524,9 @@ export function PosShell({
     setLineInputDrafts((current) => {
       const key = lineInputDraftKey(lineId, field)
       if (!(key in current)) return current
-      const { [key]: _removed, ...rest } = current
-      return rest
+      const next = { ...current }
+      delete next[key]
+      return next
     })
   }
 
@@ -1089,6 +1090,7 @@ export function PosShell({
       </section>
       <section aria-label="K03 sản phẩm" className="pos-payment">
         <CustomerPanel
+          key={selectedCustomer?.id ?? 'no-customer'}
           service={catalogService}
           selectedCustomer={selectedCustomer}
           onSelectCustomer={(customer) =>
