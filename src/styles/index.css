@@ -1293,6 +1293,20 @@ button {
   gap: var(--space-4);
 }
 
+.finance-cashbook-detail-tabs {
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+.finance-cashbook-detail-tabs button {
+  min-height: 2.25rem;
+  border: 0;
+  border-bottom: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 800;
+  padding: 0 var(--space-1) var(--space-2);
+}
+
 .finance-cashbook-detail header {
   display: flex;
   align-items: flex-start;
@@ -1300,10 +1314,31 @@ button {
   gap: var(--space-3);
 }
 
+.finance-cashbook-detail-chips,
+.finance-cashbook-detail-branch,
+.finance-cashbook-detail-note,
+.finance-cashbook-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.finance-cashbook-detail-branch {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .finance-cashbook-detail h3,
 .finance-cashbook-detail h4,
 .finance-cashbook-detail p {
   margin: 0;
+}
+
+.finance-cashbook-detail-log {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
 }
 
 .finance-cashbook-detail dl {
@@ -1321,6 +1356,53 @@ button {
 .finance-cashbook-detail dd {
   margin: 0;
   font-weight: 700;
+}
+
+.finance-cashbook-detail-link {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  padding: 0;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finance-cashbook-detail-link:hover {
+  text-decoration: underline;
+}
+
+.finance-cashbook-linked-documents {
+  display: grid;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: var(--space-3);
+}
+
+.finance-cashbook-linked-documents > p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.finance-cashbook-detail footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: var(--space-3);
+}
+
+.finance-cashbook-detail-note {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.finance-cashbook-detail-close {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .finance-collection-panel {

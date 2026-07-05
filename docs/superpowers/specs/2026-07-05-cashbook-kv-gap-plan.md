@@ -185,6 +185,7 @@ Hiện tại `/finance` là màn sổ quỹ chính:
 - filter sidebar: thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
 - filter đã dùng KV shape cho phần đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs
 - main: summary sổ quỹ, bảng sổ quỹ, inline detail dòng sổ, pagination footer
+- inline detail đã có panel KV-like: tab thông tin, tiêu đề phiếu thu/chi, chip trạng thái/hạch toán, nhật ký, grid thông tin, bảng chứng từ liên kết khi có allocations, footer ghi chú và action disabled khi chưa có hành vi an toàn
 - form tạo/sửa phiếu thu/chi mở inline khi thao tác
 - các khối phụ tài khoản quỹ/công nợ/phiếu thu chi không hiển thị trong thân trang
 
@@ -192,7 +193,7 @@ Thiếu/gap so với KV:
 
 - chưa có search sổ quỹ riêng theo mã phiếu/ghi chú/nội dung chuyển khoản.
 - chưa lọc theo loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác.
-- detail inline cần bổ sung các trường đối chiếu KV.
+- detail inline cần backend bổ sung chi nhánh thật theo phiếu, người thu/người chi riêng, tài khoản ngân hàng nguồn/đích, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ.
 - sửa/hủy phiếu thủ công chưa có điểm thao tác nổi bật trong bảng chính.
 - chưa có chọn cột.
 - xuất file hiện ở frontend; cần chốt format/cột giống KV nếu dùng vận hành thật.
@@ -213,7 +214,7 @@ Mục tiêu: nhìn và tra cứu sổ quỹ giống KV trước.
 - summary: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ nằm ngay trên bảng dữ liệu.
 - table default cột giống KV: checkbox, đánh dấu sao, mã phiếu, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ, giá trị.
 - click dòng mở detail inline.
-- detail phiếu thu tự động hiển thị phân bổ nếu API trả allocations.
+- detail phiếu thu tự động hiển thị panel KV-like và phân bổ nếu API trả allocations.
 - export file ở header.
 
 Còn lại:
