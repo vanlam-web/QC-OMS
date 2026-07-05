@@ -42,11 +42,18 @@ Backend deep-scan BOM:
 5. gom các vật tư cùng sản phẩm/đơn vị nếu hợp lệ
 6. trả về danh sách tiêu hao để checkout tạo stock movement
 
+Combo con dùng BOM chuẩn đang active tại thời điểm chốt đơn, trừ khi chứng từ đang xem lại đã có BOM version/snapshot cũ. Khi lưu chứng từ, backend phải lưu đủ tham chiếu/snapshot để chứng từ cũ không đổi nếu BOM của combo con bị sửa sau này.
+
+Khi `Lưu Combo mới`, combo mới giữ combo con là component tham chiếu. API không tự flatten combo con thành toàn bộ vật tư lá trong BOM chuẩn mới.
+
+Combo không trừ tồn kho theo chính mã combo. Tồn kho được tính theo vật tư lá sau deep-scan. Nếu combo con thiếu vật tư, response cảnh báo phải trả theo vật tư thành phần để POS có thể hiện cảnh báo và nút `Khui vật tư` khi được hỗ trợ.
+
 Validation:
 
 - chặn vòng lặp
 - tối đa 5 cấp mặc định
 - thiếu BOM con thì trả warning/flag; không chặn checkout trong MVP nếu nghiệp vụ cho phép bán tiếp
+- vòng lặp hoặc vượt quá 5 cấp thì trả lỗi cấu hình; không tự bỏ qua nhánh lỗi
 
 ---
 

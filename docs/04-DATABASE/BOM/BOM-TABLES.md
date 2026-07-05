@@ -53,6 +53,16 @@ Thành phần có thể là vật tư lá hoặc sản phẩm có BOM con.
 
 Snapshot bắt buộc để hóa đơn cũ không đổi khi BOM chuẩn được sửa.
 
+Với combo cha chứa combo con, snapshot phải giữ được cả:
+
+- dòng combo con như một thành phần tham chiếu trong combo cha
+- `source_bom_id` / `source_bom_version` hoặc dữ liệu tương đương của combo con tại thời điểm bán
+- danh sách vật tư lá đã deep-scan nếu backend đã tính ở thời điểm chốt
+
+Chứng từ cũ đọc theo snapshot/version đã lưu, không đọc lại BOM active mới nhất.
+
+Khi lưu combo mới từ POS, BOM chuẩn mới giữ combo con là component tham chiếu. Không tự flatten combo con thành vật tư lá nếu người dùng không yêu cầu.
+
 ---
 
 ## 3. Validation bắt buộc
