@@ -237,6 +237,8 @@ Phiếu sinh từ hóa đơn/thu nợ không được sửa rời qua API này. 
 
 ## 7. Cashbook
 
+> Hiện trạng frontend sau PR #83: `/finance` đang gọi `GET /finance/cashbook` với `finance_account_id`, `direction`, `status`, `is_business_accounted`, `from`, `to`, `page`, `page_size`. Các tham số `search`, `search_scope`, `voucher_type`, `counterparty_*`, `partner_debt_filter` vẫn thuộc slice UI/filter tiếp theo dù backend contract đã định hướng trước.
+
 ### `GET /finance/cashbook`
 
 Xem sổ quỹ theo từng quỹ/tài khoản.

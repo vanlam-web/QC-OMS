@@ -117,6 +117,16 @@ Quan sát trước đó ngày `01/07/2026`:
 
 Màn Sổ quỹ cho phép xem dòng tiền vào/ra và tạo phiếu thu/chi thủ công.
 
+Hiện trạng sau PR #83 ngày `05/07/2026`:
+
+- `/finance` là màn sổ quỹ chính; thân trang chỉ còn bảng sổ quỹ, inline detail dòng sổ và form phiếu thu/chi khi mở.
+- Các khối `Tài khoản quỹ`, `Công nợ khách hàng`, `Phiếu thu/chi` đã ẩn khỏi thân trang để tránh rối layout.
+- Header có ô `Tìm công nợ` theo kiểu search chung, nút `Phiếu thu`, `Phiếu chi`, `Xuất file`.
+- Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong cột filter bên trái và lấy từ `summary` của API sổ quỹ theo filter.
+- `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
+- Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.
+- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet.
+
 MVP của QC-OMS hỗ trợ:
 
 - tiền mặt
@@ -130,17 +140,18 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────┐
-│ Sổ quỹ                                     [Tìm mã phiếu] [+ Thu] [+ Chi] [Cột]    │
+│ Sổ quỹ                              [Tìm công nợ +] [Phiếu thu] [Phiếu chi] [Xuất] │
 ├───────────────────────┬────────────────────────────────────────────────────────────┤
-│ Quỹ tiền              │ Tổng thu              Tổng chi              Tồn quỹ        │
-│ ○ Tiền mặt            │ 32,358,370           -19,857,000            25,761,570     │
-│ ○ MB Bank             ├────────────────────────────────────────────────────────────┤
-│ ○ Vietcombank         │ □ ☆ Mã phiếu | Thời gian | Loại thu chi | Người | Giá trị │
-│ ○ Tổng quỹ            │ CTM001170 | ... | Chi phí khác      | Tý    | -50,000     │
-│                       │ TTHD010973| ... | Thu tiền khách trả| KL2   | 114,000     │
-│ Thời gian             │                                                            │
+│ Quỹ đầu kỳ            │ Mã phiếu | Thời gian | Loại thu chi | Người | Quỹ | Giá trị │
+│ Tổng thu              │ CTM001170 | ... | Chi phí khác      | Tý    | CASH | -50,000│
+│ Tổng chi              │ TTHD010973| ... | Thu tiền khách trả| KL2   | MB01 | 114,000│
+│ Tồn quỹ               │                                                            │
+│                       │                                                            │
+│ Thời gian             │ Pagination                                                 │
+│ Quỹ tiền              │                                                            │
 │ Loại chứng từ         │                                                            │
 │ Trạng thái            │                                                            │
+│ Hạch toán KQKD        │                                                            │
 └───────────────────────┴────────────────────────────────────────────────────────────┘
 ```
 
@@ -151,20 +162,21 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 | Bộ lọc | Giá trị |
 |---|---|
 | Quỹ tiền | Tiền mặt, từng tài khoản ngân hàng, tổng quỹ |
-| Thời gian | Hôm nay, tháng này, tùy chỉnh |
+| Thời gian | Hôm nay, hôm qua, tuần này, tuần trước, 7 ngày qua, tháng này, tháng trước, 30 ngày qua, quý này, quý trước, năm nay, năm trước, toàn thời gian, tùy chỉnh |
 | Loại chứng từ | Phiếu thu, phiếu chi |
-| Loại thu chi | Thu bán hàng, thu nợ, thu khác, chi mua vật tư, chi hoàn tiền, chi phí vận hành, chi khác |
+| Loại thu chi | Chưa có trong UI hiện tại; thuộc slice sau |
 | Trạng thái | Đã ghi sổ, đã hủy |
 | Hạch toán KQKD | Tất cả, có hạch toán, không hạch toán |
-| Người tạo | Nhân viên |
-| Người nộp/nhận | Khách/nhà cung cấp/người nhận nếu có |
-| Công nợ đối tác | Tất cả, tính vào công nợ, không tính vào công nợ, không có công nợ |
+| Người tạo | Chưa có trong UI hiện tại; thuộc slice sau |
+| Người nộp/nhận | Chưa có trong filter UI hiện tại; detail vẫn hiển thị người nộp/nhận |
+| Công nợ đối tác | Có trong form phiếu thu/chi thủ công; filter list thuộc slice sau |
 
 Ghi chú:
 
-- `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp.
-- `Người nộp/nhận` cần tìm được theo tên, mã và số điện thoại.
-- Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả.
+- Filter hiện tại tự gọi lại danh sách sổ quỹ khi đổi thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD.
+- `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp; hiện đã có trường khi tạo phiếu thủ công, chưa có filter list.
+- `Người nộp/nhận` cần tìm được theo tên, mã và số điện thoại ở slice sau.
+- Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả; hiện UI sổ quỹ chưa có ô tìm mã phiếu riêng.
 
 ---
 
@@ -172,9 +184,10 @@ Ghi chú:
 
 | Card | Ý nghĩa |
 |---|---|
+| Quỹ đầu kỳ | Số dư đầu kỳ theo filter hiện tại |
 | Tổng thu | Tổng dòng thu theo tài khoản/thời gian đang lọc |
 | Tổng chi | Tổng dòng chi theo tài khoản/thời gian đang lọc |
-| Tồn quỹ | Số dư hiệu lực theo tài khoản đang chọn |
+| Tồn quỹ | `ending_balance` từ API theo filter hiện tại |
 
 Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài khoản trong drilldown hoặc report phụ, không chỉ hiển thị một con số chung khi đối soát.
 
@@ -197,9 +210,11 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 
 MVP nên cho cấu hình cột tương tự KV, nhưng có thể làm theo mức ưu tiên:
 
-1. Cột mặc định: mã phiếu, thời gian, loại thu chi, người nộp/nhận, quỹ/tài khoản, giá trị, trạng thái.
+1. Cột mặc định hiện tại: mã phiếu, thời gian, loại thu chi, người nộp/nhận, quỹ/tài khoản, giá trị, trạng thái.
 2. Cột mở rộng: thời gian tạo, người tạo, nhân viên, mã người nộp/nhận, số điện thoại, địa chỉ, nội dung chuyển khoản, ghi chú, loại sổ quỹ, hạch toán KQKD.
 3. Chi nhánh chỉ hiển thị khi hệ thống có nhiều chi nhánh.
+
+Hiện trạng UI: chưa có nút `Cột`; cột mặc định cố định để tránh làm rối giai đoạn layout.
 
 ### Xuất file
 
@@ -213,6 +228,8 @@ Xuất file tối thiểu phải có các cột giống file KV mẫu:
 
 Sau đó thêm các cột QC-OMS cần đối soát: quỹ/tài khoản, trạng thái, ghi chú, người tạo, hạch toán KQKD.
 
+Hiện trạng UI: nút `Xuất file` nằm cạnh `Phiếu thu` và `Phiếu chi` ở header.
+
 ---
 
 ## 6. Phiếu thu/chi thủ công
@@ -222,36 +239,39 @@ Sau đó thêm các cột QC-OMS cần đối soát: quỹ/tài khoản, trạng
 Form tối thiểu:
 
 - quỹ/tài khoản nhận tiền
-- mã phiếu tự động
-- thời gian
+- mã phiếu tự động từ backend
+- thời gian ghi theo backend hiện tại
 - loại thu
-- người thu
+- người thu là actor hiện tại nếu chưa có field riêng
 - đối tượng nộp: khách hàng, nhà cung cấp, nhân viên, khác, không có
 - tên/mã/số điện thoại người nộp nếu có
 - số tiền
 - lý do/ghi chú
 - hạch toán kết quả kinh doanh
+- công nợ đối tác: không có, có đối tác nhưng không tính công nợ, hoặc tính vào công nợ
 
 ### Tạo phiếu chi
 
 Form tối thiểu:
 
 - quỹ/tài khoản chi tiền
-- mã phiếu tự động
-- thời gian
+- mã phiếu tự động từ backend
+- thời gian ghi theo backend hiện tại
 - loại chi
-- người chi
+- người chi là actor hiện tại nếu chưa có field riêng
 - đối tượng nhận: khách hàng, nhà cung cấp, nhân viên, khác, không có
 - tên/mã/số điện thoại người nhận nếu có
 - số tiền
 - lý do/ghi chú
 - hạch toán kết quả kinh doanh
+- công nợ đối tác: không có, có đối tác nhưng không tính công nợ, hoặc tính vào công nợ
 
 ### Sửa phiếu
 
 - Chỉ phiếu thủ công có nút sửa.
 - Sửa phiếu tạo phiên bản mới `MaCu.01`.
 - Phiếu cũ chuyển trạng thái đã hủy nhưng vẫn xem được.
+- Hiện trạng UI chính không hiển thị bảng phiếu thu/chi phụ; sửa/hủy phiếu thủ công giữ ở luồng voucher và detail/future surface, không nằm trên bảng phụ trong thân trang.
 
 ---
 
@@ -274,6 +294,8 @@ Các phiếu sinh từ checkout POS hoặc thu nợ khách:
 3. Tạo phiếu thu/chi thủ công không đi qua duyệt nhiều bước trong MVP.
 4. Phiếu thủ công sửa theo bản mới, không sửa đè.
 5. Phiếu từ POS/thu nợ không có nút sửa rời.
+6. `Tồn quỹ` trong summary phải đổi theo filter sổ quỹ, không cố định theo tổng số dư tài khoản hiện tại.
+7. Bộ lọc đang có phải tự áp dụng khi đổi giá trị, không cần nút áp dụng/reset.
 
 ---
 
