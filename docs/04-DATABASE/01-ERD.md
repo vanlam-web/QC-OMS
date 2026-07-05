@@ -2,7 +2,7 @@
 
 > **Vai trò:** Sơ đồ dữ liệu tổng, cập nhật theo từng phase.
 > **Đã chốt:** Foundation/System, Sales, Inventory foundation, Finance foundation, Production queue foundation.
-> **Chưa chốt:** Production ingestion/match tự động, reversal nâng cao, production hardening.
+> **Ngoài phạm vi hiện tại:** Production ingestion/match tự động, reversal nâng cao, production hardening.
 
 ---
 

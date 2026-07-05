@@ -1,6 +1,6 @@
 # KẾ HOẠCH PHÁT TRIỂN QC-OMS — FE + BE THEO TỪNG GIAI ĐOẠN
 
-> **Vai trò:** Roadmap dài hạn đã chốt; thực thi hiện tại đi theo vertical slices 1A/1B/1C/2A/2B/2C/2D.
+> **Vai trò:** Roadmap logic dài hạn; trạng thái sống và queue hiện tại nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
 > **Ngày lập:** 2026-06-28
 > **Cập nhật:** 2026-07-05 theo checklist sống hiện tại
 > **Mục tiêu:** Sau mỗi giai đoạn phải có một luồng người dùng hoàn chỉnh, chạy bằng Frontend và Backend thật trên môi trường staging.
@@ -111,7 +111,7 @@ Nguồn theo dõi chi tiết: [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
 | Phase 5 | Combo/BOM và quản lý vật tư | Purchase hàng thường đã merge; cuộn/tấm vật lý và BOM sâu còn phase riêng |
 | Phase 6 | Hàng đợi máy sản xuất realtime | Production queue foundation đã làm sớm ở 2B; ingestion/realtime đầy đủ còn phase sau |
 | Phase 7 | Bill nâng cao và hỗ trợ gửi khách | Quote print đơn giản đã có; gửi tự động/nhiều mẫu còn sau |
-| Phase 8 | Production và vận hành | Đang cập nhật dần theo Supabase Cloud/dev-staging; production hardening còn sau |
+| Phase 8 | Production và vận hành | Supabase Cloud/dev-staging đã có; production hardening còn sau |
 
 ### 3.4. Roadmap logic dài hạn
 
@@ -400,16 +400,16 @@ Một giai đoạn chỉ hoàn thành khi đáp ứng toàn bộ điều kiện 
 
 Các nội dung sau phải được giải quyết trước hoặc trong giai đoạn tương ứng:
 
-| Nội dung | Trạng thái / thời điểm cần chốt |
+| Nội dung | Quyết định / thời điểm xem lại |
 |---|---|
 | Cách tổ chức Backend | ✅ Chốt: Supabase Edge Functions + REST `/api/v1`; FE chỉ dùng SDK trực tiếp cho Auth/Realtime |
 | Schema bảng giá | ✅ Đã có PriceBook formula MVP; mở rộng nhóm hàng/filter cần slice riêng |
 | Cơ chế lưu nháp | ✅ Chốt hiện tại: LocalStorage theo máy tại `POS/ARCHITECTURE.md`; server draft chỉ mở khi có SoT mới |
 | ERD Sales, Inventory và Finance | ✅ Đã có foundation; mỗi slice mới phải rà lại schema liên quan |
 | Chính sách tồn âm và cảnh báo thiếu kho | ✅ MVP cho bán thiếu/tồn âm có cảnh báo nhẹ; quy chuẩn cuộn/tấm làm dần |
-| Hợp đồng dữ liệu thực tế với máy in/CNC | Production queue foundation đã có; ingestion/match tự động còn cần chốt |
-| Khả năng mở Zalo/Facebook theo môi trường máy POS | Chưa mở trong MVP; chỉ xem lại khi Owner chốt gửi khách tự động |
-| RPO, RTO và chính sách lưu backup | Cần chốt trước production thật |
+| Hợp đồng dữ liệu thực tế với máy in/CNC | Production queue foundation đã có; ingestion/match tự động là phạm vi mở rộng cần spec riêng |
+| Khả năng mở Zalo/Facebook theo môi trường máy POS | Ngoài MVP hiện tại; chỉ xem lại khi Owner chốt gửi khách tự động |
+| RPO, RTO và chính sách lưu backup | Xem lại trước production thật |
 
 ---
 
