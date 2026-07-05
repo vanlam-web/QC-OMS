@@ -2,8 +2,6 @@
 
 > **Thuộc khối:** [01-K01-TOPBAR.md](./01-K01-TOPBAR.md) — Mục IV và V
 >
-> **Trạng thái:** 🔨 Đang xây dựng
->
 > **Trở về:** [01-K01-TOPBAR.md](./01-K01-TOPBAR.md) | [Master Map](../01-POS-LAYOUT.md)
 
 ---

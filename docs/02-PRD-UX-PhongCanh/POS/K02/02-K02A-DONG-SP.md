@@ -1,6 +1,5 @@
 # 02-K02A-DONG-SP.md — K02-A: DÒNG SẢN PHẨM ĐỘNG + BOM (GIỎ HÀNG)
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 

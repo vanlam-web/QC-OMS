@@ -1,6 +1,5 @@
 # 04-K02D-HANG-DOI.md — K02-D: HÀNG ĐỢI MÁY SẢN XUẤT
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 

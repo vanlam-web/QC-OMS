@@ -1,6 +1,5 @@
 # 04-K03D-THANH-TOAN.md — K03-D: BÁO GIÁ / THANH TOÁN / BILL PREVIEW
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 

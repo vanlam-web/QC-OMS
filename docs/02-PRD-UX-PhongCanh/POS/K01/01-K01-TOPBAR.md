@@ -1,6 +1,5 @@
 # 01-K01-TOPBAR.md — K01: THANH ĐỈNH & ĐA NHIỆM (TOP BAR)
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 

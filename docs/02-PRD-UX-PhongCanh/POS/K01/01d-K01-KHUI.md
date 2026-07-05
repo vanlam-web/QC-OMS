@@ -1,6 +1,5 @@
 # 01d-K01-KHUI.md — K01-D: POPUP KHUI VẬT TƯ TỰ DO
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1 — K01
 > **Trở về:** [01-K01-TOPBAR.md](./01-K01-TOPBAR.md)
 > **File cha:** K01 — Thanh đỉnh Top Bar

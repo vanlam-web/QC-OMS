@@ -1,6 +1,5 @@
 # 01-POS-LAYOUT.md — BẢN ĐỒ TỔNG THỂ MÀN HÌNH BÁN HÀNG (POS MASTER BLUEPRINT)
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 
 ---

@@ -2,8 +2,6 @@
 
 > **Thuộc khối:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) — Phần V
 >
-> **Trạng thái:** 🔨 Đang xây dựng
->
 > **Trở về:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) | [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 
 ---
