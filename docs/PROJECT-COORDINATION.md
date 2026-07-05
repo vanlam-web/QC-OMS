@@ -1,122 +1,81 @@
-# PROJECT-COORDINATION — Current Work Board
+# PROJECT-COORDINATION — Board Điều Phối
 
-> **Vai trò:** Board điều phối cho item đang mở giữa Spec / Implement / Review.
-> **Owner:** Spec Thread maintains business queue and next-owner state; Review verifies stale or blocked items.
-> **Last updated:** 2026-07-03
+> **Vai trò:** Board cho việc đang mở giữa các luồng Spec / Implement / Review.
+> **Cập nhật:** 2026-07-05.
 
----
-
-## 1. Purpose
-
-This board exists so Owner can give business requirements without tracking code details or relaying messages between threads.
-
-Every active slice must show:
-
-- what the user-facing/business goal is
-- who currently owns the next action
-- which thread must receive the next report
-- the PR/branch/commit involved
-- whether Owner decision is needed
-
-If a thread finishes work, it must update/report the next-owner state. Owner should not need to ask "who is holding this now?"
+File này chỉ dùng khi có item đang cần nhiều luồng phối hợp. Nếu không có item đang mở, xem queue sống ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) và issue review ở [REVIEW-ISSUES.md](./REVIEW-ISSUES.md).
 
 ---
 
-## 2. Owner Model
+## Mục Đích
 
-Owner only needs to provide:
+Board này giúp Owner không phải tự chuyển lời giữa các luồng.
 
-- business workflow
-- desired UI/operation outcome
-- priority
-- acceptance/rejection based on real use
+Mỗi việc đang mở phải trả lời được:
 
-Codex threads must translate that into:
-
-- Source of Truth docs
-- implementation slices
-- tests/verification
-- PR review and merge gate
-- follow-up queue
+- mục tiêu nghiệp vụ là gì
+- luồng nào đang giữ việc
+- luồng nào nhận bước tiếp theo
+- branch / PR / commit liên quan
+- có cần Owner quyết định hay không
 
 ---
 
-## 3. Required Work Item Fields
-
-Use this shape for any active slice, PR, blocker, or review issue:
+## Mẫu Item
 
 ```text
-Work item:
+Việc:
 - ID:
-- Business goal:
-- Current owner: Spec / Implement / Review / Owner
-- Next owner: Spec / Implement / Review / Owner
+- Mục tiêu nghiệp vụ:
+- Luồng đang giữ: Spec / Implement / Review / Owner
+- Luồng nhận tiếp: Spec / Implement / Review / Owner
 - Tình trạng: Drafting / Implementing / Waiting Spec / Waiting Review / Must Fix / Ready to Merge / Merged / Blocked / Deferred
 - Branch / PR / commit:
 - Source of Truth:
-- Last report:
-- Next action:
-- Owner decision needed:
-- Risk:
+- Báo cáo gần nhất:
+- Bước tiếp theo:
+- Cần Owner quyết định: Có / Không
+- Rủi ro:
 ```
 
-No important work is considered handed off unless `Current owner`, `Next owner`, and `Next action` are explicit.
+Không xem là đã handoff nếu thiếu `Luồng đang giữ`, `Luồng nhận tiếp`, hoặc `Bước tiếp theo`.
 
 ---
 
-## 4. Active Board
+## Board Đang Mở
 
-Không có item đang mở trong board này.
-
-Queue sống hiện tại nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md). Issue review còn mở nằm ở [REVIEW-ISSUES.md](./REVIEW-ISSUES.md).
+Không có item đang mở.
 
 ---
 
-## 5. Thread Report Addendum
-
-Every thread-to-thread report must include this block near the top or bottom:
+## Mẫu Báo Cáo Giữa Luồng
 
 ```text
 Tình trạng:
 - ...
 
-Current owner:
+Luồng đang giữ:
 - Spec / Implement / Review / Owner
 
-Next owner:
+Luồng nhận tiếp:
 - Spec / Implement / Review / Owner
 
-Next action:
+Bước tiếp theo:
 - ...
 
-Owner decision needed:
-- Yes / No
+Cần Owner quyết định:
+- Có / Không
 ```
 
-If `Owner decision needed` is `Yes`, the report must include one concise business question and the recommended default.
+Nếu cần Owner quyết định, chỉ hỏi một câu nghiệp vụ ngắn và kèm đề xuất mặc định.
 
 ---
 
-## 6. Staleness Rules
+## Khi Nào Xoá Khỏi Board
 
-Review should flag a stale coordination item when:
+Một item rời board khi:
 
-- a PR is open but no next owner is clear
-- a thread reports completion but no next action is listed
-- Owner asks for status and the answer requires guessing from chat history
-- a work item waits on the same owner for more than one review cycle without an explicit blocker
-
-Stale items should be recorded in `docs/REVIEW-ISSUES.md` or reported directly to the responsible thread.
-
----
-
-## 7. Completion Rules
-
-A work item can leave the active board only when one of these is true:
-
-- merged and post-merge report was sent to the relevant thread
-- intentionally deferred with a reason and future trigger
-- blocked by Owner decision and reported clearly
-- replaced by a newer work item with a link/reference
-
-After merge, Spec decides whether Source of Truth or this board needs an update. Review may request cleanup if the board drifts from real PR/thread state.
+- đã merge và đã report lại đúng luồng
+- đã defer có lý do và trigger quay lại
+- bị block bởi quyết định Owner và đã báo rõ
+- được thay bằng item mới có link/reference

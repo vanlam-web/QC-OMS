@@ -1,7 +1,7 @@
 # AUDIT REPORT — Kiểm tra tuân thủ DOCUMENT_RULES.md
 
 > **Vai trò:** Historical audit only. This report records the docs state from 2026-06-26/2026-06-27 and is not the current project status dashboard.
-> **Current coordination docs:** [AI_TEAM_RULES.md](../AI_TEAM_RULES.md), [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md), [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md), [REVIEW-ISSUES.md](./REVIEW-ISSUES.md)
+> **Tài liệu điều phối hiện tại:** [AI_TEAM_RULES.md](../AI_TEAM_RULES.md), [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md), [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md), [REVIEW-ISSUES.md](./REVIEW-ISSUES.md)
 >
 > **Ngày audit:** 2026-06-26
 > **Phạm vi:** Toàn bộ `docs/`

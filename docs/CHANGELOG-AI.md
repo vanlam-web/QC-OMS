@@ -1,8 +1,8 @@
 # CHANGELOG-AI — Historical AI Coordination Log
 
 > **Vai trò:** Historical log only.
-> **Current policy:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, and `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`
-> **Note:** Entries below describe the pre-2026-07-03 multi-AI period. They are retained for traceability and are not active operating policy.
+> **Quy trình hiện tại:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, và `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`.
+> **Ghi chú:** Nội dung bên dưới là lịch sử trước mô hình Codex ba luồng từ 2026-07-03; giữ để truy vết, không phải quy trình đang dùng.
 
 File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ngoài luồng chuẩn trong giai đoạn cũ. Từ 2026-07-03, QC-OMS dùng mô hình Codex-only với ba luồng Spec / Implement / Review; không dùng file này để quyết định workflow hiện hành.
 

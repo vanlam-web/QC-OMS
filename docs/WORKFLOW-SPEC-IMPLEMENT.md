@@ -1,7 +1,7 @@
 # WORKFLOW-SPEC-IMPLEMENT — Quy ước phối hợp các luồng Codex
 
 > **Vai trò:** Source of Truth điều phối.
-> **Owner:** Người dùng trực tiếp quyết định thứ tự và nghiệp vụ cuối cùng
+> **Người quyết định:** Owner trực tiếp quyết định thứ tự và nghiệp vụ cuối cùng.
 > **Cập nhật:** 2026-07-03
 
 ---

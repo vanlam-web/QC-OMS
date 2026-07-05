@@ -1,8 +1,8 @@
 # WORKFLOW-AUTO-SPEC-IMPLEMENT — Ke hoach tu dong phoi hop cac luong Codex
 
-> **Trang thai:** Source of Truth van hanh
-> **Owner:** Nguoi dung chot uu tien nghiep vu lon
-> **Cap nhat:** 2026-07-03
+> **Vai tro:** Source of Truth van hanh.
+> **Nguoi quyet dinh:** Owner chot uu tien nghiep vu lon.
+> **Cap nhat:** 2026-07-03.
 
 ---
 

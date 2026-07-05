@@ -1,40 +1,40 @@
 # Superpowers Specs And Plans
 
-> **Vai trò:** Trace/history/handoff area.
-> **Current Source of Truth:** promoted docs under `docs/02-PRD-UX-PhongCanh`, `docs/03-BUSINESS-NghiepVu`, `docs/04-DATABASE`, `docs/05-BACKEND-MayChu`, plus active workflow docs at the root of `docs/`.
+> **Vai trò:** Khu trace/history/handoff cho các draft và plan do Codex tạo.
+> **Source of Truth hiện tại:** tài liệu đã được promote vào `docs/02-PRD-UX-PhongCanh`, `docs/03-BUSINESS-NghiepVu`, `docs/04-DATABASE`, `docs/05-BACKEND-MayChu`, hoặc workflow docs ở root `docs/`.
 
 ---
 
-## Purpose
+## Mục Đích
 
-This folder stores working artifacts created during Codex planning:
+Thư mục này giữ tài liệu làm việc trong quá trình lập kế hoạch:
 
-- `specs/` contains design notes, audits, discovery notes, and draft specs.
-- `plans/` contains implementation plans and handoff checklists.
+- `specs/`: ghi chú phân tích, audit, discovery, draft spec.
+- `plans/`: implementation plan và handoff checklist tại một thời điểm.
 
-These files are useful for traceability and for understanding how a slice was planned, but they are not automatically current Source of Truth.
-
----
-
-## Quy tắc tình trạng
-
-- Files ending in `-draft.md` are drafts unless a later Source of Truth doc explicitly promotes them.
-- Files ending in `-bridge.md` or containing `implementation-bridge` are trace bridges. They explain how a slice mapped Source of Truth to implementation, but they do not replace promoted Source of Truth docs.
-- Files in `plans/` are implementation guidance for a point in time, not current product status.
-- Cleanup plans should be deleted after the cleanup is committed, unless Owner asks to keep them.
-- If a plan conflicts with a promoted Source of Truth doc or a newer Owner decision, follow the newer Owner decision and promoted Source of Truth.
-- Do not delete historical plans/drafts during cleanup unless Owner explicitly asks.
+Các file này hữu ích để truy vết, nhưng không tự động là Source of Truth hiện tại.
 
 ---
 
-## Promotion Path
+## Quy Tắc
 
-When a draft or plan becomes canonical, Spec should copy or summarize the approved parts into the appropriate Source of Truth layer:
+- File `*-draft.md` là draft nếu chưa được promote vào Source of Truth.
+- File `*-bridge.md` hoặc `implementation-bridge` là tài liệu nối mạch, không thay thế SoT.
+- File trong `plans/` là hướng dẫn implement tại thời điểm lập plan, không phải trạng thái dự án hiện tại.
+- Cleanup plan tạm phải xoá sau khi cleanup đã commit, trừ khi Owner yêu cầu giữ.
+- Nếu plan/draft mâu thuẫn với Source of Truth mới hơn hoặc quyết định Owner mới hơn, theo tài liệu/quyết định mới hơn.
+- Không xoá plan/draft lịch sử nếu Owner chưa yêu cầu rõ.
+
+---
+
+## Promote Vào Source of Truth
+
+Khi draft hoặc plan được chốt, Spec copy hoặc tóm tắt phần đã duyệt vào đúng tầng:
 
 - UX behavior: `docs/02-PRD-UX-PhongCanh/`
 - Business rules: `docs/03-BUSINESS-NghiepVu/`
 - Database schema: `docs/04-DATABASE/`
 - Backend/API contract: `docs/05-BACKEND-MayChu/`
-- Workflow/governance: `AI_TEAM_RULES.md` or root `docs/WORKFLOW-*.md`
+- Workflow/governance: `AI_TEAM_RULES.md` hoặc root `docs/WORKFLOW-*.md`
 
-After promotion, leave the original file here as trace/history.
+Sau khi promote, file gốc trong `superpowers/` chỉ còn vai trò trace/history.
