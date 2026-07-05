@@ -1,6 +1,8 @@
 import type {
   FoundationRepository,
   InventoryProductData,
+  MaterialOpeningOptionsData,
+  MaterialOpeningResultData,
   PermissionCode,
   ProductStatus,
   StockMovementData,
@@ -85,6 +87,40 @@ export async function listStocktakes(
   return { items: result.items, page, page_size: pageSize, total: result.total };
 }
 
+export async function getMaterialOpeningOptions(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  url: URL,
+): Promise<MaterialOpeningOptionsData> {
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
+  const productId = url.searchParams.get("product_id")?.trim();
+  if (!productId) throw validationError();
+  const result = await repository.getMaterialOpeningOptions({
+    organizationId: context.organizationId,
+    productId,
+  });
+  if (result === null) throw notFound();
+  return result;
+}
+
+export async function createMaterialOpening(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  body: unknown,
+): Promise<MaterialOpeningResultData> {
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
+  const payload = parseMaterialOpening(body);
+  try {
+    return await repository.createMaterialOpening({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      ...payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
 export async function adjustNormalProductStock(
   repository: FoundationRepository,
   context: InventoryContext,
@@ -104,6 +140,24 @@ export async function adjustNormalProductStock(
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
+}
+
+function parseMaterialOpening(body: unknown): {
+  productId: string;
+  inventoryShape: "normal";
+  openedUnitId: string;
+  openedQty: number;
+  oldRemainingQty?: number;
+  note?: string;
+} {
+  if (!isRecord(body)) throw validationError();
+  if (body.inventory_shape !== "normal") throw validationError();
+  const productId = parseRequiredText(body.product_id);
+  const openedUnitId = parseRequiredText(body.opened_unit_id);
+  const openedQty = parsePositiveNumber(body.opened_qty);
+  const oldRemainingQty = body.old_remaining_qty === undefined ? undefined : parseNonNegativeNumber(body.old_remaining_qty);
+  const note = typeof body.note === "string" && body.note.trim().length > 0 ? body.note.trim() : undefined;
+  return { productId, inventoryShape: "normal", openedUnitId, openedQty, oldRemainingQty, note };
 }
 
 function parseInventoryProductList(
@@ -140,6 +194,21 @@ function parseStockAdjustment(body: unknown): { actualQty: number; reason: strin
   }
   if (typeof body.reason !== "string" || body.reason.trim().length === 0) throw validationError();
   return { actualQty: body.actual_qty, reason: body.reason.trim() };
+}
+
+function parseRequiredText(value: unknown): string {
+  if (typeof value !== "string" || value.trim().length === 0) throw validationError();
+  return value.trim();
+}
+
+function parsePositiveNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) throw validationError();
+  return value;
+}
+
+function parseNonNegativeNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw validationError();
+  return value;
 }
 
 function parsePage(url: URL): { page: number; pageSize: number } {

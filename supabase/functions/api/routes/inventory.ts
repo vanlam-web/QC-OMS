@@ -4,6 +4,8 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   adjustNormalProductStock,
+  createMaterialOpening,
+  getMaterialOpeningOptions,
   getInventoryProduct,
   listInventoryProducts,
   listStockMovements,
@@ -50,6 +52,18 @@ export async function handleInventory(
 
   if (url.pathname === "/api/v1/inventory/stocktakes" && request.method === "GET") {
     return successResponse(await listStocktakes(dependencies.repository, context, url), traceId);
+  }
+
+  if (url.pathname === "/api/v1/inventory/material-openings/options" && request.method === "GET") {
+    return successResponse(await getMaterialOpeningOptions(dependencies.repository, context, url), traceId);
+  }
+
+  if (url.pathname === "/api/v1/inventory/material-openings" && request.method === "POST") {
+    return successResponse(
+      await createMaterialOpening(dependencies.repository, context, await request.json()),
+      traceId,
+      { status: 201 },
+    );
   }
 
   const adjustMatch = url.pathname.match(/^\/api\/v1\/inventory\/products\/([^/]+)\/adjust-stock$/);
