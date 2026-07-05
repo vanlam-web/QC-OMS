@@ -1,6 +1,5 @@
 # TOAST-API — API Xử lý Toast SĐT (K03-B)
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/K03/02-K03B-TOAST.md` (Section II + IV)
 > **PRD-UX reference:** `02-PRD-UX-PhongCanh/POS/K03/02-K03B-TOAST.md`
 

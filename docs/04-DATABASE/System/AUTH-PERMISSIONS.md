@@ -1,6 +1,5 @@
 # AUTH & PERMISSIONS — Schema nền tảng hệ thống
 
-> **Trạng thái:** ✅ Chốt cho Giai đoạn 0
 > **Ngày chốt:** 2026-06-28
 > **Phạm vi:** Organization, hồ sơ người dùng, máy trạm và permission.
 

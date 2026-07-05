@@ -1,6 +1,5 @@
 # ORDER-API — API nháp, báo giá và hóa đơn POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Base path:** `/api/v1`
 > **Business:** [POS-ORDER-LIFECYCLE.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md)
 > **Database:** [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md), [INVENTORY-TABLES.md](../../04-DATABASE/Inventory/INVENTORY-TABLES.md), [PAYMENT-DEBT-TABLES.md](../../04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md), [CASHBOOK-TABLES.md](../../04-DATABASE/Finance/CASHBOOK-TABLES.md)

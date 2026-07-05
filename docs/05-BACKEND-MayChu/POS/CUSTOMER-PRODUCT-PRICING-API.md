@@ -1,6 +1,5 @@
 # CUSTOMER-PRODUCT-PRICING-API — API Customer, Product và Pricing POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Base path:** `/api/v1`
 > **Business:** [POS-CUSTOMER.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER.md), [POS-PRICING.md](../../03-BUSINESS-NghiepVu/Sales/POS-PRICING.md)
 > **Database:** [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md)

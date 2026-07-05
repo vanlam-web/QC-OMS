@@ -1,6 +1,5 @@
 # FINANCE-API — API công nợ, sổ quỹ và đối soát
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Base path:** `/api/v1`
 > **Business:** [CASHBOOK.md](../../03-BUSINESS-NghiepVu/Finance/CASHBOOK.md), [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
 > **Database:** [PAYMENT-DEBT-TABLES.md](../../04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md), [CASHBOOK-TABLES.md](../../04-DATABASE/Finance/CASHBOOK-TABLES.md)

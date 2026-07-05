@@ -1,6 +1,5 @@
 # ARCHITECTURE — Kiến trúc State Manager & Data Safety
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md` (Section V) và `02-PRD-UX-PhongCanh/POS/K01/01c-K01-ARCH-SAFETY.md` (Section V.1–V.3)
 
 ---

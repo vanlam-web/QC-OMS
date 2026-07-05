@@ -1,6 +1,5 @@
 # INVENTORY-TABLES — Bảng kho vật tư
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Business Inventory `STOCK-RULES.md`, `UNIT-CONVERSION.md`, `STOCKTAKE.md`, `PRODUCTION-RECONCILIATION.md`
 
 ---

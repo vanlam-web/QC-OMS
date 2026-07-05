@@ -1,6 +1,6 @@
 # BOM API — Backend contract mức khung
 
-> **Trạng thái:** Draft kỹ thuật từ Source of Truth nghiệp vụ
+> **Vai trò:** Draft kỹ thuật từ Source of Truth nghiệp vụ.
 > **Business:** [BOM-RULES.md](../../03-BUSINESS-NghiepVu/BOM/BOM-RULES.md)
 
 ---

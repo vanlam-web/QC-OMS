@@ -1,6 +1,5 @@
 # POS-TABLES — Bảng phục vụ màn hình POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Cập nhật theo Business Sales `POS-CUSTOMER.md`, `POS-PRICING.md`, `POS-ORDER-LIFECYCLE.md`, `POS-ORDER-CALC.md`, `POS-CHECKOUT.md`
 
 ---

@@ -1,6 +1,5 @@
 # INVENTORY-API — API tồn kho, cuộn/tấm và kiểm kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Base path:** `/api/v1`
 > **Business:** [STOCK-RULES.md](../../03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md), [UNIT-CONVERSION.md](../../03-BUSINESS-NghiepVu/Inventory/UNIT-CONVERSION.md), [STOCKTAKE.md](../../03-BUSINESS-NghiepVu/Inventory/STOCKTAKE.md)
 > **Database:** [INVENTORY-TABLES.md](../../04-DATABASE/Inventory/INVENTORY-TABLES.md)

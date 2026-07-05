@@ -1,6 +1,5 @@
 # PAYMENT-DEBT-TABLES — Thanh toán POS và công nợ
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** `POS-CHECKOUT.md`, `POS-CUSTOMER-DEBT.md`, `CASHBOOK.md`
 
 ---

@@ -1,6 +1,6 @@
 # ERD — Sơ đồ quan hệ dữ liệu QC-OMS
 
-> **Trạng thái:** 🔨 Phát triển theo giai đoạn
+> **Vai trò:** Sơ đồ dữ liệu tổng, cập nhật theo từng phase.
 > **Đã chốt:** Foundation/System — Giai đoạn 0
 > **Chưa chốt:** Checkout/Finance/Workstation
 

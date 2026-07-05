@@ -1,6 +1,6 @@
 # Purchase Tables — Phác thảo dữ liệu nhà cung cấp/nhập hàng
 
-> **Trạng thái:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement
+> **Vai trò:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement.
 > **Business:** [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md)
 
 ---

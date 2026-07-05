@@ -1,6 +1,6 @@
 # BOM Tables — Phác thảo dữ liệu định mức vật tư
 
-> **Trạng thái:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement
+> **Vai trò:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement.
 > **Business:** [BOM-RULES.md](../../03-BUSINESS-NghiepVu/BOM/BOM-RULES.md)
 
 ---

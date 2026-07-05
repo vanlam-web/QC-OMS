@@ -1,6 +1,5 @@
 # FOUNDATION TECHNICAL DESIGN — Nền tảng QC-OMS
 
-> **Trạng thái:** ✅ Chốt cho Giai đoạn 0
 > **Ngày chốt:** 2026-06-28
 > **Phạm vi:** Kiến trúc ứng dụng, ranh giới FE–BE và cấu trúc source code nền tảng.
 
@@ -227,4 +226,3 @@ Các quyết định sau được chốt just-in-time tại giai đoạn tương
 - render và gửi bill.
 
 Không được suy ra thiết kế của các domain trên chỉ từ tài liệu nền tảng này.
-

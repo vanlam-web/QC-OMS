@@ -1,6 +1,5 @@
 # CASHBOOK-TABLES — Sổ quỹ, phiếu thu/chi và đối soát
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** `CASHBOOK.md`, `PAYMENT-DEBT-TABLES.md`
 
 ---

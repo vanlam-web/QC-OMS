@@ -1,6 +1,6 @@
 # AUTH — Phân quyền Permission-based Access Control
 
-> **Trạng thái:** ✅ Chốt mô hình nền tảng Giai đoạn 0; bổ sung permission theo từng module
+> **Mốc chốt:** mô hình nền tảng Giai đoạn 0; bổ sung permission theo từng module.
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md` (Section VI)
 
 ---

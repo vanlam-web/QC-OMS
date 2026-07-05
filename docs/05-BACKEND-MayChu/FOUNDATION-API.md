@@ -1,6 +1,6 @@
 # FOUNDATION API — Auth, Profile, Permission và Workstation
 
-> **Trạng thái:** ✅ Chốt cho Giai đoạn 0
+> **Mốc chốt:** Giai đoạn 0.
 > **Base path:** `/api/v1`
 > **Database:** [AUTH-PERMISSIONS.md](../04-DATABASE/System/AUTH-PERMISSIONS.md)
 

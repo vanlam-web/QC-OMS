@@ -1,6 +1,6 @@
 # Purchase API — Backend contract mức khung
 
-> **Trạng thái:** Draft kỹ thuật từ Source of Truth nghiệp vụ
+> **Vai trò:** Draft kỹ thuật từ Source of Truth nghiệp vụ.
 > **Business:** [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md)
 
 ---
