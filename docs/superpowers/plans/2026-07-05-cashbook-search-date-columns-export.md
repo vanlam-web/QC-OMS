@@ -539,4 +539,3 @@ Do this only after a DB/API design PR adds the missing foundation:
 - Expand `cashbook_vouchers.voucher_type` to cover actual KV categories: supplier payment, staff salary, shipping expense, tax/VAT, commission, transfer.
 - Join/hydrate voucher and receipt data into cashbook list rows.
 - Add filters for `Loại thu chi`, `Người nộp/nhận`, `SĐT`, and `Công nợ đối tác`.
-
