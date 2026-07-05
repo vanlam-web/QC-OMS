@@ -53,6 +53,25 @@ export interface ProductData {
   inventory_shape?: "normal" | "roll" | "sheet";
 }
 
+export interface ProductBomItemData {
+  id: string;
+  component_product_id: string;
+  component_product: { id: string; code: string; name: string; unit_name: string };
+  quantity: number;
+  sort_order: number;
+  notes: string | null;
+}
+
+export interface ProductBomData {
+  id: string;
+  product_id: string;
+  version: number;
+  status: "active" | "archived";
+  notes: string | null;
+  created_at: string;
+  items: ProductBomItemData[];
+}
+
 export interface PriceListData {
   id: string;
   code: string;
@@ -619,6 +638,14 @@ export interface FoundationRepository {
     latestPurchaseCost?: number | null;
     latestPurchaseCostUpdatedBy?: string;
   }): Promise<ProductData | null>;
+  getProductBom(input: { organizationId: string; productId: string }): Promise<ProductBomData | null>;
+  saveProductBom(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    notes?: string | null;
+    items: Array<{ componentProductId: string; quantity: number; notes?: string | null }>;
+  }): Promise<ProductBomData>;
   listPriceLists(input: { organizationId: string; activeOnly: boolean }): Promise<PriceListData[]>;
   createPriceList(input: {
     organizationId: string;

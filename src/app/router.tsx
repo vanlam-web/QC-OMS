@@ -20,6 +20,12 @@ import { createBrowserPurchaseReceiptService } from '../features/purchase/purcha
 import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
 import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
+import { InventoryPage } from '../features/inventory/InventoryPage'
+import { createBrowserInventoryService } from '../features/inventory/inventory-service'
+import { FinancePage } from '../features/finance/FinancePage'
+import { createBrowserFinanceService } from '../features/finance/finance-service'
+import { ReportsPage } from '../features/reports/ReportsPage'
+import { createBrowserReportService } from '../features/reports/report-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 import { AppShell } from '../components/ui-shell/AppShell'
 
@@ -36,6 +42,9 @@ export function AppRoutes() {
         <Route path="/customers" element={<CustomersRoute />} />
         <Route path="/suppliers" element={<SuppliersRoute />} />
         <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
+        <Route path="/inventory" element={<InventoryRoute />} />
+        <Route path="/finance" element={<FinanceRoute />} />
+        <Route path="/reports" element={<ReportsRoute />} />
         <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
         <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
         <Route path="/forbidden" element={<ForbiddenRoute />} />
@@ -211,6 +220,60 @@ function PurchaseReceiptsRoute() {
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
       <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+    </AppShell>
+  )
+}
+
+function InventoryRoute() {
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
+  const service = useMemo(() => createBrowserInventoryService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <InventoryPage service={service} />
+    </AppShell>
+  )
+}
+
+function FinanceRoute() {
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
+  const service = useMemo(() => createBrowserFinanceService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser.permissions.includes('perm.manage_finance')) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <FinancePage service={service} />
+    </AppShell>
+  )
+}
+
+function ReportsRoute() {
+  const { currentUser, initialized, getAccessToken, signOut } = useAuth()
+  const service = useMemo(() => createBrowserReportService(getAccessToken), [getAccessToken])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (
+    !currentUser.permissions.includes('perm.manage_finance') ||
+    !currentUser.permissions.includes('perm.manage_inventory')
+  ) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <ReportsPage service={service} />
     </AppShell>
   )
 }

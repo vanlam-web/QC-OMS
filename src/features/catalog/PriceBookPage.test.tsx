@@ -23,6 +23,8 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
     })),
     createProduct: vi.fn(),
     updateProduct: vi.fn(),
+    getProductBom: vi.fn(async () => null),
+    saveProductBom: vi.fn(),
     listCustomers: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
     createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({ items: [] })),

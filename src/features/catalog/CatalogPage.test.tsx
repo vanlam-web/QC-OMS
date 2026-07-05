@@ -15,11 +15,22 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
           unit_name: 'm',
           sell_method: 'linear_m' as const,
           latest_purchase_cost: 100000,
+          inventory_shape: 'normal' as const,
+        },
+        {
+          id: 'p-2',
+          code: 'KEO',
+          name: 'Keo dán',
+          status: 'active' as const,
+          unit_name: 'chai',
+          sell_method: 'quantity' as const,
+          latest_purchase_cost: 20000,
+          inventory_shape: 'normal' as const,
         },
       ],
       page: input.page ?? 1,
       page_size: input.page_size ?? 15,
-      total: 1,
+      total: 2,
     })),
     createProduct: vi.fn(async () => ({
       id: 'p-2',
@@ -36,6 +47,25 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       status: 'inactive' as const,
       unit_name: 'm',
       sell_method: 'linear_m' as const,
+    })),
+    getProductBom: vi.fn(async () => null),
+    saveProductBom: vi.fn(async () => ({
+      id: 'bom-1',
+      product_id: 'p-1',
+      version: 1,
+      status: 'active' as const,
+      notes: null,
+      created_at: '2026-07-05T00:00:00Z',
+      items: [
+        {
+          id: 'bom-item-1',
+          component_product_id: 'p-2',
+          component_product: { id: 'p-2', code: 'KEO', name: 'Keo dán', unit_name: 'chai' },
+          quantity: 2,
+          sort_order: 1,
+          notes: 'Dán mica',
+        },
+      ],
     })),
     listCustomers: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
     createCustomer: vi.fn(),
@@ -86,7 +116,7 @@ it('lists products and creates a product', async () => {
 
   expect(screen.getByText('Đang tải hàng hóa...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
-  expect(screen.getByText('Mica 3mm')).toBeInTheDocument()
+  expect(screen.getAllByText('Mica 3mm').length).toBeGreaterThan(0)
   expect(screen.getByRole('main')).toHaveClass('management-page')
   expect(screen.getByRole('heading', { name: 'Hàng hóa' }).closest('.management-page-header')).not.toBeNull()
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
@@ -135,7 +165,7 @@ it('filters by status and toggles product active state', async () => {
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
   expect(screen.queryByText('Trạng thái: Tất cả')).not.toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Ngưng bán' }))
+  await userEvent.click(screen.getAllByRole('button', { name: 'Ngưng bán' })[0])
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
 })
 
@@ -151,10 +181,28 @@ it('renders products as a goods and inventory-oriented list, not a pricebook wor
   expect(header).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
   expect(footer).toHaveClass('management-table-footer')
-  expect(footer).toContainElement(screen.getByText('1 - 1 trong 1 hàng hóa'))
+  expect(footer).toContainElement(screen.getByText('1 - 2 trong 2 hàng hóa'))
   expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
   expect(screen.queryByRole('table', { name: 'Lưới bảng giá' })).not.toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Công thức bảng giá' })).not.toBeInTheDocument()
+})
+
+it('opens product BOM and saves single-level normal components', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByText('MICA-3MM'))
+  const bomRegion = await screen.findByRole('region', { name: 'BOM MICA-3MM' })
+  await userEvent.selectOptions(within(bomRegion).getByLabelText('Vật tư'), 'p-2')
+  await userEvent.clear(within(bomRegion).getByLabelText('Định mức'))
+  await userEvent.type(within(bomRegion).getByLabelText('Định mức'), '2')
+  await userEvent.type(within(bomRegion).getByLabelText('Ghi chú'), 'Dán mica')
+  await userEvent.click(within(bomRegion).getByRole('button', { name: 'Lưu BOM' }))
+
+  expect(service.getProductBom).toHaveBeenCalledWith('p-1')
+  expect(service.saveProductBom).toHaveBeenCalledWith('p-1', {
+    items: [{ component_product_id: 'p-2', quantity: 2, notes: 'Dán mica' }],
+  })
 })
 
 it('uses the shared table footer to move between product pages', async () => {

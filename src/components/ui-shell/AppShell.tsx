@@ -10,6 +10,7 @@ interface ShellNavItem {
   path: string
   marker: string
   permissions: `perm.${string}`[]
+  requireAllPermissions?: boolean
 }
 
 const shellNavItems: ShellNavItem[] = [
@@ -21,8 +22,18 @@ const shellNavItems: ShellNavItem[] = [
     marker: 'CT',
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
+  { label: 'Tài chính', shortLabel: 'TC', path: '/finance', marker: 'TC', permissions: ['perm.manage_finance'] },
+  {
+    label: 'Báo cáo',
+    shortLabel: 'BC',
+    path: '/reports',
+    marker: 'BC',
+    permissions: ['perm.manage_finance', 'perm.manage_inventory'],
+    requireAllPermissions: true,
+  },
   { label: 'Khách hàng', shortLabel: 'KH', path: '/customers', marker: 'KH', permissions: ['perm.create_order'] },
   { label: 'Hàng hóa', shortLabel: 'HH', path: '/products', marker: 'HH', permissions: ['perm.manage_inventory'] },
+  { label: 'Kho', shortLabel: 'Kho', path: '/inventory', marker: 'K', permissions: ['perm.manage_inventory'] },
   { label: 'Bảng giá', shortLabel: 'Giá', path: '/price-book', marker: 'BG', permissions: ['perm.edit_price_book'] },
   { label: 'Nhà cung cấp', shortLabel: 'NCC', path: '/suppliers', marker: 'NC', permissions: ['perm.manage_inventory'] },
   { label: 'Nhập hàng', shortLabel: 'NH', path: '/purchase/receipts', marker: 'NH', permissions: ['perm.manage_inventory'] },
@@ -30,7 +41,11 @@ const shellNavItems: ShellNavItem[] = [
 ]
 
 function canSeeNavItem(currentUser: CurrentUserData, item: ShellNavItem) {
-  return item.permissions.length === 0 || item.permissions.some((permission) => currentUser.permissions.includes(permission))
+  if (item.permissions.length === 0) return true
+  if (item.requireAllPermissions) {
+    return item.permissions.every((permission) => currentUser.permissions.includes(permission))
+  }
+  return item.permissions.some((permission) => currentUser.permissions.includes(permission))
 }
 
 export function AppShell({

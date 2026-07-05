@@ -14,11 +14,21 @@ export const phaseOneModules = [
   { id: 'price-book', label: 'Bảng giá', path: '/price-book', permissions: ['perm.edit_price_book'] },
   { id: 'inventory', label: 'Kho', path: '/inventory', permissions: ['perm.manage_inventory'] },
   { id: 'finance', label: 'Tài chính', path: '/finance', permissions: ['perm.manage_finance'] },
+  {
+    id: 'reports',
+    label: 'Báo cáo',
+    path: '/reports',
+    permissions: ['perm.manage_finance', 'perm.manage_inventory'],
+    requireAllPermissions: true,
+  },
 ] as const
 
 export function canOpenModule(
   currentUser: CurrentUserData,
   module: (typeof phaseOneModules)[number],
 ) {
+  if ('requireAllPermissions' in module && module.requireAllPermissions) {
+    return module.permissions.every((permission) => currentUser.permissions.includes(permission))
+  }
   return module.permissions.some((permission) => currentUser.permissions.includes(permission))
 }

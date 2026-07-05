@@ -26,6 +26,8 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
     })),
     createProduct: vi.fn(),
     updateProduct: vi.fn(),
+    getProductBom: vi.fn(async () => null),
+    saveProductBom: vi.fn(),
     listCustomers: vi.fn(async () => ({
       items: [
         {

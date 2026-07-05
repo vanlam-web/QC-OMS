@@ -140,9 +140,23 @@ Bán `1 m tới` nghĩa là bán phần:
 1m x 1.22m
 ```
 
+Để thao tác xưởng đơn giản, QC-OMS có thể dùng khổ thao tác/làm tròn khi bán và trừ tồn, ví dụ `1.2m x 2.4m` thay vì bắt nhân viên thao tác theo khổ thật `1.22m x 2.44m`.
+
+Nguyên tắc:
+
+- khổ thao tác là khổ dùng để nhập bán, tính tiền, tính phần còn lại và gợi ý vật tư
+- khổ thật nếu có chỉ là thông tin tham khảo/ẩn hoặc phục vụ nhập hàng sau này
+- không bắt nhân viên nhập cả hai khổ trong thao tác bán/khui thường ngày
+
 Với sản phẩm bán theo `m tới`, bảng giá lưu giá theo `1 m tới`, không phải giá theo `m2`.
 
 Tấm vẫn có thể bán nguyên tấm hoặc quy đổi/bán theo `m2` khi nghiệp vụ cần.
+
+Khi bán theo kích thước, ví dụ `0.5m x 0.7m x 1 tấm`, hệ thống tính phần tiêu hao và phần còn lại từ khổ thao tác. Phần còn lại có thể gồm:
+
+- phần lớn theo m tới, ví dụ `1.2m x 1.9m`
+- rẻo lớn còn dùng được
+- rẻo nhỏ được đề xuất bỏ nhưng nhân viên có thể giữ lại nếu cần
 
 ### BR-UNIT-INV-07: Biên cắt hao cho tấm
 

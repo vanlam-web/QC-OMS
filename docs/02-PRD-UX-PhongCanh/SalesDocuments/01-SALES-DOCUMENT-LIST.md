@@ -38,8 +38,10 @@ Hiện tại đã triển khai:
 
 - danh sách hóa đơn `HD...` và báo giá `BG...`
 - tìm kiếm/lọc cơ bản
+- bộ lọc thời gian dạng chọn nhanh/tùy chỉnh theo layout filter dùng chung
+- bộ lọc trạng thái thanh toán, phương thức thanh toán, người bán/người tạo và bảng giá nếu dữ liệu/API hiện có hỗ trợ
 - exact document-code lookup không bị che bởi filter mặc định
-- bấm mã chứng từ để mở chi tiết readonly
+- bấm dòng chứng từ để mở chi tiết readonly inline
 - mở lại báo giá active vào POS draft local
 - giữ giá snapshot của báo giá khi mở lại; cảnh báo nếu giá hiện tại khác hoặc sản phẩm không còn khả dụng
 
@@ -86,15 +88,18 @@ QC-OMS chỉ làm luồng **bán đứt**:
 | Tìm kiếm nhanh | Tìm theo mã chứng từ, mã khách, tên khách, SĐT nếu có, ghi chú đơn |
 | Thời gian | Mặc định tháng này; có bộ lọc hôm nay, hôm qua, tháng này, tùy chỉnh |
 | Loại chứng từ | Tất cả, Báo giá, Hóa đơn |
-| Trạng thái | Báo giá, Hoàn thành, Đã hủy |
+| Trạng thái chứng từ | Báo giá, Hoàn thành, Đã hủy |
+| Trạng thái thanh toán | Tất cả, Đã trả đủ, Còn nợ, Không thu tiền nếu có dữ liệu |
+| Phương thức thanh toán | Tất cả, Tiền mặt, Chuyển khoản, Kết hợp nếu có dữ liệu |
 | Khách hàng | Chọn khách hoặc nhập nhanh tên/mã/SĐT |
-| Người bán | Lọc theo nhân viên bán/chốt |
-| Thanh toán | Đã trả đủ, Còn nợ, Không thu tiền |
+| Người bán/người tạo | Trong QC-OMS hiện tại hai khái niệm này dùng cùng tài khoản tạo/chốt chứng từ; UI chỉ cần một filter người bán/người tạo |
 | Bảng giá | Bảng giá chung hoặc bảng giá theo nhóm khách |
 
-Không có bộ lọc giao hàng, COD, đối tác giao hàng, HĐĐT.
+Không có bộ lọc giao hàng, COD, đối tác giao hàng, kênh bán, HĐĐT, VAT, trạng thái giao hàng, trạng thái vận đơn hoặc trạng thái đồng bộ sàn.
 
 Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên toàn bộ lịch sử hoặc tự bỏ các filter thời gian/trạng thái đang che kết quả.
+
+Nếu filter tồn tại ở KiotViet nhưng QC-OMS chưa có schema/dữ liệu thật, không hiển thị filter đó ở UI. Không tạo filter rỗng chỉ để giống KiotViet.
 
 ---
 
@@ -112,11 +117,11 @@ Khi người dùng tìm đúng mã chứng từ, hệ thống phải tìm trên 
 | Khách cần trả | Số tiền phải thu của chứng từ |
 | Khách đã trả | Tiền đã thu cho hóa đơn này |
 | Còn nợ | Chỉ hiển thị với hóa đơn còn nợ |
-| Người bán | Nhân viên chốt hoặc lưu báo giá |
+| Người bán | Tài khoản tạo/chốt chứng từ; không tách riêng người tạo/người bán trong QC-OMS hiện tại |
 | Trạng thái | Báo giá, Hoàn thành, Đã hủy |
 | Ghi chú | Ghi chú đơn |
 
-Các cột có thể ẩn/hiện, nhưng bộ cột mặc định phải gọn để nhìn nhanh trên màn hình bán hàng.
+Các cột có thể ẩn/hiện, nhưng bộ cột mặc định phải gọn để nhìn nhanh trên màn hình bán hàng. Cột tiền canh phải. Tiêu đề cột tiền cũng canh phải theo giá trị.
 
 Nếu POS/báo giá/hóa đơn không chọn khách, backend phải gán chứng từ vào `KH000001 - Khách lẻ` của tổ chức. Danh sách chứng từ vẫn có thể hiển thị snapshot `Khách lẻ`, nhưng filter/lịch sử theo khách phải dựa trên `customer_id = KH000001`, không để chứng từ bán lẻ ở `customer_id = null`.
 

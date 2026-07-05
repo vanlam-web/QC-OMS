@@ -91,6 +91,26 @@ function repo(
         unit_name: "m",
         sell_method: "linear_m",
       }),
+    getProductBom: () => Promise.resolve(null),
+    saveProductBom: () =>
+      Promise.resolve({
+        id: "bom-1",
+        product_id: "p-1",
+        version: 1,
+        status: "active",
+        notes: null,
+        created_at: "2026-07-05T00:00:00Z",
+        items: [
+          {
+            id: "item-1",
+            component_product_id: "component-1",
+            component_product: { id: "component-1", code: "KEO", name: "Keo dán", unit_name: "chai" },
+            quantity: 2,
+            sort_order: 1,
+            notes: "Dán mica",
+          },
+        ],
+      }),
     listPriceLists: () =>
       Promise.resolve([
         {
@@ -216,6 +236,48 @@ Deno.test("price resolution uses default price list without discount model", asy
   assertEquals(body.items[0].price_source, "default_price_list");
   assert(!("discount_rate" in body.items[0]), "price response must not include discount_rate");
   assert(!("discount_items" in body.items[0]), "price response must not include discount_items");
+});
+
+Deno.test("product BOM routes require inventory permission and normalize items", async () => {
+  const forbidden = await call("/api/v1/products/p-1/bom", { method: "GET" }, repo(["perm.create_order"]));
+  assertEquals(forbidden.status, 403);
+
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.manage_inventory"], {
+    getProductBom: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve(null);
+    },
+    saveProductBom: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: "bom-1",
+        product_id: input.productId as string,
+        version: 1,
+        status: "active",
+        notes: null,
+        created_at: "2026-07-05T00:00:00Z",
+        items: [],
+      });
+    },
+  });
+
+  const getResponse = await call("/api/v1/products/p-1/bom", { method: "GET" }, repository);
+  const postResponse = await call(
+    "/api/v1/products/p-1/bom",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{ component_product_id: "component-1", quantity: "2", notes: " Dán mica " }],
+      }),
+    },
+    repository,
+  );
+
+  assertEquals(getResponse.status, 200);
+  assertEquals(postResponse.status, 201);
+  assertEquals(receivedInputs[0].productId, "p-1");
+  assertEquals(receivedInputs[1].items, [{ componentProductId: "component-1", quantity: 2, notes: "Dán mica" }]);
 });
 
 Deno.test("customer routes normalize optional phone and auto code", async () => {

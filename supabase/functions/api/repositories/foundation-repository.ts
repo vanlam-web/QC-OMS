@@ -22,6 +22,7 @@ import type {
   PaymentReceiptDetailData,
   PriceFormulaPreviewData,
   PriceListData,
+  ProductBomData,
   ProductData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
@@ -663,6 +664,27 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .maybeSingle();
       if (error !== null) throw error;
       return data as ProductData | null;
+    },
+    async getProductBom(input): Promise<ProductBomData | null> {
+      return await loadProductBom(client, input.organizationId, input.productId);
+    },
+    async saveProductBom(input): Promise<ProductBomData> {
+      const { data, error } = await client.rpc("save_product_bom_v1_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_product_id: input.productId,
+        p_items: input.items.map((item) => ({
+          component_product_id: item.componentProductId,
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+        })),
+        p_notes: input.notes ?? null,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data) || typeof data.id !== "string") throw new Error("BOM_SAVE_FAILED");
+      const bom = await loadProductBom(client, input.organizationId, input.productId);
+      if (bom === null) throw new Error("BOM_SAVE_FAILED");
+      return bom;
     },
     async listPriceLists(input): Promise<PriceListData[]> {
       let query = client
@@ -3223,6 +3245,69 @@ async function hydrateInventoryProducts(
       is_negative: availableQty < 0,
     };
   });
+}
+
+async function loadProductBom(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+): Promise<ProductBomData | null> {
+  const { data: bom, error: bomError } = await client
+    .from("product_boms")
+    .select("id, product_id, version, status, notes, created_at")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .eq("status", "active")
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (bomError !== null) throw bomError;
+  if (bom === null) return null;
+
+  const { data: rows, error: itemError } = await client
+    .from("product_bom_items")
+    .select("id, component_product_id, quantity, sort_order, notes")
+    .eq("organization_id", organizationId)
+    .eq("bom_id", bom.id)
+    .order("sort_order", { ascending: true });
+  if (itemError !== null) throw itemError;
+
+  const componentIds = [...new Set((rows ?? []).map((row) => row.component_product_id).filter(isString))];
+  const productsById = new Map<string, { id: string; code: string; name: string; unit_name: string }>();
+  if (componentIds.length > 0) {
+    const { data: products, error: productError } = await client
+      .from("products")
+      .select("id, code, name, unit_name")
+      .eq("organization_id", organizationId)
+      .in("id", componentIds);
+    if (productError !== null) throw productError;
+    for (const product of products ?? []) productsById.set(product.id, product);
+  }
+
+  return {
+    id: bom.id,
+    product_id: bom.product_id,
+    version: Number(bom.version),
+    status: bom.status as "active" | "archived",
+    notes: bom.notes,
+    created_at: bom.created_at,
+    items: (rows ?? []).map((row) => {
+      const product = productsById.get(row.component_product_id);
+      return {
+        id: row.id,
+        component_product_id: row.component_product_id,
+        component_product: {
+          id: product?.id ?? row.component_product_id,
+          code: product?.code ?? "",
+          name: product?.name ?? "",
+          unit_name: product?.unit_name ?? "",
+        },
+        quantity: Number(row.quantity),
+        sort_order: Number(row.sort_order),
+        notes: row.notes,
+      };
+    }),
+  };
 }
 
 function isString(value: unknown): value is string {

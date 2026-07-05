@@ -5,6 +5,7 @@ import type {
   PermissionCode,
   PriceListData,
   PriceFormulaPreviewData,
+  ProductBomData,
   ProductData,
   ProductStatus,
   ResolvedPriceData,
@@ -113,6 +114,37 @@ export async function updateProduct(
     return row;
   } catch (cause) {
     if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function getProductBom(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  productId: string,
+): Promise<ProductBomData | null> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  return await repository.getProductBom({ organizationId: context.organizationId, productId });
+}
+
+export async function saveProductBom(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  productId: string,
+  body: unknown,
+): Promise<ProductBomData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  if (context.actorUserId === undefined) throw validationError();
+  const input = parseProductBomBody(body);
+
+  try {
+    return await repository.saveProductBom({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      productId,
+      ...input,
+    });
+  } catch (cause) {
     throw mapRepositoryError(cause);
   }
 }
@@ -626,6 +658,28 @@ function parseRequiredId(value: unknown): string {
 function parseOptionalId(value: unknown): string | null {
   if (value === null) return null;
   return parseRequiredId(value);
+}
+
+function parseProductBomBody(body: unknown): {
+  notes?: string | null;
+  items: Array<{ componentProductId: string; quantity: number; notes?: string | null }>;
+} {
+  if (!isRecord(body) || !Array.isArray(body.items) || body.items.length === 0) throw validationError();
+  if (body.items.length > 50) throw validationError();
+  return {
+    notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
+    items: body.items.map((item) => {
+      if (!isRecord(item)) throw validationError();
+      const componentProductId = parseRequiredId(item.component_product_id);
+      const quantity = typeof item.quantity === "number" ? item.quantity : Number(item.quantity);
+      if (!Number.isFinite(quantity) || quantity <= 0) throw validationError();
+      return {
+        componentProductId,
+        quantity,
+        notes: typeof item.notes === "string" && item.notes.trim() ? item.notes.trim() : null,
+      };
+    }),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

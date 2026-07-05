@@ -3,6 +3,7 @@ import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   Customer,
   CustomerListResponse,
+  ProductBom,
   PriceFormulaApplyResult,
   PriceFormulaInput,
   PriceFormulaPreview,
@@ -53,6 +54,15 @@ export function createCatalogService(api: CatalogApiRequester) {
     ) =>
       api.request<Product>(`/api/v1/products/${id}`, {
         method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    getProductBom: (productId: string) => api.request<ProductBom | null>(`/api/v1/products/${productId}/bom`),
+    saveProductBom: (
+      productId: string,
+      input: { notes?: string | null; items: Array<{ component_product_id: string; quantity: number; notes?: string | null }> },
+    ) =>
+      api.request<ProductBom>(`/api/v1/products/${productId}/bom`, {
+        method: 'POST',
         body: JSON.stringify(input),
       }),
     listCustomers: (input: { search?: string; page?: number; page_size?: number } = {}) => {

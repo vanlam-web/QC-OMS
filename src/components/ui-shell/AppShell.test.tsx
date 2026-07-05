@@ -53,6 +53,7 @@ it('renders adaptive navigation with purchase supplier entries and active route'
   expect(screen.getByRole('banner')).toBeInTheDocument()
   expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
+  expect(screen.getByRole('link', { name: /Kho/i })).toHaveAttribute('href', '/inventory')
   expect(screen.getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
   expect(screen.getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('aria-current', 'page')
   expect(screen.queryByRole('link', { name: /Phiếu nhập/i })).not.toBeInTheDocument()
@@ -75,8 +76,11 @@ it('renders POS as a quick action and keeps module navigation for management pag
   expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('href', '/pos')
   expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('aria-current', 'page')
   expect(within(navigation).getByRole('link', { name: /Chứng từ/i })).toHaveAttribute('href', '/sales-documents')
+  expect(within(navigation).getByRole('link', { name: /Tài chính/i })).toHaveAttribute('href', '/finance')
+  expect(within(navigation).getByRole('link', { name: /Báo cáo/i })).toHaveAttribute('href', '/reports')
   expect(within(navigation).getByRole('link', { name: /Khách hàng/i })).toHaveAttribute('href', '/customers')
   expect(within(navigation).getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
+  expect(within(navigation).getByRole('link', { name: /Kho/i })).toHaveAttribute('href', '/inventory')
   expect(within(navigation).getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
   expect(within(navigation).getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
   expect(within(navigation).getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('href', '/purchase/receipts')
@@ -135,4 +139,13 @@ it('routes the price book nav item to the dedicated price book page', () => {
 
   expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
   expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('aria-current', 'page')
+})
+
+it('shows reports only when user has both finance and inventory permissions', () => {
+  const financeOnly = renderShell('/finance', { ...inventoryUser, permissions: ['perm.manage_finance'] })
+  expect(screen.queryByRole('link', { name: /Báo cáo/i })).not.toBeInTheDocument()
+  financeOnly.unmount()
+
+  renderShell('/inventory', { ...inventoryUser, permissions: ['perm.manage_finance', 'perm.manage_inventory'] })
+  expect(screen.getByRole('link', { name: /Báo cáo/i })).toHaveAttribute('href', '/reports')
 })

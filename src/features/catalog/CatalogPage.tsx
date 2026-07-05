@@ -15,7 +15,7 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
-import type { Product, ProductStatus, SellMethod } from './types'
+import type { Product, ProductBom, ProductStatus, SellMethod } from './types'
 
 interface CatalogState {
   products: Product[]
@@ -46,6 +46,9 @@ export function CatalogPage({
   const [createOpen, setCreateOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(true)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [componentProducts, setComponentProducts] = useState<Product[]>([])
+  const [bomByProductId, setBomByProductId] = useState<Record<string, ProductBom | null>>({})
+  const [bomForms, setBomForms] = useState<Record<string, Array<{ component_product_id: string; quantity: string; notes: string }>>>({})
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
@@ -167,8 +170,66 @@ export function CatalogPage({
     }
   }
 
-  function toggleProductDetail(product: Product) {
-    setSelectedProductId((current) => (current === product.id ? null : product.id))
+  async function toggleProductDetail(product: Product) {
+    if (selectedProductId === product.id) {
+      setSelectedProductId(null)
+      return
+    }
+    setSelectedProductId(product.id)
+    setError(null)
+    try {
+      const [bom, components] = await Promise.all([
+        service.getProductBom(product.id),
+        componentProducts.length === 0
+          ? service.listProducts({ status: 'active', page: 1, page_size: 100 })
+          : Promise.resolve({ items: componentProducts, page: 1, page_size: componentProducts.length, total: componentProducts.length }),
+      ])
+      const normalComponents = components.items.filter((item) => item.id !== product.id && item.inventory_shape !== 'roll' && item.inventory_shape !== 'sheet')
+      setComponentProducts(normalComponents)
+      setBomByProductId((current) => ({ ...current, [product.id]: bom }))
+      setBomForms((current) => ({
+        ...current,
+        [product.id]: bom?.items.map((item) => ({
+          component_product_id: item.component_product_id,
+          quantity: String(item.quantity),
+          notes: item.notes ?? '',
+        })) ?? [{ component_product_id: '', quantity: '1', notes: '' }],
+      }))
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được BOM hàng hóa.'))
+    }
+  }
+
+  async function saveBom(product: Product) {
+    const items = (bomForms[product.id] ?? [])
+      .filter((line) => line.component_product_id !== '')
+      .map((line) => ({
+        component_product_id: line.component_product_id,
+        quantity: Number(line.quantity),
+        ...(line.notes.trim() ? { notes: line.notes.trim() } : {}),
+      }))
+    if (items.length === 0 || items.some((item) => item.quantity <= 0 || !Number.isFinite(item.quantity))) {
+      setError('BOM cần ít nhất một vật tư và định mức lớn hơn 0.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const bom = await service.saveProductBom(product.id, { items })
+      setBomByProductId((current) => ({ ...current, [product.id]: bom }))
+      setBomForms((current) => ({
+        ...current,
+        [product.id]: bom.items.map((item) => ({
+          component_product_id: item.component_product_id,
+          quantity: String(item.quantity),
+          notes: item.notes ?? '',
+        })),
+      }))
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không lưu được BOM hàng hóa.'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
@@ -321,11 +382,11 @@ export function CatalogPage({
                         aria-expanded={selectedProductId === product.id}
                         className={`management-data-row${selectedProductId === product.id ? ' management-data-row-selected' : ''}`}
                         tabIndex={0}
-                        onClick={() => toggleProductDetail(product)}
+                        onClick={() => void toggleProductDetail(product)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault()
-                            toggleProductDetail(product)
+                            void toggleProductDetail(product)
                           }
                         }}
                       >
@@ -376,6 +437,79 @@ export function CatalogPage({
                               <dd>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</dd>
                             </div>
                           </dl>
+                          <section aria-label={`BOM ${product.code}`} className="catalog-bom-panel">
+                            <header>
+                              <h3>BOM vật tư</h3>
+                              {bomByProductId[product.id] ? <span>Version {bomByProductId[product.id]?.version}</span> : <span>Chưa có BOM</span>}
+                            </header>
+                            {(bomForms[product.id] ?? [{ component_product_id: '', quantity: '1', notes: '' }]).map((line, index) => (
+                              <div className="catalog-bom-line" key={`${product.id}-${index}`}>
+                                <label>
+                                  Vật tư
+                                  <select
+                                    value={line.component_product_id}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, component_product_id: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  >
+                                    <option value="">Chọn vật tư</option>
+                                    {componentProducts.map((component) => (
+                                      <option key={component.id} value={component.id}>
+                                        {component.code} · {component.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label>
+                                  Định mức
+                                  <input
+                                    min="0.001"
+                                    step="0.001"
+                                    type="number"
+                                    value={line.quantity}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, quantity: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  />
+                                </label>
+                                <label>
+                                  Ghi chú
+                                  <input
+                                    value={line.notes}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, notes: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            ))}
+                            <div className="catalog-bom-actions">
+                              <button
+                                className="button button-secondary"
+                                type="button"
+                                onClick={() => {
+                                  setBomForms((current) => ({
+                                    ...current,
+                                    [product.id]: [
+                                      ...(current[product.id] ?? []),
+                                      { component_product_id: '', quantity: '1', notes: '' },
+                                    ],
+                                  }))
+                                }}
+                              >
+                                Thêm vật tư
+                              </button>
+                              <button className="button button-primary" disabled={saving} type="button" onClick={() => void saveBom(product)}>
+                                Lưu BOM
+                              </button>
+                            </div>
+                          </section>
                         </ManagementDetailRow>
                       ) : null}
                     </Fragment>

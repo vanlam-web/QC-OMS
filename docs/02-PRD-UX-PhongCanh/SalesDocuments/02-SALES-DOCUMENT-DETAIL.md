@@ -36,6 +36,7 @@ Hiện tại đã đọc dữ liệu đã có:
 - tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có; báo giá không phát sinh tiền/kho/công nợ
 - stock movements liên quan nếu Backend trả về
 - thao tác mở lại báo giá active vào POS draft local
+- tab `Thông tin` và `Lịch sử thanh toán` có thể hiển thị trong UI; tab lịch sử thanh toán tạm thời không gọi API lịch sử riêng nếu backend/chứng từ chưa có dữ liệu đủ ổn định
 
 Chưa triển khai:
 
@@ -44,6 +45,7 @@ Chưa triển khai:
 - in/xem báo giá mẫu mặc định, thuộc Phase 3B
 - in lại bill hóa đơn nếu Bill Preview/print flow chưa sẵn sàng
 - transaction đảo kho/tiền/công nợ
+- API lịch sử thanh toán riêng cho detail; chỉ nối khi Finance/Sổ quỹ đủ dữ liệu và đã có endpoint ổn định
 
 Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
 
@@ -70,7 +72,7 @@ Hiển thị:
 - Loại chứng từ: Báo giá hoặc Hóa đơn.
 - Trạng thái.
 - Khách hàng snapshot tại thời điểm lưu.
-- Người bán/người tạo.
+- Người bán: tài khoản tạo/chốt chứng từ. QC-OMS hiện tại không tách riêng `người tạo` và `người bán`.
 - Bảng giá đã áp dụng.
 - Chi nhánh không hiển thị trong MVP vì hiện chỉ có một chi nhánh ngầm; chỉ bổ sung nếu sau này thật sự vận hành nhiều chi nhánh/kho.
 - Ghi chú đơn.
@@ -124,6 +126,7 @@ Quy tắc:
 - Không sửa trực tiếp thanh toán trong chi tiết hóa đơn.
 - Thu thêm nợ thực hiện ở module Công nợ/Sổ quỹ theo quy tắc phân bổ hóa đơn cũ nhất trước.
 - Nếu hóa đơn bị sửa/hủy, tác động đảo tiền/công nợ phải được ghi thành lịch sử, không xóa dòng cũ.
+- Nếu chưa có API lịch sử thanh toán ổn định, UI vẫn được giữ tab `Lịch sử thanh toán` nhưng hiển thị trạng thái trống/chưa có dữ liệu, không gọi endpoint chưa sẵn sàng.
 
 ---
 
