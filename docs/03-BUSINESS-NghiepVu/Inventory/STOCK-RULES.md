@@ -1,6 +1,5 @@
 # STOCK-RULES — Chính sách tồn kho và trừ kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Business rule cho tồn kho MVP, hàng thường, hàng cuộn, hàng tấm, tấm lỡ và thời điểm trừ kho
 
 ---

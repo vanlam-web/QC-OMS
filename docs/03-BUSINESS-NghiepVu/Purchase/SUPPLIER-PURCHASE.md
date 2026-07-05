@@ -1,6 +1,6 @@
 # SUPPLIER-PURCHASE — Nhà cung cấp, nhập hàng và công nợ NCC
 
-> **Trạng thái:** Source of Truth nghiệp vụ
+> **Vai trò:** Source of Truth nghiệp vụ.
 > **Tham khảo:** KiotViet `Nhà cung cấp`, `Nhập hàng`
 > **Quyết định Owner:** Có NCC, có nhập hàng mua thật, có công nợ NCC; mua cuộn/tấm theo vật lý, không mua `m2`
 

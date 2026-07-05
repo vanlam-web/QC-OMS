@@ -1,6 +1,5 @@
 # POS-CHECKOUT — Nghiệp vụ thanh toán
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/K03/04-K03D-THANH-TOAN.md` (Section III)
 
 ---

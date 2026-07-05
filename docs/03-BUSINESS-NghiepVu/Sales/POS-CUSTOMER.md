@@ -1,6 +1,5 @@
 # POS-CUSTOMER — Nghiệp vụ khách hàng POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Chốt từ draft `docs/superpowers/specs/2026-06-30-customer-product-pricing-design.md`
 
 ---

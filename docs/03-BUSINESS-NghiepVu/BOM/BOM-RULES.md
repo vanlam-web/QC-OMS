@@ -1,6 +1,6 @@
 # BOM-RULES — Định mức vật tư, combo và trừ kho nhiều cấp
 
-> **Trạng thái:** Source of Truth nghiệp vụ
+> **Vai trò:** Source of Truth nghiệp vụ.
 > **Tham khảo:** PRD POS K02-A, export KiotViet `Hàng thành phần`
 > **Quyết định Owner:** Có BOM nhiều cấp; có thể sửa BOM; POS có thể dùng BOM phát sinh để trừ kho hoặc lưu thành combo mới
 

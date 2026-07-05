@@ -1,6 +1,6 @@
 # POS-ORDER-LIFECYCLE — Vòng đời đơn hàng POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> **Vai trò:** Source of Truth nghiệp vụ cho trạng thái đơn hàng POS.
 
 ---
 

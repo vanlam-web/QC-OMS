@@ -1,6 +1,5 @@
 # UNIT-CONVERSION — Đơn vị tồn, đơn vị bán và quy đổi
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Quy tắc nghiệp vụ cho đơn vị tồn chính, đơn vị bán phụ, quy đổi đơn giản, cuộn và tấm
 
 ---

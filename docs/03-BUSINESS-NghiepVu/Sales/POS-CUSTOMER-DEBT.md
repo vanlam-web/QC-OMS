@@ -1,6 +1,5 @@
 # POS-CUSTOMER-DEBT — Nghiệp vụ công nợ khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Tách khỏi `02-PRD-UX-PhongCanh/POS/K03/01-K03A-DOI-TAC.md`
 
 ---

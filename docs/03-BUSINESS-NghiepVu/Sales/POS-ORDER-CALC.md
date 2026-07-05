@@ -1,6 +1,5 @@
 # POS-ORDER-CALC — Quy tắc tính toán giỏ hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/K02/01-K02-GIO-HANG.md` (Section II–III) và `02-PRD-UX-PhongCanh/POS/K02/02-K02A-DONG-SP.md` (Loại 1/2/3)
 
 ---

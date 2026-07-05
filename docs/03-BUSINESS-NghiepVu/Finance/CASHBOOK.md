@@ -1,6 +1,5 @@
 # CASHBOOK — Nghiệp vụ sổ quỹ, phiếu thu và phiếu chi
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Chốt từ trao đổi Owner 2026-06-30
 
 ---
