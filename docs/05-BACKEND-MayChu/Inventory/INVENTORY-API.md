@@ -14,7 +14,7 @@ Tài liệu này là Source of Truth cho Backend API Inventory MVP:
 - quản lý cấu hình tồn kho của sản phẩm
 - quản lý cuộn vật lý
 - quản lý tấm nguyên/tấm dở/tấm lỡ
-- khui vật tư phụ/cuộn/tấm để chuẩn hóa tồn dần
+- khui hàng `normal` có quy đổi đơn vị/cuộn/tấm để chuẩn hóa tồn dần
 - xem stock movement
 - tạo/lưu/cân bằng/hủy phiếu kiểm kho
 - sửa tồn hàng thường trong trang Hàng hóa bằng phiếu kiểm kho tự động
@@ -727,7 +727,7 @@ Backend nên log:
 - tạo/cân bằng/hủy kiểm kho
 - sửa tồn trực tiếp từ Hàng hóa
 - stock movement thủ công
-- khui vật tư phụ/cuộn/tấm
+- khui hàng `normal` có quy đổi đơn vị/cuộn/tấm
 - khui từ tồn tạm KiotViet
 
 Metric gợi ý:

@@ -140,11 +140,11 @@ public.product_inventory_settings.stock_unit_id
 
 ---
 
-## 5. Bảng `public.product_unit_conversions` — Quy đổi đơn vị bán phụ
+## 5. Bảng `public.product_unit_conversions` — Quy đổi đơn vị bán/khui
 
 ### Mục đích
 
-Lưu hệ số quy đổi từ đơn vị bán phụ về đơn vị tồn chính theo từng sản phẩm.
+Lưu hệ số quy đổi từ đơn vị bán hoặc đơn vị khui về đơn vị tồn chính theo từng sản phẩm.
 
 ### Các cột
 
@@ -153,9 +153,9 @@ Lưu hệ số quy đổi từ đơn vị bán phụ về đơn vị tồn chín
 | `id` | `uuid` | ❌ | Khóa chính |
 | `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
 | `product_id` | `uuid` | ❌ | FK → `public.products.id` |
-| `sale_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị bán phụ |
+| `sale_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị bán/khui |
 | `stock_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị tồn chính |
-| `stock_qty_per_sale_unit` | `numeric(18,6)` | ❌ | 1 đơn vị bán phụ bằng bao nhiêu đơn vị tồn |
+| `stock_qty_per_sale_unit` | `numeric(18,6)` | ❌ | 1 đơn vị bán/khui bằng bao nhiêu đơn vị tồn |
 | `is_active` | `boolean` | ❌ | Quy đổi còn dùng |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
@@ -351,7 +351,7 @@ Không dùng bảng này để tính giá vốn, lô/ngày mua hoặc báo cáo 
 | `old_inventory_sheet_id` | `uuid` | ✅ | FK → `public.inventory_sheets.id` nếu có tấm cũ |
 | `new_inventory_sheet_id` | `uuid` | ✅ | FK → `public.inventory_sheets.id` nếu tạo/chọn tấm mới |
 | `old_snapshot` | `jsonb` | ❌ | Giá trị hệ thống trước khui; `{}` nếu không có |
-| `input_payload` | `jsonb` | ❌ | Input đã validate: khổ, dài, số lượng, phần cũ còn lại, giữ/bỏ rẻo |
+| `input_payload` | `jsonb` | ❌ | Input đã validate: `opened_unit_id`/`opened_qty` cho `normal`; khổ, dài, số lượng, phần cũ còn lại, giữ/bỏ rẻo cho roll/sheet |
 | `result_payload` | `jsonb` | ❌ | Kết quả: object tạo/cập nhật, phần bỏ, cảnh báo |
 | `warning_codes` | `text[]` | ❌ | Ví dụ `LOW_STOCK`, `NEGATIVE_STOCK`, `PROVISIONAL_SOURCE` |
 | `note` | `text` | ✅ | Ghi chú của người thao tác |
