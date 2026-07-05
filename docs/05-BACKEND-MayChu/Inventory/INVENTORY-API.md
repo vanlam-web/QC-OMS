@@ -14,6 +14,7 @@ Tài liệu này là Source of Truth cho Backend API Inventory MVP:
 - quản lý cấu hình tồn kho của sản phẩm
 - quản lý cuộn vật lý
 - quản lý tấm nguyên/tấm dở/tấm lỡ
+- khui vật tư phụ/cuộn/tấm để chuẩn hóa tồn dần
 - xem stock movement
 - tạo/lưu/cân bằng/hủy phiếu kiểm kho
 - sửa tồn hàng thường trong trang Hàng hóa bằng phiếu kiểm kho tự động
@@ -42,6 +43,7 @@ X-Request-Id: <client-generated-id>   # không bắt buộc
 | Nhóm API | Permission |
 |---|---|
 | Xem tồn kho, cuộn, tấm, stock movement | `perm.create_order` hoặc `perm.manage_inventory` |
+| Khui vật tư từ POS/topbar hoặc kho | `perm.create_order` hoặc `perm.manage_inventory` |
 | Tạo/sửa cuộn, tấm, tấm lỡ | `perm.manage_inventory` |
 | Tạo/lưu/cân bằng/hủy kiểm kho | `perm.manage_inventory` |
 | Sửa tồn trực tiếp trong Hàng hóa | `perm.manage_inventory` |
@@ -341,7 +343,213 @@ Endpoint này chỉ đề xuất, không trừ kho.
 
 ---
 
-## 7. Stock movements
+## 7. Material opening / Khui vật tư
+
+### `GET /inventory/material-openings/options`
+
+Đọc dữ liệu gợi ý để mở popup khui vật tư cho một sản phẩm.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_inventory`
+
+**Query:**
+
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `product_id` | `uuid` | Có | Sản phẩm/vật tư cần khui |
+
+**Workflow:**
+
+1. Xác thực actor, workstation và permission.
+2. Tải product + `product_inventory_settings`.
+3. Nếu `normal`, trả cấu hình đơn vị tồn và cảnh báo nếu product không thuộc nhóm vật tư phụ nếu backend có dữ liệu nhóm.
+4. Nếu `roll`, trả danh sách khổ khả dụng từ `inventory_rolls` và tồn tạm KiotViet nếu có.
+5. Nếu `sheet`, trả khổ thao tác từ settings và tấm/tấm dở/tấm lỡ liên quan nếu có.
+6. Không tự tạo object, không trừ tồn.
+
+**Response data:**
+
+```json
+{
+  "product": {
+    "id": "uuid",
+    "code": "BAT-HIFLEX-32",
+    "name": "Bạt Hiflex 3.2m",
+    "inventory_shape": "roll",
+    "stock_unit": "m2"
+  },
+  "provisional_balance": {
+    "id": "uuid",
+    "source_type": "kiotviet_import",
+    "remaining_qty": 128,
+    "stock_unit": "m2"
+  },
+  "roll_options": [
+    {
+      "width_m": 3.2,
+      "available_roll_count": 2,
+      "suggested_old_roll_id": "uuid",
+      "suggested_old_remaining_length_m": 18
+    }
+  ],
+  "sheet_options": [],
+  "warnings": ["PROVISIONAL_SOURCE"]
+}
+```
+
+### `POST /inventory/material-openings`
+
+Ghi nhận một lần khui vật tư.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_inventory`
+
+Endpoint này xử lý cả `normal`, `roll`, `sheet` theo `inventory_shape` của product.
+
+Không nhận các trường:
+
+- nhà cung cấp
+- lô/ngày mua
+- giá vốn
+- thông tin báo cáo hao hụt nâng cao
+
+#### Input cho `normal`
+
+```json
+{
+  "product_id": "uuid",
+  "inventory_shape": "normal",
+  "opened_qty": 1,
+  "old_remaining_qty": 0,
+  "note": "Khui keo mới, phần cũ khô bỏ"
+}
+```
+
+Quy tắc:
+
+- Product phải có `inventory_shape = normal`.
+- `opened_qty > 0`.
+- `old_remaining_qty >= 0`, MVP mặc định `0`.
+- Không tạo `inventory_rolls` hoặc `inventory_sheets`.
+- Tạo `inventory_material_openings`.
+- Tạo `stock_movements` loại `material_opening` chỉ khi có thay đổi tồn chính thức cần ghi nhận.
+- Nếu tồn thiếu/âm, trả warning nhẹ, không chặn nếu actor có quyền.
+
+#### Input cho `roll`
+
+```json
+{
+  "product_id": "uuid",
+  "inventory_shape": "roll",
+  "width_m": 3.2,
+  "new_roll": {
+    "length_m": 50,
+    "source_type": "kiotviet_provisional",
+    "provisional_balance_id": "uuid"
+  },
+  "old_roll": {
+    "inventory_roll_id": "uuid",
+    "remaining_length_m": 3.5
+  },
+  "note": "Khui cuộn 3.2m mới"
+}
+```
+
+Quy tắc:
+
+- Product phải có `inventory_shape = roll`.
+- `width_m > 0`.
+- `new_roll.length_m > 0`.
+- `new_roll.source_type` là `standard_object` hoặc `kiotviet_provisional`.
+- Không bắt chọn lô/ngày mua/nhà cung cấp.
+- Nếu `standard_object`, backend được chọn một cuộn `available` cùng product/khổ theo quy tắc đơn giản nếu client không gửi id cụ thể.
+- Nếu `kiotviet_provisional`, `provisional_balance_id` bắt buộc và phải còn `remaining_qty > 0`.
+- Nếu `old_roll.remaining_length_m = 0`, cuộn cũ chuyển `empty` hoặc `discarded` theo payload/result; không tạo object rác.
+- Nếu `old_roll.remaining_length_m > 0`, giữ/cập nhật cuộn cũ để dùng tiếp.
+- Chênh lệch cũ/mới ghi vào `inventory_material_openings.old_snapshot`, `input_payload`, `result_payload`.
+- Stock movement dùng `movement_type = material_opening` cho phần tồn chính thức thay đổi.
+
+#### Input cho `sheet`
+
+```json
+{
+  "product_id": "uuid",
+  "inventory_shape": "sheet",
+  "new_sheet": {
+    "width_m": 1.2,
+    "length_m": 2.4,
+    "quantity": 1,
+    "source_type": "kiotviet_provisional",
+    "provisional_balance_id": "uuid"
+  },
+  "old_sheet": {
+    "inventory_sheet_id": "uuid",
+    "keep_remaining": true,
+    "remaining_width_m": 1.2,
+    "remaining_length_m": 0.35
+  },
+  "note": "Khui tấm mới, giữ phần cũ"
+}
+```
+
+Quy tắc:
+
+- Product phải có `inventory_shape = sheet`.
+- Khổ thao tác dùng giá trị đơn giản như `1.2m x 2.4m`.
+- `new_sheet.quantity` MVP mặc định `1`.
+- Nếu phần còn lại dạng mét tới dưới `0.2m`, backend trả warning/gợi ý bỏ, không tự bỏ nếu `keep_remaining = true`.
+- Nếu rẻo nhỏ dưới ngưỡng cấu hình, backend trả warning/gợi ý bỏ, không tự bỏ nếu client gửi giữ lại.
+- Nếu giữ lại phần cũ, tạo/cập nhật `inventory_sheets` dạng `in_use` hoặc `remnant`.
+- Nếu bỏ phần cũ, tạo stock movement liên quan nếu có thay đổi tồn chính thức; không tạo object rác.
+- Không tính giá vốn hoặc báo cáo hao hụt nâng cao trong endpoint này.
+
+#### Response data
+
+```json
+{
+  "id": "uuid",
+  "product_id": "uuid",
+  "inventory_shape": "roll",
+  "source_type": "kiotviet_provisional",
+  "warnings": ["PROVISIONAL_SOURCE", "LOW_STOCK"],
+  "created_rolls": [
+    {
+      "id": "uuid",
+      "code": "KHUI-000001-R001",
+      "width_m": 3.2,
+      "remaining_length_m": 50,
+      "remaining_area_m2": 160,
+      "status": "in_use"
+    }
+  ],
+  "updated_rolls": [],
+  "created_sheets": [],
+  "updated_sheets": [],
+  "stock_movements": [
+    {
+      "id": "uuid",
+      "movement_type": "material_opening",
+      "quantity_delta": 160
+    }
+  ]
+}
+```
+
+### `GET /inventory/material-openings`
+
+Tra cứu lịch sử khui vật tư.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_inventory`
+
+**Query:** `product_id`, `inventory_shape`, `source_type`, `from`, `to`, `page`, `page_size`.
+
+### `GET /inventory/material-openings/{id}`
+
+Chi tiết một lần khui vật tư, gồm input/result snapshot và stock movements liên quan.
+
+**Permission:** `perm.create_order` hoặc `perm.manage_inventory`
+
+---
+
+## 8. Stock movements
 
 ### `GET /inventory/stock-movements`
 
@@ -354,7 +562,7 @@ Tra cứu sổ kho chính thức.
 | Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
 | `product_id` | `uuid` | Không | Lọc theo sản phẩm |
-| `movement_type` | `string` | Không | `sale_deduction`, `stocktake_adjustment`, `manual_adjustment`, `remnant_created`, `remnant_discarded` |
+| `movement_type` | `string` | Không | `sale_deduction`, `stocktake_adjustment`, `manual_adjustment`, `remnant_created`, `remnant_discarded`, `purchase_receipt`, `material_opening` |
 | `order_id` | `uuid` | Không | Lọc theo đơn |
 | `stocktake_id` | `uuid` | Không | Lọc theo phiếu kiểm kho |
 | `from` / `to` | `datetime` | Không | Khoảng thời gian |
@@ -364,7 +572,7 @@ Backend chỉ cho đọc. Tạo stock movement phải đi qua use case nghiệp 
 
 ---
 
-## 8. Stocktake
+## 9. Stocktake
 
 ### `POST /inventory/stocktakes`
 
@@ -456,7 +664,7 @@ Chi tiết phiếu kiểm kho và các dòng.
 
 ---
 
-## 9. Sửa tồn trực tiếp từ Hàng hóa
+## 10. Sửa tồn trực tiếp từ Hàng hóa
 
 ### `POST /inventory/products/{product_id}/adjust-stock`
 
@@ -491,7 +699,7 @@ Sửa tồn trực tiếp cho hàng `normal` trong trang Hàng hóa và tự sin
 
 ---
 
-## 10. Error Handling
+## 11. Error Handling
 
 | HTTP | Code | Khi dùng |
 |---|---|---|
@@ -501,12 +709,13 @@ Sửa tồn trực tiếp cho hàng `normal` trong trang Hàng hóa và tự sin
 | 403 | `WORKSTATION_INVALID` | Workstation không hợp lệ |
 | 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy product/cuộn/tấm/phiếu trong organization |
 | 409 | `RESOURCE_CONFLICT` | Phiếu không còn draft, mã trùng, object đang bị dùng |
+| 409 | `INVENTORY_OBJECT_CONFLICT` | Cuộn/tấm được chọn để khui đã đổi trạng thái bởi thao tác khác |
 | 422 | `INVENTORY_OPERATION_FAILED` | Không thể hoàn tất nghiệp vụ kho có thể giải thích |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống không công khai chi tiết |
 
 ---
 
-## 11. Logging và metric
+## 12. Logging và metric
 
 Backend nên log:
 
@@ -515,12 +724,15 @@ Backend nên log:
 - tạo/cân bằng/hủy kiểm kho
 - sửa tồn trực tiếp từ Hàng hóa
 - stock movement thủ công
+- khui vật tư phụ/cuộn/tấm
+- khui từ tồn tạm KiotViet
 
 Metric gợi ý:
 
 - số stocktake tạo mới/cân bằng/hủy
 - số stock movement theo loại
 - số mặt hàng tồn âm
+- số lần khui vật tư theo loại `normal`/`roll`/`sheet`
 - latency API kiểm kho
 
 ---
