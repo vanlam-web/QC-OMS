@@ -6,7 +6,45 @@
 
 ## 0. Ghi nhận từ KiotViet
 
-Quan sát ngày `01/07/2026`:
+Quan sát bổ sung ngày `05/07/2026` từ KiotViet đang mở và file xuất `SoQuy_KV05072026-185646-888.xlsx`:
+
+- Màn chính có title theo quỹ đang chọn, ví dụ `Sổ quỹ tiền mặt`.
+- Top search mặc định `Theo mã phiếu`, có chế độ tìm nâng cao:
+  - theo mã phiếu
+  - theo ghi chú
+  - theo nội dung chuyển khoản
+- Action đầu trang:
+  - `+ Phiếu thu`: Tiền mặt, Ngân hàng, Ví điện tử
+  - `+ Phiếu chi`: Tiền mặt, Ngân hàng, Ví điện tử
+  - xuất file
+  - chọn cột hiển thị
+  - thiết lập/hướng dẫn
+- Bộ lọc trái có:
+  - Quỹ tiền: Tiền mặt, Ngân hàng, Ví điện tử, Tổng quỹ
+  - Thời gian: Tháng này, Tùy chỉnh
+  - Loại chứng từ: Phiếu thu, Phiếu chi
+  - Loại thu chi
+  - Trạng thái: Đã thanh toán, Đã hủy
+  - Hạch toán kết quả kinh doanh: Tất cả, Có, Không
+  - Người tạo
+  - Nhân viên
+  - Người nộp/nhận: loại đối tượng, tên/mã, số điện thoại
+  - Công nợ đối tác: Tính vào công nợ, Không tính vào công nợ, Không có công nợ
+- Summary gồm `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ`.
+- Bảng mặc định gồm `Mã phiếu`, `Thời gian`, `Loại thu chi`, `Người nộp/nhận`, `Giá trị`.
+- Chọn cột có thêm: `Thời gian tạo`, `Người tạo`, `Nhân viên`, `Chi nhánh`, `Tên tài khoản`, `Số tài khoản`, `Mã người nộp/nhận`, `Số điện thoại`, `Địa chỉ`, `Nội dung chuyển khoản`, `Ghi chú`, `Loại sổ quỹ`, `Trạng thái`.
+- File xuất 1 tháng có 241 dòng, cột xuất tối thiểu: `Mã phiếu`, `Thời gian`, `Loại thu chi`, `Người nộp/nhận`, `Giá trị`.
+- File xuất tháng 06/2026 có các nhóm thực tế:
+  - `Phiếu thu Tiền khách trả`: 143 dòng
+  - `Phiếu chi Lương NV`: 21 dòng
+  - `Phiếu chi Vận chuyển`: 17 dòng
+  - `Phiếu chi Vật tư`: 15 dòng
+  - `Phiếu chi Tiền trả NCC`: 13 dòng
+  - `Phiếu thu/chi Chuyển/Rút`
+  - `Chi phí khác`
+  - các chi phí lẻ: điện, nước, nhà, rác, thuế, hoa hồng, VAT cho khách
+
+Quan sát trước đó ngày `01/07/2026`:
 
 - Bộ lọc mặc định `Tháng này` trống vì đầu tháng mới, không dùng làm căn cứ đánh giá dữ liệu.
 - Chọn `Toàn thời gian` trên quỹ `Tiền mặt` có `4,161 phiếu thu chi`.
@@ -28,6 +66,42 @@ Quan sát ngày `01/07/2026`:
   - đối tượng nhận `Khác`
   - người nhận có tên và SĐT
   - có ghi chú chi, ví dụ `Xăng xe`
+- Ví dụ phiếu chi thủ công `CTM001180` ngày `04/07/2026`:
+  - tiêu đề `Phiếu chi CTM001180`
+  - trạng thái `Đã thanh toán`
+  - chip `Có hạch toán`
+  - người tạo, người chi, thời gian, chi nhánh
+  - số tiền âm
+  - loại chi `Chi Vận chuyển`
+  - đối tượng nhận `Nhà cung cấp`
+  - phương thức thanh toán `Tiền mặt`
+  - người nhận hiển thị tên, mã NCC và số điện thoại
+  - ghi chú
+- Ví dụ phiếu thu tự động `TTHD011029` ngày `04/07/2026`:
+  - tiêu đề `Phiếu thu TTHD011029`
+  - trạng thái `Đã thanh toán`
+  - chip `Không hạch toán`
+  - người tạo, người thu, thời gian, chi nhánh
+  - loại thu `Thu Tiền khách trả`
+  - đối tượng nộp `Khách hàng`
+  - phương thức thanh toán `Tiền mặt`
+  - người nộp hiển thị tên và mã khách
+  - có khối `Phiếu thu tự động được gắn với hóa đơn HD...`
+  - bảng gắn hóa đơn gồm mã phiếu/hóa đơn, thời gian, giá trị phiếu, đã thu trước, giá trị thu, trạng thái
+- Form tạo phiếu thu tiền mặt có:
+  - mã phiếu tự động
+  - thời gian
+  - loại thu
+  - người thu
+  - đối tượng nộp
+  - tên người nộp và `Tạo mới`
+  - số tiền
+  - ghi chú
+  - checkbox `Hạch toán kết quả kinh doanh`
+  - nút `Bỏ qua`, `Lưu & In`, `Lưu`
+- Loại thu KV thấy được: `Thu nhập khác`, `Chuyển/Rút`, `Chi phí cố định`, `Góp vốn`, `Khách trả nợ`, `Tạo mới`.
+- Form tạo phiếu chi tiền mặt có cấu trúc tương tự, đổi thành loại chi/người chi/đối tượng nhận/người nhận.
+- Loại chi KV thấy được gồm nhóm hệ thống và các mục: `Chi phí khác`, `Chuyển/Rút`, `Chi phí điện`, `Chi phí hội nghị, sự kiện, công tác phí`, `Chi phí nhân công`, `Chi phí nước`, `Chi phí phần mềm, dịch vụ quản trị, tư vấn`, `Chi phí quảng cáo`, cùng các loại thực tế từ file xuất như lương, vận chuyển, vật tư, tiền trả NCC, tiền nhà, rác, thuế, hoa hồng, VAT cho khách.
 
 Áp dụng cho QC-OMS:
 
@@ -35,6 +109,7 @@ Quan sát ngày `01/07/2026`:
 - Phiếu thu từ hóa đơn/thu nợ phải hiển thị liên kết chứng từ gốc và phân bổ vào hóa đơn.
 - Phiếu chi thủ công cần lưu cờ có tính vào báo cáo kinh doanh hay không.
 - Người nộp/nhận có thể là khách hàng, nhà cung cấp, nhân viên hoặc đối tượng tự do.
+- `Ví điện tử` có trong KiotViet nhưng QC-OMS MVP vẫn chưa đưa vào nếu Owner chưa chốt nghiệp vụ riêng; cần thiết kế mở để thêm sau.
 
 ---
 
@@ -83,6 +158,13 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 | Hạch toán KQKD | Tất cả, có hạch toán, không hạch toán |
 | Người tạo | Nhân viên |
 | Người nộp/nhận | Khách/nhà cung cấp/người nhận nếu có |
+| Công nợ đối tác | Tất cả, tính vào công nợ, không tính vào công nợ, không có công nợ |
+
+Ghi chú:
+
+- `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp.
+- `Người nộp/nhận` cần tìm được theo tên, mã và số điện thoại.
+- Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả.
 
 ---
 
@@ -111,6 +193,26 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 | Hạch toán | Có/không tính vào báo cáo kinh doanh nếu cần |
 | Trạng thái | Đã ghi sổ/đã hủy |
 
+### Chọn cột
+
+MVP nên cho cấu hình cột tương tự KV, nhưng có thể làm theo mức ưu tiên:
+
+1. Cột mặc định: mã phiếu, thời gian, loại thu chi, người nộp/nhận, quỹ/tài khoản, giá trị, trạng thái.
+2. Cột mở rộng: thời gian tạo, người tạo, nhân viên, mã người nộp/nhận, số điện thoại, địa chỉ, nội dung chuyển khoản, ghi chú, loại sổ quỹ, hạch toán KQKD.
+3. Chi nhánh chỉ hiển thị khi hệ thống có nhiều chi nhánh.
+
+### Xuất file
+
+Xuất file tối thiểu phải có các cột giống file KV mẫu:
+
+- mã phiếu
+- thời gian
+- loại thu chi
+- người nộp/nhận
+- giá trị
+
+Sau đó thêm các cột QC-OMS cần đối soát: quỹ/tài khoản, trạng thái, ghi chú, người tạo, hạch toán KQKD.
+
 ---
 
 ## 6. Phiếu thu/chi thủ công
@@ -120,20 +222,30 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 Form tối thiểu:
 
 - quỹ/tài khoản nhận tiền
+- mã phiếu tự động
+- thời gian
 - loại thu
+- người thu
+- đối tượng nộp: khách hàng, nhà cung cấp, nhân viên, khác, không có
+- tên/mã/số điện thoại người nộp nếu có
 - số tiền
-- người nộp nếu có
 - lý do/ghi chú
+- hạch toán kết quả kinh doanh
 
 ### Tạo phiếu chi
 
 Form tối thiểu:
 
 - quỹ/tài khoản chi tiền
+- mã phiếu tự động
+- thời gian
 - loại chi
+- người chi
+- đối tượng nhận: khách hàng, nhà cung cấp, nhân viên, khác, không có
+- tên/mã/số điện thoại người nhận nếu có
 - số tiền
-- người nhận nếu có
 - lý do/ghi chú
+- hạch toán kết quả kinh doanh
 
 ### Sửa phiếu
 
