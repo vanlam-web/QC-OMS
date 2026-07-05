@@ -1,6 +1,6 @@
 begin;
 
-select plan(11);
+select plan(17);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -149,6 +149,71 @@ select is(
   ),
   false,
   'manual voucher mirrors business-accounted flag to entry'
+);
+
+select has_function(
+  'public',
+  'cancel_cashbook_voucher_tx',
+  array['uuid', 'uuid', 'uuid'],
+  'manual cashbook voucher cancel rpc exists'
+);
+
+insert into manual_voucher_results (name, result)
+values (
+  'cancelled_expense',
+  public.cancel_cashbook_voucher_tx(
+    '20000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000001',
+    ((select result->>'id' from manual_voucher_results where name = 'expense')::uuid)
+  )
+);
+
+select is(
+  (select result->>'status' from manual_voucher_results where name = 'cancelled_expense'),
+  'cancelled',
+  'manual voucher cancel result is cancelled'
+);
+
+select is(
+  (
+    select status
+    from public.cashbook_vouchers
+    where id = ((select result->>'id' from manual_voucher_results where name = 'expense')::uuid)
+  ),
+  'cancelled',
+  'manual voucher cancel updates voucher status'
+);
+
+select is(
+  (
+    select status
+    from public.cashbook_entries
+    where cashbook_voucher_id = ((select result->>'id' from manual_voucher_results where name = 'expense')::uuid)
+  ),
+  'cancelled',
+  'manual voucher cancel updates entry status'
+);
+
+select throws_ok(
+  $$ select public.cancel_cashbook_voucher_tx(
+    '20000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000001',
+    ((select result->>'id' from manual_voucher_results where name = 'expense')::uuid)
+  ) $$,
+  '22023',
+  'cashbook voucher is not posted',
+  'manual voucher cancel rejects already cancelled voucher'
+);
+
+select is(
+  (
+    select coalesce(sum(amount_delta), 0)::integer
+    from public.cashbook_entries
+    where status = 'posted'
+      and cashbook_voucher_id = ((select result->>'id' from manual_voucher_results where name = 'expense')::uuid)
+  ),
+  0,
+  'cancelled manual voucher no longer contributes posted balance'
 );
 
 select * from finish();

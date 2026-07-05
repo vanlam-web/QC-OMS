@@ -4,6 +4,7 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   collectCustomerDebt,
+  cancelCashbookVoucher,
   createCashbookVoucher,
   getCashbookEntry,
   getCustomerDebt,
@@ -89,6 +90,14 @@ export async function handleFinance(
       await createCashbookVoucher(dependencies.repository, context, await request.json()),
       traceId,
       { status: 201 },
+    );
+  }
+
+  const cashbookVoucherCancelMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook-vouchers\/([^/]+)\/cancel$/);
+  if (cashbookVoucherCancelMatch !== null && request.method === "POST") {
+    return successResponse(
+      await cancelCashbookVoucher(dependencies.repository, context, cashbookVoucherCancelMatch[1]),
+      traceId,
     );
   }
 

@@ -118,6 +118,21 @@ describe('finance-service', () => {
     ])
   })
 
+  it('posts manual cashbook voucher cancel', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: FinanceApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return { id: 'voucher-1', code: 'PC000001', source_type: 'manual_voucher', status: 'cancelled', amount: 45000 } as T
+    }
+    const service = createFinanceService({ request })
+
+    await service.cancelCashbookVoucher('voucher-1')
+
+    expect(calls).toEqual([
+      ['/api/v1/finance/cashbook-vouchers/voucher-1/cancel', { method: 'POST' }],
+    ])
+  })
+
   it('builds a cashbook CSV from visible rows', () => {
     expect(buildCashbookCsv([
       {

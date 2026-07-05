@@ -472,6 +472,18 @@ export function FinancePage({ service }: { service: FinanceService }) {
     }
   }
 
+  async function cancelManualVoucher(voucher: CashbookVoucher) {
+    setError(null)
+    setMessage(null)
+    try {
+      const result = await service.cancelCashbookVoucher(voucher.id)
+      setMessage(`Đã hủy phiếu ${result.code}.`)
+      await Promise.all([loadCashbook({ page: 1 }), loadReferenceData()])
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không hủy được phiếu thu chi.'))
+    }
+  }
+
   return (
     <ManagementPage
       title="Sổ quỹ"
@@ -987,6 +999,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
                   <th>Nguồn</th>
                   <th>Trạng thái</th>
                   <th>Số tiền</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -996,6 +1009,16 @@ export function FinancePage({ service }: { service: FinanceService }) {
                     <td>{voucher.source_type === 'payment_receipt' ? 'Phiếu thu' : 'Phiếu thủ công'}</td>
                     <td><StatusChip tone={voucher.status === 'posted' ? 'success' : 'neutral'}>{statusText(voucher.status)}</StatusChip></td>
                     <td><MoneyText value={voucher.amount} /></td>
+                    <td>
+                      {voucher.source_type === 'manual_voucher' && voucher.status === 'posted' ? (
+                        <ManagementRowActionButton
+                          ariaLabel={`Hủy phiếu ${voucher.code}`}
+                          onClick={() => void cancelManualVoucher(voucher)}
+                        >
+                          Hủy
+                        </ManagementRowActionButton>
+                      ) : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
