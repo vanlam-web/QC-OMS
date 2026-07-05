@@ -132,6 +132,26 @@ export async function cancelCashbookVoucher(
   }
 }
 
+export async function reviseCashbookVoucher(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  voucherId: string,
+  body: unknown,
+): Promise<CashbookVoucherData> {
+  requireAnyPermission(context, ["perm.manage_finance"]);
+  const payload = parseCashbookVoucherPayload(body);
+  try {
+    return await repository.reviseCashbookVoucher({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      voucherId,
+      payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
 export async function listCashbookBalances(
   repository: FoundationRepository,
   context: FinanceContext,

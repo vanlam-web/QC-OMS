@@ -135,6 +135,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [visibleCashbookColumns, setVisibleCashbookColumns] = useState<CashbookColumnKey[]>(defaultCashbookColumns)
   const [vouchers, setVouchers] = useState<CashbookVoucher[]>([])
   const [voucherMode, setVoucherMode] = useState<CashbookDirection | null>(null)
+  const [editingVoucher, setEditingVoucher] = useState<CashbookVoucher | null>(null)
   const [voucherAccountId, setVoucherAccountId] = useState('')
   const [voucherType, setVoucherType] = useState<CreateCashbookVoucherInput['voucher_type']>('other_income')
   const [voucherAmount, setVoucherAmount] = useState('')
@@ -161,11 +162,28 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   function openVoucherForm(direction: CashbookDirection) {
     const options = voucherTypeOptions(direction)
+    setEditingVoucher(null)
     setVoucherMode(direction)
     setVoucherAccountId(accounts.find((account) => account.is_active)?.id ?? '')
     setVoucherType(options[0].value)
     setVoucherAmount('')
     setVoucherBusinessAccounted(direction === 'out')
+    setVoucherCounterpartyType('none')
+    setVoucherCounterpartyName('')
+    setVoucherCounterpartyPhone('')
+    setVoucherReason('')
+    setError(null)
+    setMessage(null)
+  }
+
+  function openVoucherRevision(voucher: CashbookVoucher) {
+    const direction: CashbookDirection = voucher.code.startsWith('PT') ? 'in' : 'out'
+    setEditingVoucher(voucher)
+    setVoucherMode(direction)
+    setVoucherAccountId(accounts.find((account) => account.is_active)?.id ?? '')
+    setVoucherType(direction === 'in' ? 'other_income' : 'operating_expense')
+    setVoucherAmount(String(voucher.amount))
+    setVoucherBusinessAccounted(true)
     setVoucherCounterpartyType('none')
     setVoucherCounterpartyName('')
     setVoucherCounterpartyPhone('')
@@ -451,7 +469,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
     setError(null)
     setMessage(null)
     try {
-      const result = await service.createCashbookVoucher({
+      const payload = {
         voucher_direction: voucherMode,
         voucher_type: voucherType,
         finance_account_id: voucherAccountId,
@@ -461,9 +479,13 @@ export function FinancePage({ service }: { service: FinanceService }) {
         ...(voucherCounterpartyName.trim() ? { counterparty_name: voucherCounterpartyName.trim() } : {}),
         ...(voucherCounterpartyPhone.trim() ? { counterparty_phone: voucherCounterpartyPhone.trim() } : {}),
         reason: voucherReason.trim(),
-      })
-      setMessage(`Đã tạo phiếu ${result.code}.`)
+      }
+      const result = editingVoucher === null
+        ? await service.createCashbookVoucher(payload)
+        : await service.reviseCashbookVoucher(editingVoucher.id, payload)
+      setMessage(editingVoucher === null ? `Đã tạo phiếu ${result.code}.` : `Đã sửa phiếu ${result.code}.`)
       setVoucherMode(null)
+      setEditingVoucher(null)
       await Promise.all([loadCashbook({ page: 1 }), loadReferenceData()])
     } catch (cause) {
       setError(formatApiError(cause, 'Không tạo được phiếu thu chi.'))
@@ -575,15 +597,22 @@ export function FinancePage({ service }: { service: FinanceService }) {
       {message ? <p role="status">{message}</p> : null}
 
       {voucherMode !== null ? (
-        <section aria-label={`Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}`} className="management-inline-detail finance-voucher-panel">
+        <section
+          aria-label={editingVoucher === null ? `Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}` : `Sửa phiếu ${editingVoucher.code}`}
+          className="management-inline-detail finance-voucher-panel"
+        >
           <header>
             <div>
-              <h2>Tạo phiếu {voucherMode === 'in' ? 'thu' : 'chi'}</h2>
-              <p>{voucherMode === 'in' ? 'Ghi tăng quỹ' : 'Ghi giảm quỹ'} ngay khi lưu.</p>
+              <h2>{editingVoucher === null ? `Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}` : `Sửa phiếu ${editingVoucher.code}`}</h2>
+              <p>{editingVoucher === null ? (voucherMode === 'in' ? 'Ghi tăng quỹ' : 'Ghi giảm quỹ') : 'Tạo bản mới, phiếu cũ chuyển đã hủy'} ngay khi lưu.</p>
             </div>
-            <button className="button button-secondary" type="button" onClick={() => setVoucherMode(null)}>Đóng</button>
+            <button className="button button-secondary" type="button" onClick={() => { setVoucherMode(null); setEditingVoucher(null) }}>Đóng</button>
           </header>
-          <form aria-label={`Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}`} className="management-detail-form" onSubmit={createManualVoucher}>
+          <form
+            aria-label={editingVoucher === null ? `Tạo phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}` : `Sửa phiếu ${editingVoucher.code}`}
+            className="management-detail-form"
+            onSubmit={createManualVoucher}
+          >
             <label>
               Quỹ/tài khoản
               <select value={voucherAccountId} onChange={(event) => setVoucherAccountId(event.target.value)}>
@@ -642,7 +671,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <input value={voucherReason} onChange={(event) => setVoucherReason(event.target.value)} />
             </label>
             <button className="button button-primary" disabled={savingVoucher} type="submit">
-              Lưu phiếu {voucherMode === 'in' ? 'thu' : 'chi'}
+              {editingVoucher === null ? `Lưu phiếu ${voucherMode === 'in' ? 'thu' : 'chi'}` : 'Lưu bản sửa'}
             </button>
           </form>
         </section>
@@ -1011,12 +1040,20 @@ export function FinancePage({ service }: { service: FinanceService }) {
                     <td><MoneyText value={voucher.amount} /></td>
                     <td>
                       {voucher.source_type === 'manual_voucher' && voucher.status === 'posted' ? (
-                        <ManagementRowActionButton
-                          ariaLabel={`Hủy phiếu ${voucher.code}`}
-                          onClick={() => void cancelManualVoucher(voucher)}
-                        >
-                          Hủy
-                        </ManagementRowActionButton>
+                        <>
+                          <ManagementRowActionButton
+                            ariaLabel={`Sửa phiếu ${voucher.code}`}
+                            onClick={() => openVoucherRevision(voucher)}
+                          >
+                            Sửa
+                          </ManagementRowActionButton>
+                          <ManagementRowActionButton
+                            ariaLabel={`Hủy phiếu ${voucher.code}`}
+                            onClick={() => void cancelManualVoucher(voucher)}
+                          >
+                            Hủy
+                          </ManagementRowActionButton>
+                        </>
                       ) : '-'}
                     </td>
                   </tr>

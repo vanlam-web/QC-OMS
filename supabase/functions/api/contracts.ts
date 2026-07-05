@@ -968,6 +968,12 @@ export interface FoundationRepository {
     actorUserId: string;
     payload: Record<string, unknown>;
   }): Promise<CashbookVoucherData>;
+  reviseCashbookVoucher(input: {
+    organizationId: string;
+    actorUserId: string;
+    voucherId: string;
+    payload: Record<string, unknown>;
+  }): Promise<CashbookVoucherData>;
   cancelCashbookVoucher(input: {
     organizationId: string;
     actorUserId: string;

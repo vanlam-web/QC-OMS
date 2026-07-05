@@ -383,14 +383,91 @@ Deno.test("manual cashbook voucher cancel calls repository", async () => {
   });
 });
 
-Deno.test("source-linked cashbook vouchers cannot be edited independently", async () => {
+Deno.test("manual cashbook voucher revise requires finance permission", async () => {
   const response = await call(
-    "/api/v1/finance/cashbook-vouchers/source-linked-1/revise",
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 50000,
+        reason: "Sửa phiếu chi",
+      }),
+    },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher revise validates payload and calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 50000,
+        is_business_accounted: false,
+        counterparty_type: "employee",
+        counterparty_name: "Nguyen Van A",
+        counterparty_phone: "0900000000",
+        reason: "Sửa phiếu chi",
+      }),
+    },
+    repo(["perm.manage_finance"], {
+      reviseCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-2",
+          code: "PC000001.01",
+          source_type: "manual_voucher",
+          status: "posted",
+          amount: 50000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    voucherId: "voucher-1",
+    payload: {
+      voucher_direction: "out",
+      voucher_type: "operating_expense",
+      finance_account_id: "cash-1",
+      amount: 50000,
+      is_business_accounted: false,
+      counterparty_type: "employee",
+      counterparty_name: "Nguyen Van A",
+      counterparty_phone: "0900000000",
+      reason: "Sửa phiếu chi",
+    },
+  });
+  assertEquals(await data(response), {
+    id: "voucher-2",
+    code: "PC000001.01",
+    source_type: "manual_voucher",
+    status: "posted",
+    amount: 50000,
+  });
+});
+
+Deno.test("manual cashbook voucher revise requires a complete payload", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
     { method: "POST", body: JSON.stringify({ reason: "test" }) },
     repo(["perm.manage_finance"]),
   );
 
-  assertEquals(response.status, 404);
+  assertEquals(response.status, 400);
 });
 
 Deno.test("cashbook exact voucher search ignores default date filters", async () => {
