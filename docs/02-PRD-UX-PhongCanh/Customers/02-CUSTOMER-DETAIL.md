@@ -1,6 +1,6 @@
 # 02-CUSTOMER-DETAIL — Chi tiết khách hàng
 
-> **Mốc chốt:** V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao để follow-up sau.
+> **Mốc chốt:** V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao nằm ngoài phạm vi hiện tại.
 
 ---
 
@@ -89,7 +89,7 @@ UI và lõi nghiệp vụ phải tách riêng:
 
 ---
 
-## 4. Follow-up sau V1: Cấu hình gửi bill
+## 4. Ngoài phạm vi hiện tại: Cấu hình gửi bill
 
 Cho phép bật/tắt hỗ trợ gửi bill và chọn kênh:
 
@@ -107,7 +107,7 @@ Quy tắc:
 
 ## 5. Tab Lịch sử bán
 
-Hiển thị lịch sử chứng từ bán hàng của khách, có lựa chọn `Hóa đơn` / `Báo giá` trong tab. Mỗi lựa chọn tải tối đa `10` chứng từ gần đây trước; nếu cần xem thêm thì dùng phân trang/lazy-load ở follow-up, không trộn toàn bộ lịch sử vào công nợ.
+Hiển thị lịch sử chứng từ bán hàng của khách, có lựa chọn `Hóa đơn` / `Báo giá` trong tab. Mỗi lựa chọn tải tối đa `10` chứng từ gần đây trước; nếu cần xem thêm thì dùng phân trang/lazy-load ở phạm vi mở rộng, không trộn toàn bộ lịch sử vào công nợ.
 
 - Mã hóa đơn hoặc mã báo giá theo lựa chọn đang xem.
 - Thời gian.
@@ -123,7 +123,7 @@ Không hiển thị dòng tổng kiểu `13 chứng từ gần đây` trong UI c
 
 KiotViet hiển thị lịch sử bán/trả hàng chung. QC-OMS MVP trong tab này giữ hai lát rõ ràng là `Hóa đơn` và `Báo giá`; trả hàng bán nằm ngoài phạm vi MVP hiện tại.
 
-Nguồn dữ liệu chuẩn là Sales Documents lọc theo `customer_id` và `type = invoice | quote`. Nếu API danh sách chứng từ chưa hỗ trợ filter này, không được dựng dữ liệu giả; UI có thể ẩn tab lịch sử bán trong lát đó và phải ghi rõ follow-up.
+Nguồn dữ liệu chuẩn là Sales Documents lọc theo `customer_id` và `type = invoice | quote`. Nếu API danh sách chứng từ chưa hỗ trợ filter này, không được dựng dữ liệu giả; UI có thể ẩn tab lịch sử bán trong lát đó và phải ghi rõ ngoài phạm vi.
 
 `KH000001 - Khách lẻ` là hồ sơ khách mặc định của tổ chức. Báo giá/hóa đơn được tạo ở POS khi nhân viên chưa chọn khách vẫn phải có `customer_id` trỏ về `KH000001`, vì vậy tab lịch sử của `KH000001` phải thấy các chứng từ khách lẻ này thay vì phụ thuộc snapshot tên khách.
 
@@ -174,7 +174,7 @@ KiotViet có thêm nhiều tab như lịch sử đặt hàng, công nợ, lịch
 
 ---
 
-## 8. Follow-up sau V1: Trạng thái khách hàng
+## 8. Ngoài phạm vi V1: Trạng thái khách hàng
 
 | Trạng thái | Hành vi |
 |---|---|

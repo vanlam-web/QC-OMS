@@ -217,7 +217,7 @@ Sau này có thể cho phép một số nhóm hàng tự áp dụng nếu Owner 
 
 Công thức MVP làm tròn giá sau cùng lên `1,000đ`.
 
-Các kiểu làm tròn khác như `5,000đ`, `10,000đ` hoặc không làm tròn là future scope nếu Owner cần.
+Các kiểu làm tròn khác như `5,000đ`, `10,000đ` hoặc không làm tròn nằm ngoài phạm vi hiện tại, chỉ mở khi Owner cần.
 
 ### Trạng thái chốt
 
@@ -232,7 +232,7 @@ Các kiểu làm tròn khác như `5,000đ`, `10,000đ` hoặc không làm tròn
 - Trước preview, ô bảng giá hiển thị `Chưa xem`; sau preview hiển thị `Hiện tại ... -> ...`, `Mới ...` hoặc `Không khớp`.
 - Không hiển thị nhãn `Giá tay`/`Theo công thức` theo từng ô nếu API chưa trả `current_mode` theo từng `computed_prices[]`.
 
-Còn cần bàn/chốt trước khi implement PriceBook nâng cao:
+Ngoài phạm vi hiện tại, cần chốt trước khi làm PriceBook nâng cao:
 
 - nhóm hàng nào cần công thức riêng
 - công thức tối thiểu cho từng nhóm hàng chính

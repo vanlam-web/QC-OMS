@@ -1,6 +1,6 @@
 # 01-CUSTOMER-LIST — Danh sách khách hàng
 
-> **Mốc chốt:** V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao để follow-up sau.
+> **Mốc chốt:** V1 đủ test theo chốt Owner ngày `2026-07-03`; chức năng nâng cao nằm ngoài phạm vi hiện tại.
 > **Tham khảo:** KiotViet `Khách hàng > Khách hàng`
 
 ---
@@ -50,7 +50,7 @@ V1 hiện tại:
 | Tìm kiếm nhanh | Tìm theo mã khách, tên khách, SĐT nếu có |
 | Trạng thái | V1 chỉ hiển thị `Đang hoạt động` |
 
-Follow-up sau V1:
+Ngoài phạm vi V1:
 
 | Bộ lọc | Quy tắc |
 |---|---|
@@ -107,7 +107,7 @@ V1 hiện tại hiển thị các cột phục vụ bán hàng, áp giá và thu
 | Nợ hiện tại | Tổng còn nợ hiện tại theo hóa đơn; tải tự động cho khách đang hiển thị trên trang hiện tại |
 | Tổng bán | Tổng tiền hóa đơn hoàn tất của khách; không tính báo giá hoặc chứng từ đã hủy |
 
-Follow-up sau V1:
+Ngoài phạm vi V1:
 
 | Cột | Mô tả |
 |---|---|
@@ -125,7 +125,7 @@ Phần tổng phía trên danh sách hiển thị:
 
 Trong MVP chưa có nghiệp vụ trả hàng bán, nên `Tổng bán trừ trả hàng` có thể bằng `Tổng bán` hoặc ẩn nhãn này để tránh gây hiểu nhầm.
 
-Lát hiện tại hiển thị `Nợ hiện tại` và `Tổng bán` ở bảng ngoài để Owner kiểm tra nhanh công nợ/doanh số. `Tổng bán trừ trả hàng` là follow-up sau khi có nghiệp vụ trả hàng bán; không dựng số giả.
+Lát hiện tại hiển thị `Nợ hiện tại` và `Tổng bán` ở bảng ngoài để Owner kiểm tra nhanh công nợ/doanh số. `Tổng bán trừ trả hàng` nằm ngoài phạm vi hiện tại cho tới khi có nghiệp vụ trả hàng bán; không dựng số giả.
 
 ---
 

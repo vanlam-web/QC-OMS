@@ -170,7 +170,7 @@ Nếu thao tác trả NCC làm số dư âm, hệ thống không mở workflow t
 | Lưu tạm | Tạo draft, chưa tăng tồn/công nợ/sổ quỹ |
 | Hoàn thành/Nhập hàng | Posted, tăng tồn, cập nhật `giá nhập cuối`, ghi công nợ/sổ quỹ |
 | Hủy | Với phiếu posted phải dùng bút toán đảo/an toàn, không xóa vật lý |
-| Sửa phiếu posted | Future hoặc dùng quy tắc sửa chứng từ `MaCu.01`; không sửa phá dữ liệu |
+| Sửa phiếu posted | Ngoài phạm vi hiện tại; sau này dùng quy tắc sửa chứng từ an toàn, không sửa phá dữ liệu |
 
 ---
 
