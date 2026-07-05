@@ -1,6 +1,6 @@
 # CHANGELOG-AI — Historical AI Coordination Log
 
-> **Status:** Historical log only
+> **Vai trò:** Historical log only.
 > **Current policy:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, and `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`
 > **Note:** Entries below describe the pre-2026-07-03 multi-AI period. They are retained for traceability and are not active operating policy.
 
@@ -11,12 +11,12 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
 ## Format chuẩn
 
 ```
-[YYYY-MM-DD] Loại — Actor — Reason — Scope — Status
+[YYYY-MM-DD] Loại — Actor — Reason — Scope — Tình trạng
 ```
 
 - **Loại:** Bypass | Decision | Rollback | Review
 - **Actor:** Owner | Codex | Cursor | Gemini (historical)
-- **Status:** Pending Review | Reviewed by Codex | Reverted | Active
+- **Tình trạng:** Pending Review | Reviewed by Codex | Reverted | Active
 
 ---
 
@@ -30,7 +30,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/02-PRD-UX-PhongCanh/POS/K02/02c-K02A-M2-KHUI.md` (Top Bar M2 đồng bộ K01)
   - `docs/02-PRD-UX-PhongCanh/POS/README.md` (trạng thái + sửa `||`)
   - `docs/AUDIT-V2.md` (bảng tiến độ, cập nhật Đợt 1 = ✅)
-- **Status:** Pending Review
+- **Tình trạng:** Pending Review
 
 ### Bypass #2 — Đợt 2 (P-04, P-05, P-06)
 - **Actor:** Owner
@@ -39,7 +39,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/02-PRD-UX-PhongCanh/POS/K01/01b-K01-PROFILE-SHORTCUTS.md` (SoT shortcut + F8)
   - `docs/02-PRD-UX-PhongCanh/POS/K01/01-K01-TOPBAR.md` (bỏ bảng shortcut trùng, tham chiếu 01b)
   - `docs/AUDIT-V2.md` (Đợt 2 = ✅, dòng lịch sử mới)
-- **Status:** Pending Review
+- **Tình trạng:** Pending Review
 
 ### Bypass #3 — Đợt 3 (P-07, P-08, P-09)
 - **Actor:** Owner
@@ -49,7 +49,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md` (BR-01..07 → BR-CHK-01..07 + 4 tham chiếu nội bộ)
   - `docs/02-PRD-UX-PhongCanh/POS/K02/01-K02-GIO-HANG.md` (link anchor cập nhật)
   - `docs/AUDIT-V2.md` (Đợt 3 = ✅, dòng lịch sử mới)
-- **Status:** Pending Review
+- **Tình trạng:** Pending Review
 
 ---
 
@@ -61,7 +61,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
 - **Scope:**
   - `AI_TEAM_RULES.md` (thêm Owner Emergency Override, Gemini Parallel Analysis, sửa ASCII layout, thêm Questions vào Implementation Report)
   - `docs/CHANGELOG-AI.md` (file mới — log bypass #1, #2, #3 ngược)
-- **Status:** Pending Review
+- **Tình trạng:** Pending Review
 
 ---
 

@@ -1,6 +1,6 @@
 # REVIEW-ISSUES — Review Thread Issue Tracker
 
-> **Status:** Active Review Thread tracker
+> **Vai trò:** Tracker issue cho Review Thread.
 > **Owner:** Review Thread maintains this file when Owner asks for project checks
 > **Last updated:** 2026-07-03
 
@@ -24,9 +24,9 @@ This tracker does not replace PR comments, implementation plans, or Source of Tr
 
 ---
 
-## 2. Status Values
+## 2. Giá trị tình trạng
 
-| Status | Meaning |
+| Tình trạng | Ý nghĩa |
 |---|---|
 | `Open` | Review found the issue and assigned it for follow-up. |
 | `Waiting for Spec` | Spec must clarify expected behavior or Source of Truth. |
@@ -97,7 +97,7 @@ Review should open or update a coordination finding when Owner must ask who is h
 
 ### REV-2026-07-03-001 — Catalog management unit tests fail
 
-**Status:** Closed
+**Tình trạng:** Closed
 
 **Assigned to:**
 
@@ -155,7 +155,7 @@ Issue closed because the catalog unit failures are no longer reproducible and th
 
 ### REV-2026-07-03-002 — Playwright e2e blocked by invalid Supabase API key
 
-**Status:** Closed
+**Tình trạng:** Closed
 
 **Assigned to:** Implement
 
@@ -227,7 +227,7 @@ Remaining risk: E2E user bootstrap is skipped because the current `.env.local` d
 
 ### REV-2026-07-03-003 — Production bundle exceeds Vite warning threshold
 
-**Status:** Open
+**Tình trạng:** Open
 
 **Assigned to:** Implement, later priority
 
@@ -261,7 +261,7 @@ npm run build
 
 ### REV-2026-07-03-004 — Workspace has many uncommitted changes
 
-**Status:** Waiting for Owner/Spec
+**Tình trạng:** Closed
 
 **Assigned to:** Owner/Spec for packaging decision; Implement and Review for follow-up
 
@@ -319,11 +319,19 @@ Owner decision: choose option 2. Wait for a clean branch/baseline and isolate th
 
 Review recommendation remains: keep this issue open until the workspace or branch is clean enough to package only the intended hunks.
 
+**Review re-check:** 2026-07-05
+
+```sh
+git status --short --branch
+```
+
+Result: PASS — `main...origin/main`, no modified or untracked files. Issue closed because the dirty-worktree packaging risk no longer applies to the current main checkout.
+
 ---
 
 ### REV-2026-07-03-005 — Governance docs still contain old multi-AI wording
 
-**Status:** Closed
+**Tình trạng:** Closed
 
 **Assigned to:** Spec, when Spec thread is available
 
@@ -378,7 +386,7 @@ Result: PASS for whitespace. Remaining legacy-wording matches are limited to exp
 
 ### REV-2026-07-03-006 — Documentation indexes do not reflect current repo state
 
-**Status:** Closed
+**Tình trạng:** Closed
 
 **Assigned to:**
 
@@ -479,7 +487,7 @@ Result: PASS. Markdown link check returned `0`. The stale `Production Queue.*Ch�
 
 ### REV-2026-07-03-007 — Historical audit and draft files need clear status
 
-**Status:** Closed
+**Tình trạng:** Closed
 
 **Assigned to:** Spec, when Spec thread is available
 

@@ -1,6 +1,6 @@
 # PROJECT-COORDINATION — Current Work Board
 
-> **Status:** Active coordination board
+> **Vai trò:** Board điều phối cho item đang mở giữa Spec / Implement / Review.
 > **Owner:** Spec Thread maintains business queue and next-owner state; Review verifies stale or blocked items.
 > **Last updated:** 2026-07-03
 
@@ -51,7 +51,7 @@ Work item:
 - Business goal:
 - Current owner: Spec / Implement / Review / Owner
 - Next owner: Spec / Implement / Review / Owner
-- Status: Drafting / Implementing / Waiting Spec / Waiting Review / Must Fix / Ready to Merge / Merged / Blocked / Deferred
+- Tình trạng: Drafting / Implementing / Waiting Spec / Waiting Review / Must Fix / Ready to Merge / Merged / Blocked / Deferred
 - Branch / PR / commit:
 - Source of Truth:
 - Last report:
@@ -66,11 +66,9 @@ No important work is considered handed off unless `Current owner`, `Next owner`,
 
 ## 4. Active Board
 
-| Work item | Business goal | Current owner | Next owner | Status | Branch / PR | Next action |
-|---|---|---|---|---|---|---|
-| Customer detail MVP spec base | Chốt SoT khách hàng có MST, bảng giá áp dụng và công nợ readonly trước khi merge implementation | Review | Review | Merged | PR #43 `codex/customer-detail-mvp-spec` | Merged into `main` at `7d83247`; kept as trace for stacked order |
-| Customer detail MVP implementation | Khách hàng có MST, bảng giá áp dụng và công nợ readonly để phục vụ bán hàng | Review | Review | Merged | PR #41 `codex/customer-detail-mvp-impl` | Merged into `main` at `1402f61`; browser smoke remains follow-up risk due local login redirect |
-| Governance/docs cleanup | Quy trình 3 luồng rõ ràng, không để Owner chuyển lời | Spec | Spec | Merged | PR #42 `codex/docs-governance-index-cleanup` | Merged into `main` at `7b1a85a`; no active next action, continue normal Owner intake |
+Không có item đang mở trong board này.
+
+Queue sống hiện tại nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md). Issue review còn mở nằm ở [REVIEW-ISSUES.md](./REVIEW-ISSUES.md).
 
 ---
 
@@ -79,7 +77,7 @@ No important work is considered handed off unless `Current owner`, `Next owner`,
 Every thread-to-thread report must include this block near the top or bottom:
 
 ```text
-Status:
+Tình trạng:
 - ...
 
 Current owner:
