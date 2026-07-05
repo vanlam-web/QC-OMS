@@ -2,7 +2,7 @@
 
 > **Vai trò:** Historical log only.
 > **Quy trình hiện tại:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, và `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`.
-> **Ghi chú:** Nội dung bên dưới là lịch sử trước mô hình Codex ba luồng từ 2026-07-03; giữ để truy vết, không phải quy trình đang dùng. Các mục `Pending Review` cũ không còn là việc mở hiện tại.
+> **Ghi chú:** Nội dung bên dưới là lịch sử trước mô hình Codex ba luồng từ 2026-07-03; giữ để truy vết, không phải quy trình đang dùng. Các trạng thái review cũ không còn là việc mở hiện tại.
 
 File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ngoài luồng chuẩn trong giai đoạn cũ. Từ 2026-07-03, QC-OMS dùng mô hình Codex-only với ba luồng Spec / Implement / Review; không dùng file này để quyết định workflow hiện hành.
 
@@ -16,7 +16,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
 
 - **Loại:** Bypass | Decision | Rollback | Review
 - **Actor:** Owner | Codex | Cursor | Gemini (historical)
-- **Tình trạng:** Pending Review | Reviewed by Codex | Reverted | Active
+- **Tình trạng:** Historical only
 
 ---
 
