@@ -77,7 +77,7 @@ Quyết định Owner ngày `2026-07-03`:
 - Không cho trùng tên khách trong cùng tổ chức sau khi chuẩn hóa: trim, gộp khoảng trắng lặp, so sánh không phân biệt hoa/thường.
 - Không cho trùng SĐT đã chuẩn hóa trong cùng tổ chức. SĐT trống vẫn được phép cho nhiều khách nếu tên khác nhau.
 - Hồ sơ khách MVP có trường `MST` để phục vụ khách công ty/tổ chức.
-- Các trường bổ sung khác của KiotViet chưa cần đưa vào MVP nếu chưa phục vụ bán hàng, áp giá hoặc công nợ.
+- Các trường bổ sung khác của KiotViet nằm ngoài MVP nếu chưa phục vụ bán hàng, áp giá hoặc công nợ.
 - Nếu khách không có nhóm khách, hệ thống áp dụng `Bảng giá chung`.
 - Chi tiết khách tham khảo KiotViet nhưng chỉ giữ phần cần vận hành: thông tin chính, bảng giá áp dụng, lịch sử bán nếu có API đúng, và nợ cần thu.
 
@@ -85,10 +85,10 @@ QC-OMS MVP lược bỏ:
 
 - giới tính, sinh nhật
 - điểm thưởng/thẻ thành viên
-- khu vực giao hàng nếu chưa làm module giao hàng
+- khu vực giao hàng vì MVP chưa có module giao hàng
 - Facebook/email/company trên danh sách chính
 - CCCD/CMND, hộ chiếu, tài khoản ngân hàng
-- địa chỉ nhận hàng nhiều trường nếu chưa làm module giao hàng
+- địa chỉ nhận hàng nhiều trường vì MVP chưa có module giao hàng
 
 `MST` và `Địa chỉ` không cần là cột mặc định trên danh sách chính nếu làm chật bảng, nhưng phải có trong form tạo/sửa và chi tiết khách. `Địa chỉ` trong MVP là một dòng text tự nhập để lưu hồ sơ khách, không tách khu vực/phường/xã và chưa phải luồng giao hàng.
 

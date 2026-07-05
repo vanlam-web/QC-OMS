@@ -38,7 +38,7 @@ QC-OMS làm báo cáo đủ để quản trị xưởng, nhưng không copy toà
 - Báo cáo trả hàng bán.
 - Báo cáo đặt hàng KiotViet.
 - Báo cáo nhân viên riêng cho HR/KPI/hoa hồng.
-- Báo cáo nhà cung cấp trước khi Purchase/Supplier có dữ liệu.
+- Báo cáo nhà cung cấp nâng cao.
 - Lợi nhuận kế toán đầy đủ khi chưa chốt giá vốn, nhập hàng và chi phí sản xuất.
 - Báo cáo khách trả trước vì MVP không tạo công nợ âm.
 
