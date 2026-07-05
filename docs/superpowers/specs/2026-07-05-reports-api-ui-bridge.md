@@ -1,10 +1,10 @@
 # Reports API/UI Bridge
 
 > Ngay lap: 2026-07-05
-> Trang thai: Bridge da dong bo voi main local sau commit `68f3cff`; khong thay Source of Truth.
+> Trang thai: Trace bridge, not Source of Truth. Da dong bo voi main o commit `3b50523`.
 > Lien quan: `docs/02-PRD-UX-PhongCanh/Reports/`, Sales/Finance/Inventory Source of Truth.
 
-## 1. Hien trang main local
+## 1. Hien trang main
 
 - [x] `/reports` route.
 - [x] End of Day report baseline.

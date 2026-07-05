@@ -1,5 +1,7 @@
 # QC-OMS Implementation Checklist
 
+> **Role:** Implementation log for the latest baseline work. This is not the long-term live roadmap.
+> **Live status source:** Use [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) for current queue and next work.
 > Last update: 2026-07-05
 > Purpose: Track implementation progress after each work block.
 

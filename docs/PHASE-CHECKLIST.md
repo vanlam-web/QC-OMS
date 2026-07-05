@@ -2,6 +2,9 @@
 
 Tài liệu này dùng để nối mạch giữa các session Codex.
 
+> **Role:** Live status board for current project state, next queue, and cross-thread handoff.
+> Historical implementation logs may exist elsewhere, but this file wins for current status.
+
 Quy ước phối hợp giữa luồng đặc tả và luồng implement nằm tại
 [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md). Mọi slice mới hoặc review PR nên đọc file đó trước để tránh quên nhịp làm việc.
 
@@ -615,9 +618,9 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
 ### Đang làm / ưu tiên hiện tại
 
 1. **Spec sync/correction**
-   - Trạng thái: ✅ đã đồng bộ vào main local ở commit `68f3cff`.
+   - Trạng thái: ✅ đã đồng bộ và push lên `main` ở commit `3b50523`.
    - Đã cập nhật: SalesDocuments docs, Inventory business rules, Inventory/Finance/Reports bridge docs, spec gap deduped checklist.
-   - Còn lại: push `main` lên remote và Owner review docs sau khi push.
+   - Còn lại: Owner review docs; nếu ổn thì không cần thêm việc.
 
 ### Có thể làm tiếp sau spec sync
 
@@ -659,6 +662,7 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
 - Purchase return/trả hàng nhập.
 - Máy sản xuất tự động trừ kho hoặc tự match file với bill.
 - HĐĐT/VAT, delivery/COD, kênh online.
+- Refactor lớn `docs/README.md`; trước mắt dùng `PHASE-CHECKLIST.md` làm trạng thái sống.
 
 ## Lệnh thường dùng
 
