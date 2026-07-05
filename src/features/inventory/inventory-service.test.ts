@@ -52,4 +52,55 @@ describe('inventory-service', () => {
       ],
     ])
   })
+
+  it('calls material opening preview, options and create endpoints', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: InventoryApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      if (path.includes('options')) {
+        return { product: { id: 'mat-1' }, conversions: [], warnings: [] } as T
+      }
+      if (path.includes('pos-shortage-preview')) {
+        return { product_id: 'p-1', quantity: 2, source: 'product', shortages: [], warnings: [] } as T
+      }
+      return { id: 'opening-1' } as T
+    }
+    const service = createInventoryService({ request })
+
+    await service.previewPosShortage({ product_id: 'p-1', quantity: 2 })
+    await service.getMaterialOpeningOptions('mat-1')
+    await service.createMaterialOpening({
+      product_id: 'mat-1',
+      inventory_shape: 'normal',
+      opened_unit_id: 'unit-pack',
+      opened_qty: 1,
+      old_remaining_qty: 0,
+      note: 'Khui nhanh',
+    })
+
+    expect(calls).toEqual([
+      [
+        '/api/v1/inventory/pos-shortage-preview',
+        {
+          method: 'POST',
+          body: JSON.stringify({ product_id: 'p-1', quantity: 2 }),
+        },
+      ],
+      ['/api/v1/inventory/material-openings/options?product_id=mat-1', undefined],
+      [
+        '/api/v1/inventory/material-openings',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            product_id: 'mat-1',
+            inventory_shape: 'normal',
+            opened_unit_id: 'unit-pack',
+            opened_qty: 1,
+            old_remaining_qty: 0,
+            note: 'Khui nhanh',
+          }),
+        },
+      ],
+    ])
+  })
 })

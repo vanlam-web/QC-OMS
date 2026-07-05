@@ -5,6 +5,11 @@ import type {
   InventoryProductListResponse,
   InventoryProductStatus,
   InventoryShape,
+  MaterialOpeningInput,
+  MaterialOpeningOptions,
+  MaterialOpeningResult,
+  PosShortagePreview,
+  PosShortagePreviewInput,
   StockMovementListResponse,
   Stocktake,
   StocktakeListResponse,
@@ -59,6 +64,20 @@ export function createInventoryService(api: InventoryApiRequester) {
     },
     adjustNormalProductStock: (productId: string, input: StockAdjustmentInput) =>
       api.request<Stocktake>(`/api/v1/inventory/products/${productId}/adjust-stock`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    previewPosShortage: (input: PosShortagePreviewInput) =>
+      api.request<PosShortagePreview>('/api/v1/inventory/pos-shortage-preview', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    getMaterialOpeningOptions: (productId: string) =>
+      api.request<MaterialOpeningOptions>(
+        `/api/v1/inventory/material-openings/options?product_id=${encodeURIComponent(productId)}`,
+      ),
+    createMaterialOpening: (input: MaterialOpeningInput) =>
+      api.request<MaterialOpeningResult>('/api/v1/inventory/material-openings', {
         method: 'POST',
         body: JSON.stringify(input),
       }),

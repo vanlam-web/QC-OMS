@@ -15,6 +15,8 @@ import { ThemeToggle } from '../../components/ui-shell/ThemeProvider'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { Customer, Product, ResolvedPrice, SellMethod } from '../catalog/types'
+import type { InventoryService } from '../inventory/inventory-service'
+import type { MaterialOpeningConversionOption, MaterialOpeningOptions, PosShortageMaterial, PosShortagePreview } from '../inventory/types'
 import type { CheckoutCartLine, OrderService, QuoteReopenPayload, RecentPriceList } from '../orders/order-service'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
 import type { ProductionQueueDraftPayload } from '../production-queue/types'
@@ -49,6 +51,7 @@ interface PosInvoiceTab {
 
 export function PosShell({
   catalogService,
+  inventoryService,
   orderService,
   productionQueueService,
   currentUser,
@@ -58,6 +61,7 @@ export function PosShell({
   onOpenDashboard,
 }: {
   catalogService: CatalogService
+  inventoryService: InventoryService
   orderService: OrderService
   productionQueueService: ProductionQueueService
   currentUser: CurrentUserData
@@ -91,6 +95,15 @@ export function PosShell({
   const [discountModes, setDiscountModes] = useState<Record<string, DiscountMode>>({})
   const [recentPriceLineId, setRecentPriceLineId] = useState<string | null>(null)
   const [recentPrices, setRecentPrices] = useState<Record<string, RecentPriceList['items']>>({})
+  const [shortagePreviews, setShortagePreviews] = useState<Record<string, PosShortagePreview>>({})
+  const [shortagePreviewErrors, setShortagePreviewErrors] = useState<Record<string, string>>({})
+  const [quickOpeningLineId, setQuickOpeningLineId] = useState<string | null>(null)
+  const [quickOpeningSelectedIds, setQuickOpeningSelectedIds] = useState<Record<string, boolean>>({})
+  const [quickOpeningQtyByProduct, setQuickOpeningQtyByProduct] = useState<Record<string, number>>({})
+  const [quickOpeningUnitByProduct, setQuickOpeningUnitByProduct] = useState<Record<string, string>>({})
+  const [materialOpeningOptions, setMaterialOpeningOptions] = useState<Record<string, MaterialOpeningOptions>>({})
+  const [materialOpeningSaving, setMaterialOpeningSaving] = useState(false)
+  const [materialOpeningError, setMaterialOpeningError] = useState<string | null>(null)
   const [pendingFocusLineId, setPendingFocusLineId] = useState<string | null>(null)
   const [lineInputDrafts, setLineInputDrafts] = useState<Record<string, string>>({})
   const productSearchRef = useRef<HTMLInputElement>(null)
@@ -108,6 +121,12 @@ export function PosShell({
   const activeCartLineId =
     selectedCartLineId ?? priceEditorLineId ?? recentPriceLineId ?? hoveredCartLineId
   const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
+  const quickOpeningLine = quickOpeningLineId === null
+    ? null
+    : cartLines.find((line) => line.id === quickOpeningLineId) ?? null
+  const quickOpeningShortages = quickOpeningLine === null
+    ? []
+    : supportedShortages(shortagePreviews[quickOpeningLine.id])
   const updateActiveTab = useCallback((updater: (tab: PosInvoiceTab) => PosInvoiceTab) => {
     setTabs((current) =>
       current.map((tab) => (tab.id === activeTabId ? updater(tab) : tab)),
@@ -211,6 +230,42 @@ export function PosShell({
   useEffect(() => {
     persistInvoiceTabs(tabs)
   }, [tabs])
+
+  useEffect(() => {
+    let active = true
+
+    for (const line of cartLines) {
+      if (line.quantity <= 0) continue
+      void inventoryService.previewPosShortage({ product_id: line.product.id, quantity: line.quantity })
+        .then((preview) => {
+          if (!active) return
+          setShortagePreviews((current) => ({ ...current, [line.id]: preview }))
+          setShortagePreviewErrors((current) => {
+            if (!(line.id in current)) return current
+            const next = { ...current }
+            delete next[line.id]
+            return next
+          })
+        })
+        .catch((cause) => {
+          if (!active) return
+          setShortagePreviews((current) => {
+            if (!(line.id in current)) return current
+            const next = { ...current }
+            delete next[line.id]
+            return next
+          })
+          setShortagePreviewErrors((current) => ({
+            ...current,
+            [line.id]: formatApiError(cause, 'Không kiểm tra được tồn vật tư.'),
+          }))
+        })
+    }
+
+    return () => {
+      active = false
+    }
+  }, [cartLines, inventoryService])
 
   useEffect(() => {
     if (pendingFocusLineId === null) return undefined
@@ -547,6 +602,88 @@ export function PosShell({
     }))
   }
 
+  async function recheckLineShortage(line: CheckoutCartLine) {
+    const preview = await inventoryService.previewPosShortage({ product_id: line.product.id, quantity: line.quantity })
+    setShortagePreviews((current) => ({ ...current, [line.id]: preview }))
+    setShortagePreviewErrors((current) => {
+      if (!(line.id in current)) return current
+      const next = { ...current }
+      delete next[line.id]
+      return next
+    })
+  }
+
+  async function openQuickMaterialOpening(line: CheckoutCartLine) {
+    const shortages = supportedShortages(shortagePreviews[line.id])
+    setQuickOpeningLineId(line.id)
+    setMaterialOpeningError(null)
+    setQuickOpeningSelectedIds(Object.fromEntries(shortages.map((shortage) => [shortage.product_id, true])))
+    setQuickOpeningQtyByProduct((current) => ({
+      ...current,
+      ...Object.fromEntries(shortages.map((shortage) => [shortage.product_id, current[shortage.product_id] ?? 1])),
+    }))
+    setQuickOpeningUnitByProduct((current) => ({
+      ...current,
+      ...Object.fromEntries(shortages.map((shortage) => [
+        shortage.product_id,
+        current[shortage.product_id] ?? shortage.conversion_options[0]?.unit_id ?? '',
+      ])),
+    }))
+
+    const optionResults = await Promise.allSettled(
+      shortages.map(async (shortage) => [shortage.product_id, await inventoryService.getMaterialOpeningOptions(shortage.product_id)] as const),
+    )
+    setMaterialOpeningOptions((current) => {
+      const next = { ...current }
+      for (const result of optionResults) {
+        if (result.status !== 'fulfilled') continue
+        next[result.value[0]] = result.value[1]
+      }
+      return next
+    })
+    setQuickOpeningUnitByProduct((current) => {
+      const next = { ...current }
+      for (const result of optionResults) {
+        if (result.status !== 'fulfilled') continue
+        const [productId, options] = result.value
+        next[productId] = options.conversions[0]?.unit_id ?? next[productId] ?? ''
+      }
+      return next
+    })
+  }
+
+  async function submitQuickMaterialOpening(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (quickOpeningLine === null) return
+    const selectedShortages = quickOpeningShortages.filter((shortage) => quickOpeningSelectedIds[shortage.product_id])
+    if (selectedShortages.length === 0) {
+      setMaterialOpeningError('Chọn ít nhất một vật tư để khui.')
+      return
+    }
+    setMaterialOpeningSaving(true)
+    setMaterialOpeningError(null)
+    try {
+      for (const shortage of selectedShortages) {
+        const conversion = quickOpeningConversion(shortage, materialOpeningOptions[shortage.product_id], quickOpeningUnitByProduct[shortage.product_id])
+        if (conversion === undefined) throw new Error('MATERIAL_OPENING_CONVERSION_MISSING')
+        await inventoryService.createMaterialOpening({
+          product_id: shortage.product_id,
+          inventory_shape: 'normal',
+          opened_unit_id: conversion.unit_id,
+          opened_qty: quickOpeningQtyByProduct[shortage.product_id] ?? 1,
+          old_remaining_qty: 0,
+          note: `Khui nhanh từ POS: ${quickOpeningLine.product.name}`,
+        })
+      }
+      await recheckLineShortage(quickOpeningLine)
+      setQuickOpeningLineId(null)
+    } catch (cause) {
+      setMaterialOpeningError(formatApiError(cause, 'Không khui được vật tư.'))
+    } finally {
+      setMaterialOpeningSaving(false)
+    }
+  }
+
   async function handleProductionQueueDraft(payload: ProductionQueueDraftPayload) {
     const queueCustomer =
       payload.customer === null
@@ -828,6 +965,19 @@ export function PosShell({
                     {line.quoteWarnings?.map((warning) => (
                       <span key={warning.code}>{warning.message}</span>
                     ))}
+                    {shortagePreviewErrors[line.id] ? <span role="status">{shortagePreviewErrors[line.id]}</span> : null}
+                    {supportedShortages(shortagePreviews[line.id]).length > 0 ? (
+                      <span className="pos-cart-line-shortage">
+                        {shortageSummary(shortagePreviews[line.id])}
+                        <button
+                          aria-label={`Khui vật tư ${line.product.name}`}
+                          type="button"
+                          onClick={() => void openQuickMaterialOpening(line)}
+                        >
+                          Khui vật tư
+                        </button>
+                      </span>
+                    ) : null}
                   </div>
                   {isAreaLine(line) ? (
                     <>
@@ -1203,6 +1353,87 @@ export function PosShell({
           </form>
         </aside>
       ) : null}
+      {quickOpeningLine !== null ? (
+        <aside aria-label="Khui vật tư nhanh" aria-modal="true" className="pos-material-opening-dialog" role="dialog">
+          <form onSubmit={(event) => void submitQuickMaterialOpening(event)}>
+            <header>
+              <h2>Khui vật tư nhanh</h2>
+              <button
+                aria-label="Đóng khui vật tư nhanh"
+                type="button"
+                onClick={() => setQuickOpeningLineId(null)}
+              >
+                ×
+              </button>
+            </header>
+            <p>{quickOpeningLine.product.name}</p>
+            {materialOpeningError ? <p role="alert">{materialOpeningError}</p> : null}
+            <div className="pos-material-opening-list">
+              {quickOpeningShortages.map((shortage) => {
+                const options = materialOpeningOptions[shortage.product_id]
+                const conversions = options?.conversions ?? shortage.conversion_options
+                return (
+                  <section key={shortage.product_id} className="pos-material-opening-item">
+                    <label>
+                      <input
+                        aria-label={`Chọn ${shortage.name}`}
+                        checked={quickOpeningSelectedIds[shortage.product_id] ?? false}
+                        type="checkbox"
+                        onChange={(event) =>
+                          setQuickOpeningSelectedIds((current) => ({
+                            ...current,
+                            [shortage.product_id]: event.target.checked,
+                          }))
+                        }
+                      />
+                      <strong>{shortage.code} {shortage.name}</strong>
+                    </label>
+                    <span>Thiếu {formatMeasure(shortage.shortage_qty)} {shortage.stock_unit.name}</span>
+                    <label>
+                      Số lượng khui {shortage.name}
+                      <input
+                        aria-label={`Số lượng khui ${shortage.name}`}
+                        min="0.001"
+                        step="0.001"
+                        type="number"
+                        value={quickOpeningQtyByProduct[shortage.product_id] ?? 1}
+                        onChange={(event) =>
+                          setQuickOpeningQtyByProduct((current) => ({
+                            ...current,
+                            [shortage.product_id]: readPositiveNumber(event.target.value) || 1,
+                          }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Đơn vị khui {shortage.name}
+                      <select
+                        aria-label={`Đơn vị khui ${shortage.name}`}
+                        value={quickOpeningUnitByProduct[shortage.product_id] ?? conversions[0]?.unit_id ?? ''}
+                        onChange={(event) =>
+                          setQuickOpeningUnitByProduct((current) => ({
+                            ...current,
+                            [shortage.product_id]: event.target.value,
+                          }))
+                        }
+                      >
+                        {conversions.map((conversion) => (
+                          <option key={conversion.unit_id} value={conversion.unit_id}>
+                            {conversion.name} ({formatMeasure(conversion.stock_qty_per_unit)} {shortage.stock_unit.name})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </section>
+                )
+              })}
+            </div>
+            <button disabled={materialOpeningSaving} type="submit">
+              Xác nhận khui
+            </button>
+          </form>
+        </aside>
+      ) : null}
     </main>
   )
 }
@@ -1306,6 +1537,33 @@ function lineDimensions(line: CheckoutCartLine) {
     line.linear_m !== undefined ? `D ${formatMeasure(line.linear_m)}m` : null,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(' · ') : null
+}
+
+function supportedShortages(preview: PosShortagePreview | undefined): PosShortageMaterial[] {
+  return (preview?.shortages ?? []).filter((shortage) =>
+    shortage.inventory_shape === 'normal' &&
+    shortage.quick_material_opening_supported &&
+    shortage.conversion_options.length > 0
+  )
+}
+
+function shortageSummary(preview: PosShortagePreview | undefined) {
+  const shortages = supportedShortages(preview)
+  if (shortages.length === 0) return null
+  if (shortages.length === 1) {
+    const shortage = shortages[0]
+    return `Thiếu vật tư: ${shortage.name} thiếu ${formatMeasure(shortage.shortage_qty)} ${shortage.stock_unit.name}`
+  }
+  return `Thiếu vật tư: ${shortages.length} vật tư có thể khui`
+}
+
+function quickOpeningConversion(
+  shortage: PosShortageMaterial,
+  options: MaterialOpeningOptions | undefined,
+  unitId: string | undefined,
+): MaterialOpeningConversionOption | undefined {
+  const conversions = options?.conversions ?? shortage.conversion_options
+  return conversions.find((conversion) => conversion.unit_id === unitId) ?? conversions[0]
 }
 
 function compactMeasureInputWidthCh(value: number | string) {

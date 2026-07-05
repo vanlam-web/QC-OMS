@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { PosShell } from './PosShell'
 import { ThemeProvider } from '../../components/ui-shell/ThemeProvider'
 import type { CatalogService } from '../catalog/catalog-service'
+import type { InventoryService } from '../inventory/inventory-service'
 import type { OrderService } from '../orders/order-service'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
 import { saveQuoteReopenPayload } from './quote-draft-handoff'
@@ -65,6 +66,7 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
 
 function renderPosShell(overrides: {
   catalogService?: CatalogService
+  inventoryService?: InventoryService
   orderService?: OrderService
   productionQueueService?: ProductionQueueService
   currentUser?: Parameters<typeof PosShell>[0]['currentUser']
@@ -74,6 +76,7 @@ function renderPosShell(overrides: {
     <ThemeProvider>
       <PosShell
         catalogService={overrides.catalogService ?? makeCatalogService()}
+        inventoryService={overrides.inventoryService ?? makeInventoryService()}
         orderService={overrides.orderService ?? makeOrderService()}
         productionQueueService={overrides.productionQueueService ?? makeProductionQueueService()}
         currentUser={
@@ -111,6 +114,26 @@ function makeOrderService(overrides: Partial<OrderService> = {}): OrderService {
   }
 }
 
+function makeInventoryService(overrides: Partial<InventoryService> = {}): InventoryService {
+  return {
+    listInventoryProducts: vi.fn(),
+    getInventoryProduct: vi.fn(),
+    listStockMovements: vi.fn(),
+    listStocktakes: vi.fn(),
+    adjustNormalProductStock: vi.fn(),
+    previewPosShortage: vi.fn(async () => ({
+      product_id: 'p-1',
+      quantity: 1,
+      source: 'product' as const,
+      shortages: [],
+      warnings: [],
+    })),
+    getMaterialOpeningOptions: vi.fn(),
+    createMaterialOpening: vi.fn(),
+    ...overrides,
+  } as InventoryService
+}
+
 beforeEach(() => {
   window.sessionStorage.clear()
   window.localStorage.clear()
@@ -139,6 +162,7 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
     <ThemeProvider>
       <PosShell
         catalogService={makeCatalogService()}
+        inventoryService={makeInventoryService()}
         orderService={makeOrderService()}
         productionQueueService={makeProductionQueueService()}
         currentUser={{
@@ -245,6 +269,211 @@ it('uses the K01 F3 product search as an enabled product picker', async () => {
   const cart = screen.getByLabelText('K02 giỏ hàng')
   expect(within(cart).getByText('Mica 3mm')).toBeInTheDocument()
   expect(within(cart).getAllByText('120 000').length).toBeGreaterThan(0)
+})
+
+it('does not show quick material opening when preview has no supported shortage', async () => {
+  const inventoryService = makeInventoryService()
+  renderPosShell({ inventoryService })
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+
+  await waitFor(() => expect(inventoryService.previewPosShortage).toHaveBeenCalledWith({ product_id: 'p-1', quantity: 1 }))
+  expect(screen.queryByRole('button', { name: 'Khui vật tư Mica 3mm' })).not.toBeInTheDocument()
+})
+
+it('opens quick material opening prefilled for one supported shortage and rechecks preview after submit', async () => {
+  const inventoryService = makeInventoryService({
+    previewPosShortage: vi
+      .fn()
+      .mockResolvedValueOnce({
+        product_id: 'p-1',
+        quantity: 1,
+        source: 'product',
+        shortages: [
+          {
+            product_id: 'mat-1',
+            code: 'GIAY-A4',
+            name: 'Giấy A4',
+            required_qty: 5,
+            available_qty: 2,
+            shortage_qty: 3,
+            stock_unit: { id: 'unit-sheet', code: 'TO', name: 'Tờ' },
+            inventory_shape: 'normal' as const,
+            quick_material_opening_supported: true,
+            conversion_options: [{ unit_id: 'unit-ram', code: 'RAM', name: 'Ram', stock_qty_per_unit: 500 }],
+          },
+        ],
+        warnings: [],
+      })
+      .mockResolvedValue({
+        product_id: 'p-1',
+        quantity: 1,
+        source: 'product' as const,
+        shortages: [],
+        warnings: [],
+      }),
+    getMaterialOpeningOptions: vi.fn(async () => ({
+      product: {
+        id: 'mat-1',
+        code: 'GIAY-A4',
+        name: 'Giấy A4',
+        inventory_shape: 'normal' as const,
+        stock_unit: { id: 'unit-sheet', code: 'TO', name: 'Tờ' },
+      },
+      conversions: [{ unit_id: 'unit-ram', code: 'RAM', name: 'Ram', stock_qty_per_unit: 500 }],
+      warnings: [],
+    })),
+    createMaterialOpening: vi.fn(async () => ({
+      id: 'opening-1',
+      product_id: 'mat-1',
+      inventory_shape: 'normal' as const,
+      source_type: 'manual_normal' as const,
+      opened_unit_id: 'unit-ram',
+      opened_qty: 1,
+      opened_stock_qty: 500,
+      stock_movement_id: null,
+      warnings: [],
+      created_at: '2026-07-05T00:00:00Z',
+    })),
+  })
+  renderPosShell({ inventoryService })
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  const quickButton = await screen.findByRole('button', { name: 'Khui vật tư Mica 3mm' })
+  expect(screen.getByText('Thiếu vật tư: Giấy A4 thiếu 3 Tờ')).toBeInTheDocument()
+
+  await userEvent.click(quickButton)
+
+  const dialog = await screen.findByRole('dialog', { name: 'Khui vật tư nhanh' })
+  expect(within(dialog).getByText('GIAY-A4 Giấy A4')).toBeInTheDocument()
+  expect(within(dialog).getByLabelText('Chọn Giấy A4')).toBeChecked()
+  expect(within(dialog).getByLabelText('Số lượng khui Giấy A4')).toHaveValue(1)
+  expect(within(dialog).getByLabelText('Đơn vị khui Giấy A4')).toHaveValue('unit-ram')
+
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận khui' }))
+
+  await waitFor(() =>
+    expect(inventoryService.createMaterialOpening).toHaveBeenCalledWith({
+      product_id: 'mat-1',
+      inventory_shape: 'normal',
+      opened_unit_id: 'unit-ram',
+      opened_qty: 1,
+      old_remaining_qty: 0,
+      note: 'Khui nhanh từ POS: Mica 3mm',
+    }),
+  )
+  await waitFor(() => expect(inventoryService.previewPosShortage).toHaveBeenCalledTimes(2))
+  expect(screen.queryByRole('dialog', { name: 'Khui vật tư nhanh' })).not.toBeInTheDocument()
+})
+
+it('lets staff choose one or many supported shortage materials before opening', async () => {
+  const inventoryService = makeInventoryService({
+    previewPosShortage: vi.fn(async () => ({
+      product_id: 'p-1',
+      quantity: 1,
+      source: 'standard_bom' as const,
+      bom_id: 'bom-1',
+      shortages: [
+        {
+          product_id: 'mat-1',
+          code: 'LED',
+          name: 'Bóng LED',
+          required_qty: 10,
+          available_qty: 4,
+          shortage_qty: 6,
+          stock_unit: { id: 'unit-led', code: 'CON', name: 'Con' },
+          inventory_shape: 'normal' as const,
+          quick_material_opening_supported: true,
+          conversion_options: [{ unit_id: 'unit-bag', code: 'BAO', name: 'Bao', stock_qty_per_unit: 100 }],
+        },
+        {
+          product_id: 'mat-2',
+          code: 'GIAY',
+          name: 'Giấy ảnh',
+          required_qty: 3,
+          available_qty: 0,
+          shortage_qty: 3,
+          stock_unit: { id: 'unit-sheet', code: 'TO', name: 'Tờ' },
+          inventory_shape: 'normal' as const,
+          quick_material_opening_supported: true,
+          conversion_options: [{ unit_id: 'unit-ram', code: 'RAM', name: 'Ram', stock_qty_per_unit: 500 }],
+        },
+      ],
+      warnings: [],
+    })),
+    getMaterialOpeningOptions: vi.fn(async (productId: string) => ({
+      product: {
+        id: productId,
+        code: productId === 'mat-1' ? 'LED' : 'GIAY',
+        name: productId === 'mat-1' ? 'Bóng LED' : 'Giấy ảnh',
+        inventory_shape: 'normal' as const,
+        stock_unit: { id: 'unit-stock', code: 'DV', name: 'Đơn vị' },
+      },
+      conversions: productId === 'mat-1'
+        ? [{ unit_id: 'unit-bag', code: 'BAO', name: 'Bao', stock_qty_per_unit: 100 }]
+        : [{ unit_id: 'unit-ram', code: 'RAM', name: 'Ram', stock_qty_per_unit: 500 }],
+      warnings: [],
+    })),
+    createMaterialOpening: vi.fn(async (input) => ({
+      id: `opening-${input.product_id}`,
+      product_id: input.product_id,
+      inventory_shape: 'normal' as const,
+      source_type: 'manual_normal' as const,
+      opened_unit_id: input.opened_unit_id,
+      opened_qty: input.opened_qty,
+      opened_stock_qty: 100,
+      stock_movement_id: null,
+      warnings: [],
+      created_at: '2026-07-05T00:00:00Z',
+    })),
+  })
+  renderPosShell({ inventoryService })
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Khui vật tư Mica 3mm' }))
+
+  const dialog = await screen.findByRole('dialog', { name: 'Khui vật tư nhanh' })
+  expect(within(dialog).getByLabelText('Chọn Bóng LED')).toBeChecked()
+  expect(within(dialog).getByLabelText('Chọn Giấy ảnh')).toBeChecked()
+
+  await userEvent.click(within(dialog).getByLabelText('Chọn Giấy ảnh'))
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận khui' }))
+
+  await waitFor(() => expect(inventoryService.createMaterialOpening).toHaveBeenCalledTimes(1))
+  expect(inventoryService.createMaterialOpening).toHaveBeenCalledWith(expect.objectContaining({ product_id: 'mat-1' }))
+})
+
+it('keeps quote and checkout actions available while shortage warning is visible', async () => {
+  const inventoryService = makeInventoryService({
+    previewPosShortage: vi.fn(async () => ({
+      product_id: 'p-1',
+      quantity: 1,
+      source: 'product' as const,
+      shortages: [
+        {
+          product_id: 'mat-1',
+          code: 'GIAY-A4',
+          name: 'Giấy A4',
+          required_qty: 5,
+          available_qty: 2,
+          shortage_qty: 3,
+          stock_unit: { id: 'unit-sheet', code: 'TO', name: 'Tờ' },
+          inventory_shape: 'normal' as const,
+          quick_material_opening_supported: true,
+          conversion_options: [{ unit_id: 'unit-ram', code: 'RAM', name: 'Ram', stock_qty_per_unit: 500 }],
+        },
+      ],
+      warnings: [],
+    })),
+  })
+  renderPosShell({ inventoryService })
+
+  await userEvent.click(await screen.findByRole('button', { name: /Mica 3mm/ }))
+  await screen.findByRole('button', { name: 'Khui vật tư Mica 3mm' })
+  const checkoutDrawer = await openCheckoutDrawer()
+
+  expect(within(checkoutDrawer).getByRole('button', { name: 'Báo giá' })).toBeEnabled()
+  expect(within(checkoutDrawer).getByRole('button', { name: 'Tạo hóa đơn' })).toBeEnabled()
 })
 
 it('keeps K01 utility actions visible beside connection and profile', async () => {
