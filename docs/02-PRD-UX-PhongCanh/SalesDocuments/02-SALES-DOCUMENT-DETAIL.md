@@ -37,7 +37,7 @@ Hiện tại đã đọc dữ liệu đã có:
 - thao tác mở lại báo giá active vào POS draft local
 - tab `Thông tin` và `Lịch sử thanh toán` có thể hiển thị trong UI; tab lịch sử thanh toán tạm thời không gọi API lịch sử riêng nếu backend/chứng từ chưa có dữ liệu đủ ổn định
 
-Chưa triển khai:
+Ngoài phạm vi hiện tại:
 
 - nút sửa hóa đơn
 - nút hủy hóa đơn
@@ -49,7 +49,7 @@ Chưa triển khai:
 
 - in/xem báo giá mẫu mặc định cho `BG...`
 
-Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
+Các phần bên dưới có nhãn **Ngoài phạm vi hiện tại** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
 
 ---
 
@@ -161,11 +161,11 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
-Hiện tại chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Mở lại báo giá đã có ở mức draft local; in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+Hiện tại chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Mở lại báo giá đã có ở mức draft local; in/sửa/hủy/đảo nằm ngoài phạm vi hiện tại nếu chưa có transaction tương ứng.
 
 ---
 
-## 8. Thao tác Future Phase
+## 8. Thao tác ngoài phạm vi hiện tại
 
 Các thao tác trong mục này chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn nếu có tác động liên bảng, và kiểm thử đủ.
 

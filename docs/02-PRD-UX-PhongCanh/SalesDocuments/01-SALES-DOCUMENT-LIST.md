@@ -44,7 +44,7 @@ Hiện tại đã triển khai:
 - mở lại báo giá active vào POS draft local
 - giữ giá snapshot của báo giá khi mở lại; cảnh báo nếu giá hiện tại khác hoặc sản phẩm không còn khả dụng
 
-Chưa triển khai:
+Ngoài phạm vi hiện tại:
 
 - in lại bill hóa đơn nếu Bill Preview/print flow chưa có
 - sửa hóa đơn
@@ -140,17 +140,17 @@ Nếu POS/báo giá/hóa đơn không chọn khách, backend phải gán chứng
 | Báo giá active | Mở chi tiết readonly, mở lại vào POS draft local |
 | Báo giá không còn mở được | Mở chi tiết readonly; xử lý theo cảnh báo nếu sản phẩm/khách/giá đã lệch |
 
-### 5.2. Future phase
+### 5.2. Ngoài phạm vi hiện tại
 
 Các thao tác sau là thiết kế tương lai, không coi là đã có hiện tại:
 
-| Trạng thái | Thao tác tương lai |
+| Trạng thái | Thao tác ngoài phạm vi hiện tại |
 |---|---|
 | Báo giá | Hủy báo giá nếu Owner chốt sau |
 | Hóa đơn hoàn thành | In lại bill, sửa hóa đơn, hủy hóa đơn |
 | Hóa đơn đã hủy | In/xem lịch sử; không cho sửa tiếp |
 
-Quy tắc sửa/hủy hóa đơn future phase:
+Quy tắc sửa/hủy hóa đơn khi làm sau:
 
 - Không sửa đè hóa đơn đã chốt.
 - Bấm **Sửa hóa đơn** mở chứng từ tại POS như một bản nháp sửa.
