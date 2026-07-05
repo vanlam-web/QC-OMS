@@ -132,14 +132,25 @@ Ví dụ:
 
 Nếu tồn chính là `ram`, bán `tờ` sẽ quy đổi số tờ về ram để ghi stock movement.
 
-### BR-INV-05B: Khui vật tư phụ đưa phần dở/cũ về 0
+### BR-INV-05B: Khui hàng normal có quy đổi đơn vị
 
-Vật tư phụ thuộc `normal` như keo, vít, nguồn, LED vẫn được phép đi qua popup khui nếu xưởng cần ghi nhận mở mới hoặc bỏ phần dở cũ.
+Hàng `normal` được phép đi qua popup khui khi có quy đổi từ đơn vị lớn sang đơn vị nhỏ hoặc đơn vị dùng thực tế.
+
+Ví dụ:
+
+```text
+1 ram giấy = 500 tờ
+1 bao LED = 100 con
+1 cuộn decal = n mét
+```
+
+Hàng `normal` không có quy đổi mở bao bì, hoặc là dịch vụ không quản lý tồn, không cần hiện trong popup khui.
 
 Quy tắc MVP:
 
-- Khui vật tư phụ không tạo cuộn/tấm vật lý.
+- Khui hàng `normal` không tạo cuộn/tấm vật lý.
 - Phần đang dùng dở/cũ được đưa về `0`.
+- Số lượng khui mới quy đổi về đơn vị tồn chính theo `product_unit_conversions`.
 - Thao tác phải ghi log: ai khui, vật tư nào, số lượng khui mới nếu có, lý do/ghi chú nếu có.
 - Nếu tồn không đủ hoặc tồn âm, hệ thống chỉ cảnh báo nhẹ theo rule tồn âm, không chặn.
 
@@ -297,4 +308,4 @@ Sản phẩm ngưng bán:
 - Tấm rẻo nhỏ theo ngưỡng cạnh nhỏ nhất không tự tạo nếu nhân viên giữ tùy chọn bỏ rẻo.
 - Rẻo nhỏ không bị bỏ âm thầm; hệ thống đề xuất bỏ bằng checkbox và nhân viên có thể giữ lại.
 - Phần m tới còn dưới `0.2m` được đề xuất bỏ như rẻo nhỏ.
-- Khui vật tư phụ `normal` đưa phần dở/cũ về `0`, không tạo object cuộn/tấm.
+- Khui hàng `normal` có quy đổi đơn vị đưa phần dở/cũ về `0`, không tạo object cuộn/tấm.

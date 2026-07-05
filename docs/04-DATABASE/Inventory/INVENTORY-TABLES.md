@@ -370,7 +370,7 @@ Không dùng bảng này để tính giá vốn, lô/ngày mua hoặc báo cáo 
 
 ### Quy tắc dữ liệu
 
-- Khui vật tư phụ `normal` không tạo cuộn/tấm; log nằm ở bảng này, stock movement chỉ tạo nếu có thay đổi tồn thực tế.
+- Khui hàng `normal` có quy đổi đơn vị không tạo cuộn/tấm; log nằm ở bảng này, stock movement chỉ tạo nếu có thay đổi tồn thực tế.
 - Khui roll/sheet từ tồn tạm phải ghi `source_type = 'kiotviet_provisional'`.
 - Tồn thiếu/âm chỉ là warning, không làm operation thất bại nếu actor có quyền.
 - Rẻo nhỏ hoặc phần m tới dưới `0.2m` chỉ được ghi là đề xuất bỏ trong `result_payload`; nếu người dùng giữ lại, phải tạo/cập nhật object tương ứng.

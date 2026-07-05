@@ -361,7 +361,7 @@ Endpoint này chỉ đề xuất, không trừ kho.
 
 1. Xác thực actor, workstation và permission.
 2. Tải product + `product_inventory_settings`.
-3. Nếu `normal`, trả cấu hình đơn vị tồn và cảnh báo nếu product không thuộc nhóm vật tư phụ nếu backend có dữ liệu nhóm.
+3. Nếu `normal`, trả cấu hình đơn vị tồn và danh sách quy đổi đơn vị từ `product_unit_conversions`.
 4. Nếu `roll`, trả danh sách khổ khả dụng từ `inventory_rolls` và tồn tạm KiotViet nếu có.
 5. Nếu `sheet`, trả khổ thao tác từ settings và tấm/tấm dở/tấm lỡ liên quan nếu có.
 6. Không tự tạo object, không trừ tồn.
@@ -417,6 +417,7 @@ Không nhận các trường:
 {
   "product_id": "uuid",
   "inventory_shape": "normal",
+  "opened_unit_id": "uuid",
   "opened_qty": 1,
   "old_remaining_qty": 0,
   "note": "Khui keo mới, phần cũ khô bỏ"
@@ -426,6 +427,8 @@ Không nhận các trường:
 Quy tắc:
 
 - Product phải có `inventory_shape = normal`.
+- Product phải có cấu hình quy đổi đơn vị phù hợp để khui; nếu không có quy đổi, trả validation error để tránh hiện nhầm hàng không cần khui.
+- `opened_unit_id` là đơn vị lớn/đơn vị nhập khui, ví dụ ram, bao, cuộn; backend quy đổi về đơn vị tồn chính theo `product_unit_conversions`.
 - `opened_qty > 0`.
 - `old_remaining_qty >= 0`, MVP mặc định `0`.
 - Không tạo `inventory_rolls` hoặc `inventory_sheets`.

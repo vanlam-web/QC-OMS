@@ -18,7 +18,7 @@ Mục tiêu là vận hành nhanh và chuẩn hóa kho dần:
 - nếu chưa đủ dữ liệu vật lý thì vẫn cho ghi nhận từ tồn tạm
 - phần cũ còn lại do hệ thống gợi ý, nhân viên được sửa theo thực tế
 
-Vật tư phụ như keo/vít/nguồn/LED vẫn đi qua popup khui trong MVP, nhưng chỉ theo quy tắc đơn giản: phần đang dùng dở/cũ được đưa về `0`, rồi ghi nhận lần khui mới.
+Vật tư phụ vẫn đi qua popup khui trong MVP khi sản phẩm có quy đổi đơn vị lớn sang đơn vị nhỏ. Ví dụ: `1 ram = 500 tờ`, `1 bao LED = 100 con`, `1 cuộn decal = n mét`. Khi khui, phần đang dùng dở/cũ được đưa về `0`, rồi ghi nhận lần khui mới.
 
 ---
 
@@ -51,20 +51,23 @@ Không có bước chọn nhà cung cấp, ngày mua, số lô trong MVP.
 
 ## 4. Khui vật tư phụ
 
-Áp dụng cho hàng `normal` là vật tư phụ có thể dùng dở: keo, vít, nguồn, LED hoặc vật tư phụ tương tự.
+Áp dụng cho hàng `normal` có nhiều đơn vị hoặc có quy đổi bao bì: ram giấy ra tờ, bao LED ra con, hộp/bao vật tư ra đơn vị nhỏ.
+
+Không áp dụng cho hàng `normal` chỉ bán nguyên đơn vị và không có quy đổi mở bao bì, ví dụ standee bán cái hoặc dịch vụ không quản lý tồn.
 
 ### 4.1. Trường nhập
 
 | Trường | Quy tắc |
 |---|---|
-| Vật tư | Chỉ chọn sản phẩm `inventory_shape = normal` và thuộc nhóm vật tư phụ |
-| Số lượng khui mới | Theo đơn vị tồn hoặc đơn vị quy đổi đang cấu hình |
+| Vật tư | Chỉ chọn sản phẩm `inventory_shape = normal` và có cấu hình quy đổi đơn vị |
+| Số lượng khui mới | Theo đơn vị lớn hoặc đơn vị nhỏ đang cấu hình, ví dụ `1 bao`, `1 ram`, `1 cuộn` |
 | Phần dở/cũ còn lại | MVP mặc định `0` |
 | Ghi chú | Nên nhập khi bỏ phần cũ do hỏng, khô, rơi vãi hoặc không dùng tiếp |
 
 ### 4.2. Quy tắc xử lý
 
 - Khi khui vật tư phụ, phần dở/cũ về `0`.
+- Số lượng khui mới được quy đổi về đơn vị tồn chính để ghi nhận tồn.
 - Hệ thống ghi log thao tác khui và lý do nếu có.
 - Không tạo cuộn/tấm vật lý cho vật tư phụ.
 - Nếu tồn không đủ, chỉ cảnh báo nhẹ theo rule tồn âm, vẫn cho ghi nhận nếu người dùng có quyền.
