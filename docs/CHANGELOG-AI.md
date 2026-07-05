@@ -2,7 +2,7 @@
 
 > **Vai trò:** Historical log only.
 > **Quy trình hiện tại:** `AI_TEAM_RULES.md`, `docs/WORKFLOW-SPEC-IMPLEMENT.md`, và `docs/WORKFLOW-AUTO-SPEC-IMPLEMENT.md`.
-> **Ghi chú:** Nội dung bên dưới là lịch sử trước mô hình Codex ba luồng từ 2026-07-03; giữ để truy vết, không phải quy trình đang dùng.
+> **Ghi chú:** Nội dung bên dưới là lịch sử trước mô hình Codex ba luồng từ 2026-07-03; giữ để truy vết, không phải quy trình đang dùng. Các mục `Pending Review` cũ không còn là việc mở hiện tại.
 
 File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ngoài luồng chuẩn trong giai đoạn cũ. Từ 2026-07-03, QC-OMS dùng mô hình Codex-only với ba luồng Spec / Implement / Review; không dùng file này để quyết định workflow hiện hành.
 
@@ -30,7 +30,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/02-PRD-UX-PhongCanh/POS/K02/02c-K02A-M2-KHUI.md` (Top Bar M2 đồng bộ K01)
   - `docs/02-PRD-UX-PhongCanh/POS/README.md` (trạng thái + sửa `||`)
   - `docs/AUDIT-V2.md` (bảng tiến độ, cập nhật Đợt 1 = ✅)
-- **Tình trạng:** Pending Review
+- **Tình trạng:** Historical; không còn là việc mở
 
 ### Bypass #2 — Đợt 2 (P-04, P-05, P-06)
 - **Actor:** Owner
@@ -39,7 +39,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/02-PRD-UX-PhongCanh/POS/K01/01b-K01-PROFILE-SHORTCUTS.md` (SoT shortcut + F8)
   - `docs/02-PRD-UX-PhongCanh/POS/K01/01-K01-TOPBAR.md` (bỏ bảng shortcut trùng, tham chiếu 01b)
   - `docs/AUDIT-V2.md` (Đợt 2 = ✅, dòng lịch sử mới)
-- **Tình trạng:** Pending Review
+- **Tình trạng:** Historical; không còn là việc mở
 
 ### Bypass #3 — Đợt 3 (P-07, P-08, P-09)
 - **Actor:** Owner
@@ -49,7 +49,7 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
   - `docs/03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md` (BR-01..07 → BR-CHK-01..07 + 4 tham chiếu nội bộ)
   - `docs/02-PRD-UX-PhongCanh/POS/K02/01-K02-GIO-HANG.md` (link anchor cập nhật)
   - `docs/AUDIT-V2.md` (Đợt 3 = ✅, dòng lịch sử mới)
-- **Tình trạng:** Pending Review
+- **Tình trạng:** Historical; không còn là việc mở
 
 ---
 
@@ -61,17 +61,13 @@ File này lưu lịch sử các lần Owner phải bypass hoặc phối hợp ng
 - **Scope:**
   - `AI_TEAM_RULES.md` (thêm Owner Emergency Override, Gemini Parallel Analysis, sửa ASCII layout, thêm Questions vào Implementation Report)
   - `docs/CHANGELOG-AI.md` (file mới — log bypass #1, #2, #3 ngược)
-- **Tình trạng:** Pending Review
+- **Tình trạng:** Historical; không còn là việc mở
 
 ---
 
 ## Quy tắc cũ sau khi Codex online
 
-Phần này là historical policy của giai đoạn 2026-06-27, không còn là quy trình hiện hành. Khi Codex online trở lại, kế hoạch khi đó là:
-
-1. Review 4 bypass ở trên.
-2. Có quyền giữ nguyên hoặc yêu cầu rollback.
-3. Nếu rollback → Cursor revert file và ghi log mới tại đây.
+Phần này là historical policy của giai đoạn 2026-06-27, không còn là quy trình hiện hành. Không dùng các bypass trên làm checklist đang mở.
 
 ---
 
