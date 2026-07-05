@@ -39,17 +39,17 @@ const showAuxiliaryFinanceSections = false
 const defaultCashbookColumns: CashbookColumnKey[] = [
   'code',
   'created_at',
-  'finance_account',
   'source_type',
+  'counterparty',
+  'finance_account',
   'amount_delta',
-  'status',
 ]
 const cashbookColumnDefinitions: Array<{ key: CashbookColumnKey; label: string }> = [
   { key: 'code', label: 'Mã phiếu' },
   { key: 'created_at', label: 'Thời gian' },
-  { key: 'source_type', label: 'Nguồn' },
+  { key: 'source_type', label: 'Loại thu chi' },
   { key: 'counterparty', label: 'Người nộp/nhận' },
-  { key: 'finance_account', label: 'Quỹ/tài khoản' },
+  { key: 'finance_account', label: 'Loại sổ quỹ' },
   { key: 'amount_delta', label: 'Giá trị' },
   { key: 'status', label: 'Trạng thái' },
   { key: 'note', label: 'Ghi chú' },
@@ -576,7 +576,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
       )
     }
     if (column === 'created_at') return dateText(entry.created_at)
-    if (column === 'finance_account') return `${entry.finance_account.code} · ${entry.finance_account.name}`
+    if (column === 'finance_account') return accountTypeText(entry.finance_account.account_type)
     if (column === 'source_type') return sourceTypeText(entry.source_type)
     if (column === 'counterparty') return '-'
     if (column === 'amount_delta') return <MoneyText value={entry.amount_delta} />
@@ -723,8 +723,14 @@ export function FinancePage({ service }: { service: FinanceService }) {
             />
           </ManagementCompactToolbar>
           <div className="finance-voucher-actions" aria-label="Tạo phiếu thu chi">
-            <button className="button button-secondary" type="button" onClick={() => openVoucherForm('in')}>Phiếu thu</button>
-            <button className="button button-secondary" type="button" onClick={() => openVoucherForm('out')}>Phiếu chi</button>
+            <button aria-label="+ Phiếu thu" className="button button-secondary" type="button" onClick={() => openVoucherForm('in')}>
+              <Plus aria-hidden="true" size={16} />
+              Phiếu thu
+            </button>
+            <button aria-label="+ Phiếu chi" className="button button-secondary" type="button" onClick={() => openVoucherForm('out')}>
+              <Plus aria-hidden="true" size={16} />
+              Phiếu chi
+            </button>
             <button className="button button-secondary" type="button" onClick={exportCashbook}>
               <Download aria-hidden="true" size={16} />
               Xuất file
@@ -1175,9 +1181,13 @@ export function FinancePage({ service }: { service: FinanceService }) {
         {cashbookEntries !== null && cashbookEntries.length > 0 ? (
           <>
             <ManagementTableViewport>
-              <table aria-label="Sổ quỹ" className="management-table">
+              <table aria-label="Sổ quỹ" className="management-table finance-cashbook-data-table">
                 <thead>
                   <tr>
+                    <th className="finance-cashbook-select-column">
+                      <input aria-label="Chọn tất cả dòng sổ quỹ" type="checkbox" />
+                    </th>
+                    <th aria-label="Đánh dấu" className="finance-cashbook-star-column">☆</th>
                     {visibleCashbookColumns.map((column) => (
                       <th key={column}>{cashbookColumnDefinitions.find((definition) => definition.key === column)?.label}</th>
                     ))}
@@ -1187,12 +1197,16 @@ export function FinancePage({ service }: { service: FinanceService }) {
                   {cashbookEntries.map((entry) => (
                     <Fragment key={entry.id}>
                       <tr>
+                        <td className="finance-cashbook-select-column">
+                          <input aria-label={`Chọn dòng ${entry.code}`} type="checkbox" />
+                        </td>
+                        <td className="finance-cashbook-star-column">☆</td>
                         {visibleCashbookColumns.map((column) => (
-                          <td key={column}>{cashbookCell(entry, column)}</td>
+                          <td className={column === 'amount_delta' ? 'finance-cashbook-money-column' : undefined} key={column}>{cashbookCell(entry, column)}</td>
                         ))}
                       </tr>
                       {selectedCashbookEntry?.id === entry.id ? (
-                        <ManagementDetailRow colSpan={visibleCashbookColumns.length} label={`Chi tiết sổ quỹ ${entry.code}`}>
+                        <ManagementDetailRow colSpan={visibleCashbookColumns.length + 2} label={`Chi tiết sổ quỹ ${entry.code}`}>
                           {cashbookDetail === null ? <p>Đang tải chi tiết...</p> : (
                             <div className="finance-cashbook-detail">
                               <header>

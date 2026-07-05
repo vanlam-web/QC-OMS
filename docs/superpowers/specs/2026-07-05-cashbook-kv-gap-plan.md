@@ -2,12 +2,12 @@
 
 > Ngày lập: 2026-07-05
 > Nguồn: KiotViet `Sổ quỹ`, file xuất `SoQuy_KV05072026-185646-888.xlsx`, docs/code QC-OMS tại `origin/main` sau PR #71.
-> Cập nhật: 2026-07-06 theo `origin/main` sau PR #83 `finance-cashbook-table-layout`.
+> Cập nhật: 2026-07-06 theo `origin/main` sau PR #85 và slice `finance-cashbook-main-layout`.
 > Loại tài liệu: gap/roadmap, không thay Source of Truth. Source of Truth nằm ở `Finance/CASHBOOK.md`, `Finance/02-CASHBOOK.md`, `CASHBOOK-TABLES.md`, `FINANCE-API.md`.
 
 ## 1. Kết luận nhanh
 
-Sổ quỹ QC-OMS đã có layout chính gần KiotViet hơn sau PR #83, nhưng chưa đủ hoàn chỉnh như KiotViet.
+Sổ quỹ QC-OMS đã có layout chính gần KiotViet hơn sau các slice PR #83-#85 và `finance-cashbook-main-layout`, nhưng chưa đủ hoàn chỉnh như KiotViet.
 
 Đã có nền chính:
 
@@ -18,7 +18,7 @@ Sổ quỹ QC-OMS đã có layout chính gần KiotViet hơn sau PR #83, nhưng 
 - detail cashbook/payment receipt backend
 - thu nợ khách tạo cashbook entry
 - UI `/finance` lấy sổ quỹ làm bảng chính, filter sidebar bên trái
-- summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong filter sidebar và đổi theo filter
+- summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải ngay trên bảng sổ quỹ và đổi theo filter
 - `Tồn quỹ` dùng `summary.ending_balance`, không còn dùng tổng số dư tài khoản tĩnh
 - bộ lọc đang có tự áp dụng khi đổi giá trị: thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
 - quick time menu: hôm nay/hôm qua/tuần/tháng/quý/năm/toàn thời gian/tùy chỉnh
@@ -181,10 +181,10 @@ Thiếu/gap:
 
 Hiện tại `/finance` là màn sổ quỹ chính:
 
-- header: tìm công nợ nhanh, nút `Phiếu thu`, `Phiếu chi`, `Xuất file`
-- filter sidebar: summary sổ quỹ, thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
+- header: tìm công nợ nhanh, nút `+ Phiếu thu`, `+ Phiếu chi`, `Xuất file`
+- filter sidebar: thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
 - filter đã dùng KV shape cho phần đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs
-- main: bảng sổ quỹ, inline detail dòng sổ, pagination footer
+- main: summary sổ quỹ, bảng sổ quỹ, inline detail dòng sổ, pagination footer
 - form tạo/sửa phiếu thu/chi mở inline khi thao tác
 - các khối phụ tài khoản quỹ/công nợ/phiếu thu chi không hiển thị trong thân trang
 
@@ -210,8 +210,8 @@ Mục tiêu: nhìn và tra cứu sổ quỹ giống KV trước.
 - quỹ/tài khoản đã đổi từ select sang radio list; mặc định chọn quỹ tiền mặt nếu có.
 - thu/chi và trạng thái đã đổi từ select sang checkbox group.
 - hạch toán KQKD đã đổi từ select sang segmented tabs.
-- summary: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ.
-- table default cột giống KV cộng quỹ/tài khoản và trạng thái.
+- summary: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ nằm ngay trên bảng dữ liệu.
+- table default cột giống KV: checkbox, đánh dấu sao, mã phiếu, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ, giá trị.
 - click dòng mở detail inline.
 - detail phiếu thu tự động hiển thị phân bổ nếu API trả allocations.
 - export file ở header.
