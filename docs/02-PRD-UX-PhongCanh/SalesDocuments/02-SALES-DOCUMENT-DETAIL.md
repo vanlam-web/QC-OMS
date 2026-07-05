@@ -41,10 +41,13 @@ Chưa triển khai:
 
 - nút sửa hóa đơn
 - nút hủy hóa đơn
-- in/xem báo giá mẫu mặc định, thuộc Phase 3B
 - in lại bill hóa đơn nếu Bill Preview/print flow chưa sẵn sàng
 - transaction đảo kho/tiền/công nợ
 - API lịch sử thanh toán riêng cho detail; chỉ nối khi Finance/Sổ quỹ đủ dữ liệu và đã có endpoint ổn định
+
+Đã có ở lát quote print:
+
+- in/xem báo giá mẫu mặc định cho `BG...`
 
 Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
 

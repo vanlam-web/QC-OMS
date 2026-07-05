@@ -1,8 +1,8 @@
 # ERD — Sơ đồ quan hệ dữ liệu QC-OMS
 
 > **Vai trò:** Sơ đồ dữ liệu tổng, cập nhật theo từng phase.
-> **Đã chốt:** Foundation/System — Giai đoạn 0
-> **Chưa chốt:** Checkout/Finance/Workstation
+> **Đã chốt:** Foundation/System, Sales, Inventory foundation, Finance foundation, Production queue foundation.
+> **Chưa chốt:** Production ingestion/match tự động, reversal nâng cao, production hardening.
 
 ---
 
@@ -27,7 +27,7 @@ Chi tiết cột, constraint và index: [System/AUTH-PERMISSIONS.md](./System/AU
 
 ## 2. SALES
 
-Hiện có đặc tả một phần tại [Sales/POS-TABLES.md](./Sales/POS-TABLES.md), gồm Customer, Product, Pricing, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng. Payment, cashbook và debt allocation chi tiết sẽ được chốt ở Finance.
+Hiện có đặc tả tại [Sales/POS-TABLES.md](./Sales/POS-TABLES.md), gồm Customer, Product, Pricing, báo giá, hóa đơn, sửa chứng từ và snapshot dòng hàng. Payment, cashbook và debt allocation nằm ở Finance.
 
 ```mermaid
 erDiagram
@@ -52,7 +52,7 @@ erDiagram
 
 ## 3. INVENTORY
 
-Hiện có đặc tả một phần tại [Inventory/INVENTORY-TABLES.md](./Inventory/INVENTORY-TABLES.md), gồm đơn vị tồn, cấu hình tồn kho sản phẩm, quy đổi đơn vị, cuộn vật lý, tấm/tấm lỡ, stock movement và phiếu kiểm kho.
+Hiện có đặc tả tại [Inventory/INVENTORY-TABLES.md](./Inventory/INVENTORY-TABLES.md), gồm đơn vị tồn, cấu hình tồn kho sản phẩm, quy đổi đơn vị, cuộn vật lý, tấm/tấm lỡ, stock movement và phiếu kiểm kho.
 
 ```mermaid
 erDiagram
@@ -74,7 +74,7 @@ erDiagram
 
 ## 4. FINANCE
 
-Hiện có đặc tả một phần tại [Finance/PAYMENT-DEBT-TABLES.md](./Finance/PAYMENT-DEBT-TABLES.md) và [Finance/CASHBOOK-TABLES.md](./Finance/CASHBOOK-TABLES.md), gồm quỹ/tài khoản, phiếu thu, phương thức thu, công nợ theo hóa đơn, phân bổ tiền trả nợ, sổ quỹ và đối soát.
+Hiện có đặc tả tại [Finance/PAYMENT-DEBT-TABLES.md](./Finance/PAYMENT-DEBT-TABLES.md) và [Finance/CASHBOOK-TABLES.md](./Finance/CASHBOOK-TABLES.md), gồm quỹ/tài khoản, phiếu thu, phương thức thu, công nợ theo hóa đơn, phân bổ tiền trả nợ, sổ quỹ và đối soát.
 
 ```mermaid
 erDiagram
@@ -98,9 +98,9 @@ erDiagram
 
 ---
 
-## 5. WORKSTATION QUEUE
+## 5. PRODUCTION QUEUE
 
-Chưa chốt. `workstations` nền tảng đã có; event/queue/history sẽ được thiết kế trước Giai đoạn 6 sau khi hợp đồng tích hợp máy sản xuất được xác nhận.
+Production queue foundation đã có trong schema/API riêng. ERD tổng chỉ ghi nhận ranh giới: dữ liệu máy sản xuất dùng để đưa file vào nháp POS và đối soát, chưa tự trừ kho hoặc tự match hóa đơn nếu chưa có spec riêng.
 
 ---
 

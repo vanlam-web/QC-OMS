@@ -46,11 +46,14 @@ Hiện tại đã triển khai:
 
 Chưa triển khai:
 
-- in/xem báo giá mẫu mặc định, thuộc Phase 3B
 - in lại bill hóa đơn nếu Bill Preview/print flow chưa có
 - sửa hóa đơn
 - hủy hóa đơn
 - thao tác đảo kho/tiền/công nợ từ danh sách
+
+Đã có ở lát quote print:
+
+- in/xem báo giá mẫu mặc định cho `BG...`
 
 QC-OMS chỉ làm luồng **bán đứt**:
 
@@ -143,7 +146,7 @@ Các thao tác sau là thiết kế tương lai, không coi là đã có hiện 
 
 | Trạng thái | Thao tác tương lai |
 |---|---|
-| Báo giá | In/xem báo giá mẫu mặc định trong Phase 3B; hủy báo giá nếu Owner chốt sau |
+| Báo giá | Hủy báo giá nếu Owner chốt sau |
 | Hóa đơn hoàn thành | In lại bill, sửa hóa đơn, hủy hóa đơn |
 | Hóa đơn đã hủy | In/xem lịch sử; không cho sửa tiếp |
 
