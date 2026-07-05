@@ -23,6 +23,8 @@ Nguyên tắc phối hợp bắt buộc: luồng nào nhận việc từ luồng
 
 Bảng điều phối việc đang làm nằm tại [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md). Spec giữ bảng này đủ mới cho các slice/PR quan trọng; Review có quyền flag nếu bảng không khớp thực tế.
 
+Khi sửa lỗi load chậm hoặc tối ưu hiệu năng, đọc và cập nhật [PERFORMANCE-FIX-LOG.md](./PERFORMANCE-FIX-LOG.md) để không test/fix trùng giữa các luồng.
+
 ---
 
 ## 2. Thứ tự ưu tiên Source of Truth

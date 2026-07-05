@@ -99,6 +99,7 @@ export function PosShell({
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0] ?? makeInvoiceTab(1)
   const cartLines = activeTab.cartLines
   const selectedCustomer = activeTab.selectedCustomer
+  const selectedCustomerId = selectedCustomer?.id
   const sourceQuote = activeTab.sourceQuote
   const cartTotal = useMemo(
     () => cartLines.reduce((sum, line) => sum + lineTotal(line), 0),
@@ -131,17 +132,42 @@ export function PosShell({
       setLoadingProducts(true)
       setError(null)
       try {
-        const productResult = await catalogService.listProducts({ status: 'active' })
-        const visibleProducts = productResult.items.slice(0, 12)
-        const priceResult =
-          visibleProducts.length > 0
-            ? await catalogService.resolvePrices(
-                visibleProducts.map((product) => product.id),
-                selectedCustomer?.id,
-              )
-            : { items: [] }
+        const productResult = await catalogService.listProducts({
+          status: 'active',
+          page: 1,
+          page_size: 12,
+        })
         if (!active) return
-        setProducts(visibleProducts)
+        setProducts(productResult.items)
+      } catch (cause) {
+        if (active) setError(formatApiError(cause, 'Không tải được sản phẩm POS.'))
+      } finally {
+        if (active) setLoadingProducts(false)
+      }
+    }
+
+    void loadProducts()
+
+    return () => {
+      active = false
+    }
+  }, [catalogService])
+
+  useEffect(() => {
+    let active = true
+
+    async function resolveVisiblePrices() {
+      if (products.length === 0) {
+        setPrices({})
+        return
+      }
+
+      try {
+        const priceResult = await catalogService.resolvePrices(
+          products.map((product) => product.id),
+          selectedCustomerId,
+        )
+        if (!active) return
         setPrices(
           Object.fromEntries(priceResult.items.map((price) => [price.product_id, price])),
         )
@@ -159,18 +185,16 @@ export function PosShell({
           }),
         }))
       } catch (cause) {
-        if (active) setError(formatApiError(cause, 'Không tải được sản phẩm POS.'))
-      } finally {
-        if (active) setLoadingProducts(false)
+        if (active) setError(formatApiError(cause, 'Không tải được giá bán POS.'))
       }
     }
 
-    void loadProducts()
+    void resolveVisiblePrices()
 
     return () => {
       active = false
     }
-  }, [catalogService, selectedCustomer, updateActiveTab])
+  }, [catalogService, products, selectedCustomerId, updateActiveTab])
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {

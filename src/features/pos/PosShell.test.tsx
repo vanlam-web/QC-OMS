@@ -179,6 +179,54 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
   expect(within(cart).getAllByText('120 000').length).toBeGreaterThan(0)
 })
 
+it('loads only the quick grid product page on POS startup', async () => {
+  const service = makeCatalogService()
+  renderPosShell({ catalogService: service })
+
+  await screen.findByRole('button', { name: /Mica 3mm/ })
+
+  expect(service.listProducts).toHaveBeenCalledWith({ status: 'active', page: 1, page_size: 12 })
+})
+
+it('does not reload products when customer prices refresh', async () => {
+  const service = makeCatalogService({
+    resolvePrices: vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [
+          {
+            product_id: 'p-1',
+            unit_price: 120000,
+            price_source: 'default_price_list' as const,
+            price_list_id: 'pl-default',
+          },
+        ],
+      })
+      .mockResolvedValue({
+        items: [
+          {
+            product_id: 'p-1',
+            unit_price: 90000,
+            price_source: 'customer_group_price_list' as const,
+            price_list_id: 'pl-customer',
+          },
+        ],
+      }),
+  })
+
+  renderPosShell({ catalogService: service })
+
+  await screen.findByRole('button', { name: /Mica 3mm/ })
+  expect(service.listProducts).toHaveBeenCalledTimes(1)
+
+  await userEvent.type(screen.getByLabelText('Tìm khách'), 'khach')
+  await userEvent.keyboard('{Enter}')
+  await userEvent.click(await screen.findByRole('button', { name: 'Chọn KH000001 Khach le' }))
+
+  await waitFor(() => expect(service.resolvePrices).toHaveBeenCalledTimes(2))
+  expect(service.listProducts).toHaveBeenCalledTimes(1)
+})
+
 it('uses the K01 F3 product search as an enabled product picker', async () => {
   renderPosShell()
 

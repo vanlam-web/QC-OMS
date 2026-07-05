@@ -164,6 +164,9 @@ it('lists draft purchase receipts with totals and opens post action for draft de
   expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Hoàn thành nhập hàng' })).not.toBeInTheDocument()
+  expect(service.listSuppliers).not.toHaveBeenCalled()
+  expect(service.listProducts).not.toHaveBeenCalled()
+  expect(service.listFinanceAccounts).not.toHaveBeenCalled()
   const footer = screen.getByRole('navigation', { name: 'Phân trang phiếu nhập' })
   expect(within(footer).getByText('1-1 / 1 phiếu nhập')).toBeInTheDocument()
   expect(within(footer).getByText('Trang 1 / 1')).toBeInTheDocument()
@@ -253,7 +256,7 @@ it('creates a draft receipt for normal items with computed totals shown locally'
 
   await screen.findByText('PN000673')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
-  const detail = screen.getByRole('region', { name: 'Tạo phiếu nhập' })
+  const detail = await screen.findByRole('region', { name: 'Tạo phiếu nhập' })
   expect(detail).toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
@@ -308,7 +311,7 @@ it('creates a roll draft line from physical roll lengths without manual object c
 
   await screen.findByText('PN000673')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
-  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+  const form = await screen.findByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
   await userEvent.type(within(form).getByLabelText('Thời gian nhập'), '2026-07-01T10:00')
@@ -346,7 +349,7 @@ it('creates a sheet draft line with multiple size groups', async () => {
 
   await screen.findByText('PN000673')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu nhập' }))
-  const form = screen.getByRole('form', { name: 'Thông tin phiếu nhập' })
+  const form = await screen.findByRole('form', { name: 'Thông tin phiếu nhập' })
   await userEvent.selectOptions(within(form).getByLabelText('Nhà cung cấp'), 'supplier-1')
   await userEvent.clear(within(form).getByLabelText('Thời gian nhập'))
   await userEvent.type(within(form).getByLabelText('Thời gian nhập'), '2026-07-01T10:00')
@@ -462,6 +465,7 @@ it('warns on low purchase cost and posts with a selected bank account', async ()
 
   expect(within(form).getByText(/thấp hơn giá nhập cuối/i)).toBeInTheDocument()
   await userEvent.selectOptions(within(form).getByLabelText('Phương thức trả ngay'), 'bank_transfer')
+  await screen.findByText('VCB - Vietcombank')
   await userEvent.selectOptions(within(form).getByLabelText('Tài khoản chuyển khoản'), 'bank-1')
   await userEvent.click(within(form).getByRole('button', { name: 'Hoàn thành nhập hàng' }))
 

@@ -110,23 +110,6 @@ export function CustomersPage({
     }
   }, [service])
 
-  useEffect(() => {
-    if (state === null) return
-
-    const customerIdsToLoad = state.customers.filter((customer) => customerDebts[customer.id] === undefined).map((customer) => customer.id)
-    if (customerIdsToLoad.length === 0) return
-
-    for (const customerId of customerIdsToLoad) {
-      if (customerDebtRequestsRef.current.has(customerId)) continue
-      customerDebtRequestsRef.current.add(customerId)
-      orderService
-        .getCustomerDebt(customerId)
-        .then((debt) => setCustomerDebts((debts) => ({ ...debts, [customerId]: debt })))
-        .catch(() => setCustomerDebts((debts) => ({ ...debts, [customerId]: 'error' })))
-        .finally(() => customerDebtRequestsRef.current.delete(customerId))
-    }
-  }, [customerDebts, orderService, state])
-
   async function filterCustomers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = search.trim()
@@ -153,6 +136,18 @@ export function CustomersPage({
       }
       return next
     })
+  }
+
+  function loadCustomerDebt(customerId: string) {
+    if (customerDebts[customerId] !== undefined || customerDebtRequestsRef.current.has(customerId)) return
+
+    customerDebtRequestsRef.current.add(customerId)
+    setCustomerDebts((debts) => ({ ...debts, [customerId]: 'loading' }))
+    orderService
+      .getCustomerDebt(customerId)
+      .then((debt) => setCustomerDebts((debts) => ({ ...debts, [customerId]: debt })))
+      .catch(() => setCustomerDebts((debts) => ({ ...debts, [customerId]: 'error' })))
+      .finally(() => customerDebtRequestsRef.current.delete(customerId))
   }
 
   function loadCustomerHistory(customerId: string, historyType: CustomerHistoryType) {
@@ -211,8 +206,7 @@ export function CustomersPage({
   const canGoNext = page < totalPages
   const activeFilterSummary = lastSearch ? `Tìm: ${lastSearch}` : 'Đang hoạt động'
   const visibleDebtTotal = state?.customers.reduce((sum, customer) => {
-    const debt = customerDebts[customer.id]
-    return sum + (typeof debt === 'object' ? debt.total_debt : 0)
+    return sum + (customer.total_debt_amount ?? 0)
   }, 0) ?? 0
   const visibleSalesTotal = state?.customers.reduce((sum, customer) => sum + (customer.total_sales_amount ?? 0), 0) ?? 0
   const customerKpis = (
@@ -377,7 +371,7 @@ export function CustomersPage({
                 {state.customers.map((customer) => {
                   const debt = customerDebts[customer.id]
                   const history = customerHistories[customerHistoryKey(customer.id, customerHistoryType)]
-                  const debtAmount = typeof debt === 'object' ? debt.total_debt : null
+                  const debtAmount = customer.total_debt_amount ?? null
                   return (
                     <Fragment key={customer.id}>
                     <tr
@@ -420,7 +414,10 @@ export function CustomersPage({
                                   aria-selected={activeDetailTab === 'debt'}
                                   role="tab"
                                   type="button"
-                                  onClick={() => setActiveDetailTab('debt')}
+                                  onClick={() => {
+                                    setActiveDetailTab('debt')
+                                    loadCustomerDebt(customer.id)
+                                  }}
                                 >
                                   Nợ cần thu
                                 </button>

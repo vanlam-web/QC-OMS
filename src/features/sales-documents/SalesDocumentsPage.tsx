@@ -56,6 +56,7 @@ export function SalesDocumentsPage({
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
   const [showFilters, setShowFilters] = useState(true)
   const [selected, setSelected] = useState<SalesDocumentDetail | null>(null)
+  const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [detailErrorDocumentId, setDetailErrorDocumentId] = useState<string | null>(null)
@@ -129,6 +130,7 @@ export function SalesDocumentsPage({
     event.preventDefault()
     const trimmed = search.trim()
     setSelected(null)
+    setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
     setLastSearch(trimmed)
@@ -141,6 +143,7 @@ export function SalesDocumentsPage({
     setTypeFilter('all')
     setStatusFilter('all')
     setSelected(null)
+    setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ search: '', type: 'all', status: 'all', page: 1 })
@@ -149,6 +152,7 @@ export function SalesDocumentsPage({
   async function applyTypeFilter(nextType: typeof typeFilter) {
     setTypeFilter(nextType)
     setSelected(null)
+    setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ type: nextType, page: 1 })
@@ -157,6 +161,7 @@ export function SalesDocumentsPage({
   async function applyStatusFilter(nextStatus: typeof statusFilter) {
     setStatusFilter(nextStatus)
     setSelected(null)
+    setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ status: nextStatus, page: 1 })
@@ -164,6 +169,7 @@ export function SalesDocumentsPage({
 
   async function goToPage(nextPage: number) {
     setSelected(null)
+    setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ page: nextPage })
@@ -172,6 +178,7 @@ export function SalesDocumentsPage({
   async function openDocument(document: SalesDocumentListItem) {
     if (selected?.id === document.id) {
       setSelected(null)
+      setLoadingDocumentId(null)
       setDetailError(null)
       setDetailErrorDocumentId(null)
       return
@@ -180,11 +187,14 @@ export function SalesDocumentsPage({
     setDetailError(null)
     setDetailErrorDocumentId(null)
     setSelected(null)
+    setLoadingDocumentId(document.id)
     try {
       setSelected(await service.getSalesDocument(document.id))
     } catch (cause) {
       setDetailError(formatApiError(cause, 'Không tải được chi tiết chứng từ.'))
       setDetailErrorDocumentId(document.id)
+    } finally {
+      setLoadingDocumentId(null)
     }
   }
 
@@ -349,7 +359,7 @@ export function SalesDocumentsPage({
                           <td><MoneyText value={document.total_amount} /></td>
                           <td><MoneyText value={document.paid_amount} /></td>
                         </tr>
-                        {selected?.id === document.id || detailErrorDocumentId === document.id ? (
+                        {selected?.id === document.id || detailErrorDocumentId === document.id || loadingDocumentId === document.id ? (
                           <ManagementDetailRow colSpan={7} label={`Chi tiết chứng từ ${document.code}`}>
                             {document.order_type === 'quote' && document.status === 'active' && orderService && onOpenQuoteInPos ? (
                               <div className="row-actions">
@@ -364,7 +374,7 @@ export function SalesDocumentsPage({
                                 </button>
                               </div>
                             ) : null}
-                            <SalesDocumentDetailView document={selected} error={detailError} onOpenQuotePrint={onOpenQuotePrint} />
+                            <SalesDocumentDetailView document={selected} error={detailError} loading={loadingDocumentId === document.id} onOpenQuotePrint={onOpenQuotePrint} />
                           </ManagementDetailRow>
                         ) : null}
                       </Fragment>
@@ -394,16 +404,18 @@ export function SalesDocumentsPage({
 function SalesDocumentDetailView({
   document,
   error,
+  loading,
   onOpenQuotePrint,
 }: {
   document: SalesDocumentDetail | null
   error: string | null
+  loading: boolean
   onOpenQuotePrint?: (documentId: string) => void
 }) {
   const [activeTab, setActiveTab] = useState<'info' | 'payment-history'>('info')
 
   if (error) return <p role="alert">{error}</p>
-  if (!document) return null
+  if (loading || !document) return <p>Đang tải chi tiết...</p>
 
   return (
     <div className="sales-document-detail">

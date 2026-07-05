@@ -52,6 +52,8 @@ export function SuppliersPage({
   const [suppliers, setSuppliers] = useState<Supplier[] | null>(null)
   const [customers, setCustomers] = useState<SupplierCustomerOption[]>([])
   const [financeAccounts, setFinanceAccounts] = useState<SupplierFinanceAccount[]>([])
+  const [customersLoaded, setCustomersLoaded] = useState(false)
+  const [financeAccountsLoaded, setFinanceAccountsLoaded] = useState(false)
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
@@ -61,6 +63,7 @@ export function SuppliersPage({
   const [pageSize, setPageSize] = useState(supplierPageSize)
   const [showFilters, setShowFilters] = useState(true)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [loadingSupplierId, setLoadingSupplierId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<SupplierInput>(blankForm)
   const [saving, setSaving] = useState(false)
@@ -113,18 +116,12 @@ export function SuppliersPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [supplierResult, customerResult, financeAccountResult] = await Promise.all([
-          service.listSuppliers({ status: 'active', page: 1, page_size: supplierPageSize }),
-          service.listCustomers(),
-          service.listFinanceAccounts(),
-        ])
+        const supplierResult = await service.listSuppliers({ status: 'active', page: 1, page_size: supplierPageSize })
         if (!active) return
         setSuppliers(supplierResult.items)
         setTotal(supplierResult.total)
         setPage(supplierResult.page)
         setPageSize(supplierResult.page_size)
-        setCustomers(customerResult.items)
-        setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được nhà cung cấp.'))
       }
@@ -136,6 +133,20 @@ export function SuppliersPage({
       active = false
     }
   }, [service])
+
+  async function ensureCustomersLoaded() {
+    if (customersLoaded) return
+    const result = await service.listCustomers()
+    setCustomers(result.items)
+    setCustomersLoaded(true)
+  }
+
+  async function ensureFinanceAccountsLoaded() {
+    if (financeAccountsLoaded) return
+    const result = await service.listFinanceAccounts()
+    setFinanceAccounts(result.items)
+    setFinanceAccountsLoaded(true)
+  }
 
   async function filterSuppliers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -157,11 +168,12 @@ export function SuppliersPage({
   async function openSupplier(supplier: Supplier) {
     setError(null)
     setDetailOpen(false)
+    setLoadingSupplierId(supplier.id)
     setPaymentSupplier(null)
     setEditingId(null)
     setForm(blankForm)
     try {
-      const detail = await service.getSupplier(supplier.id)
+      const [detail] = await Promise.all([service.getSupplier(supplier.id), ensureCustomersLoaded()])
       setDetailOpen(true)
       setEditingId(detail.id)
       setForm({
@@ -177,6 +189,18 @@ export function SuppliersPage({
       })
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết nhà cung cấp.'))
+    } finally {
+      setLoadingSupplierId(null)
+    }
+  }
+
+  async function changePaymentMethod(nextMethod: 'cash' | 'bank_transfer') {
+    setPaymentMethod(nextMethod)
+    if (nextMethod !== 'bank_transfer') return
+    try {
+      await ensureFinanceAccountsLoaded()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được tài khoản chuyển khoản.'))
     }
   }
 
@@ -205,6 +229,7 @@ export function SuppliersPage({
     setError(null)
     setPaymentSupplier(null)
     setDetailOpen(false)
+    setLoadingSupplierId(supplier.id)
     setEditingId(null)
     setForm(blankForm)
     setPayableReceipts([])
@@ -219,6 +244,8 @@ export function SuppliersPage({
       setPaymentNote('')
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được phiếu nhập còn nợ.'))
+    } finally {
+      setLoadingSupplierId(null)
     }
   }
 
@@ -273,11 +300,19 @@ export function SuppliersPage({
     setForm(blankForm)
   }
 
-  function openCreateSupplier() {
+  async function openCreateSupplier() {
     setEditingId(null)
     setPaymentSupplier(null)
-    setDetailOpen(true)
+    setDetailOpen(false)
+    setLoadingSupplierId(null)
     setForm(blankForm)
+    setError(null)
+    try {
+      await ensureCustomersLoaded()
+      setDetailOpen(true)
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được danh sách khách hàng.'))
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -418,7 +453,7 @@ export function SuppliersPage({
         )}
         <label>
           Phương thức trả NCC
-          <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}>
+          <select value={paymentMethod} onChange={(event) => void changePaymentMethod(event.target.value as 'cash' | 'bank_transfer')}>
             <option value="cash">Tiền mặt</option>
             <option value="bank_transfer">Chuyển khoản</option>
           </select>
@@ -448,6 +483,14 @@ export function SuppliersPage({
     )
   }
 
+  function supplierDetailLoading(supplier: Supplier) {
+    return (
+      <section aria-label={`Đang tải ${supplier.code}`} className="management-inline-detail" role="region">
+        <p>Đang tải chi tiết nhà cung cấp...</p>
+      </section>
+    )
+  }
+
   return (
     <ManagementPage
       title="Nhà cung cấp"
@@ -458,7 +501,7 @@ export function SuppliersPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã, tên, điện thoại"
             trailingAction={
-              <ManagementCompactCreateAction ariaLabel="Tạo nhà cung cấp" onClick={openCreateSupplier} />
+              <ManagementCompactCreateAction ariaLabel="Tạo nhà cung cấp" onClick={() => void openCreateSupplier()} />
             }
             value={search}
             onChange={setSearch}
@@ -545,9 +588,10 @@ export function SuppliersPage({
                   <tbody>
                     {suppliers.map((supplier) => {
                       const detailForRow = editingId === supplier.id || paymentSupplier?.id === supplier.id
+                      const loadingForRow = loadingSupplierId === supplier.id
                       return (
                         <Fragment key={supplier.id}>
-                          <tr>
+                          <tr className={detailForRow || loadingForRow ? 'management-data-row-selected' : undefined}>
                             <td>{supplier.code}</td>
                             <td>{supplier.name}</td>
                             <td>{supplier.phone ?? '-'}</td>
@@ -577,9 +621,13 @@ export function SuppliersPage({
                               </div>
                             </td>
                           </tr>
-                          {detailForRow ? (
+                          {detailForRow || loadingForRow ? (
                             <ManagementDetailRow colSpan={9} label="Hồ sơ và thanh toán nhà cung cấp">
-                              {paymentSupplier?.id === supplier.id ? supplierPaymentForm() : supplierForm()}
+                              {loadingForRow
+                                ? supplierDetailLoading(supplier)
+                                : paymentSupplier?.id === supplier.id
+                                  ? supplierPaymentForm()
+                                  : supplierForm()}
                             </ManagementDetailRow>
                           ) : null}
                         </Fragment>

@@ -41,6 +41,8 @@ import type {
 } from "../contracts.ts";
 
 type DatabaseClient = SupabaseClient;
+const currentUserCacheTtlMs = 2000;
+const currentUserCache = new Map<string, { expiresAt: number; promise: Promise<CurrentUserRecord | null> }>();
 
 const customerBaseSelect = "id, code, name, phone, customer_group_id, customer_groups(id, code, name)";
 const customerExtendedSelect = "id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)";
@@ -342,80 +344,98 @@ function resolveFormulaPrice(
   };
 }
 
+async function loadCurrentUser(
+  client: DatabaseClient,
+  input: GetCurrentUserInput,
+): Promise<CurrentUserRecord | null> {
+  const { data: profile, error: profileError } = await client
+    .from("profiles")
+    .select("user_id, display_name, organization_id, organizations(id, code, name)")
+    .eq("user_id", input.userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (profileError !== null) {
+    throw profileError;
+  }
+
+  if (profile === null) {
+    return null;
+  }
+
+  const organization = Array.isArray(profile.organizations)
+    ? profile.organizations[0]
+    : profile.organizations;
+
+  const { data: permissionRows, error: permissionError } = await client
+    .from("user_permissions")
+    .select("permission_code, permissions!inner(status)")
+    .eq("user_id", input.userId)
+    .eq("permissions.status", "active")
+    .order("permission_code", { ascending: true });
+
+  if (permissionError !== null) {
+    throw permissionError;
+  }
+
+  let workstation = null;
+  let workstationInvalid = false;
+
+  if (input.workstationId !== null) {
+    const { data: workstationRow, error: workstationError } = await client
+      .from("workstations")
+      .select("id, code, name, organization_id")
+      .eq("id", input.workstationId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (workstationError !== null) {
+      throw workstationError;
+    }
+
+    if (workstationRow === null || workstationRow.organization_id !== profile.organization_id) {
+      workstationInvalid = true;
+    } else {
+      workstation = {
+        id: workstationRow.id,
+        code: workstationRow.code,
+        name: workstationRow.name,
+      };
+    }
+  }
+
+  return {
+    user: {
+      id: input.userId,
+      email: input.email,
+      displayName: profile.display_name,
+    },
+    organization: {
+      id: organization.id,
+      code: organization.code,
+      name: organization.name,
+    },
+    workstation,
+    permissions: (permissionRows ?? []).map((row) => row.permission_code),
+    workstationInvalid,
+  };
+}
+
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
   return {
     async getCurrentUser(input: GetCurrentUserInput): Promise<CurrentUserRecord | null> {
-      const { data: profile, error: profileError } = await client
-        .from("profiles")
-        .select("user_id, display_name, organization_id, organizations(id, code, name)")
-        .eq("user_id", input.userId)
-        .eq("status", "active")
-        .maybeSingle();
+      const cacheKey = JSON.stringify([input.userId, input.email, input.workstationId]);
+      const cached = currentUserCache.get(cacheKey);
+      if (cached !== undefined && cached.expiresAt > Date.now()) return await cached.promise;
 
-      if (profileError !== null) {
-        throw profileError;
+      const promise = loadCurrentUser(client, input);
+      currentUserCache.set(cacheKey, { expiresAt: Date.now() + currentUserCacheTtlMs, promise });
+      try {
+        return await promise;
+      } catch (cause) {
+        currentUserCache.delete(cacheKey);
+        throw cause;
       }
-
-      if (profile === null) {
-        return null;
-      }
-
-      const organization = Array.isArray(profile.organizations)
-        ? profile.organizations[0]
-        : profile.organizations;
-
-      const { data: permissionRows, error: permissionError } = await client
-        .from("user_permissions")
-        .select("permission_code, permissions!inner(status)")
-        .eq("user_id", input.userId)
-        .eq("permissions.status", "active")
-        .order("permission_code", { ascending: true });
-
-      if (permissionError !== null) {
-        throw permissionError;
-      }
-
-      let workstation = null;
-      let workstationInvalid = false;
-
-      if (input.workstationId !== null) {
-        const { data: workstationRow, error: workstationError } = await client
-          .from("workstations")
-          .select("id, code, name, organization_id")
-          .eq("id", input.workstationId)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (workstationError !== null) {
-          throw workstationError;
-        }
-
-        if (workstationRow === null || workstationRow.organization_id !== profile.organization_id) {
-          workstationInvalid = true;
-        } else {
-          workstation = {
-            id: workstationRow.id,
-            code: workstationRow.code,
-            name: workstationRow.name,
-          };
-        }
-      }
-
-      return {
-        user: {
-          id: input.userId,
-          email: input.email,
-          displayName: profile.display_name,
-        },
-        organization: {
-          id: organization.id,
-          code: organization.code,
-          name: organization.name,
-        },
-        workstation,
-        permissions: (permissionRows ?? []).map((row) => row.permission_code),
-        workstationInvalid,
-      };
     },
     async listWorkstations(organizationId: string): Promise<WorkstationData[]> {
       const { data, error } = await client
@@ -826,8 +846,12 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       }
       if (error !== null) throw error;
       const creatorMap = await loadSellerMap(client, (data ?? []).map((row) => row.created_by ?? ""));
-      const salesTotalMap = await loadCustomerSalesTotals(client, input.organizationId, (data ?? []).map((row) => row.id));
-      return { items: (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap)), total: count ?? 0 };
+      const customerIds = (data ?? []).map((row) => row.id);
+      const [salesTotalMap, debtTotalMap] = await Promise.all([
+        loadCustomerSalesTotals(client, input.organizationId, customerIds),
+        loadCustomerDebtTotals(client, input.organizationId, customerIds),
+      ]);
+      return { items: (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap, debtTotalMap)), total: count ?? 0 };
     },
     async createCustomer(input): Promise<CustomerData> {
       const code = input.code ?? await nextCustomerCode(client, input.organizationId);
@@ -1316,8 +1340,11 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.paymentStatus !== undefined) query = query.eq("payment_status", input.paymentStatus);
       if (input.from !== undefined) query = query.gte("created_at", input.from);
       if (input.to !== undefined) query = query.lte("created_at", input.to);
+      if (input.search === undefined) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error !== null) throw error;
 
       let rows = data ?? [];
@@ -1333,11 +1360,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         });
       }
 
-      const page = paginate(rows, input.page, input.pageSize);
+      const page = input.search === undefined
+        ? { items: rows, total: count ?? 0 }
+        : paginate(rows, input.page, input.pageSize);
       const sellers = await loadSellerMap(client, page.items.map((row) => row.created_by));
       return {
         items: page.items.map((row) => toSalesDocumentListItem(row, sellers)),
-        total: input.search === undefined ? data?.length ?? 0 : page.total,
+        total: page.total,
       };
     },
     async getSalesDocument(input): Promise<SalesDocumentDetailData | null> {
@@ -1354,12 +1383,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const sellers = await loadSellerMap(client, [order.created_by]);
       const base = toSalesDocumentListItem(order, sellers);
-      const [items, paymentReceipts, debtEntries, stockMovements, history, priceList] = await Promise.all([
+      const [items, priceList] = await Promise.all([
         loadSalesDocumentItems(client, input.organizationId, input.orderId),
-        loadSalesDocumentPaymentReceipts(client, input.organizationId, input.orderId),
-        loadSalesDocumentDebtEntries(client, input.organizationId, input.orderId),
-        loadSalesDocumentStockMovements(client, input.organizationId, input.orderId),
-        loadSalesDocumentHistory(client, input.organizationId, input.orderId),
         loadSalesDocumentPriceList(client, input.organizationId, order.price_list_id),
       ]);
 
@@ -1368,10 +1393,10 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         price_list: priceList,
         change_returned_amount: Number(order.change_returned_amount),
         items,
-        payment_receipts: paymentReceipts,
-        debt_entries: debtEntries,
-        stock_movements: stockMovements,
-        history,
+        payment_receipts: [],
+        debt_entries: [],
+        stock_movements: [],
+        history: [],
       };
     },
     async listFinanceAccounts(input): Promise<FinanceAccountData[]> {
@@ -1842,6 +1867,7 @@ function toCustomerData(
   row: CustomerRepositoryRow,
   creatorMap: Map<string, string> = new Map(),
   salesTotalMap: Map<string, number> = new Map(),
+  debtTotalMap: Map<string, number> = new Map(),
 ): CustomerData {
   const group = Array.isArray(row.customer_groups) ? row.customer_groups[0] : row.customer_groups;
   const createdBy = row.created_by ?? null;
@@ -1858,6 +1884,7 @@ function toCustomerData(
     created_at: row.created_at ?? "",
     created_by: createdBy === null ? null : { id: createdBy, name: creatorName ?? "" },
     total_sales_amount: salesTotalMap.get(row.id) ?? 0,
+    total_debt_amount: debtTotalMap.get(row.id) ?? 0,
   };
 }
 
@@ -1894,6 +1921,25 @@ async function loadCustomerSalesTotals(
     const customerId = String(row.customer_id ?? "");
     if (customerId.length === 0) continue;
     totals.set(customerId, (totals.get(customerId) ?? 0) + Number(row.total_amount ?? 0));
+  }
+
+  return totals;
+}
+
+async function loadCustomerDebtTotals(
+  client: DatabaseClient,
+  organizationId: string,
+  customerIds: string[],
+): Promise<Map<string, number>> {
+  const uniqueIds = [...new Set(customerIds.filter((id) => id.length > 0))];
+  const totals = new Map(uniqueIds.map((id) => [id, 0]));
+  if (uniqueIds.length === 0) return totals;
+
+  const invoices = await loadOpenDebtInvoices(client, organizationId, undefined, uniqueIds);
+  for (const invoice of invoices) {
+    const customerId = invoice.customer_id ?? "";
+    if (!totals.has(customerId)) continue;
+    totals.set(customerId, (totals.get(customerId) ?? 0) + invoice.remaining_debt);
   }
 
   return totals;
@@ -2873,6 +2919,7 @@ async function loadOpenDebtInvoices(
   client: DatabaseClient,
   organizationId: string,
   customerId?: string,
+  customerIds?: string[],
 ): Promise<Array<{
   order_id: string;
   order_code: string;
@@ -2896,6 +2943,7 @@ async function loadOpenDebtInvoices(
     .limit(1000);
 
   if (customerId !== undefined) orderQuery = orderQuery.eq("customer_id", customerId);
+  if (customerIds !== undefined && customerIds.length > 0) orderQuery = orderQuery.in("customer_id", customerIds);
 
   const { data: orders, error: ordersError } = await orderQuery;
   if (ordersError !== null) throw ordersError;

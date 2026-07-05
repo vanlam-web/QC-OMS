@@ -140,6 +140,9 @@ export function PurchaseReceiptsPage({
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [products, setProducts] = useState<PurchaseReceiptProduct[]>([])
   const [financeAccounts, setFinanceAccounts] = useState<PurchaseReceiptFinanceAccount[]>([])
+  const [suppliersLoaded, setSuppliersLoaded] = useState(false)
+  const [productsLoaded, setProductsLoaded] = useState(false)
+  const [financeAccountsLoaded, setFinanceAccountsLoaded] = useState(false)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(purchaseReceiptPageSize)
@@ -150,6 +153,7 @@ export function PurchaseReceiptsPage({
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(true)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<PurchaseReceiptStatus | null>(null)
   const [selectedReceipt, setSelectedReceipt] = useState<PurchaseReceipt | null>(null)
@@ -242,20 +246,12 @@ export function PurchaseReceiptsPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [receiptResult, supplierResult, productResult, financeAccountResult] = await Promise.all([
-          service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize }),
-          service.listSuppliers(),
-          service.listProducts(),
-          service.listFinanceAccounts(),
-        ])
+        const receiptResult = await service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize })
         if (!active) return
         setReceipts(receiptResult.items)
         setTotal(receiptResult.total)
         setPage(receiptResult.page)
         setPageSize(receiptResult.page_size)
-        setSuppliers(supplierResult.items)
-        setProducts(productResult.items.filter((product) => product.status === 'active'))
-        setFinanceAccounts(financeAccountResult.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được phiếu nhập.'))
       }
@@ -267,6 +263,30 @@ export function PurchaseReceiptsPage({
       active = false
     }
   }, [service])
+
+  async function ensureReceiptLookupsLoaded() {
+    const requests: Promise<void>[] = []
+    if (!suppliersLoaded) {
+      requests.push(service.listSuppliers().then((result) => {
+        setSuppliers(result.items)
+        setSuppliersLoaded(true)
+      }))
+    }
+    if (!productsLoaded) {
+      requests.push(service.listProducts().then((result) => {
+        setProducts(result.items.filter((product) => product.status === 'active'))
+        setProductsLoaded(true)
+      }))
+    }
+    await Promise.all(requests)
+  }
+
+  async function ensureFinanceAccountsLoaded() {
+    if (financeAccountsLoaded) return
+    const result = await service.listFinanceAccounts()
+    setFinanceAccounts(result.items)
+    setFinanceAccountsLoaded(true)
+  }
 
   async function filterReceipts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -337,16 +357,18 @@ export function PurchaseReceiptsPage({
       setSelectedReceipt(null)
       setDetailOpen(false)
       setSupplierPaymentOpen(false)
+      setLoadingReceiptId(null)
       return
     }
     setError(null)
     setDetailOpen(false)
+    setLoadingReceiptId(receipt.id)
     setEditingId(null)
     setEditingStatus(null)
     setSelectedReceipt(null)
     setSupplierPaymentOpen(false)
     try {
-      const detail = await service.getReceipt(receipt.id)
+      const [detail] = await Promise.all([service.getReceipt(receipt.id), ensureReceiptLookupsLoaded()])
       setDetailOpen(true)
       setEditingId(detail.id)
       setEditingStatus(detail.status)
@@ -378,6 +400,8 @@ export function PurchaseReceiptsPage({
       setRollLengthTexts({})
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết phiếu nhập.'))
+    } finally {
+      setLoadingReceiptId(null)
     }
   }
 
@@ -533,8 +557,16 @@ export function PurchaseReceiptsPage({
     setRollLengthTexts({})
   }
 
-  function openCreateReceipt() {
-    resetForm()
+  async function openCreateReceipt() {
+    setError(null)
+    setDetailOpen(false)
+    setLoadingReceiptId(null)
+    try {
+      await ensureReceiptLookupsLoaded()
+      resetForm()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được dữ liệu tạo phiếu nhập.'))
+    }
   }
 
   function openSupplierPaymentForReceipt() {
@@ -543,6 +575,26 @@ export function PurchaseReceiptsPage({
     setSupplierPaymentAmount(Math.max(selectedReceiptOutstanding, 0))
     setSupplierPaymentMethod('cash')
     setSupplierPaymentFinanceAccountId('')
+  }
+
+  async function changeImmediatePaymentMethod(nextMethod: 'cash' | 'bank_transfer') {
+    setPaymentMethod(nextMethod)
+    if (nextMethod !== 'bank_transfer') return
+    try {
+      await ensureFinanceAccountsLoaded()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được tài khoản chuyển khoản.'))
+    }
+  }
+
+  async function changeSupplierPaymentMethod(nextMethod: 'cash' | 'bank_transfer') {
+    setSupplierPaymentMethod(nextMethod)
+    if (nextMethod !== 'bank_transfer') return
+    try {
+      await ensureFinanceAccountsLoaded()
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không tải được tài khoản chuyển khoản.'))
+    }
   }
 
   const today = localDateString(new Date())
@@ -1061,7 +1113,7 @@ export function PurchaseReceiptsPage({
                 Phương thức trả NCC
                 <select
                   value={supplierPaymentMethod}
-                  onChange={(event) => setSupplierPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                  onChange={(event) => void changeSupplierPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
                 >
                   <option value="cash">Tiền mặt</option>
                   <option value="bank_transfer">Chuyển khoản</option>
@@ -1095,7 +1147,7 @@ export function PurchaseReceiptsPage({
                 Phương thức trả ngay
                 <select
                   value={paymentMethod}
-                  onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
+                  onChange={(event) => void changeImmediatePaymentMethod(event.target.value as 'cash' | 'bank_transfer')}
                 >
                   <option value="cash">Tiền mặt</option>
                   <option value="bank_transfer">Chuyển khoản</option>
@@ -1127,6 +1179,14 @@ export function PurchaseReceiptsPage({
     )
   }
 
+  function receiptDetailLoading(ariaLabel: string) {
+    return (
+      <section aria-label={ariaLabel} className="management-inline-detail" role="region">
+        <p>Đang tải chi tiết phiếu nhập...</p>
+      </section>
+    )
+  }
+
   return (
     <ManagementPage
       title="Phiếu nhập"
@@ -1137,7 +1197,7 @@ export function PurchaseReceiptsPage({
             leadingIcon={<Search aria-hidden="true" size={16} />}
             placeholder="Tìm mã phiếu, NCC"
             trailingAction={
-              <ManagementCompactCreateAction ariaLabel="Tạo phiếu nhập" onClick={openCreateReceipt} />
+              <ManagementCompactCreateAction ariaLabel="Tạo phiếu nhập" onClick={() => void openCreateReceipt()} />
             }
             value={search}
             onChange={setSearch}
@@ -1300,9 +1360,10 @@ export function PurchaseReceiptsPage({
                     <tbody>
                       {receipts.map((receipt) => {
                         const detailForRow = editingId === receipt.id
+                        const loadingForRow = loadingReceiptId === receipt.id
                         return (
                           <Fragment key={receipt.id}>
-                            <tr className={detailForRow ? 'management-data-row-selected' : undefined}>
+                            <tr className={detailForRow || loadingForRow ? 'management-data-row-selected' : undefined}>
                               <td>{receipt.code}</td>
                               <td>{new Date(receipt.received_at).toLocaleString('vi-VN')}</td>
                               <td>{`${receipt.supplier.code} - ${receipt.supplier.name}`}</td>
@@ -1329,9 +1390,11 @@ export function PurchaseReceiptsPage({
                                 </div>
                               </td>
                             </tr>
-                            {detailForRow ? (
+                            {detailForRow || loadingForRow ? (
                               <ManagementDetailRow colSpan={10} label={`Chi tiết phiếu nhập ${receipt.code}`}>
-                                {receiptDetailContent(`Nội dung chi tiết ${receipt.code}`)}
+                                {loadingForRow
+                                  ? receiptDetailLoading(`Đang tải chi tiết ${receipt.code}`)
+                                  : receiptDetailContent(`Nội dung chi tiết ${receipt.code}`)}
                               </ManagementDetailRow>
                             ) : null}
                           </Fragment>

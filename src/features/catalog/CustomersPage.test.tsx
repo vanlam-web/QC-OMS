@@ -24,6 +24,7 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
           created_by: { id: 'user-admin', name: 'Admin' },
           created_at: '2026-06-30T17:08:00Z',
           total_sales_amount: 750000,
+          total_debt_amount: 250000,
         },
       ],
       page: 1,
@@ -42,6 +43,7 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       created_by: { id: 'user-admin', name: 'Admin' },
       created_at: '2026-07-03T03:00:00Z',
       total_sales_amount: 0,
+      total_debt_amount: 0,
     })),
     resolvePrices: vi.fn(async () => ({ items: [] })),
     listPriceLists: vi.fn(async () => ({ items: [] })),
@@ -194,12 +196,11 @@ it('lists customers in the shared management layout', async () => {
   expect(within(grid).getByText('Công ty Phong Cảnh')).toBeInTheDocument()
   expect(within(grid).getByText('Khách VIP')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
-  await waitFor(() => expect(grid).toHaveTextContent('250 000'))
-  await waitFor(() => expect(summary).toHaveTextContent('250 000'))
   expect(grid).toHaveTextContent('250 000')
   expect(grid).toHaveTextContent('750 000')
+  expect(summary).toHaveTextContent('250 000')
   expect(summary).toHaveTextContent('750 000')
-  expect(orderService.getCustomerDebt).toHaveBeenCalledWith('customer-1')
+  expect(orderService.getCustomerDebt).not.toHaveBeenCalled()
 
   const footer = screen.getByRole('navigation', { name: 'Phân trang khách hàng' })
   expect(footer).toHaveClass('management-table-footer')

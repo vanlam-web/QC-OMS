@@ -46,6 +46,93 @@ it('throws typed API errors preserving metadata', async () => {
   })
 })
 
+it('deduplicates concurrent GET requests for the same resource and token', async () => {
+  let fetchCount = 0
+  const responseResolvers: Array<(response: Response) => void> = []
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => 'token-123',
+    fetch: (async () => {
+      fetchCount += 1
+      return new Promise<Response>((resolve) => {
+        responseResolvers.push(resolve)
+      })
+    }) as typeof fetch,
+  })
+
+  const first = client.request('/api/v1/products?status=active&page=1&page_size=12')
+  const second = client.request('/api/v1/products?status=active&page=1&page_size=12')
+  await Promise.resolve()
+  responseResolvers.forEach((resolveResponse) =>
+    resolveResponse(
+    new Response(JSON.stringify({ success: true, data: { items: [] }, trace_id: 'trace' }), {
+      status: 200,
+    }),
+    ),
+  )
+
+  await expect(Promise.all([first, second])).resolves.toEqual([{ items: [] }, { items: [] }])
+  expect(fetchCount).toBe(1)
+})
+
+it('does not deduplicate concurrent write requests', async () => {
+  let fetchCount = 0
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => 'token-123',
+    fetch: (async () => {
+      fetchCount += 1
+      return new Response(JSON.stringify({ success: true, data: { ok: true }, trace_id: 'trace' }), {
+        status: 200,
+      })
+    }) as typeof fetch,
+  })
+
+  await Promise.all([
+    client.request('/api/v1/products', { method: 'POST', body: JSON.stringify({ name: 'A' }) }),
+    client.request('/api/v1/products', { method: 'POST', body: JSON.stringify({ name: 'A' }) }),
+  ])
+
+  expect(fetchCount).toBe(2)
+})
+
+it('reuses a recently completed GET request for the same resource and token', async () => {
+  let fetchCount = 0
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => 'token-123',
+    fetch: (async () => {
+      fetchCount += 1
+      return new Response(JSON.stringify({ success: true, data: { count: fetchCount }, trace_id: 'trace' }), {
+        status: 200,
+      })
+    }) as typeof fetch,
+  })
+
+  await expect(client.request('/api/v1/price-lists')).resolves.toEqual({ count: 1 })
+  await expect(client.request('/api/v1/price-lists')).resolves.toEqual({ count: 1 })
+  expect(fetchCount).toBe(1)
+})
+
+it('clears completed GET cache before write requests', async () => {
+  let fetchCount = 0
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => 'token-123',
+    fetch: (async () => {
+      fetchCount += 1
+      return new Response(JSON.stringify({ success: true, data: { count: fetchCount }, trace_id: 'trace' }), {
+        status: 200,
+      })
+    }) as typeof fetch,
+  })
+
+  await client.request('/api/v1/products?page=1&page_size=15')
+  await client.request('/api/v1/products', { method: 'POST', body: JSON.stringify({ name: 'A' }) })
+  await expect(client.request('/api/v1/products?page=1&page_size=15')).resolves.toEqual({ count: 3 })
+  expect(fetchCount).toBe(3)
+})
+
 it('rejects base URLs that already include the API route prefix', async () => {
   expect(() =>
     createApiClient({

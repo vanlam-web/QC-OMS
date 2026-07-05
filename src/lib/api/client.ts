@@ -19,6 +19,10 @@ export interface ApiClientOptions {
   fetch?: typeof fetch
 }
 
+const inFlightGetRequests = new WeakMap<typeof fetch, Map<string, Promise<unknown>>>()
+const completedGetRequests = new WeakMap<typeof fetch, Map<string, { expiresAt: number; value: unknown }>>()
+const completedGetCacheTtlMs = 1000
+
 export function createApiClient(options: ApiClientOptions) {
   const fetcher = options.fetch ?? fetch
   const baseUrl = normalizeApiBaseUrl(options.baseUrl)
@@ -26,31 +30,99 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     async request<T>(path: string, init: RequestInit = {}): Promise<T> {
       const accessToken = await options.getAccessToken()
-      const traceId = crypto.randomUUID()
-      const headers = new Headers(init.headers)
-      headers.set('x-request-id', traceId)
-      headers.set('content-type', headers.get('content-type') ?? 'application/json')
+      const inFlightKey = makeInFlightGetKey(baseUrl, path, accessToken, init)
+      if (inFlightKey !== null) {
+        const inFlightByFetcher = getInFlightByFetcher(fetcher)
+        const existingRequest = inFlightByFetcher.get(inFlightKey)
+        if (existingRequest !== undefined) return existingRequest as Promise<T>
 
-      if (accessToken) {
-        headers.set('authorization', `Bearer ${accessToken}`)
+        const completedByFetcher = getCompletedByFetcher(fetcher)
+        const completedRequest = completedByFetcher.get(inFlightKey)
+        if (completedRequest !== undefined) {
+          if (completedRequest.expiresAt > Date.now()) return completedRequest.value as T
+          completedByFetcher.delete(inFlightKey)
+        }
+
+        const requestPromise = executeRequest<T>(fetcher, baseUrl, path, init, accessToken)
+        inFlightByFetcher.set(inFlightKey, requestPromise)
+        try {
+          const value = await requestPromise
+          completedByFetcher.set(inFlightKey, {
+            expiresAt: Date.now() + completedGetCacheTtlMs,
+            value,
+          })
+          return value
+        } finally {
+          inFlightByFetcher.delete(inFlightKey)
+        }
       }
 
-      const response = await fetcher(`${baseUrl}${path}`, { ...init, headers })
-      const body = (await response.json()) as ApiEnvelope<T>
-
-      if (!body.success) {
-        throw new ApiError(
-          response.status,
-          body.error.code,
-          body.error.message,
-          body.trace_id,
-          body.error.fields,
-        )
-      }
-
-      return body.data
+      getCompletedByFetcher(fetcher).clear()
+      return executeRequest<T>(fetcher, baseUrl, path, init, accessToken)
     },
   }
+}
+
+async function executeRequest<T>(
+  fetcher: typeof fetch,
+  baseUrl: string,
+  path: string,
+  init: RequestInit,
+  accessToken: string | null,
+): Promise<T> {
+  const traceId = crypto.randomUUID()
+  const headers = new Headers(init.headers)
+  headers.set('x-request-id', traceId)
+  headers.set('content-type', headers.get('content-type') ?? 'application/json')
+
+  if (accessToken) {
+    headers.set('authorization', `Bearer ${accessToken}`)
+  }
+
+  const response = await fetcher(`${baseUrl}${path}`, { ...init, headers })
+  const body = (await response.json()) as ApiEnvelope<T>
+
+  if (!body.success) {
+    throw new ApiError(
+      response.status,
+      body.error.code,
+      body.error.message,
+      body.trace_id,
+      body.error.fields,
+    )
+  }
+
+  return body.data
+}
+
+function getInFlightByFetcher(fetcher: typeof fetch) {
+  let requests = inFlightGetRequests.get(fetcher)
+  if (requests === undefined) {
+    requests = new Map<string, Promise<unknown>>()
+    inFlightGetRequests.set(fetcher, requests)
+  }
+  return requests
+}
+
+function getCompletedByFetcher(fetcher: typeof fetch) {
+  let requests = completedGetRequests.get(fetcher)
+  if (requests === undefined) {
+    requests = new Map<string, { expiresAt: number; value: unknown }>()
+    completedGetRequests.set(fetcher, requests)
+  }
+  return requests
+}
+
+function makeInFlightGetKey(
+  baseUrl: string,
+  path: string,
+  accessToken: string | null,
+  init: RequestInit,
+) {
+  const method = init.method?.toUpperCase() ?? 'GET'
+  if (method !== 'GET') return null
+  if (init.body !== undefined || init.headers !== undefined || init.signal !== undefined) return null
+  return JSON.stringify([baseUrl, path, accessToken])
 }
 
 function normalizeApiBaseUrl(baseUrl: string) {

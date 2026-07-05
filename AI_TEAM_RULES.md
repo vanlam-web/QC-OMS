@@ -16,6 +16,8 @@ Current active Codex threads:
 
 The Review Thread is the thread responsible for checking the project when Owner asks, running verification, reviewing current state, and preparing clear reports or work packages so Spec and Implement can continue safely.
 
+For load/performance work, read and update `docs/PERFORMANCE-FIX-LOG.md` with measured request counts, timings, fixes, and verification before handing off or merging.
+
 ## 1. Mandatory Working Principles
 
 Every Codex thread must follow these principles.

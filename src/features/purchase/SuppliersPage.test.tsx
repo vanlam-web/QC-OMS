@@ -103,6 +103,8 @@ it('lists suppliers with payable and purchase totals plus linked customer', asyn
   expect(screen.getByRole('navigation', { name: 'Phân trang nhà cung cấp' })).toHaveClass('management-table-footer')
   expect(screen.queryByRole('form', { name: 'Thông tin nhà cung cấp' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Tạo nhà cung cấp' })).toBeInTheDocument()
+  expect(service.listCustomers).not.toHaveBeenCalled()
+  expect(service.listFinanceAccounts).not.toHaveBeenCalled()
 })
 
 it('summarizes supplier validation state with scan-friendly KPI cards and panels', async () => {
@@ -202,7 +204,7 @@ it('creates supplier with blank phone and selected linked customer', async () =>
   await screen.findByText('NCC000031')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo nhà cung cấp' }))
   expect(screen.queryByRole('region', { name: 'Hồ sơ và thanh toán nhà cung cấp' })).not.toBeInTheDocument()
-  const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
+  const form = await screen.findByRole('form', { name: 'Thông tin nhà cung cấp' })
   expect(form.closest('.management-list-surface')).not.toBeNull()
   await userEvent.type(within(form).getByLabelText('Tên NCC'), 'NCC mới')
   await userEvent.type(within(form).getByLabelText('Địa chỉ'), 'Quận 1')
@@ -228,7 +230,7 @@ it('opens supplier for editing and saves inactive status', async () => {
   render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
 
   await userEvent.click(await screen.findByRole('button', { name: 'Sửa NCC000031' }))
-  const form = screen.getByRole('form', { name: 'Thông tin nhà cung cấp' })
+  const form = await screen.findByRole('form', { name: 'Thông tin nhà cung cấp' })
   const detail = screen.getByRole('region', { name: 'Hồ sơ và thanh toán nhà cung cấp' })
   expect(detail).toHaveClass('management-inline-detail')
   expect(form.closest('tr')).toHaveClass('management-detail-row')
@@ -274,6 +276,7 @@ it('opens supplier payment form from payable supplier and submits explicit recei
   await userEvent.clear(within(form).getByLabelText('Số tiền trả cho PN000673'))
   await userEvent.type(within(form).getByLabelText('Số tiền trả cho PN000673'), '250000')
   await userEvent.selectOptions(within(form).getByLabelText('Phương thức trả NCC'), 'bank_transfer')
+  await screen.findByText('VCB - Vietcombank')
   await userEvent.selectOptions(within(form).getByLabelText('Tài khoản chuyển khoản NCC'), 'bank-1')
   await userEvent.type(within(form).getByLabelText('Ghi chú thanh toán'), 'Thanh toán NCC')
   await userEvent.click(within(form).getByRole('button', { name: 'Lưu thanh toán NCC' }))

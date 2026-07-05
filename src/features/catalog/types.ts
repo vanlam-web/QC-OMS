@@ -39,6 +39,7 @@ export interface Customer {
   created_by?: { id: string; name: string } | null
   created_at?: string
   total_sales_amount?: number
+  total_debt_amount?: number
 }
 
 export interface CustomerListResponse {

@@ -81,6 +81,7 @@ export interface CustomerData {
   created_at: string;
   created_by: { id: string; name: string } | null;
   total_sales_amount: number;
+  total_debt_amount: number;
 }
 
 export interface SupplierData {

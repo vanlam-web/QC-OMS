@@ -208,6 +208,7 @@ Deno.test("sales document detail returns snapshots, payments, debt and stock mov
   assertEquals(data.items[0].height_m, 3.3);
   assertEquals(data.items[0].linear_m, null);
   assertEquals(data.items[0].note, "2.5m x 3.3m x 1 = 8.25m2");
+  assertEquals(data.payment_receipts.length, 1);
   assertEquals(data.debt_entries[0].amount_delta, 150000);
   assertEquals(data.stock_movements[0].movement_type, "sale_deduction");
 });
