@@ -150,11 +150,11 @@ Response phải gồm:
 
 ### `GET /finance/retail-debts`
 
-Danh sách khách lẻ nợ chưa gán hồ sơ khách.
+Danh sách hóa đơn còn nợ của khách mặc định `KH000001 - Khách lẻ`.
 
 **Permission:** `perm.manage_finance`
 
-Mỗi dòng phải có `retail_debt_note` để nhận diện lại giao dịch.
+Mỗi dòng phát sinh từ POS chưa chọn khách phải có `retail_debt_note` để nhận diện lại người nợ. API này không dùng bucket `customer_id = null`.
 
 ---
 

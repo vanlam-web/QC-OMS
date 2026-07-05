@@ -89,7 +89,7 @@ Validate và tính lại giỏ hàng nháp từ dữ liệu POS gửi lên.
 }
 ```
 
-`customer_id` được phép null.
+`customer_id` được phép null ở bước validate giỏ hàng vì chưa ghi chứng từ.
 
 **Validation:**
 
@@ -173,6 +173,7 @@ Lưu hóa đơn nháp hiện tại thành báo giá.
 
 **Validation:**
 
+- Nếu Frontend không gửi `customer_id`, Backend resolve về khách mặc định `KH000001 - Khách lẻ` trước khi lưu.
 - Nếu có `customer_id`, khách phải cùng organization.
 - `customer_snapshot` bắt buộc, kể cả khách lẻ.
 - Có ít nhất một dòng hàng.
@@ -337,7 +338,7 @@ Checkout giỏ hàng hiện tại thành hóa đơn bán hàng `HD...`.
 }
 ```
 
-`source_quote_id`, `customer_id`, `price_list_id`, `bank_account_id` được phép null theo nghiệp vụ.
+`source_quote_id`, `customer_id`, `price_list_id`, `bank_account_id` được phép null trong input theo nghiệp vụ. Khi ghi hóa đơn, `customer_id` null phải được Backend resolve về `KH000001 - Khách lẻ`; dữ liệu lưu không dùng bucket khách lẻ null.
 
 Ghi chú: khi nhân viên mở báo giá về POS, POS tạo một nháp local có thể sửa. Nếu checkout gửi `source_quote_id`, backend giữ link `BG... -> HD...` và đổi báo giá sang `converted`. Nếu checkout không gửi `source_quote_id`, backend tạo hóa đơn như bán thẳng; đây vẫn là hành vi hợp lệ trong MVP.
 
@@ -351,7 +352,8 @@ Nếu khách trả dư và nhân viên chọn cấn vào nợ cũ, phần cấn 
 - Dòng hàng phải pass validation như `/pos/cart/validate`.
 - Backend tự tính lại `line_subtotal_amount`, `line_total`, `subtotal_amount`, `discount_amount`, `total_amount`.
 - Nếu `source_quote_id` có giá trị, báo giá phải cùng organization, `order_type = quote`, `status = active`.
-- Nếu `customer_id` null và hóa đơn còn nợ, `retail_debt_note` bắt buộc.
+- Nếu Frontend không gửi `customer_id`, Backend resolve về `KH000001 - Khách lẻ`.
+- Nếu khách được resolve là `KH000001` và hóa đơn còn nợ, `retail_debt_note` bắt buộc để nhận diện người nợ.
 - `cash_amount >= 0`, `bank_amount >= 0`, `old_debt_payment_amount >= 0`.
 - Nếu `bank_amount > 0`, `bank_account_id` bắt buộc, active, cùng organization và là tài khoản `bank`.
 - Một lần checkout chỉ được chọn tối đa một tài khoản bank.
@@ -363,16 +365,17 @@ Nếu khách trả dư và nhân viên chọn cấn vào nợ cũ, phần cấn 
 1. Xác thực actor, workstation và permission.
 2. Validate giỏ hàng và tính lại tiền.
 3. Sinh mã `HD...`.
-4. Tạo `orders` loại `invoice`, `status = completed`.
-5. Tạo `order_items` snapshot.
-6. Trừ kho theo Inventory rule bằng `stock_movements`.
-7. Nếu có tiền thực giữ lại, tạo `payment_receipts` và `payment_receipt_methods`.
-8. Tạo `cashbook_entries` từ từng dòng phương thức thu.
-9. Nếu hóa đơn mới còn nợ, tạo `customer_debt_entries` loại `invoice_debt`.
-10. Nếu có trả nợ cũ, phân bổ vào hóa đơn còn nợ cũ nhất trước bằng `customer_debt_allocations` và tạo `customer_debt_entries` loại `debt_payment`.
-11. Nếu có `source_quote_id`, đổi báo giá sang `converted`; nếu không có thì bỏ qua bước này.
-12. Ghi `order_status_history`.
-13. Trả hóa đơn, payment summary, debt summary và cảnh báo tồn kho nếu có.
+4. Resolve khách hàng: nếu input không có khách, dùng `KH000001 - Khách lẻ`.
+5. Tạo `orders` loại `invoice`, `status = completed`.
+6. Tạo `order_items` snapshot.
+7. Trừ kho theo Inventory rule bằng `stock_movements`.
+8. Nếu có tiền thực giữ lại, tạo `payment_receipts` và `payment_receipt_methods`.
+9. Tạo `cashbook_entries` từ từng dòng phương thức thu.
+10. Nếu hóa đơn mới còn nợ, tạo `customer_debt_entries` loại `invoice_debt`.
+11. Nếu có trả nợ cũ, phân bổ vào hóa đơn còn nợ cũ nhất trước bằng `customer_debt_allocations` và tạo `customer_debt_entries` loại `debt_payment`.
+12. Nếu có `source_quote_id`, đổi báo giá sang `converted`; nếu không có thì bỏ qua bước này.
+13. Ghi `order_status_history`.
+14. Trả hóa đơn, payment summary, debt summary và cảnh báo tồn kho nếu có.
 
 Nếu bất kỳ bước ghi dữ liệu chính nào lỗi, transaction phải rollback; không được tạo hóa đơn dở dang.
 
