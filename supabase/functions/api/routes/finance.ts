@@ -12,6 +12,7 @@ import {
   listCashbookVouchers,
   listCustomerDebts,
   listFinanceAccounts,
+  listRetailDebts,
   listReconciliations,
 } from "../use-cases/finance.ts";
 
@@ -51,6 +52,10 @@ export async function handleFinance(
 
   if (url.pathname === "/api/v1/finance/customer-debts" && request.method === "GET") {
     return successResponse(await listCustomerDebts(dependencies.repository, context, url), traceId);
+  }
+
+  if (url.pathname === "/api/v1/finance/retail-debts" && request.method === "GET") {
+    return successResponse(await listRetailDebts(dependencies.repository, context, url), traceId);
   }
 
   const customerDebtMatch = url.pathname.match(/^\/api\/v1\/finance\/customers\/([^/]+)\/debt$/);

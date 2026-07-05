@@ -398,6 +398,17 @@ export interface CustomerDebtDetailData {
   }>;
 }
 
+export interface RetailDebtInvoiceData {
+  order_id: string;
+  order_code: string;
+  created_at: string;
+  total_amount: number;
+  paid_amount: number;
+  debt_amount: number;
+  remaining_debt: number;
+  retail_debt_note: string | null;
+}
+
 export interface DebtCollectionResultData {
   payment_receipt_id: string;
   allocated_amount: number;
@@ -889,6 +900,11 @@ export interface FoundationRepository {
     page: number;
     pageSize: number;
   }): Promise<{ items: CustomerDebtSummaryData[]; total: number }>;
+  listRetailDebts(input: {
+    organizationId: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: RetailDebtInvoiceData[]; total: number }>;
   getCustomerDebt(input: { organizationId: string; customerId: string }): Promise<CustomerDebtDetailData | null>;
   collectCustomerDebt(input: {
     organizationId: string;

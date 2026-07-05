@@ -328,6 +328,41 @@ Deno.test("payment receipt detail includes methods and invoice allocations", asy
   assertEquals(result.allocations[0].remaining_after, 120000);
 });
 
+Deno.test("retail debts endpoint lists KH000001 open invoices", async () => {
+  let observedOrganizationId = "";
+  const response = await call(
+    "/api/v1/finance/retail-debts",
+    { method: "GET" },
+    repo(["perm.manage_finance"], {
+      listRetailDebts: (input: { organizationId: string }) => {
+        observedOrganizationId = input.organizationId;
+        return Promise.resolve({
+          items: [
+            {
+              order_id: "order-retail-1",
+              order_code: "HD000123",
+              created_at: "2026-07-05T09:00:00Z",
+              total_amount: 120000,
+              paid_amount: 20000,
+              debt_amount: 100000,
+              remaining_debt: 100000,
+              retail_debt_note: "Anh Nam 090...",
+            },
+          ],
+          total: 1,
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { items: Array<{ order_code: string; retail_debt_note: string }>; total: number };
+  assertEquals(response.status, 200);
+  assertEquals(observedOrganizationId, organizationId);
+  assertEquals(result.total, 1);
+  assertEquals(result.items[0].order_code, "HD000123");
+  assertEquals(result.items[0].retail_debt_note, "Anh Nam 090...");
+});
+
 Deno.test("inventory products hide inactive rows for create_order-only actor", async () => {
   let requestedStatus = "";
   const response = await call(

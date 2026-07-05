@@ -1,6 +1,6 @@
 begin;
 
-select plan(36);
+select plan(37);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -177,6 +177,7 @@ values (
     '00000000-0000-4000-8000-000000000001',
     jsonb_build_object(
       'customer_id', '00000000-0000-4000-8000-000000000501',
+      'retail_debt_note', 'partial paid retail debt fixture',
       'items', jsonb_build_array(
         jsonb_build_object(
           'product_id', '00000000-0000-4000-8000-000000000303',
@@ -479,6 +480,7 @@ values (
     '00000000-0000-4000-8000-000000000001',
     jsonb_build_object(
       'customer_id', '00000000-0000-4000-8000-000000000501',
+      'retail_debt_note', 'standalone retail debt fixture',
       'items', jsonb_build_array(
         jsonb_build_object(
           'product_id', '00000000-0000-4000-8000-000000000303',
@@ -545,6 +547,34 @@ select throws_ok(
   '22023',
   'debt collection cannot exceed outstanding debt',
   'debt collection rejects overpayment'
+);
+
+select throws_ok(
+  $$
+    select public.checkout_order_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      jsonb_build_object(
+        'customer_id', null,
+        'items', jsonb_build_array(
+          jsonb_build_object(
+            'product_id', '00000000-0000-4000-8000-000000000303',
+            'quantity', 1,
+            'unit_price', 50000,
+            'price_source', 'default_price_list'
+          )
+        ),
+        'payment', jsonb_build_object(
+          'cash_amount', 0,
+          'bank_amount', 0,
+          'old_debt_payment_amount', 0
+        )
+      )
+    )
+  $$,
+  '22023',
+  'retail_debt_note is required for KH000001 debt',
+  'retail customer debt requires an identifying note'
 );
 
 insert into checkout_results (name, result)
