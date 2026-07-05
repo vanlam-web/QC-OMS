@@ -60,6 +60,15 @@ body {
   color: var(--color-text);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 button,
 input,
 select,
@@ -404,6 +413,11 @@ button {
   padding: var(--space-3);
 }
 
+.management-filter-column:has(.management-filter-sidebar-popover-open) {
+  z-index: calc(var(--z-shell) + 3);
+  overflow: visible;
+}
+
 .management-kpis {
   min-width: 0;
 }
@@ -519,6 +533,10 @@ button {
   color: var(--color-text);
 }
 
+.management-filter-group {
+  position: relative;
+}
+
 .management-filter-group h2 {
   margin: 0;
   padding: var(--space-2) 0;
@@ -531,7 +549,8 @@ button {
   gap: var(--space-2);
 }
 
-.management-filter-options label {
+.management-filter-options label,
+.management-filter-options .management-filter-choice {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -545,6 +564,148 @@ button {
 
 .management-filter-options input {
   accent-color: var(--color-primary);
+}
+
+.management-filter-time-options {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.management-filter-options .management-filter-choice {
+  min-height: 2.875rem;
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.management-filter-choice > span:not(.management-filter-choice-trailing) {
+  flex: 1;
+}
+
+.management-filter-choice svg {
+  color: var(--color-text-muted);
+}
+
+.management-filter-choice-trailing {
+  display: inline-flex;
+  flex: 0 0 1.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  margin-right: calc(var(--space-1) * -1);
+  margin-left: auto;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 0;
+}
+
+.management-filter-choice-trailing:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.management-filter-options .management-filter-choice-active {
+  border-color: var(--color-selected-border);
+  box-shadow: inset 0 0 0 1px var(--color-selected-border);
+}
+
+.management-filter-quick-time-menu {
+  position: absolute;
+  top: calc(2.5rem + 1.125rem);
+  left: calc(100% + var(--space-4));
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(5, max-content);
+  gap: var(--space-3);
+  width: max-content;
+  max-width: calc(100vw - 26rem);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  transform: translateY(-50%);
+}
+
+.management-filter-quick-time-menu::before {
+  position: absolute;
+  top: calc(50% - 0.35rem);
+  left: -0.55rem;
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-surface);
+  box-shadow: -1px 1px 0 var(--color-border-muted);
+  content: '';
+  transform: rotate(45deg);
+}
+
+.management-filter-quick-time-menu h3 {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.management-filter-quick-time-menu div {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.management-filter-quick-time-menu button {
+  min-height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0 var(--space-2);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.management-filter-quick-time-menu button:hover,
+.management-filter-quick-time-menu .management-filter-quick-time-active {
+  border-color: var(--color-selected-border);
+  background: var(--color-selected-border);
+  color: #fff;
+}
+
+.management-filter-date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.management-filter-options .management-filter-date-range label {
+  display: grid;
+  gap: var(--space-1);
+  align-items: start;
+  min-height: 0;
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-2);
+}
+
+.management-filter-date-range span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.management-filter-date-range input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  outline: none;
 }
 
 .management-list-surface {
@@ -691,30 +852,82 @@ button {
 }
 
 .management-table-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
   flex: 0 0 auto;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: stretch;
   gap: var(--space-3);
   border-top: 1px solid var(--color-border-muted);
-  margin-top: var(--space-2);
-  padding-top: var(--space-3);
+  min-height: 2.75rem;
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-2) 0;
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
+.management-table-footer-size,
 .management-table-footer-actions {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
 }
 
+.management-table-footer-size {
+  justify-self: start;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.management-table-footer-size select {
+  min-height: 1.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  padding: 0 var(--space-8) 0 var(--space-2);
+}
+
+.management-table-footer-actions {
+  justify-self: center;
+}
+
 .management-table-footer button {
-  min-height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 1.875rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
 }
 
 .management-table-footer button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.management-table-footer-actions input {
+  width: 2.75rem;
+  min-height: 1.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: center;
+}
+
+.management-table-footer-summary {
+  justify-self: end;
+  color: var(--color-text);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .management-row-action {
@@ -771,6 +984,14 @@ button {
   line-height: 1.35;
   text-align: left;
   vertical-align: top;
+}
+
+.management-list-surface thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-primary));
+  box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
 .management-data-row {

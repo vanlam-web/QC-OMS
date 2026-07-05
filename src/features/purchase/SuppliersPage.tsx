@@ -82,20 +82,22 @@ export function SuppliersPage({
   const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
 
   async function loadSuppliers(
-    input: { search?: string; status?: SupplierStatus | 'all'; page?: number } = {
+    input: { search?: string; status?: SupplierStatus | 'all'; page?: number; page_size?: number } = {
       search: lastSearch,
       status: lastStatus,
       page,
+      page_size: pageSize,
     },
   ) {
     const nextSearch = input.search ?? lastSearch
     const nextStatus = input.status ?? lastStatus
     const nextPage = input.page ?? page
+    const nextPageSize = input.page_size ?? pageSize
     setError(null)
     try {
       const result = await service.listSuppliers({
         page: nextPage,
-        page_size: pageSize,
+        page_size: nextPageSize,
         search: nextSearch?.trim() || undefined,
         status: nextStatus,
       })
@@ -644,7 +646,10 @@ export function SuppliersPage({
                 page={page}
                 pageSize={pageSize}
                 total={total}
+                onFirst={() => void goToPage(1)}
+                onLast={() => void goToPage(totalPages)}
                 onNext={() => void goToPage(page + 1)}
+                onPageSizeChange={(nextPageSize) => void loadSuppliers({ page: 1, page_size: nextPageSize })}
                 onPrevious={() => void goToPage(page - 1)}
               />
             </>

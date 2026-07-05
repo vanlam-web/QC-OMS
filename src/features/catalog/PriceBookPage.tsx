@@ -80,15 +80,16 @@ export function PriceBookPage({
     adjustments: {} as Record<string, { mode: AdjustmentMode; value: string }>,
   })
 
-  async function load(filters: { search?: string; status?: ProductStatus | 'all'; page?: number } = {}) {
+  async function load(filters: { search?: string; status?: ProductStatus | 'all'; page?: number; page_size?: number } = {}) {
     const nextSearch = filters.search ?? lastSearch
     const nextStatus = filters.status ?? lastStatus
     const nextPage = filters.page ?? page
+    const nextPageSize = filters.page_size ?? pageSize
     setError(null)
     try {
       const result = await service.listProducts({
         page: nextPage,
-        page_size: pageSize,
+        page_size: nextPageSize,
         search: nextSearch || undefined,
         status: nextStatus,
       })
@@ -612,7 +613,10 @@ export function PriceBookPage({
               page={page}
               pageSize={pageSize}
               total={state.total}
+              onFirst={() => void goToPage(1)}
+              onLast={() => void goToPage(totalPages)}
               onNext={() => void goToPage(page + 1)}
+              onPageSizeChange={(nextPageSize) => void load({ page: 1, page_size: nextPageSize })}
               onPrevious={() => void goToPage(page - 1)}
             />
           </>

@@ -1412,7 +1412,10 @@ export function PurchaseReceiptsPage({
                 page={page}
                 pageSize={pageSize}
                 total={total}
+                onFirst={() => void goToPage(1)}
+                onLast={() => void goToPage(totalPages)}
                 onNext={() => void goToPage(page + 1)}
+                onPageSizeChange={(nextPageSize) => void loadReceipts({ page: 1, page_size: nextPageSize })}
                 onPrevious={() => void goToPage(page - 1)}
               />
             </>

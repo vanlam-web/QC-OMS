@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react'
-import { Plus } from 'lucide-react'
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 export function ManagementPage({
   title,
@@ -44,16 +44,18 @@ export function ManagementPage({
 export function ManagementFilterSidebar({
   ariaLabel,
   actions,
+  popoverOpen = false,
   children,
 }: {
   ariaLabel: string
   title?: string
   activeSummary?: string
   actions?: ReactNode
+  popoverOpen?: boolean
   children: ReactNode
 }) {
   return (
-    <aside aria-label={ariaLabel} className="management-filter-sidebar">
+    <aside aria-label={ariaLabel} className={`management-filter-sidebar${popoverOpen ? ' management-filter-sidebar-popover-open' : ''}`}>
       {children}
       {actions ? <ManagementFilterActionBar>{actions}</ManagementFilterActionBar> : null}
     </aside>
@@ -194,8 +196,12 @@ export function ManagementTableFooter({
   total,
   canGoPrevious,
   canGoNext,
+  pageSizeOptions = [15, 30, 50, 100],
+  onPageSizeChange,
+  onFirst,
   onPrevious,
   onNext,
+  onLast,
 }: {
   ariaLabel: string
   entityLabel: string
@@ -204,25 +210,57 @@ export function ManagementTableFooter({
   total: number
   canGoPrevious: boolean
   canGoNext: boolean
+  pageSizeOptions?: number[]
+  onPageSizeChange?: (pageSize: number) => void
+  onFirst?: () => void
   onPrevious: () => void
   onNext: () => void
+  onLast?: () => void
 }) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1
   const rangeEnd = Math.min(page * pageSize, total)
 
   return (
     <nav aria-label={ariaLabel} className="management-table-footer">
-      <span>{rangeStart}-{rangeEnd} / {total} {entityLabel}</span>
-      <span>Trang {page} / {totalPages}</span>
+      <div className="management-table-footer-size">
+        <span>Hiển thị</span>
+        <label>
+          <span className="sr-only">Số dòng hiển thị</span>
+          <select
+            aria-label="Số dòng hiển thị"
+            disabled={onPageSizeChange === undefined}
+            value={pageSize}
+            onChange={(event) => onPageSizeChange?.(Number(event.target.value))}
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option} dòng
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className="management-table-footer-actions">
-        <button className="button button-secondary" disabled={!canGoPrevious} type="button" onClick={onPrevious}>
-          Trang trước
+        <button aria-label="Trang đầu" disabled={!canGoPrevious} title="Trang đầu" type="button" onClick={onFirst ?? onPrevious}>
+          <ChevronFirst aria-hidden="true" size={18} />
         </button>
-        <button className="button button-secondary" disabled={!canGoNext} type="button" onClick={onNext}>
-          Trang sau
+        <button aria-label="Trang trước" disabled={!canGoPrevious} title="Trang trước" type="button" onClick={onPrevious}>
+          <ChevronLeft aria-hidden="true" size={18} />
+        </button>
+        <input
+          aria-label="Trang hiện tại"
+          inputMode="numeric"
+          readOnly
+          value={page}
+        />
+        <button aria-label="Trang sau" disabled={!canGoNext} title="Trang sau" type="button" onClick={onNext}>
+          <ChevronRight aria-hidden="true" size={18} />
+        </button>
+        <button aria-label="Trang cuối" disabled={!canGoNext} title="Trang cuối" type="button" onClick={onLast ?? onNext}>
+          <ChevronLast aria-hidden="true" size={18} />
         </button>
       </div>
+      <strong className="management-table-footer-summary">{rangeStart} - {rangeEnd} trong {total} {entityLabel}</strong>
     </nav>
   )
 }

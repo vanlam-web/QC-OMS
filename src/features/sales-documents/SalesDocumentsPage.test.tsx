@@ -212,7 +212,12 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(screen.queryByText('Chưa có bộ lọc phụ.')).not.toBeInTheDocument()
   expect(screen.queryByText('Chọn một chứng từ để xem chi tiết.')).not.toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
-  expect(service.listSalesDocuments).toHaveBeenCalledWith({ page: 1, page_size: 15 })
+  expect(service.listSalesDocuments).toHaveBeenCalledWith(expect.objectContaining({
+    from: expect.stringMatching(/^\d{4}-\d{2}-01$/),
+    page: 1,
+    page_size: 15,
+    to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+  }))
   expect(screen.getByRole('columnheader', { name: 'Mã hóa đơn' })).toBeInTheDocument()
   expect(screen.getByRole('columnheader', { name: 'Thời gian' })).toBeInTheDocument()
   expect(screen.getByRole('columnheader', { name: 'Khách hàng' })).toBeInTheDocument()
@@ -239,8 +244,8 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(screen.queryByText('Hoàn tất', { selector: '.status-chip' })).not.toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang chứng từ' })
   expect(footer).toHaveClass('management-table-footer')
-  expect(within(footer).getByText('1-1 / 1 chứng từ')).toBeInTheDocument()
-  expect(within(footer).getByText('Trang 1 / 1')).toBeInTheDocument()
+  expect(within(footer).getByText('1 - 1 trong 1 chứng từ')).toBeInTheDocument()
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
   expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeDisabled()
 })
@@ -274,7 +279,13 @@ it('searches by document code and keeps filtered empty state clear', async () =>
   await screen.findByText('Chưa có chứng từ phù hợp bộ lọc.')
   await userEvent.type(screen.getByLabelText('Tìm chứng từ'), 'HD010985{Enter}')
 
-  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ search: 'HD010985', page: 1, page_size: 15 })
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    from: expect.stringMatching(/^\d{4}-\d{2}-01$/),
+    page: 1,
+    page_size: 15,
+    search: 'HD010985',
+    to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+  }))
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
   expect(within(sidebar).queryByText('Tìm: HD010985')).not.toBeInTheDocument()
   expect(screen.getByText('Không thấy chứng từ theo bộ lọc hiện tại.')).toBeInTheDocument()
@@ -299,16 +310,65 @@ it('uses 15-row pagination range and navigates pages through the list footer', a
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   const footer = await screen.findByRole('navigation', { name: 'Phân trang chứng từ' })
-  expect(within(footer).getByText('1-15 / 40 chứng từ')).toBeInTheDocument()
-  expect(within(footer).getByText('Trang 1 / 3')).toBeInTheDocument()
+  expect(within(footer).getByText('1 - 15 trong 40 chứng từ')).toBeInTheDocument()
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
   expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeEnabled()
   await userEvent.click(within(footer).getByRole('button', { name: 'Trang sau' }))
 
-  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({ page: 2, page_size: 15 })
-  expect(await within(footer).findByText('16-30 / 40 chứng từ')).toBeInTheDocument()
-  expect(within(footer).getByText('Trang 2 / 3')).toBeInTheDocument()
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    from: expect.stringMatching(/^\d{4}-\d{2}-01$/),
+    page: 2,
+    page_size: 15,
+    to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+  }))
+  expect(await within(footer).findByText('16 - 30 trong 40 chứng từ')).toBeInTheDocument()
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('2')
   expect(await screen.findByText('HD010999')).toBeInTheDocument()
+})
+
+it('filters sales documents by KiotViet-style custom time range', async () => {
+  const service = makeService()
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('HD010985')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
+  const timeGroup = within(sidebar).getByRole('region', { name: 'Thời gian' })
+
+  expect(within(timeGroup).getByRole('radio', { name: 'Tháng này' })).toBeChecked()
+  expect(within(timeGroup).getByRole('radio', { name: 'Tùy chỉnh' })).toBeInTheDocument()
+
+  await userEvent.click(within(timeGroup).getByRole('radio', { name: 'Tùy chỉnh' }))
+  await userEvent.clear(within(timeGroup).getByLabelText('Từ ngày'))
+  await userEvent.type(within(timeGroup).getByLabelText('Từ ngày'), '2026-07-01')
+  await userEvent.clear(within(timeGroup).getByLabelText('Đến ngày'))
+  await userEvent.type(within(timeGroup).getByLabelText('Đến ngày'), '2026-07-31')
+
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({
+    from: '2026-07-01',
+    page: 1,
+    page_size: 15,
+    to: '2026-07-31',
+  })
+})
+
+it('opens KiotViet-style quick time menu and can select all time without date params', async () => {
+  const service = makeService()
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('HD010985')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc chứng từ bán hàng' })
+  const timeGroup = within(sidebar).getByRole('region', { name: 'Thời gian' })
+
+  await userEvent.click(within(timeGroup).getByText('Tháng này'))
+
+  expect(within(timeGroup).getByRole('region', { name: 'Chọn nhanh thời gian' })).toBeInTheDocument()
+  await userEvent.click(within(timeGroup).getByRole('button', { name: 'Toàn thời gian' }))
+
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+  })
 })
 
 it('filters quotes and exposes reopen only for active quote rows', async () => {
@@ -334,12 +394,14 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   await userEvent.click(screen.getByRole('radio', { name: 'Báo giá' }))
   await userEvent.click(screen.getByRole('radio', { name: 'Đang hiệu lực' }))
 
-  expect(service.listSalesDocuments).toHaveBeenLastCalledWith({
+  expect(service.listSalesDocuments).toHaveBeenLastCalledWith(expect.objectContaining({
+    from: expect.stringMatching(/^\d{4}-\d{2}-01$/),
     type: 'quote',
     status: 'active',
     page: 1,
     page_size: 15,
-  })
+    to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+  }))
   expect(screen.queryByRole('button', { name: 'Mở tại POS BG000123' })).not.toBeInTheDocument()
   await clickDocumentRow('BG000123')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ BG000123' })

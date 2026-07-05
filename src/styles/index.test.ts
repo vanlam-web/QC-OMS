@@ -63,6 +63,16 @@ it('right aligns money values in shared tables', () => {
   expect(cssRule('.money-text')).toContain('font-variant-numeric: tabular-nums')
 })
 
+it('keeps shared management table headers sticky and visually distinct', () => {
+  const headerRule = cssRule('.management-list-surface thead th')
+
+  expect(headerRule).toContain('position: sticky')
+  expect(headerRule).toContain('top: 0')
+  expect(headerRule).toContain('z-index: 2')
+  expect(headerRule).toContain('background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-primary))')
+  expect(headerRule).toContain('box-shadow: inset 0 -1px 0 var(--color-border)')
+})
+
 it('shares inline detail tab styling outside customer-only pages', () => {
   expect(css).toContain('.customer-detail-tabs,\n.inline-detail-tabs')
   expect(css).toContain(".customer-detail-tabs button[aria-selected='true'],\n.inline-detail-tabs button[aria-selected='true']")

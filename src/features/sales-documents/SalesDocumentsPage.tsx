@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Search } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Search } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
@@ -27,6 +27,101 @@ function dateTime(value: string) {
 }
 
 const salesDocumentsPageSize = 15
+type TimeFilter = 'all' | 'today' | 'yesterday' | 'week' | 'last_week' | 'last_7_days' | 'month' | 'last_month' | 'last_30_days' | 'quarter' | 'last_quarter' | 'year' | 'last_year' | 'custom'
+
+const quickTimeGroups: Array<{ title: string; presets: Array<Exclude<TimeFilter, 'custom'>> }> = [
+  { title: 'Theo ngày', presets: ['today', 'yesterday'] },
+  { title: 'Theo tuần', presets: ['week', 'last_week', 'last_7_days'] },
+  { title: 'Theo tháng', presets: ['month', 'last_month', 'last_30_days'] },
+  { title: 'Theo quý', presets: ['quarter', 'last_quarter'] },
+  { title: 'Theo năm', presets: ['year', 'last_year', 'all'] },
+]
+
+const quickTimeLabels: Record<TimeFilter, string> = {
+  all: 'Toàn thời gian',
+  today: 'Hôm nay',
+  yesterday: 'Hôm qua',
+  week: 'Tuần này',
+  last_week: 'Tuần trước',
+  last_7_days: '7 ngày qua',
+  month: 'Tháng này',
+  last_month: 'Tháng trước',
+  last_30_days: '30 ngày qua',
+  quarter: 'Quý này',
+  last_quarter: 'Quý trước',
+  year: 'Năm nay',
+  last_year: 'Năm trước',
+  custom: 'Tùy chỉnh',
+}
+
+function localDateString(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+
+function currentMonthRange() {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return { from: localDateString(firstDay), to: localDateString(lastDay) }
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
+function quickTimeRange(preset: Exclude<TimeFilter, 'custom'>) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const day = today.getDay()
+  const mondayOffset = day === 0 ? -6 : 1 - day
+  const currentQuarter = Math.floor(today.getMonth() / 3)
+
+  if (preset === 'all') return { from: '', to: '' }
+  if (preset === 'today') return { from: localDateString(today), to: localDateString(today) }
+  if (preset === 'yesterday') {
+    const yesterday = addDays(today, -1)
+    return { from: localDateString(yesterday), to: localDateString(yesterday) }
+  }
+  if (preset === 'week') {
+    const firstDay = addDays(today, mondayOffset)
+    return { from: localDateString(firstDay), to: localDateString(addDays(firstDay, 6)) }
+  }
+  if (preset === 'last_week') {
+    const firstDay = addDays(today, mondayOffset - 7)
+    return { from: localDateString(firstDay), to: localDateString(addDays(firstDay, 6)) }
+  }
+  if (preset === 'last_7_days') return { from: localDateString(addDays(today, -6)), to: localDateString(today) }
+  if (preset === 'month') return currentMonthRange()
+  if (preset === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'last_30_days') return { from: localDateString(addDays(today, -29)), to: localDateString(today) }
+  if (preset === 'quarter') {
+    const firstDay = new Date(today.getFullYear(), currentQuarter * 3, 1)
+    const lastDay = new Date(today.getFullYear(), currentQuarter * 3 + 3, 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'last_quarter') {
+    const firstDay = new Date(today.getFullYear(), currentQuarter * 3 - 3, 1)
+    const lastDay = new Date(today.getFullYear(), currentQuarter * 3, 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'year') {
+    return { from: localDateString(new Date(today.getFullYear(), 0, 1)), to: localDateString(new Date(today.getFullYear(), 11, 31)) }
+  }
+  return { from: localDateString(new Date(today.getFullYear() - 1, 0, 1)), to: localDateString(new Date(today.getFullYear() - 1, 11, 31)) }
+}
+
+function displayDate(value: string) {
+  if (!value) return '--/--/----'
+  const [year, month, day] = value.split('-')
+  return `${day}/${month}/${year}`
+}
 
 interface SalesDocumentsState {
   items: SalesDocumentListItem[]
@@ -54,6 +149,10 @@ export function SalesDocumentsPage({
   const [lastSearch, setLastSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'invoice' | 'quote'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('month')
+  const [dateFrom, setDateFrom] = useState(() => currentMonthRange().from)
+  const [dateTo, setDateTo] = useState(() => currentMonthRange().to)
+  const [quickTimeOpen, setQuickTimeOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(true)
   const [selected, setSelected] = useState<SalesDocumentDetail | null>(null)
   const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(null)
@@ -66,20 +165,30 @@ export function SalesDocumentsPage({
     search?: string
     type?: typeof typeFilter
     status?: typeof statusFilter
+    time?: typeof timeFilter
+    from?: string
+    to?: string
     page?: number
+    page_size?: number
   } = {}) {
     const nextSearch = input.search ?? lastSearch
     const nextType = input.type ?? typeFilter
     const nextStatus = input.status ?? statusFilter
+    const nextTime = input.time ?? timeFilter
+    const nextFrom = input.from ?? dateFrom
+    const nextTo = input.to ?? dateTo
     const nextPage = input.page ?? state?.page ?? 1
+    const nextPageSize = input.page_size ?? state?.pageSize ?? salesDocumentsPageSize
     setError(null)
     try {
       const result = await service.listSalesDocuments({
         ...(nextSearch ? { search: nextSearch } : {}),
         ...(nextType === 'all' ? {} : { type: nextType }),
         ...(nextStatus === 'all' ? {} : { status: nextStatus }),
+        ...(nextTime !== 'all' && nextFrom ? { from: nextFrom } : {}),
+        ...(nextTime !== 'all' && nextTo ? { to: nextTo } : {}),
         page: nextPage,
-        page_size: salesDocumentsPageSize,
+        page_size: nextPageSize,
       })
       setState({ items: result.items, total: result.total, page: result.page, pageSize: result.page_size })
       if (result.items.length === 0) setSelected(null)
@@ -111,7 +220,13 @@ export function SalesDocumentsPage({
     async function loadInitialDocuments() {
       setError(null)
       try {
-        const result = await service.listSalesDocuments({ page: 1, page_size: salesDocumentsPageSize })
+        const monthRange = currentMonthRange()
+        const result = await service.listSalesDocuments({
+          from: monthRange.from,
+          to: monthRange.to,
+          page: 1,
+          page_size: salesDocumentsPageSize,
+        })
         if (!active) return
         setState({ items: result.items, total: result.total, page: result.page, pageSize: result.page_size })
       } catch (cause) {
@@ -134,19 +249,25 @@ export function SalesDocumentsPage({
     setDetailError(null)
     setDetailErrorDocumentId(null)
     setLastSearch(trimmed)
+    setQuickTimeOpen(false)
     await loadDocuments({ search: trimmed, page: 1 })
   }
 
   async function resetFilters() {
+    const monthRange = currentMonthRange()
     setSearch('')
     setLastSearch('')
     setTypeFilter('all')
     setStatusFilter('all')
+    setTimeFilter('month')
+    setDateFrom(monthRange.from)
+    setDateTo(monthRange.to)
+    setQuickTimeOpen(false)
     setSelected(null)
     setLoadingDocumentId(null)
     setDetailError(null)
     setDetailErrorDocumentId(null)
-    await loadDocuments({ search: '', type: 'all', status: 'all', page: 1 })
+    await loadDocuments({ search: '', type: 'all', status: 'all', time: 'month', from: monthRange.from, to: monthRange.to, page: 1 })
   }
 
   async function applyTypeFilter(nextType: typeof typeFilter) {
@@ -165,6 +286,33 @@ export function SalesDocumentsPage({
     setDetailError(null)
     setDetailErrorDocumentId(null)
     await loadDocuments({ status: nextStatus, page: 1 })
+  }
+
+  async function applyQuickTimeFilter(nextTime: Exclude<TimeFilter, 'custom'>) {
+    const range = quickTimeRange(nextTime)
+    setTimeFilter(nextTime)
+    setDateFrom(range.from)
+    setDateTo(range.to)
+    setQuickTimeOpen(false)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ time: nextTime, from: range.from, to: range.to, page: 1 })
+  }
+
+  async function applyCustomDateFilter(next: { from?: string; to?: string }) {
+    const nextFrom = next.from ?? dateFrom
+    const nextTo = next.to ?? dateTo
+    setTimeFilter('custom')
+    setDateFrom(nextFrom)
+    setDateTo(nextTo)
+    setQuickTimeOpen(false)
+    setSelected(null)
+    setLoadingDocumentId(null)
+    setDetailError(null)
+    setDetailErrorDocumentId(null)
+    await loadDocuments({ time: 'custom', from: nextFrom, to: nextTo, page: 1 })
   }
 
   async function goToPage(nextPage: number) {
@@ -202,12 +350,14 @@ export function SalesDocumentsPage({
   const total = state?.total ?? 0
   const page = state?.page ?? 1
   const pageSize = state?.pageSize ?? salesDocumentsPageSize
-  const hasFilter = lastSearch.length > 0 || typeFilter !== 'all' || statusFilter !== 'all'
+  const hasFilter = lastSearch.length > 0 || typeFilter !== 'all' || statusFilter !== 'all' || timeFilter !== 'month'
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
   const activeFilterSummary = [
     ...(lastSearch ? [`Tìm: ${lastSearch}`] : []),
+    ...(timeFilter === 'custom' ? [`Thời gian: ${dateFrom || '...'} - ${dateTo || '...'}`] : []),
+    ...(timeFilter !== 'month' && timeFilter !== 'custom' ? [`Thời gian: ${quickTimeLabels[timeFilter]}`] : []),
     ...(typeFilter !== 'all' ? [`Loại: ${documentTypeFilterLabel(typeFilter)}`] : []),
     ...(statusFilter !== 'all' ? [`Trạng thái: ${lifecycleFilterLabel(statusFilter)}`] : []),
   ].join(' • ')
@@ -244,6 +394,7 @@ export function SalesDocumentsPage({
         <ManagementFilterSidebar
           activeSummary={activeFilterSummary || undefined}
           ariaLabel="Bộ lọc chứng từ bán hàng"
+          popoverOpen={quickTimeOpen}
           title="Bộ lọc"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
@@ -261,6 +412,85 @@ export function SalesDocumentsPage({
           >
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
+          <ManagementFilterGroup title="Thời gian">
+            <div className="management-filter-time-options">
+              <div
+                className={`management-filter-choice${timeFilter !== 'custom' ? ' management-filter-choice-active' : ''}`}
+                aria-expanded={quickTimeOpen}
+                onClick={() => {
+                  if (timeFilter === 'custom') void applyQuickTimeFilter('month')
+                  else setQuickTimeOpen((current) => !current)
+                }}
+              >
+                <input
+                  aria-label={timeFilter === 'custom' ? quickTimeLabels.month : quickTimeLabels[timeFilter]}
+                  checked={timeFilter !== 'custom'}
+                  name="sales-document-time"
+                  readOnly
+                  type="radio"
+                  onChange={() => undefined}
+                />
+                <span>{timeFilter === 'custom' ? quickTimeLabels.month : quickTimeLabels[timeFilter]}</span>
+                <span className="management-filter-choice-trailing">
+                  <ChevronRight aria-hidden="true" size={17} />
+                </span>
+              </div>
+              <label className={`management-filter-choice${timeFilter === 'custom' ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  aria-label="Tùy chỉnh"
+                  checked={timeFilter === 'custom'}
+                  name="sales-document-time"
+                  type="radio"
+                  onChange={() => void applyCustomDateFilter({})}
+                />
+                <span>{timeFilter === 'custom' ? `${displayDate(dateFrom)} - ${displayDate(dateTo)}` : 'Tùy chỉnh'}</span>
+                <CalendarDays aria-hidden="true" size={17} />
+              </label>
+            </div>
+            {quickTimeOpen ? (
+              <div aria-label="Chọn nhanh thời gian" className="management-filter-quick-time-menu" role="region">
+                {quickTimeGroups.map((group) => (
+                  <section key={group.title}>
+                    <h3>{group.title}</h3>
+                    <div>
+                      {group.presets.map((preset) => (
+                        <button
+                          className={timeFilter === preset ? 'management-filter-quick-time-active' : undefined}
+                          key={preset}
+                          type="button"
+                          onClick={() => void applyQuickTimeFilter(preset)}
+                        >
+                          {quickTimeLabels[preset]}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : null}
+            {timeFilter === 'custom' ? (
+              <div className="management-filter-date-range">
+                <label>
+                  <span>Từ ngày</span>
+                  <input
+                    aria-label="Từ ngày"
+                    type="date"
+                    value={dateFrom}
+                    onChange={(event) => void applyCustomDateFilter({ from: event.target.value })}
+                  />
+                </label>
+                <label>
+                  <span>Đến ngày</span>
+                  <input
+                    aria-label="Đến ngày"
+                    type="date"
+                    value={dateTo}
+                    onChange={(event) => void applyCustomDateFilter({ to: event.target.value })}
+                  />
+                </label>
+              </div>
+            ) : null}
+          </ManagementFilterGroup>
           <ManagementFilterGroup title="Loại chứng từ">
             <label>
               <input checked={typeFilter === 'all'} name="sales-document-type" type="radio" onChange={() => void applyTypeFilter('all')} />
@@ -391,7 +621,10 @@ export function SalesDocumentsPage({
               page={page}
               pageSize={pageSize}
               total={total}
+              onFirst={() => void goToPage(1)}
+              onLast={() => void goToPage(totalPages)}
               onNext={() => void goToPage(page + 1)}
+              onPageSizeChange={(nextPageSize) => void loadDocuments({ page: 1, page_size: nextPageSize })}
               onPrevious={() => void goToPage(page - 1)}
             />
           </>

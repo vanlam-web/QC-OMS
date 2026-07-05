@@ -81,7 +81,7 @@ it('renders the price book as a separate grid-first workspace', async () => {
   expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
   const filterForm = screen.getByRole('form', { name: 'Lọc bảng giá' })
   expect(filterForm.closest('.management-filter-sidebar')).not.toBeNull()
-  expect(screen.getByRole('navigation', { name: 'Phân trang bảng giá' })).toHaveTextContent('1-1 / 1 hàng hóa')
+  expect(screen.getByRole('navigation', { name: 'Phân trang bảng giá' })).toHaveTextContent('1 - 1 trong 1 hàng hóa')
 
   const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
   expect(grid.closest('.management-table-viewport')).not.toBeNull()

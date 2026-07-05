@@ -71,12 +71,13 @@ export function CustomersPage({
     address: '',
   })
 
-  async function load(filters: { search?: string; page?: number } = {}) {
+  async function load(filters: { search?: string; page?: number; page_size?: number } = {}) {
     const nextSearch = filters.search ?? lastSearch
     const nextPage = filters.page ?? page
+    const nextPageSize = filters.page_size ?? pageSize
     setError(null)
     try {
-      const result = await service.listCustomers({ search: nextSearch || undefined, page: nextPage, page_size: pageSize })
+      const result = await service.listCustomers({ search: nextSearch || undefined, page: nextPage, page_size: nextPageSize })
       setState({ customers: result.items, total: result.total, page: result.page, pageSize: result.page_size })
       setLastSearch(nextSearch)
       setPage(result.page)
@@ -498,7 +499,10 @@ export function CustomersPage({
               page={page}
               pageSize={pageSize}
               total={state.total}
+              onFirst={() => void goToPage(1)}
+              onLast={() => void goToPage(totalPages)}
               onNext={() => void goToPage(page + 1)}
+              onPageSizeChange={(nextPageSize) => void load({ page: 1, page_size: nextPageSize })}
               onPrevious={() => void goToPage(page - 1)}
             />
           </>

@@ -227,6 +227,10 @@ it('renders filter sidebar content without a duplicated header summary', () => {
 })
 
 it('renders a reusable management table footer with range page and disabled controls', () => {
+  const onFirst = vi.fn()
+  const onLast = vi.fn()
+  const onPageSizeChange = vi.fn()
+
   render(
     <ManagementTableFooter
       ariaLabel="Phân trang chứng từ"
@@ -236,17 +240,24 @@ it('renders a reusable management table footer with range page and disabled cont
       page={1}
       pageSize={15}
       total={40}
+      onFirst={onFirst}
+      onLast={onLast}
       onNext={vi.fn()}
+      onPageSizeChange={onPageSizeChange}
       onPrevious={vi.fn()}
     />,
   )
 
   const footer = screen.getByRole('navigation', { name: 'Phân trang chứng từ' })
   expect(footer).toHaveClass('management-table-footer')
-  expect(within(footer).getByText('1-15 / 40 chứng từ')).toBeInTheDocument()
-  expect(within(footer).getByText('Trang 1 / 3')).toBeInTheDocument()
+  expect(within(footer).getByText('Hiển thị')).toBeInTheDocument()
+  expect(within(footer).getByRole('combobox', { name: 'Số dòng hiển thị' })).toHaveValue('15')
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
+  expect(within(footer).getByText('1 - 15 trong 40 chứng từ')).toBeInTheDocument()
+  expect(within(footer).getByRole('button', { name: 'Trang đầu' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang trước' })).toBeDisabled()
   expect(within(footer).getByRole('button', { name: 'Trang sau' })).toBeEnabled()
+  expect(within(footer).getByRole('button', { name: 'Trang cuối' })).toBeEnabled()
 })
 
 it('renders compact row action buttons and inline detail rows tied to the table', () => {

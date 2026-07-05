@@ -188,8 +188,8 @@ it('uses 15-row pagination range and navigates pages through the list footer', a
 
   await screen.findByText('NCC000031')
   const footer = screen.getByRole('navigation', { name: 'Phân trang nhà cung cấp' })
-  expect(within(footer).getByText('1-15 / 16 nhà cung cấp')).toBeInTheDocument()
-  expect(within(footer).getByText('Trang 1 / 2')).toBeInTheDocument()
+  expect(within(footer).getByText('1 - 15 trong 16 nhà cung cấp')).toBeInTheDocument()
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
 
   await userEvent.click(within(footer).getByRole('button', { name: 'Trang sau' }))
 

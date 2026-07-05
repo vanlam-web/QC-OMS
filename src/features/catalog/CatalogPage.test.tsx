@@ -151,8 +151,8 @@ it('renders products as a goods and inventory-oriented list, not a pricebook wor
   expect(header).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
   expect(footer).toHaveClass('management-table-footer')
-  expect(footer).toContainElement(screen.getByText('1-1 / 1 hàng hóa'))
-  expect(footer).toContainElement(screen.getByText('Trang 1 / 1'))
+  expect(footer).toContainElement(screen.getByText('1 - 1 trong 1 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
   expect(screen.queryByRole('table', { name: 'Lưới bảng giá' })).not.toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Công thức bảng giá' })).not.toBeInTheDocument()
 })
@@ -180,14 +180,14 @@ it('uses the shared table footer to move between product pages', async () => {
 
   expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
   const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
-  expect(footer).toContainElement(screen.getByText('1-15 / 45 hàng hóa'))
-  expect(footer).toContainElement(screen.getByText('Trang 1 / 3'))
+  expect(footer).toContainElement(screen.getByText('1 - 15 trong 45 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
 
   await userEvent.click(within(footer).getByRole('button', { name: 'Trang sau' }))
 
   expect(await screen.findByText('DECAL-2')).toBeInTheDocument()
-  expect(footer).toContainElement(screen.getByText('16-30 / 45 hàng hóa'))
-  expect(footer).toContainElement(screen.getByText('Trang 2 / 3'))
+  expect(footer).toContainElement(screen.getByText('16 - 30 trong 45 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('2')
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 2, page_size: 15, search: undefined, status: 'active' })
 })
 
