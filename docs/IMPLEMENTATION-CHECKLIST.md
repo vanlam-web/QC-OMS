@@ -6,16 +6,6 @@
 
 ---
 
-## Backlog Sau
-
-- [ ] Giảm cảnh báo Vite production chunk size.
-  - Hiện tại: `npm run build` pass, nhưng Vite cảnh báo main JavaScript chunk lớn hơn 500 kB.
-  - Ý nghĩa: không phải lỗi đúng/sai nghiệp vụ; có thể làm trang đầu tải chậm hơn khi app lớn.
-  - Hướng xử lý sau: route-level code splitting để POS, Inventory, Finance, Reports, BOM/Catalog chỉ load code khi mở module.
-  - Ưu tiên: sau khi các workflow nghiệp vụ lõi ổn định.
-
----
-
 ## Baseline Đã Kiểm
 
 | Nhóm | Kết quả |

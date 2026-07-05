@@ -82,7 +82,7 @@ npm run build
 | `REV-2026-07-03-004` — Workspace has many uncommitted changes | Closed; `main...origin/main` sạch ngày 2026-07-05 |
 | `REV-2026-07-03-005` — Governance docs old multi-AI wording | Closed; wording đã chuyển Codex Spec / Implement / Review |
 | `REV-2026-07-03-006` — Documentation indexes drift | Closed; index đã cập nhật |
-| `REV-2026-07-03-007` — Historical audit/draft status unclear | Closed; audit/draft đã ghi rõ trace/history |
+| `REV-2026-07-03-007` — Historical audit/draft status unclear | Closed; root audit logs cũ đã gỡ khỏi docs sống |
 
 ---
 
