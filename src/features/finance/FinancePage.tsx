@@ -26,6 +26,7 @@ import type {
   CustomerDebtSummary,
   FinanceAccount,
   CashbookBalance,
+  PartnerDebtMode,
 } from './types'
 import type { FinanceService } from './finance-service'
 import { buildCashbookCsv } from './finance-service'
@@ -82,13 +83,31 @@ function sourceTypeText(value: CashbookEntry['source_type']) {
 }
 
 function voucherTypeOptions(direction: CashbookDirection): Array<{ value: CreateCashbookVoucherInput['voucher_type']; label: string }> {
-  if (direction === 'in') return [{ value: 'other_income', label: 'Thu nhập khác' }]
+  if (direction === 'in') {
+    return [
+      { value: 'other_income', label: 'Thu nhập khác' },
+      { value: 'capital_contribution', label: 'Góp vốn' },
+      { value: 'transfer', label: 'Chuyển/Rút' },
+    ]
+  }
   return [
     { value: 'material_purchase', label: 'Vật tư' },
+    { value: 'supplier_payment', label: 'Tiền trả NCC' },
+    { value: 'staff_salary', label: 'Lương NV' },
+    { value: 'shipping_expense', label: 'Vận chuyển' },
     { value: 'customer_refund', label: 'Hoàn tiền khách' },
     { value: 'operating_expense', label: 'Chi phí vận hành' },
+    { value: 'tax_or_vat', label: 'Thuế/VAT' },
+    { value: 'commission', label: 'Hoa hồng' },
+    { value: 'transfer', label: 'Chuyển/Rút' },
     { value: 'other_expense', label: 'Chi khác' },
   ]
+}
+
+function partnerDebtModeText(value: PartnerDebtMode) {
+  if (value === 'affects_partner_debt') return 'Có ảnh hưởng công nợ'
+  if (value === 'not_affect_partner_debt') return 'Không ảnh hưởng công nợ'
+  return 'Không áp dụng công nợ'
 }
 
 function dateText(value: string) {
@@ -139,6 +158,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [voucherAccountId, setVoucherAccountId] = useState('')
   const [voucherType, setVoucherType] = useState<CreateCashbookVoucherInput['voucher_type']>('other_income')
   const [voucherAmount, setVoucherAmount] = useState('')
+  const [voucherPartnerDebtMode, setVoucherPartnerDebtMode] = useState<PartnerDebtMode>('no_partner_debt')
   const [voucherBusinessAccounted, setVoucherBusinessAccounted] = useState(true)
   const [voucherCounterpartyType, setVoucherCounterpartyType] = useState<CreateCashbookVoucherInput['counterparty_type']>('none')
   const [voucherCounterpartyName, setVoucherCounterpartyName] = useState('')
@@ -167,6 +187,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
     setVoucherAccountId(accounts.find((account) => account.is_active)?.id ?? '')
     setVoucherType(options[0].value)
     setVoucherAmount('')
+    setVoucherPartnerDebtMode('no_partner_debt')
     setVoucherBusinessAccounted(direction === 'out')
     setVoucherCounterpartyType('none')
     setVoucherCounterpartyName('')
@@ -183,6 +204,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
     setVoucherAccountId(accounts.find((account) => account.is_active)?.id ?? '')
     setVoucherType(direction === 'in' ? 'other_income' : 'operating_expense')
     setVoucherAmount(String(voucher.amount))
+    setVoucherPartnerDebtMode('no_partner_debt')
     setVoucherBusinessAccounted(true)
     setVoucherCounterpartyType('none')
     setVoucherCounterpartyName('')
@@ -474,6 +496,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
         voucher_type: voucherType,
         finance_account_id: voucherAccountId,
         amount,
+        partner_debt_mode: voucherPartnerDebtMode,
         is_business_accounted: voucherBusinessAccounted,
         counterparty_type: voucherCounterpartyType,
         ...(voucherCounterpartyName.trim() ? { counterparty_name: voucherCounterpartyName.trim() } : {}),
@@ -636,6 +659,17 @@ export function FinancePage({ service }: { service: FinanceService }) {
             <label>
               Số tiền
               <input min="1" type="number" value={voucherAmount} onChange={(event) => setVoucherAmount(event.target.value)} />
+            </label>
+            <label>
+              Công nợ đối tác
+              <select
+                value={voucherPartnerDebtMode}
+                onChange={(event) => setVoucherPartnerDebtMode(event.target.value as PartnerDebtMode)}
+              >
+                <option value="no_partner_debt">{partnerDebtModeText('no_partner_debt')}</option>
+                <option value="not_affect_partner_debt">{partnerDebtModeText('not_affect_partner_debt')}</option>
+                <option value="affects_partner_debt">{partnerDebtModeText('affects_partner_debt')}</option>
+              </select>
             </label>
             <label>
               Đối tượng
