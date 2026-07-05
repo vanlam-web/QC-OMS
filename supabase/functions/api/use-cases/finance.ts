@@ -113,11 +113,15 @@ export async function listCashbookEntries(
   requireAnyPermission(context, ["perm.view_shift_report", "perm.manage_finance"]);
   const { page, pageSize } = parsePagedSearch(url);
   const search = url.searchParams.get("search")?.trim() || undefined;
-  const isExactVoucherSearch = search !== undefined && /^[A-Z]{2,}[A-Z0-9]*[0-9]{3,}(?:\.[0-9]{2})?$/.test(search);
+  const searchScope = parseOptionalEnum(url.searchParams.get("search_scope"), ["code", "note", "transfer_content"]);
+  const isExactVoucherSearch = (searchScope === "code" || searchScope === undefined) &&
+    search !== undefined &&
+    /^[A-Z]{2,}[A-Z0-9]*[0-9]{3,}(?:\.[0-9]{2})?$/.test(search);
   return await repository.listCashbookEntries({
     organizationId: context.organizationId,
     financeAccountId: url.searchParams.get("finance_account_id")?.trim() || undefined,
     search,
+    searchScope,
     direction: parseOptionalEnum(url.searchParams.get("direction"), ["in", "out"]),
     sourceType: parseOptionalEnum(url.searchParams.get("source_type"), ["payment_receipt_method", "cashbook_voucher"]),
     status: parseOptionalEnum(url.searchParams.get("status"), ["posted", "cancelled"]),

@@ -4,6 +4,17 @@ export type CashbookStatus = 'posted' | 'cancelled'
 export type CashbookSourceType = 'payment_receipt_method' | 'cashbook_voucher'
 export type VoucherSourceType = 'payment_receipt' | 'manual_voucher'
 export type CashbookBusinessAccountedFilter = 'all' | 'true' | 'false'
+export type CashbookSearchScope = 'all' | 'code' | 'note' | 'transfer_content'
+export type CashbookColumnKey =
+  | 'code'
+  | 'created_at'
+  | 'source_type'
+  | 'counterparty'
+  | 'finance_account'
+  | 'amount_delta'
+  | 'status'
+  | 'note'
+  | 'is_business_accounted'
 
 export interface FinanceAccount {
   id: string

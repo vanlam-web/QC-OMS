@@ -1526,10 +1526,14 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       let items = await Promise.all((data ?? []).map((row) => hydrateCashbookEntry(client, input.organizationId, row)));
       if (input.search !== undefined) {
         const search = input.search.toLocaleLowerCase("vi");
-        items = items.filter((item) =>
-          item.code.toLocaleLowerCase("vi").includes(search) ||
-          item.note?.toLocaleLowerCase("vi").includes(search) === true
-        );
+        items = items.filter((item) => {
+          const codeMatch = item.code.toLocaleLowerCase("vi").includes(search);
+          const noteMatch = item.note?.toLocaleLowerCase("vi").includes(search) === true;
+          if (input.searchScope === "code") return codeMatch;
+          if (input.searchScope === "note") return noteMatch;
+          if (input.searchScope === "transfer_content") return false;
+          return codeMatch || noteMatch;
+        });
       }
 
       const summaryItems = items.filter((item) => item.status === "posted");

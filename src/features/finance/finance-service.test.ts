@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createFinanceService } from './finance-service'
+import { buildCashbookCsv, createFinanceService } from './finance-service'
 import type { FinanceApiRequester } from './finance-service'
 
 describe('finance-service', () => {
@@ -14,6 +14,7 @@ describe('finance-service', () => {
     await service.listCustomerDebts({ search: 'an', page: 2, page_size: 20 })
     await service.listCashbookEntries({
       search: 'PT0001',
+      search_scope: 'code',
       finance_account_id: 'bank-1',
       direction: 'in',
       status: 'posted',
@@ -28,7 +29,7 @@ describe('finance-service', () => {
     expect(calls).toEqual([
       ['/api/v1/finance/customer-debts?search=an&page=2&page_size=20', undefined],
       [
-        '/api/v1/finance/cashbook?search=PT0001&finance_account_id=bank-1&direction=in&status=posted&is_business_accounted=false&from=2026-07-01T00%3A00%3A00.000Z&to=2026-07-31T23%3A59%3A59.999Z&page=3&page_size=15',
+        '/api/v1/finance/cashbook?search=PT0001&search_scope=code&finance_account_id=bank-1&direction=in&status=posted&is_business_accounted=false&from=2026-07-01T00%3A00%3A00.000Z&to=2026-07-31T23%3A59%3A59.999Z&page=3&page_size=15',
         undefined,
       ],
       ['/api/v1/finance/cashbook/entry-1', undefined],
@@ -74,5 +75,25 @@ describe('finance-service', () => {
         },
       ],
     ])
+  })
+
+  it('builds a cashbook CSV from visible rows', () => {
+    expect(buildCashbookCsv([
+      {
+        id: 'entry-1',
+        code: 'CTM001180',
+        status: 'posted',
+        direction: 'out',
+        amount_delta: -30000,
+        finance_account: { id: 'cash-1', code: 'CASH', name: 'Quỹ tiền mặt', account_type: 'cash' },
+        is_business_accounted: true,
+        source_type: 'cashbook_voucher',
+        created_at: '2026-07-04T07:46:00.000Z',
+        note: 'Vận chuyển',
+      },
+    ])).toBe([
+      'Mã phiếu,Thời gian,Loại thu chi,Người nộp/nhận,Giá trị,Quỹ/Tài khoản,Trạng thái,Ghi chú,Hạch toán KQKD',
+      'CTM001180,2026-07-04T07:46:00.000Z,,,-30000,CASH,posted,Vận chuyển,true',
+    ].join('\n'))
   })
 })

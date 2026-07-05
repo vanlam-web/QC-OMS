@@ -300,6 +300,36 @@ Deno.test("cashbook exact voucher search ignores default date filters", async ()
   assertEquals(observedTo, undefined);
 });
 
+Deno.test("cashbook scoped code search passes search scope and ignores default date filters", async () => {
+  let observedSearchScope: string | undefined = "";
+  let observedFrom: string | undefined = "";
+  let observedTo: string | undefined = "";
+  const response = await call(
+    "/api/v1/finance/cashbook?search=CTM001180&search_scope=code&from=2026-07-01&to=2026-07-31&page=1&page_size=15",
+    { method: "GET" },
+    repo(["perm.manage_finance"], {
+      listCashbookEntries: (input: { search?: string; searchScope?: string; from?: string; to?: string }) => {
+        observedSearchScope = input.searchScope;
+        observedFrom = input.from;
+        observedTo = input.to;
+        assertEquals(input.search, "CTM001180");
+        return Promise.resolve({
+          summary: { opening_balance: 0, total_in: 0, total_out: -30000, ending_balance: -30000 },
+          items: [],
+          page: 1,
+          page_size: 15,
+          total: 0,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observedSearchScope, "code");
+  assertEquals(observedFrom, undefined);
+  assertEquals(observedTo, undefined);
+});
+
 Deno.test("cashbook entry detail includes source and allocation snapshot", async () => {
   const response = await call(
     "/api/v1/finance/cashbook/entry-1",

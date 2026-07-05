@@ -3,6 +3,8 @@ import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   CashbookDirection,
   CashbookEntryDetail,
+  CashbookEntry,
+  CashbookSearchScope,
   CashbookStatus,
   CashbookListResponse,
   CashbookVoucherListResponse,
@@ -44,6 +46,7 @@ export function createFinanceService(api: FinanceApiRequester) {
     listCashbookBalances: () => api.request<CashbookBalanceListResponse>('/api/v1/finance/cashbook/balances'),
     listCashbookEntries: (input: {
       search?: string
+      search_scope?: CashbookSearchScope
       finance_account_id?: string
       direction?: CashbookDirection | 'all'
       status?: CashbookStatus | 'all'
@@ -55,6 +58,7 @@ export function createFinanceService(api: FinanceApiRequester) {
     } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
+      if (input.search_scope && input.search_scope !== 'all') params.set('search_scope', input.search_scope)
       if (input.finance_account_id) params.set('finance_account_id', input.finance_account_id)
       if (input.direction && input.direction !== 'all') params.set('direction', input.direction)
       if (input.status && input.status !== 'all') params.set('status', input.status)
@@ -72,6 +76,28 @@ export function createFinanceService(api: FinanceApiRequester) {
 }
 
 export type FinanceService = ReturnType<typeof createFinanceService>
+
+export function buildCashbookCsv(items: CashbookEntry[]) {
+  const rows = [
+    ['Mã phiếu', 'Thời gian', 'Loại thu chi', 'Người nộp/nhận', 'Giá trị', 'Quỹ/Tài khoản', 'Trạng thái', 'Ghi chú', 'Hạch toán KQKD'],
+    ...items.map((entry) => [
+      entry.code,
+      entry.created_at,
+      '',
+      '',
+      String(entry.amount_delta),
+      entry.finance_account.code,
+      entry.status,
+      entry.note ?? '',
+      String(entry.is_business_accounted),
+    ]),
+  ]
+  return rows.map((row) => row.map(csvCell).join(',')).join('\n')
+}
+
+function csvCell(value: string) {
+  return /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
+}
 
 export function createBrowserFinanceService(getAccessToken: () => Promise<string | null>) {
   return createFinanceService(
