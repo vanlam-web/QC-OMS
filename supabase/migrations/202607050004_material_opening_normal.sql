@@ -3,11 +3,13 @@ create table if not exists public.inventory_provisional_balances (
   organization_id uuid not null references public.organizations(id) on delete restrict,
   product_id uuid not null,
   source_type text not null default 'kiotviet_import',
+  source_label text,
   initial_qty numeric(18,6) not null,
   remaining_qty numeric(18,6) not null,
   stock_unit_id uuid not null,
-  status text not null default 'active',
+  status text not null default 'open',
   note text,
+  created_by uuid not null references public.profiles(user_id) on delete restrict,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint inventory_provisional_balances_product_org_fkey foreign key (product_id, organization_id)
@@ -15,12 +17,16 @@ create table if not exists public.inventory_provisional_balances (
   constraint inventory_provisional_balances_stock_unit_org_fkey foreign key (stock_unit_id, organization_id)
     references public.inventory_units(id, organization_id) on delete restrict,
   constraint inventory_provisional_balances_qty_check check (initial_qty >= 0 and remaining_qty >= 0 and remaining_qty <= initial_qty),
-  constraint inventory_provisional_balances_status_check check (status in ('active', 'closed')),
+  constraint inventory_provisional_balances_status_check check (status in ('open', 'fully_normalized', 'closed')),
   constraint inventory_provisional_balances_source_check check (source_type in ('kiotviet_import'))
 );
 
 create index if not exists idx_inventory_provisional_balances_product
   on public.inventory_provisional_balances (organization_id, product_id, status);
+
+create unique index if not exists inventory_provisional_balances_one_kiotviet_import
+  on public.inventory_provisional_balances (organization_id, product_id, source_type)
+  where source_type = 'kiotviet_import';
 
 create table if not exists public.inventory_material_openings (
   id uuid primary key default gen_random_uuid(),
@@ -47,6 +53,25 @@ create table if not exists public.inventory_material_openings (
   constraint inventory_material_openings_provisional_check check (
     (source_type = 'kiotviet_provisional' and provisional_balance_id is not null)
     or (source_type <> 'kiotviet_provisional' and provisional_balance_id is null)
+  ),
+  constraint inventory_material_openings_shape_object_check check (
+    (
+      inventory_shape = 'normal'
+      and old_inventory_roll_id is null
+      and new_inventory_roll_id is null
+      and old_inventory_sheet_id is null
+      and new_inventory_sheet_id is null
+    )
+    or (
+      inventory_shape = 'roll'
+      and old_inventory_sheet_id is null
+      and new_inventory_sheet_id is null
+    )
+    or (
+      inventory_shape = 'sheet'
+      and old_inventory_roll_id is null
+      and new_inventory_roll_id is null
+    )
   ),
   constraint inventory_material_openings_payload_check check (
     jsonb_typeof(old_snapshot) = 'object'
