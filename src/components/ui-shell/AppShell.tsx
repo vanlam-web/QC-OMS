@@ -22,7 +22,7 @@ const shellNavItems: ShellNavItem[] = [
     marker: 'CT',
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
-  { label: 'Tài chính', shortLabel: 'TC', path: '/finance', marker: 'TC', permissions: ['perm.manage_finance'] },
+  { label: 'Sổ quỹ', shortLabel: 'SQ', path: '/finance', marker: 'SQ', permissions: ['perm.manage_finance'] },
   {
     label: 'Báo cáo',
     shortLabel: 'BC',

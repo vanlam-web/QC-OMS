@@ -13,7 +13,7 @@ export const phaseOneModules = [
   { id: 'purchase-receipts', label: 'Nhập hàng', path: '/purchase/receipts', permissions: ['perm.manage_inventory'] },
   { id: 'price-book', label: 'Bảng giá', path: '/price-book', permissions: ['perm.edit_price_book'] },
   { id: 'inventory', label: 'Kho', path: '/inventory', permissions: ['perm.manage_inventory'] },
-  { id: 'finance', label: 'Tài chính', path: '/finance', permissions: ['perm.manage_finance'] },
+  { id: 'finance', label: 'Sổ quỹ', path: '/finance', permissions: ['perm.manage_finance'] },
   {
     id: 'reports',
     label: 'Báo cáo',

@@ -146,15 +146,15 @@ export function ReportsPage({ service }: { service: ReportService }) {
     >
       {error ? <p role="alert">{error}</p> : null}
 
-      <ManagementListSurface ariaLabel="Báo cáo cuối ngày">
-        <h2>Báo cáo cuối ngày</h2>
+      <ManagementListSurface ariaLabel="Cuối ngày">
+        <h2>Cuối ngày</h2>
         <MetricGrid ariaLabel="Chỉ số cuối ngày">
           <MetricCard label="Hóa đơn" value={sales?.length ?? 0} hint="Hóa đơn hoàn tất" tone="neutral" />
           <MetricCard label="Tiền thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Dòng thu sổ quỹ" tone="success" />
           <MetricCard label="Tiền chi" value={<MoneyText value={cashbookSummary.total_out} />} hint="Dòng chi sổ quỹ" tone="warning" />
           <MetricCard label="Quỹ cuối" value={<MoneyText value={cashbookSummary.ending_balance} />} hint="Theo sổ quỹ" tone="info" />
         </MetricGrid>
-        {cashbook === null ? <p>Đang tải báo cáo cuối ngày...</p> : null}
+        {cashbook === null ? <p>Đang tải cuối ngày...</p> : null}
         {cashbook !== null && cashbook.length === 0 ? <EmptyState>Chưa có dòng sổ quỹ trong khoảng ngày.</EmptyState> : null}
         {cashbook !== null && cashbook.length > 0 ? (
           <ManagementTableViewport>
@@ -184,18 +184,18 @@ export function ReportsPage({ service }: { service: ReportService }) {
         ) : null}
       </ManagementListSurface>
 
-      <ManagementListSurface ariaLabel="Báo cáo bán hàng">
-        <h2>Báo cáo bán hàng</h2>
+      <ManagementListSurface ariaLabel="Bán hàng">
+        <h2>Bán hàng</h2>
         <MetricGrid ariaLabel="Chỉ số bán hàng">
           <MetricCard label="Tổng tiền" value={<MoneyText value={salesTotal} />} hint="Sau chiết khấu" tone="success" />
           <MetricCard label="Đã thu trên hóa đơn" value={<MoneyText value={salesPaid} />} hint="Không gồm thu nợ cũ" tone="info" />
           <MetricCard label="Nợ phát sinh" value={<MoneyText value={salesDebt} />} hint="Từ hóa đơn trong kỳ" tone={salesDebt > 0 ? 'warning' : 'neutral'} />
         </MetricGrid>
-        {sales === null ? <p>Đang tải báo cáo bán hàng...</p> : null}
+        {sales === null ? <p>Đang tải bán hàng...</p> : null}
         {sales !== null && sales.length === 0 ? <EmptyState>Chưa có hóa đơn bán hàng trong khoảng ngày.</EmptyState> : null}
         {sales !== null && sales.length > 0 ? (
           <ManagementTableViewport>
-            <table aria-label="Báo cáo bán hàng" className="management-table">
+            <table aria-label="Bán hàng" className="management-table">
               <thead>
                 <tr>
                   <th>Mã hóa đơn</th>
@@ -223,17 +223,17 @@ export function ReportsPage({ service }: { service: ReportService }) {
         ) : null}
       </ManagementListSurface>
 
-      <ManagementListSurface ariaLabel="Báo cáo công nợ">
-        <h2>Báo cáo công nợ</h2>
+      <ManagementListSurface ariaLabel="Công nợ">
+        <h2>Công nợ</h2>
         <MetricGrid ariaLabel="Chỉ số công nợ">
           <MetricCard label="Khách còn nợ" value={debts?.length ?? 0} hint="Tối đa 100 dòng đầu" tone="neutral" />
           <MetricCard label="Tổng nợ" value={<MoneyText value={debtTotal} />} hint="Công nợ hiện tại" tone={debtTotal > 0 ? 'warning' : 'success'} />
         </MetricGrid>
-        {debts === null ? <p>Đang tải báo cáo công nợ...</p> : null}
+        {debts === null ? <p>Đang tải công nợ...</p> : null}
         {debts !== null && debts.length === 0 ? <EmptyState>Chưa có khách còn nợ.</EmptyState> : null}
         {debts !== null && debts.length > 0 ? (
           <ManagementTableViewport>
-            <table aria-label="Báo cáo công nợ" className="management-table">
+            <table aria-label="Công nợ" className="management-table">
               <thead>
                 <tr>
                   <th>Mã khách</th>
@@ -259,24 +259,24 @@ export function ReportsPage({ service }: { service: ReportService }) {
         ) : null}
       </ManagementListSurface>
 
-      <ManagementListSurface ariaLabel="Báo cáo tồn kho">
-        <h2>Báo cáo tồn kho</h2>
+      <ManagementListSurface ariaLabel="Hàng hóa">
+        <h2>Hàng hóa</h2>
         <MetricGrid ariaLabel="Chỉ số tồn kho">
-          <MetricCard label="Mặt hàng active" value={inventory?.length ?? 0} hint="Tối đa 100 dòng đầu" tone="neutral" />
-          <MetricCard label="Tổng tồn" value={numberText(inventoryQty)} hint="Cộng số lượng khả dụng" tone="info" />
+          <MetricCard label="Mặt hàng đang kinh doanh" value={inventory?.length ?? 0} hint="Tối đa 100 dòng đầu" tone="neutral" />
+          <MetricCard label="Tồn kho" value={numberText(inventoryQty)} hint="Cộng số lượng tồn" tone="info" />
           <MetricCard label="Âm kho" value={negativeStockCount} hint="Cần kiểm tra" tone={negativeStockCount > 0 ? 'danger' : 'success'} />
         </MetricGrid>
-        {inventory === null ? <p>Đang tải báo cáo tồn kho...</p> : null}
-        {inventory !== null && inventory.length === 0 ? <EmptyState>Chưa có tồn kho active.</EmptyState> : null}
+        {inventory === null ? <p>Đang tải hàng hóa...</p> : null}
+        {inventory !== null && inventory.length === 0 ? <EmptyState>Chưa có hàng hóa đang kinh doanh.</EmptyState> : null}
         {inventory !== null && inventory.length > 0 ? (
           <ManagementTableViewport>
-            <table aria-label="Báo cáo tồn kho" className="management-table">
+            <table aria-label="Hàng hóa" className="management-table">
               <thead>
                 <tr>
                   <th>Mã hàng</th>
                   <th>Tên hàng</th>
-                  <th>Loại tồn</th>
-                  <th>Tồn khả dụng</th>
+                  <th>Loại hàng</th>
+                  <th>Tồn kho</th>
                   <th>Trạng thái</th>
                 </tr>
               </thead>

@@ -16,10 +16,10 @@
 - Modify: `src/components/ui-shell/AppShell.tsx`
 - Test: `src/components/ui-shell/AppShell.test.tsx`
 
-- [ ] Change `/finance` navigation label from `Tài chính` to `Sổ quỹ`.
-- [ ] Keep route `/finance` unchanged.
-- [ ] Keep permission `perm.manage_finance` unchanged.
-- [ ] Run `npm test -- src/components/ui-shell/AppShell.test.tsx`.
+- [x] Change `/finance` navigation label from `Tài chính` to `Sổ quỹ`.
+- [x] Keep route `/finance` unchanged.
+- [x] Keep permission `perm.manage_finance` unchanged.
+- [x] Run `npm test -- src/components/ui-shell/AppShell.test.tsx`.
 
 ### Task 2: Page Copy
 
@@ -29,11 +29,11 @@
 - Modify: `src/features/reports/ReportsPage.tsx`
 - Test: existing page tests for these files.
 
-- [ ] Finance page: use KiotViet-style words: `Sổ quỹ`, `Phiếu thu`, `Phiếu chi`, `Tổng thu`, `Tổng chi`, `Tồn quỹ`, `Người nộp/nhận`.
-- [ ] Inventory page: use KiotViet-style words: `Hàng hóa`, `Tồn kho`, `Kiểm kho`, `Cân bằng kho`.
-- [ ] Reports page: keep report names close to KiotViet: `Cuối ngày`, `Bán hàng`, `Công nợ`, `Hàng hóa`.
-- [ ] Do not add `Khách đặt`.
-- [ ] Do not change data flow or API calls.
+- [x] Finance page: use KiotViet-style words: `Sổ quỹ`, `Phiếu thu`, `Phiếu chi`, `Tổng thu`, `Tổng chi`, `Tồn quỹ`, `Người nộp/nhận`.
+- [x] Inventory page: use KiotViet-style words: `Hàng hóa`, `Tồn kho`, `Kiểm kho`, `Cân bằng kho`.
+- [x] Reports page: keep report names close to KiotViet: `Cuối ngày`, `Bán hàng`, `Công nợ`, `Hàng hóa`.
+- [x] Do not add `Khách đặt`.
+- [x] Do not change data flow or API calls.
 
 ### Task 3: Documentation
 
@@ -41,9 +41,11 @@
 - Modify: `docs/KIOTVIET-REFERENCE-NOTES.md`
 - Modify: `docs/IMPLEMENTATION-CHECKLIST.md`
 
-- [ ] Record owner decision: sell direct only, no reserved/customer ordered quantity for now.
-- [ ] Remove reserved/customer ordered quantity from suggested backlog.
-- [ ] Add checklist entry for KiotViet label refresh.
+- [x] Record owner decision: sell direct only, no reserved/customer ordered quantity for now.
+- [x] Remove reserved/customer ordered quantity from suggested backlog.
+- [x] Add checklist entry for KiotViet label refresh.
+
+Note: after the Owner reorganized docs, Source of Truth already records that QC-OMS does not use `Khách đặt` in MVP. No extra Source of Truth edit was needed for this slice; this plan file is the saved execution checklist.
 
 ### Task 4: Verification
 
@@ -52,6 +54,6 @@
 - `npm run lint`
 - `npm run typecheck`
 
-- [ ] All targeted tests pass.
-- [ ] Lint passes.
-- [ ] Typecheck passes.
+- [x] All targeted tests pass.
+- [x] Lint passes.
+- [x] Typecheck passes.

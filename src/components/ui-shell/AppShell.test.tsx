@@ -76,7 +76,7 @@ it('renders POS as a quick action and keeps module navigation for management pag
   expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('href', '/pos')
   expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('aria-current', 'page')
   expect(within(navigation).getByRole('link', { name: /Chứng từ/i })).toHaveAttribute('href', '/sales-documents')
-  expect(within(navigation).getByRole('link', { name: /Tài chính/i })).toHaveAttribute('href', '/finance')
+  expect(within(navigation).getByRole('link', { name: /Sổ quỹ/i })).toHaveAttribute('href', '/finance')
   expect(within(navigation).getByRole('link', { name: /Báo cáo/i })).toHaveAttribute('href', '/reports')
   expect(within(navigation).getByRole('link', { name: /Khách hàng/i })).toHaveAttribute('href', '/customers')
   expect(within(navigation).getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')

@@ -245,7 +245,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   return (
     <ManagementPage
-      title="Tài chính"
+      title="Sổ quỹ"
       actions={
         <ManagementCompactToolbar ariaLabel="Lọc công nợ khách hàng" onSubmit={filterDebts}>
           <ManagementCompactSearch
@@ -255,14 +255,14 @@ export function FinancePage({ service }: { service: FinanceService }) {
             leadingIcon={<Search aria-hidden="true" size={16} />}
             onChange={setDebtSearch}
           />
-          <button className="button button-primary" type="submit">Lọc nợ</button>
+          <button className="button button-primary" type="submit">Lọc công nợ</button>
         </ManagementCompactToolbar>
       }
       kpis={
-        <MetricGrid ariaLabel="Tổng quan tài chính">
-          <MetricCard label="Số dư quỹ" value={<MoneyText value={totalBalanceAmount} />} hint="Tiền mặt + ngân hàng" tone="success" />
+        <MetricGrid ariaLabel="Tổng quan sổ quỹ">
+          <MetricCard label="Tồn quỹ" value={<MoneyText value={totalBalanceAmount} />} hint="Tiền mặt + ngân hàng" tone="success" />
           <MetricCard label="Công nợ khách" value={<MoneyText value={totalDebtAmount} />} hint="Từ danh sách đang xem" tone={totalDebtAmount > 0 ? 'warning' : 'neutral'} />
-          <MetricCard label="Thu trong sổ" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc sổ quỹ" tone="info" />
+          <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc sổ quỹ" tone="info" />
         </MetricGrid>
       }
     >
@@ -468,10 +468,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
           </ManagementCompactToolbar>
         </header>
         <MetricGrid ariaLabel="Tổng sổ quỹ">
-          <MetricCard label="Đầu kỳ" value={<MoneyText value={cashbookSummary.opening_balance} />} hint="Theo bộ lọc" tone="neutral" />
+          <MetricCard label="Quỹ đầu kỳ" value={<MoneyText value={cashbookSummary.opening_balance} />} hint="Theo bộ lọc" tone="neutral" />
           <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc" tone="success" />
           <MetricCard label="Tổng chi" value={<MoneyText value={cashbookSummary.total_out} />} hint="Theo bộ lọc" tone="warning" />
-          <MetricCard label="Cuối kỳ" value={<MoneyText value={cashbookSummary.ending_balance} />} hint="Theo bộ lọc" tone="info" />
+          <MetricCard label="Tồn quỹ" value={<MoneyText value={cashbookSummary.ending_balance} />} hint="Theo bộ lọc" tone="info" />
         </MetricGrid>
         {cashbookEntries === null ? <p>Đang tải sổ quỹ...</p> : null}
         {cashbookEntries !== null && cashbookEntries.length === 0 ? <EmptyState>Chưa có dòng sổ quỹ.</EmptyState> : null}
@@ -481,11 +481,11 @@ export function FinancePage({ service }: { service: FinanceService }) {
               <table aria-label="Sổ quỹ" className="management-table">
                 <thead>
                   <tr>
-                    <th>Mã</th>
-                    <th>Ngày</th>
-                    <th>Tài khoản</th>
-                    <th>Hướng</th>
-                    <th>Số tiền</th>
+                    <th>Mã phiếu</th>
+                    <th>Thời gian</th>
+                    <th>Quỹ/tài khoản</th>
+                    <th>Loại thu chi</th>
+                    <th>Giá trị</th>
                     <th>Nguồn</th>
                     <th>Trạng thái</th>
                   </tr>
@@ -523,11 +523,11 @@ export function FinancePage({ service }: { service: FinanceService }) {
         ) : null}
       </ManagementListSurface>
 
-      <ManagementListSurface ariaLabel="Phiếu thu chi">
-        <h2>Phiếu thu chi</h2>
-        {vouchers.length === 0 ? <EmptyState>Chưa có phiếu thu chi.</EmptyState> : (
+      <ManagementListSurface ariaLabel="Phiếu thu/chi">
+        <h2>Phiếu thu/chi</h2>
+        {vouchers.length === 0 ? <EmptyState>Chưa có phiếu thu/chi.</EmptyState> : (
           <ManagementTableViewport>
-            <table aria-label="Phiếu thu chi" className="management-table">
+            <table aria-label="Phiếu thu/chi" className="management-table">
               <thead>
                 <tr>
                   <th>Mã phiếu</th>

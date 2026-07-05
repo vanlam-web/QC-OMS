@@ -78,7 +78,7 @@ describe('ReportsPage', () => {
 
     expect(await screen.findByText('Chưa có hóa đơn bán hàng trong khoảng ngày.')).toBeInTheDocument()
     expect(screen.getByText('Chưa có khách còn nợ.')).toBeInTheDocument()
-    expect(screen.getByText('Chưa có tồn kho active.')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có hàng hóa đang kinh doanh.')).toBeInTheDocument()
   })
 
   it('shows sales, debt, cashbook, and inventory report data', async () => {

@@ -94,7 +94,7 @@ describe('FinancePage', () => {
     expect(await screen.findByText('CASH')).toBeInTheDocument()
     expect(screen.getByText('Anh Nam')).toBeInTheDocument()
     expect(screen.getAllByText('PT0001').length).toBeGreaterThan(0)
-    expect(screen.getByRole('table', { name: 'Phiếu thu chi' })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Phiếu thu/chi' })).toBeInTheDocument()
   })
 
   it('filters debts and cashbook entries', async () => {
@@ -102,7 +102,7 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await userEvent.type(await screen.findByLabelText('Tìm công nợ'), 'nam')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc nợ' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Lọc công nợ' }))
 
     expect(service.listCustomerDebts).toHaveBeenLastCalledWith({ search: 'nam', page: 1, page_size: 15 })
 

@@ -61,13 +61,13 @@ describe('InventoryPage', () => {
     const service = makeService()
     render(<InventoryPage service={service} />)
 
-    expect(screen.getByText('Đang tải tồn kho...')).toBeInTheDocument()
+    expect(screen.getByText('Đang tải hàng hóa...')).toBeInTheDocument()
     expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
     expect(screen.getByText('DECAL-PP')).toBeInTheDocument()
     expect(screen.getAllByText('Âm kho').length).toBeGreaterThan(0)
 
-    await userEvent.type(screen.getByLabelText('Tìm tồn kho'), 'mica')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại tồn' }), 'normal')
+    await userEvent.type(screen.getByLabelText('Tìm hàng hóa'), 'mica')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại hàng' }), 'normal')
     await userEvent.click(screen.getByRole('button', { name: 'Lọc' }))
 
     expect(service.listInventoryProducts).toHaveBeenLastCalledWith({
@@ -83,9 +83,9 @@ describe('InventoryPage', () => {
     const service = makeService()
     render(<InventoryPage service={service} />)
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Xem tồn kho MICA-3MM' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Xem hàng hóa MICA-3MM' }))
 
-    const detail = await screen.findByRole('region', { name: 'Chi tiết tồn kho MICA-3MM' })
+    const detail = await screen.findByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })
     expect(within(detail).getByText('Mica 3mm')).toBeInTheDocument()
     expect(within(detail).getByText('checkout')).toBeInTheDocument()
     expect(within(detail).getByText('KK000001')).toBeInTheDocument()
@@ -93,7 +93,7 @@ describe('InventoryPage', () => {
     await userEvent.clear(within(detail).getByLabelText('Tồn thực tế'))
     await userEvent.type(within(detail).getByLabelText('Tồn thực tế'), '12')
     await userEvent.type(within(detail).getByLabelText('Lý do điều chỉnh'), 'Đếm lại kho')
-    await userEvent.click(within(detail).getByRole('button', { name: 'Cân bằng tồn' }))
+    await userEvent.click(within(detail).getByRole('button', { name: 'Cân bằng kho' }))
 
     expect(service.adjustNormalProductStock).toHaveBeenCalledWith('product-1', {
       actual_qty: 12,

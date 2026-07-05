@@ -19,15 +19,15 @@ import type { InventoryService } from './inventory-service'
 const pageSizeDefault = 15
 
 function shapeText(shape: InventoryShape | 'all') {
-  if (shape === 'normal') return 'Thường'
-  if (shape === 'roll') return 'Cuộn'
-  if (shape === 'sheet') return 'Tấm'
+  if (shape === 'normal') return 'Hàng thường'
+  if (shape === 'roll') return 'Hàng cuộn'
+  if (shape === 'sheet') return 'Hàng tấm'
   return 'Tất cả'
 }
 
 function statusText(status: InventoryProductStatus | 'all') {
-  if (status === 'active') return 'Đang bán'
-  if (status === 'inactive') return 'Ngừng bán'
+  if (status === 'active') return 'Đang kinh doanh'
+  if (status === 'inactive') return 'Ngưng bán'
   return 'Tất cả'
 }
 
@@ -172,11 +172,11 @@ export function InventoryPage({ service }: { service: InventoryService }) {
 
   return (
     <ManagementPage
-      title="Kho"
+      title="Hàng hóa"
       actions={
-        <ManagementCompactToolbar ariaLabel="Lọc tồn kho" onSubmit={filterProducts}>
+        <ManagementCompactToolbar ariaLabel="Lọc hàng hóa" onSubmit={filterProducts}>
           <ManagementCompactSearch
-            label="Tìm tồn kho"
+            label="Tìm hàng hóa"
             placeholder="Mã hàng, tên hàng"
             value={search}
             leadingIcon={<Search aria-hidden="true" size={16} />}
@@ -186,25 +186,25 @@ export function InventoryPage({ service }: { service: InventoryService }) {
         </ManagementCompactToolbar>
       }
       kpis={
-        <MetricGrid ariaLabel="Tổng quan tồn kho">
+        <MetricGrid ariaLabel="Tổng quan hàng hóa">
           <MetricCard label="Mặt hàng" value={total} hint="Theo bộ lọc hiện tại" tone="info" />
-          <MetricCard label="Tổng tồn" value={numberText(totalQty)} hint="Cộng các dòng đang xem" tone="neutral" />
+          <MetricCard label="Tồn kho" value={numberText(totalQty)} hint="Cộng các dòng đang xem" tone="neutral" />
           <MetricCard label="Âm kho" value={negativeCount} hint="Cần kiểm tra" tone={negativeCount > 0 ? 'danger' : 'success'} />
         </MetricGrid>
       }
       filter={
         <ManagementFilterSidebar
-          ariaLabel="Bộ lọc tồn kho"
+          ariaLabel="Bộ lọc hàng hóa"
           actions={
             <button className="button button-secondary" type="button" onClick={() => void resetFilters()}>
               <RotateCcw aria-hidden="true" size={16} />
-              Đặt lại bộ lọc
+              Đặt lại
             </button>
           }
         >
-          <ManagementFilterGroup title="Trạng thái">
+          <ManagementFilterGroup title="Trạng thái hàng hóa">
             <select
-              aria-label="Trạng thái tồn kho"
+              aria-label="Trạng thái hàng hóa"
               className="management-filter-select"
               value={status}
               onChange={(event) => setStatus(event.target.value as InventoryProductStatus | 'all')}
@@ -214,9 +214,9 @@ export function InventoryPage({ service }: { service: InventoryService }) {
               <option value="all">{statusText('all')}</option>
             </select>
           </ManagementFilterGroup>
-          <ManagementFilterGroup title="Loại tồn">
+          <ManagementFilterGroup title="Loại hàng">
             <select
-              aria-label="Loại tồn"
+              aria-label="Loại hàng"
               className="management-filter-select"
               value={shape}
               onChange={(event) => setShape(event.target.value as InventoryShape | 'all')}
@@ -230,20 +230,20 @@ export function InventoryPage({ service }: { service: InventoryService }) {
         </ManagementFilterSidebar>
       }
     >
-      <ManagementListSurface ariaLabel="Danh sách tồn kho">
+      <ManagementListSurface ariaLabel="Danh sách hàng hóa">
         {error ? <p role="alert">{error}</p> : null}
-        {products === null ? <p>Đang tải tồn kho...</p> : null}
-        {products !== null && products.length === 0 ? <EmptyState>Chưa có tồn kho theo bộ lọc.</EmptyState> : null}
+        {products === null ? <p>Đang tải hàng hóa...</p> : null}
+        {products !== null && products.length === 0 ? <EmptyState>Chưa có hàng hóa theo bộ lọc.</EmptyState> : null}
         {products !== null && products.length > 0 ? (
           <>
             <ManagementTableViewport>
-              <table aria-label="Danh sách tồn kho" className="management-table">
+              <table aria-label="Danh sách hàng hóa" className="management-table">
                 <thead>
                   <tr>
                     <th>Mã hàng</th>
                     <th>Tên hàng</th>
-                    <th>Loại tồn</th>
-                    <th>Tồn khả dụng</th>
+                    <th>Loại hàng</th>
+                    <th>Tồn kho</th>
                     <th>Trạng thái</th>
                     <th>Thao tác</th>
                   </tr>
@@ -260,7 +260,7 @@ export function InventoryPage({ service }: { service: InventoryService }) {
                       </td>
                       <td>
                         <ManagementRowActionButton
-                          ariaLabel={`Xem tồn kho ${product.code}`}
+                          ariaLabel={`Xem hàng hóa ${product.code}`}
                           onClick={() => void openProduct(product)}
                         >
                           Xem {product.code}
@@ -272,7 +272,7 @@ export function InventoryPage({ service }: { service: InventoryService }) {
               </table>
             </ManagementTableViewport>
             <ManagementTableFooter
-              ariaLabel="Phân trang tồn kho"
+              ariaLabel="Phân trang hàng hóa"
               entityLabel="mặt hàng"
               page={page}
               pageSize={pageSize}
@@ -290,20 +290,20 @@ export function InventoryPage({ service }: { service: InventoryService }) {
       </ManagementListSurface>
 
       {detail ? (
-        <section aria-label={`Chi tiết tồn kho ${detail.code}`} className="management-inline-detail">
+        <section aria-label={`Chi tiết hàng hóa ${detail.code}`} className="management-inline-detail">
           <header>
             <div>
               <h2>{detail.name}</h2>
               <p>{detail.code} · {shapeText(detail.inventory_shape)}</p>
             </div>
-            <button aria-label="Đóng chi tiết tồn kho" className="button button-secondary" type="button" onClick={() => setDetail(null)}>
+            <button aria-label="Đóng chi tiết hàng hóa" className="button button-secondary" type="button" onClick={() => setDetail(null)}>
               <ChevronRight aria-hidden="true" size={16} />
               Đóng
             </button>
           </header>
           <dl className="management-detail-list">
             <div>
-              <dt>Tồn khả dụng</dt>
+              <dt>Tồn kho</dt>
               <dd>{numberText(detail.available_qty)} {detail.stock_unit}</dd>
             </div>
             <div>
@@ -313,7 +313,7 @@ export function InventoryPage({ service }: { service: InventoryService }) {
           </dl>
 
           {detail.inventory_shape === 'normal' ? (
-            <form aria-label="Cân bằng tồn kho" className="management-detail-form" onSubmit={adjustStock}>
+            <form aria-label="Cân bằng kho" className="management-detail-form" onSubmit={adjustStock}>
               <label>
                 Tồn thực tế
                 <input
@@ -335,7 +335,7 @@ export function InventoryPage({ service }: { service: InventoryService }) {
                 />
               </label>
               <button className="button button-primary" disabled={adjusting} type="submit">
-                Cân bằng tồn
+                Cân bằng kho
               </button>
             </form>
           ) : (
