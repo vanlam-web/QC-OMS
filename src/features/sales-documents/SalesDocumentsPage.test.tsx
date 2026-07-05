@@ -241,7 +241,7 @@ it('lists invoices with money, seller and customer snapshots', async () => {
   expect(within(typeFilterGroup).queryByRole('radio')).not.toBeInTheDocument()
   expect(within(statusFilterGroup).getByRole('combobox', { name: 'Trạng thái chứng từ' })).toHaveValue('all')
   expect(within(statusFilterGroup).queryByRole('radio')).not.toBeInTheDocument()
-  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' })).toBeInTheDocument()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Danh sách chứng từ' })).not.toBeInTheDocument()
   expect(screen.queryByText('Tìm nhanh mã hóa đơn/báo giá, khách hàng hoặc ghi chú theo dữ liệu API hiện có.')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Còn nợ' })).not.toBeInTheDocument()

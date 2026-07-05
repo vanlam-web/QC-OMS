@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, KeyRound, Lock, RotateCcw, Search, Unlock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, KeyRound, Lock, Search, Unlock } from 'lucide-react'
 import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
@@ -90,12 +90,6 @@ export function FoundationAdminPage({
   async function filterUsers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     await load({ search: userSearch, status: userStatus })
-  }
-
-  async function resetUserFilters() {
-    setUserSearch('')
-    setUserStatus('all')
-    await load({ search: '', status: 'all' })
   }
 
   function focusCreateUserForm() {
@@ -190,12 +184,6 @@ export function FoundationAdminPage({
           activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc người dùng"
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetUserFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc người dùng"

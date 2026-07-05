@@ -121,7 +121,7 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
     getCashbookEntry: vi.fn(async () => cashbookDetail),
     listCashbookEntries: vi.fn(async () => ({
-      summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 500000 },
+      summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
       items: [entry],
       page: 1,
       page_size: 15,
@@ -133,13 +133,29 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
 }
 
 describe('FinancePage', () => {
-  it('shows accounts, debts, cashbook, and vouchers', async () => {
+  it('shows cashbook without auxiliary account debt and voucher sections', async () => {
     render(<FinancePage service={makeService()} />)
 
-    expect(await screen.findByText('CASH')).toBeInTheDocument()
-    expect(screen.getByText('Anh Nam')).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Sổ quỹ' })).toBeInTheDocument()
     expect(screen.getAllByText('PT0001').length).toBeGreaterThan(0)
-    expect(screen.getByRole('table', { name: 'Phiếu thu/chi' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Tài khoản quỹ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Công nợ khách hàng' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Phiếu thu/chi' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Công nợ khách')).not.toBeInTheDocument()
+  })
+
+  it('moves opening and outflow summary cards into the left KPI stack', async () => {
+    render(<FinancePage service={makeService()} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const sidebarSummary = screen.getByRole('region', { name: 'Tổng quan sổ quỹ' })
+    const sidebarLabels = within(sidebarSummary)
+      .getAllByText(/Quỹ đầu kỳ|Tổng chi|Tồn quỹ|Tổng thu/)
+      .map((node) => node.textContent)
+
+    expect(sidebarLabels).toEqual(['Quỹ đầu kỳ', 'Tổng thu', 'Tổng chi', 'Tồn quỹ'])
+    expect(within(sidebarSummary).getByText('400 000')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: 'Sổ quỹ' })).not.toBeInTheDocument()
   })
 
   it('filters debts and cashbook entries', async () => {
@@ -147,19 +163,22 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await userEvent.type(await screen.findByLabelText('Tìm công nợ'), 'nam')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc công nợ' }))
+    const debtFilterButton = screen.getByRole('button', { name: 'Lọc công nợ' })
+    expect(screen.getByLabelText('Tìm công nợ').closest('.management-compact-search')).toContainElement(debtFilterButton)
+    expect(debtFilterButton).toHaveClass('management-compact-create-action')
+    expect(debtFilterButton).toHaveTextContent('')
+    await userEvent.click(debtFilterButton)
 
     expect(service.listCustomerDebts).toHaveBeenLastCalledWith({ search: 'nam', page: 1, page_size: 15 })
 
-    await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'PT0001')
-    await userEvent.selectOptions(screen.getByLabelText('Loại chứng từ'), 'in')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Loại chứng từ' }), 'in')
+    expect(screen.queryByRole('button', { name: 'Lọc sổ' })).not.toBeInTheDocument()
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
-      search: 'PT0001',
+      search: undefined,
       search_scope: 'all',
-      from: undefined,
-      to: undefined,
+      from: '2026-07-01',
+      to: '2026-07-31',
       finance_account_id: undefined,
       direction: 'in',
       status: 'all',
@@ -175,17 +194,22 @@ describe('FinancePage', () => {
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
-    expect(within(sidebar).getByRole('heading', { name: 'Sổ quỹ' })).toBeInTheDocument()
-    await userEvent.selectOptions(screen.getByLabelText('Quỹ tiền'), 'bank-1')
-    await userEvent.selectOptions(screen.getByLabelText('Trạng thái sổ quỹ'), 'posted')
-    await userEvent.selectOptions(screen.getByLabelText('Hạch toán KQKD'), 'false')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
+    expect(within(sidebar).queryByRole('heading', { name: 'Sổ quỹ' })).not.toBeInTheDocument()
+    expect(within(sidebar).queryByLabelText('Tìm sổ quỹ')).not.toBeInTheDocument()
+    expect(within(sidebar).queryByLabelText('Tìm theo')).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Quỹ tiền' })).toHaveClass('management-filter-select')
+    expect(screen.getByRole('combobox', { name: 'Loại chứng từ' })).toHaveClass('management-filter-select')
+    expect(screen.getByRole('combobox', { name: 'Trạng thái sổ quỹ' })).toHaveClass('management-filter-select')
+    expect(screen.getByRole('combobox', { name: 'Hạch toán KQKD' })).toHaveClass('management-filter-select')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quỹ tiền' }), 'bank-1')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Trạng thái sổ quỹ' }), 'posted')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hạch toán KQKD' }), 'false')
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: undefined,
       search_scope: 'all',
-      from: undefined,
-      to: undefined,
+      from: '2026-07-01',
+      to: '2026-07-31',
       finance_account_id: 'bank-1',
       direction: 'all',
       status: 'posted',
@@ -195,51 +219,44 @@ describe('FinancePage', () => {
     })
   })
 
-  it('filters cashbook by search scope and date range', async () => {
+  it('filters cashbook by date range', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    await userEvent.selectOptions(screen.getByLabelText('Tìm theo'), 'code')
-    await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'CTM001180')
+    const timeGroup = screen.getByRole('region', { name: 'Thời gian' })
+    expect(within(timeGroup).getByRole('radio', { name: 'Tháng này' })).toBeChecked()
+    expect(within(timeGroup).getByRole('radio', { name: 'Tùy chỉnh' })).toBeInTheDocument()
+    await userEvent.click(within(timeGroup).getByText('Tháng này'))
+    const quickTimeMenu = screen.getByRole('region', { name: 'Chọn nhanh thời gian' })
+    expect(within(quickTimeMenu).getByRole('button', { name: 'Hôm nay' })).toBeInTheDocument()
+    expect(within(quickTimeMenu).getByRole('button', { name: 'Tháng trước' })).toBeInTheDocument()
+    await userEvent.click(within(timeGroup).getByRole('radio', { name: 'Tùy chỉnh' }))
+    await userEvent.clear(screen.getByLabelText('Từ ngày'))
     await userEvent.type(screen.getByLabelText('Từ ngày'), '2026-07-01')
+    await userEvent.clear(screen.getByLabelText('Đến ngày'))
     await userEvent.type(screen.getByLabelText('Đến ngày'), '2026-07-31')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
-      search: 'CTM001180',
-      search_scope: 'code',
+      search: undefined,
+      search_scope: 'all',
       from: '2026-07-01',
       to: '2026-07-31',
     }))
   })
 
-  it('resets cashbook filters from the shared sidebar action bar', async () => {
+  it('does not show a cashbook reset action in the filter sidebar', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'PC000001')
-    await userEvent.selectOptions(screen.getByLabelText('Quỹ tiền'), 'bank-1')
-    await userEvent.click(screen.getByRole('button', { name: 'Đặt lại bộ lọc tài chính' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quỹ tiền' }), 'bank-1')
 
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
-    expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc tài chính' }).closest('.management-filter-actions')).not.toBeNull()
-    expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
-      search: undefined,
-      search_scope: 'all',
-      from: undefined,
-      to: undefined,
-      finance_account_id: undefined,
-      direction: 'all',
-      status: 'all',
-      is_business_accounted: undefined,
-      page: 1,
-      page_size: 15,
-    })
+    expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc tài chính' })).not.toBeInTheDocument()
   })
 
-  it('toggles cashbook columns and exports visible rows', async () => {
+  it('exports visible rows without showing a cashbook column chooser', async () => {
     const service = makeService()
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:cashbook')
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
@@ -247,11 +264,12 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    await userEvent.click(screen.getByRole('button', { name: 'Cột' }))
-    await userEvent.click(screen.getByLabelText('Ghi chú'))
-    expect(screen.getByRole('columnheader', { name: 'Ghi chú' })).toBeInTheDocument()
+    const voucherActions = screen.getByLabelText('Tạo phiếu thu chi')
+    expect(within(voucherActions).getByRole('button', { name: 'Xuất file' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cột' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Chọn cột sổ quỹ' })).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Xuất file' }))
+    await userEvent.click(within(voucherActions).getByRole('button', { name: 'Xuất file' }))
     expect(screen.getByRole('status')).toHaveTextContent('Đã tạo file sổ quỹ')
     expect(createObjectURL).toHaveBeenCalled()
     expect(click).toHaveBeenCalled()
@@ -295,48 +313,6 @@ describe('FinancePage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Đã tạo phiếu PC000001')
   })
 
-  it('cancels a posted manual cashbook voucher and reloads cashbook data', async () => {
-    const service = makeService({
-      listCashbookVouchers: vi.fn(async () => ({ items: [voucher, manualVoucher], total: 2 })),
-    })
-    render(<FinancePage service={service} />)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Hủy phiếu PC000001' }))
-
-    expect(service.cancelCashbookVoucher).toHaveBeenCalledWith('voucher-2')
-    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
-    expect(screen.getByRole('status')).toHaveTextContent('Đã hủy phiếu PC000001')
-  })
-
-  it('revises a posted manual cashbook voucher as a new version and reloads cashbook data', async () => {
-    const service = makeService({
-      listCashbookVouchers: vi.fn(async () => ({ items: [manualVoucher], total: 1 })),
-    })
-    render(<FinancePage service={service} />)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Sửa phiếu PC000001' }))
-    const form = await screen.findByRole('form', { name: 'Sửa phiếu PC000001' })
-
-    await userEvent.clear(within(form).getByLabelText('Số tiền'))
-    await userEvent.type(within(form).getByLabelText('Số tiền'), '50000')
-    await userEvent.clear(within(form).getByLabelText('Lý do'))
-    await userEvent.type(within(form).getByLabelText('Lý do'), 'Sửa phiếu chi')
-    await userEvent.click(within(form).getByRole('button', { name: 'Lưu bản sửa' }))
-
-    expect(service.reviseCashbookVoucher).toHaveBeenCalledWith('voucher-2', {
-      voucher_direction: 'out',
-      voucher_type: 'operating_expense',
-      finance_account_id: 'cash-1',
-      amount: 50000,
-      partner_debt_mode: 'no_partner_debt',
-      is_business_accounted: true,
-      counterparty_type: 'none',
-      reason: 'Sửa phiếu chi',
-    })
-    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))
-    expect(screen.getByRole('status')).toHaveTextContent('Đã sửa phiếu PC000001.01')
-  })
-
   it('opens cashbook entry detail with allocation rows', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
@@ -350,35 +326,4 @@ describe('FinancePage', () => {
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
   })
 
-  it('opens debt detail and submits collection payload', async () => {
-    const service = makeService()
-    render(<FinancePage service={service} />)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Thu nợ Anh Nam' }))
-
-    const form = await screen.findByRole('form', { name: 'Thu nợ khách hàng' })
-    expect(within(screen.getByRole('region', { name: 'Hóa đơn còn nợ' })).getByText('HD0001')).toBeInTheDocument()
-
-    await userEvent.clear(within(form).getByLabelText('Tiền mặt'))
-    await userEvent.type(within(form).getByLabelText('Tiền mặt'), '200000')
-    await userEvent.clear(within(form).getByLabelText('Chuyển khoản'))
-    await userEvent.type(within(form).getByLabelText('Chuyển khoản'), '300000')
-    await userEvent.selectOptions(within(form).getByLabelText('Tài khoản ngân hàng'), 'bank-1')
-    await userEvent.type(within(form).getByLabelText('Mã giao dịch'), 'MB-123')
-    await userEvent.type(within(form).getByLabelText('Ghi chú'), 'Khách trả nợ')
-    await userEvent.click(within(form).getByRole('button', { name: 'Lưu thu nợ' }))
-
-    expect(service.collectCustomerDebt).toHaveBeenCalledWith({
-      customer_id: 'customer-1',
-      amount: 500000,
-      payment_method: {
-        cash_amount: 200000,
-        bank_amount: 300000,
-        bank_account_id: 'bank-1',
-        bank_transaction_ref: 'MB-123',
-      },
-      note: 'Khách trả nợ',
-    })
-    await waitFor(() => expect(service.listCustomerDebts).toHaveBeenCalledTimes(2))
-  })
 })

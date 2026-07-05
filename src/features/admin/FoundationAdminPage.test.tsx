@@ -67,7 +67,7 @@ it('loads user and permission administration data from the API service', async (
   expect(sidebar).toHaveClass('management-filter-sidebar')
   expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
   expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
-  expect(within(sidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }).closest('.management-filter-actions')).not.toBeNull()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Người dùng' })).toHaveClass('management-list-surface')
   expect(screen.getByRole('region', { name: 'Danh mục quyền' })).toHaveClass('management-list-surface')
   expect(document.querySelector('.admin-grid')).toBeNull()

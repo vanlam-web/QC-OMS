@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import {
@@ -120,13 +120,6 @@ export function CatalogPage({
     event.preventDefault()
     setPage(1)
     await load({ search: search.trim(), status, page: 1 })
-  }
-
-  async function resetProductFilters() {
-    setSearch('')
-    setStatus('active')
-    setPage(1)
-    await load({ search: '', status: 'active', page: 1 })
   }
 
   async function goToPage(nextPage: number) {
@@ -265,12 +258,6 @@ export function CatalogPage({
           activeSummary={activeFilterSummary}
           ariaLabel="Bộ lọc hàng hóa"
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetProductFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc hàng hóa"

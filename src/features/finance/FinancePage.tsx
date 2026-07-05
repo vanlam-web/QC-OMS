@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { Columns3, Download, RotateCcw, Search, WalletCards } from 'lucide-react'
+import { CalendarDays, ChevronRight, Download, Plus, Search, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -34,6 +34,8 @@ import type { FinanceService } from './finance-service'
 import { buildCashbookCsv } from './finance-service'
 
 const pageSizeDefault = 15
+type CashbookTimeFilter = 'all' | 'today' | 'yesterday' | 'week' | 'last_week' | 'last_7_days' | 'month' | 'last_month' | 'last_30_days' | 'quarter' | 'last_quarter' | 'year' | 'last_year' | 'custom'
+const showAuxiliaryFinanceSections = false
 const defaultCashbookColumns: CashbookColumnKey[] = [
   'code',
   'created_at',
@@ -53,6 +55,31 @@ const cashbookColumnDefinitions: Array<{ key: CashbookColumnKey; label: string }
   { key: 'note', label: 'Ghi chú' },
   { key: 'is_business_accounted', label: 'Hạch toán KQKD' },
 ]
+
+const cashbookQuickTimeGroups: Array<{ title: string; presets: Array<Exclude<CashbookTimeFilter, 'custom'>> }> = [
+  { title: 'Theo ngày', presets: ['today', 'yesterday'] },
+  { title: 'Theo tuần', presets: ['week', 'last_week', 'last_7_days'] },
+  { title: 'Theo tháng', presets: ['month', 'last_month', 'last_30_days'] },
+  { title: 'Theo quý', presets: ['quarter', 'last_quarter'] },
+  { title: 'Theo năm', presets: ['year', 'last_year', 'all'] },
+]
+
+const cashbookQuickTimeLabels: Record<CashbookTimeFilter, string> = {
+  all: 'Toàn thời gian',
+  today: 'Hôm nay',
+  yesterday: 'Hôm qua',
+  week: 'Tuần này',
+  last_week: 'Tuần trước',
+  last_7_days: '7 ngày qua',
+  month: 'Tháng này',
+  last_month: 'Tháng trước',
+  last_30_days: '30 ngày qua',
+  quarter: 'Quý này',
+  last_quarter: 'Quý trước',
+  year: 'Năm nay',
+  last_year: 'Năm trước',
+  custom: 'Tùy chỉnh',
+}
 
 function accountTypeText(type: FinanceAccount['account_type']) {
   return type === 'cash' ? 'Tiền mặt' : 'Ngân hàng'
@@ -118,6 +145,75 @@ function dateText(value: string) {
   return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(parsed)
 }
 
+function localDateString(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+
+function currentMonthRange() {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return { from: localDateString(firstDay), to: localDateString(lastDay) }
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
+function cashbookQuickTimeRange(preset: Exclude<CashbookTimeFilter, 'custom'>) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const day = today.getDay()
+  const mondayOffset = day === 0 ? -6 : 1 - day
+  const currentQuarter = Math.floor(today.getMonth() / 3)
+
+  if (preset === 'all') return { from: '', to: '' }
+  if (preset === 'today') return { from: localDateString(today), to: localDateString(today) }
+  if (preset === 'yesterday') {
+    const yesterday = addDays(today, -1)
+    return { from: localDateString(yesterday), to: localDateString(yesterday) }
+  }
+  if (preset === 'week') {
+    const firstDay = addDays(today, mondayOffset)
+    return { from: localDateString(firstDay), to: localDateString(addDays(firstDay, 6)) }
+  }
+  if (preset === 'last_week') {
+    const firstDay = addDays(today, mondayOffset - 7)
+    return { from: localDateString(firstDay), to: localDateString(addDays(firstDay, 6)) }
+  }
+  if (preset === 'last_7_days') return { from: localDateString(addDays(today, -6)), to: localDateString(today) }
+  if (preset === 'month') return currentMonthRange()
+  if (preset === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'last_30_days') return { from: localDateString(addDays(today, -29)), to: localDateString(today) }
+  if (preset === 'quarter') {
+    const firstDay = new Date(today.getFullYear(), currentQuarter * 3, 1)
+    const lastDay = new Date(today.getFullYear(), currentQuarter * 3 + 3, 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'last_quarter') {
+    const firstDay = new Date(today.getFullYear(), currentQuarter * 3 - 3, 1)
+    const lastDay = new Date(today.getFullYear(), currentQuarter * 3, 0)
+    return { from: localDateString(firstDay), to: localDateString(lastDay) }
+  }
+  if (preset === 'year') {
+    return { from: localDateString(new Date(today.getFullYear(), 0, 1)), to: localDateString(new Date(today.getFullYear(), 11, 31)) }
+  }
+  return { from: localDateString(new Date(today.getFullYear() - 1, 0, 1)), to: localDateString(new Date(today.getFullYear() - 1, 11, 31)) }
+}
+
+function displayDate(value: string) {
+  if (!value) return '--/--/----'
+  const [year, month, day] = value.split('-')
+  return `${day}/${month}/${year}`
+}
+
 export function FinancePage({ service }: { service: FinanceService }) {
   const [accounts, setAccounts] = useState<FinanceAccount[]>([])
   const [balances, setBalances] = useState<CashbookBalance[]>([])
@@ -133,14 +229,16 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookTotal, setCashbookTotal] = useState(0)
   const [cashbookPage, setCashbookPage] = useState(1)
   const [cashbookPageSize, setCashbookPageSize] = useState(pageSizeDefault)
-  const [cashbookSearch, setCashbookSearch] = useState('')
+  const [cashbookSearch] = useState('')
   const [lastCashbookSearch, setLastCashbookSearch] = useState('')
-  const [cashbookSearchScope, setCashbookSearchScope] = useState<CashbookSearchScope>('all')
+  const [cashbookSearchScope] = useState<CashbookSearchScope>('all')
   const [lastCashbookSearchScope, setLastCashbookSearchScope] = useState<CashbookSearchScope>('all')
-  const [cashbookFrom, setCashbookFrom] = useState('')
-  const [lastCashbookFrom, setLastCashbookFrom] = useState('')
-  const [cashbookTo, setCashbookTo] = useState('')
-  const [lastCashbookTo, setLastCashbookTo] = useState('')
+  const [cashbookTimeFilter, setCashbookTimeFilter] = useState<CashbookTimeFilter>('month')
+  const [cashbookFrom, setCashbookFrom] = useState(() => currentMonthRange().from)
+  const [lastCashbookFrom, setLastCashbookFrom] = useState(() => currentMonthRange().from)
+  const [cashbookTo, setCashbookTo] = useState(() => currentMonthRange().to)
+  const [lastCashbookTo, setLastCashbookTo] = useState(() => currentMonthRange().to)
+  const [cashbookQuickTimeOpen, setCashbookQuickTimeOpen] = useState(false)
   const [cashbookAccountId, setCashbookAccountId] = useState('all')
   const [lastCashbookAccountId, setLastCashbookAccountId] = useState('all')
   const [cashbookDirection, setCashbookDirection] = useState<CashbookDirection | 'all'>('all')
@@ -152,8 +250,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookSummary, setCashbookSummary] = useState({ opening_balance: 0, total_in: 0, total_out: 0, ending_balance: 0 })
   const [selectedCashbookEntry, setSelectedCashbookEntry] = useState<CashbookEntry | null>(null)
   const [cashbookDetail, setCashbookDetail] = useState<CashbookEntryDetail | null>(null)
-  const [showCashbookColumns, setShowCashbookColumns] = useState(false)
-  const [visibleCashbookColumns, setVisibleCashbookColumns] = useState<CashbookColumnKey[]>(defaultCashbookColumns)
+  const visibleCashbookColumns = defaultCashbookColumns
   const [vouchers, setVouchers] = useState<CashbookVoucher[]>([])
   const [voucherMode, setVoucherMode] = useState<CashbookDirection | null>(null)
   const [editingVoucher, setEditingVoucher] = useState<CashbookVoucher | null>(null)
@@ -179,8 +276,6 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   const activeBankAccounts = accounts.filter((account) => account.is_active && account.account_type === 'bank')
   const activeAccounts = accounts.filter((account) => account.is_active)
-  const totalDebtAmount = debts?.reduce((sum, debt) => sum + debt.total_debt, 0) ?? 0
-  const totalBalanceAmount = balances.reduce((sum, balance) => sum + balance.balance, 0)
 
   function openVoucherForm(direction: CashbookDirection) {
     const options = voucherTypeOptions(direction)
@@ -291,6 +386,25 @@ export function FinancePage({ service }: { service: FinanceService }) {
     }
   }
 
+  async function applyCashbookQuickTimeFilter(preset: Exclude<CashbookTimeFilter, 'custom'>) {
+    const range = cashbookQuickTimeRange(preset)
+    setCashbookTimeFilter(preset)
+    setCashbookQuickTimeOpen(false)
+    setCashbookFrom(range.from)
+    setCashbookTo(range.to)
+    await applyCashbookFilters({ from: range.from, to: range.to })
+  }
+
+  async function applyCashbookCustomDateFilter(input: { from?: string; to?: string } = {}) {
+    const nextFrom = input.from ?? cashbookFrom
+    const nextTo = input.to ?? cashbookTo
+    setCashbookTimeFilter('custom')
+    setCashbookQuickTimeOpen(false)
+    setCashbookFrom(nextFrom)
+    setCashbookTo(nextTo)
+    await applyCashbookFilters({ from: nextFrom, to: nextTo })
+  }
+
   async function loadReferenceData() {
     setError(null)
     try {
@@ -317,7 +431,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
           service.listCashbookBalances(),
           service.listCashbookVouchers(),
           service.listCustomerDebts({ page: 1, page_size: pageSizeDefault }),
-          service.listCashbookEntries({ page: 1, page_size: pageSizeDefault }),
+          service.listCashbookEntries({ from: currentMonthRange().from, to: currentMonthRange().to, page: 1, page_size: pageSizeDefault }),
         ])
         if (!active) return
         setAccounts(accountResult.items)
@@ -350,39 +464,27 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   async function filterCashbook(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    await applyCashbookFilters()
+  }
+
+  async function applyCashbookFilters(input: {
+    from?: string
+    to?: string
+    finance_account_id?: string
+    direction?: CashbookDirection | 'all'
+    status?: CashbookStatus | 'all'
+    business_accounted_filter?: CashbookBusinessAccountedFilter
+  } = {}) {
     setCashbookPage(1)
     await loadCashbook({
       search: cashbookSearch,
       search_scope: cashbookSearchScope,
-      from: cashbookFrom,
-      to: cashbookTo,
-      finance_account_id: cashbookAccountId,
-      direction: cashbookDirection,
-      status: cashbookStatus,
-      business_accounted_filter: cashbookBusinessAccounted,
-      page: 1,
-    })
-  }
-
-  function resetCashbookFilters() {
-    setCashbookSearch('')
-    setCashbookSearchScope('all')
-    setCashbookFrom('')
-    setCashbookTo('')
-    setCashbookAccountId('all')
-    setCashbookDirection('all')
-    setCashbookStatus('all')
-    setCashbookBusinessAccounted('all')
-    setCashbookPage(1)
-    void loadCashbook({
-      search: '',
-      search_scope: 'all',
-      from: '',
-      to: '',
-      finance_account_id: 'all',
-      direction: 'all',
-      status: 'all',
-      business_accounted_filter: 'all',
+      from: input.from ?? cashbookFrom,
+      to: input.to ?? cashbookTo,
+      finance_account_id: input.finance_account_id ?? cashbookAccountId,
+      direction: input.direction ?? cashbookDirection,
+      status: input.status ?? cashbookStatus,
+      business_accounted_filter: input.business_accounted_filter ?? cashbookBusinessAccounted,
       page: 1,
     })
   }
@@ -396,14 +498,6 @@ export function FinancePage({ service }: { service: FinanceService }) {
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết sổ quỹ.'))
     }
-  }
-
-  function toggleCashbookColumn(column: CashbookColumnKey) {
-    setVisibleCashbookColumns((current) =>
-      current.includes(column)
-        ? current.filter((item) => item !== column)
-        : [...current, column],
-    )
   }
 
   function exportCashbook() {
@@ -565,98 +659,186 @@ export function FinancePage({ service }: { service: FinanceService }) {
               placeholder="Tên, mã khách, mã hóa đơn"
               value={debtSearch}
               leadingIcon={<Search aria-hidden="true" size={16} />}
+              trailingAction={
+                <button
+                  aria-label="Lọc công nợ"
+                  className="management-compact-create-action"
+                  title="Lọc công nợ"
+                  type="submit"
+                >
+                  <Plus aria-hidden="true" size={18} strokeWidth={2} />
+                </button>
+              }
               onChange={setDebtSearch}
             />
-            <button className="button button-primary" type="submit">Lọc công nợ</button>
           </ManagementCompactToolbar>
           <div className="finance-voucher-actions" aria-label="Tạo phiếu thu chi">
             <button className="button button-secondary" type="button" onClick={() => openVoucherForm('in')}>Phiếu thu</button>
             <button className="button button-secondary" type="button" onClick={() => openVoucherForm('out')}>Phiếu chi</button>
+            <button className="button button-secondary" type="button" onClick={exportCashbook}>
+              <Download aria-hidden="true" size={16} />
+              Xuất file
+            </button>
           </div>
         </div>
       }
       kpis={
         <MetricGrid ariaLabel="Tổng quan sổ quỹ">
-          <MetricCard label="Tồn quỹ" value={<MoneyText value={totalBalanceAmount} />} hint="Tiền mặt + ngân hàng" tone="success" />
-          <MetricCard label="Công nợ khách" value={<MoneyText value={totalDebtAmount} />} hint="Từ danh sách đang xem" tone={totalDebtAmount > 0 ? 'warning' : 'neutral'} />
+          <MetricCard label="Quỹ đầu kỳ" value={<MoneyText value={cashbookSummary.opening_balance} />} hint="Theo bộ lọc" tone="neutral" />
           <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc sổ quỹ" tone="info" />
+          <MetricCard label="Tổng chi" value={<MoneyText value={cashbookSummary.total_out} />} hint="Theo bộ lọc" tone="warning" />
+          <MetricCard label="Tồn quỹ" value={<MoneyText value={cashbookSummary.ending_balance} />} hint="Theo bộ lọc" tone="success" />
         </MetricGrid>
       }
       filter={
         <ManagementFilterSidebar
           ariaLabel="Bộ lọc tài chính"
-          actions={
-            <>
-              <button className="button button-primary" form="cashbook-filter-form" type="submit">Lọc sổ</button>
-              <button className="button button-secondary" type="button" onClick={resetCashbookFilters}>
-                <RotateCcw aria-hidden="true" size={16} />
-                Đặt lại bộ lọc tài chính
-              </button>
-            </>
-          }
+          popoverOpen={cashbookQuickTimeOpen}
         >
           <form id="cashbook-filter-form" aria-label="Bộ lọc sổ quỹ" className="management-filter-sidebar-form" onSubmit={filterCashbook}>
-            <ManagementFilterGroup title="Sổ quỹ">
-              <ManagementCompactSearch
-                label="Tìm sổ quỹ"
-                placeholder="Mã phiếu, ghi chú"
-                value={cashbookSearch}
-                leadingIcon={<Search aria-hidden="true" size={16} />}
-                onChange={setCashbookSearch}
-              />
-              <label>
-                Tìm theo
-                <select value={cashbookSearchScope} onChange={(event) => setCashbookSearchScope(event.target.value as CashbookSearchScope)}>
-                  <option value="all">Tất cả</option>
-                  <option value="code">Mã phiếu</option>
-                  <option value="note">Ghi chú</option>
-                  <option value="transfer_content">Nội dung chuyển khoản</option>
-                </select>
-              </label>
-              <label>
-                Từ ngày
-                <input type="date" value={cashbookFrom} onChange={(event) => setCashbookFrom(event.target.value)} />
-              </label>
-              <label>
-                Đến ngày
-                <input type="date" value={cashbookTo} onChange={(event) => setCashbookTo(event.target.value)} />
-              </label>
-              <label>
-                Quỹ tiền
-                <select value={cashbookAccountId} onChange={(event) => setCashbookAccountId(event.target.value)}>
-                  <option value="all">Tổng quỹ</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Loại chứng từ
-                <select value={cashbookDirection} onChange={(event) => setCashbookDirection(event.target.value as CashbookDirection | 'all')}>
-                  <option value="all">{directionText('all')}</option>
-                  <option value="in">{directionText('in')}</option>
-                  <option value="out">{directionText('out')}</option>
-                </select>
-              </label>
-              <label>
-                Trạng thái sổ quỹ
-                <select value={cashbookStatus} onChange={(event) => setCashbookStatus(event.target.value as CashbookStatus | 'all')}>
-                  <option value="all">Tất cả</option>
-                  <option value="posted">{statusText('posted')}</option>
-                  <option value="cancelled">{statusText('cancelled')}</option>
-                </select>
-              </label>
-              <label>
-                Hạch toán KQKD
-                <select
-                  value={cashbookBusinessAccounted}
-                  onChange={(event) => setCashbookBusinessAccounted(event.target.value as CashbookBusinessAccountedFilter)}
+            <ManagementFilterGroup title="Thời gian">
+              <div className="management-filter-time-options">
+                <div
+                  aria-expanded={cashbookQuickTimeOpen}
+                  className={`management-filter-choice${cashbookTimeFilter !== 'custom' ? ' management-filter-choice-active' : ''}`}
+                  onClick={() => {
+                    if (cashbookTimeFilter === 'custom') void applyCashbookQuickTimeFilter('month')
+                    else setCashbookQuickTimeOpen((current) => !current)
+                  }}
                 >
-                  <option value="all">{businessAccountedText('all')}</option>
-                  <option value="true">{businessAccountedText('true')}</option>
-                  <option value="false">{businessAccountedText('false')}</option>
-                </select>
-              </label>
+                  <input
+                    aria-label={cashbookTimeFilter === 'custom' ? cashbookQuickTimeLabels.month : cashbookQuickTimeLabels[cashbookTimeFilter]}
+                    checked={cashbookTimeFilter !== 'custom'}
+                    name="cashbook-time"
+                    readOnly
+                    type="radio"
+                    onChange={() => undefined}
+                  />
+                  <span>{cashbookTimeFilter === 'custom' ? cashbookQuickTimeLabels.month : cashbookQuickTimeLabels[cashbookTimeFilter]}</span>
+                  <span className="management-filter-choice-trailing">
+                    <ChevronRight aria-hidden="true" size={17} />
+                  </span>
+                </div>
+                <label className={`management-filter-choice${cashbookTimeFilter === 'custom' ? ' management-filter-choice-active' : ''}`}>
+                  <input
+                    aria-label="Tùy chỉnh"
+                    checked={cashbookTimeFilter === 'custom'}
+                    name="cashbook-time"
+                    type="radio"
+                    onChange={() => void applyCashbookCustomDateFilter()}
+                  />
+                  <span>{cashbookTimeFilter === 'custom' ? `${displayDate(cashbookFrom)} - ${displayDate(cashbookTo)}` : 'Tùy chỉnh'}</span>
+                  <CalendarDays aria-hidden="true" size={17} />
+                </label>
+              </div>
+              {cashbookQuickTimeOpen ? (
+                <div aria-label="Chọn nhanh thời gian" className="management-filter-quick-time-menu" role="region">
+                  {cashbookQuickTimeGroups.map((group) => (
+                    <section key={group.title}>
+                      <h3>{group.title}</h3>
+                      <div>
+                        {group.presets.map((preset) => (
+                          <button
+                            className={cashbookTimeFilter === preset ? 'management-filter-quick-time-active' : undefined}
+                            key={preset}
+                            type="button"
+                            onClick={() => void applyCashbookQuickTimeFilter(preset)}
+                          >
+                            {cashbookQuickTimeLabels[preset]}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : null}
+              {cashbookTimeFilter === 'custom' ? (
+                <div className="management-filter-date-range">
+                  <label>
+                    <span>Từ ngày</span>
+                    <input
+                      aria-label="Từ ngày"
+                      type="date"
+                      value={cashbookFrom}
+                      onChange={(event) => void applyCashbookCustomDateFilter({ from: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    <span>Đến ngày</span>
+                    <input
+                      aria-label="Đến ngày"
+                      type="date"
+                      value={cashbookTo}
+                      onChange={(event) => void applyCashbookCustomDateFilter({ to: event.target.value })}
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </ManagementFilterGroup>
+            <ManagementFilterGroup title="Quỹ tiền">
+              <select
+                aria-label="Quỹ tiền"
+                className="management-filter-select"
+                value={cashbookAccountId}
+                onChange={(event) => {
+                  const nextValue = event.target.value
+                  setCashbookAccountId(nextValue)
+                  void applyCashbookFilters({ finance_account_id: nextValue })
+                }}
+              >
+                <option value="all">Tổng quỹ</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
+                ))}
+              </select>
+            </ManagementFilterGroup>
+            <ManagementFilterGroup title="Loại chứng từ">
+              <select
+                aria-label="Loại chứng từ"
+                className="management-filter-select"
+                value={cashbookDirection}
+                onChange={(event) => {
+                  const nextValue = event.target.value as CashbookDirection | 'all'
+                  setCashbookDirection(nextValue)
+                  void applyCashbookFilters({ direction: nextValue })
+                }}
+              >
+                <option value="all">{directionText('all')}</option>
+                <option value="in">{directionText('in')}</option>
+                <option value="out">{directionText('out')}</option>
+              </select>
+            </ManagementFilterGroup>
+            <ManagementFilterGroup title="Trạng thái sổ quỹ">
+              <select
+                aria-label="Trạng thái sổ quỹ"
+                className="management-filter-select"
+                value={cashbookStatus}
+                onChange={(event) => {
+                  const nextValue = event.target.value as CashbookStatus | 'all'
+                  setCashbookStatus(nextValue)
+                  void applyCashbookFilters({ status: nextValue })
+                }}
+              >
+                <option value="all">Tất cả</option>
+                <option value="posted">{statusText('posted')}</option>
+                <option value="cancelled">{statusText('cancelled')}</option>
+              </select>
+            </ManagementFilterGroup>
+            <ManagementFilterGroup title="Hạch toán KQKD">
+              <select
+                aria-label="Hạch toán KQKD"
+                className="management-filter-select"
+                value={cashbookBusinessAccounted}
+                onChange={(event) => {
+                  const nextValue = event.target.value as CashbookBusinessAccountedFilter
+                  setCashbookBusinessAccounted(nextValue)
+                  void applyCashbookFilters({ business_accounted_filter: nextValue })
+                }}
+              >
+                <option value="all">{businessAccountedText('all')}</option>
+                <option value="true">{businessAccountedText('true')}</option>
+                <option value="false">{businessAccountedText('false')}</option>
+              </select>
             </ManagementFilterGroup>
           </form>
         </ManagementFilterSidebar>
@@ -757,6 +939,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
         </section>
       ) : null}
 
+      {showAuxiliaryFinanceSections ? (
       <ManagementListSurface ariaLabel="Tài khoản quỹ">
         <h2>Tài khoản quỹ</h2>
         {balances.length === 0 ? <EmptyState>Chưa có số dư quỹ.</EmptyState> : (
@@ -784,7 +967,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
           </ManagementTableViewport>
         )}
       </ManagementListSurface>
+      ) : null}
 
+      {showAuxiliaryFinanceSections ? (
       <ManagementListSurface ariaLabel="Công nợ khách hàng">
         <h2>Công nợ khách hàng</h2>
         {debts === null ? <p>Đang tải công nợ...</p> : null}
@@ -842,6 +1027,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
           </>
         ) : null}
       </ManagementListSurface>
+      ) : null}
 
       {selectedDebt && debtDetail ? (
         <section aria-label={`Thu nợ ${selectedDebt.customer_name}`} className="management-inline-detail finance-collection-panel">
@@ -920,40 +1106,6 @@ export function FinancePage({ service }: { service: FinanceService }) {
       ) : null}
 
       <ManagementListSurface ariaLabel="Sổ quỹ">
-        <header className="finance-section-header">
-          <h2>Sổ quỹ</h2>
-          <div className="finance-page-actions" aria-label="Tùy chọn sổ quỹ">
-            <button className="button button-secondary" type="button" onClick={() => setShowCashbookColumns((value) => !value)}>
-              <Columns3 aria-hidden="true" size={16} />
-              Cột
-            </button>
-            <button className="button button-secondary" type="button" onClick={exportCashbook}>
-              <Download aria-hidden="true" size={16} />
-              Xuất file
-            </button>
-          </div>
-        </header>
-        {showCashbookColumns ? (
-          <section aria-label="Chọn cột sổ quỹ" className="finance-cashbook-columns">
-            {cashbookColumnDefinitions.map((column) => (
-              <label key={column.key}>
-                <input
-                  checked={visibleCashbookColumns.includes(column.key)}
-                  disabled={column.key === 'code'}
-                  type="checkbox"
-                  onChange={() => toggleCashbookColumn(column.key)}
-                />
-                {column.label}
-              </label>
-            ))}
-          </section>
-        ) : null}
-        <MetricGrid ariaLabel="Tổng sổ quỹ">
-          <MetricCard label="Quỹ đầu kỳ" value={<MoneyText value={cashbookSummary.opening_balance} />} hint="Theo bộ lọc" tone="neutral" />
-          <MetricCard label="Tổng thu" value={<MoneyText value={cashbookSummary.total_in} />} hint="Theo bộ lọc" tone="success" />
-          <MetricCard label="Tổng chi" value={<MoneyText value={cashbookSummary.total_out} />} hint="Theo bộ lọc" tone="warning" />
-          <MetricCard label="Tồn quỹ" value={<MoneyText value={cashbookSummary.ending_balance} />} hint="Theo bộ lọc" tone="info" />
-        </MetricGrid>
         {cashbookEntries === null ? <p>Đang tải sổ quỹ...</p> : null}
         {cashbookEntries !== null && cashbookEntries.length === 0 ? <EmptyState>Chưa có dòng sổ quỹ.</EmptyState> : null}
         {cashbookEntries !== null && cashbookEntries.length > 0 ? (
@@ -1051,6 +1203,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
         ) : null}
       </ManagementListSurface>
 
+      {showAuxiliaryFinanceSections ? (
       <ManagementListSurface ariaLabel="Phiếu thu/chi">
         <h2>Phiếu thu/chi</h2>
         {vouchers.length === 0 ? <EmptyState>Chưa có phiếu thu/chi.</EmptyState> : (
@@ -1097,6 +1250,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
           </ManagementTableViewport>
         )}
       </ManagementListSurface>
+      ) : null}
     </ManagementPage>
   )
 }

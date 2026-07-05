@@ -220,7 +220,7 @@ it('filters purchase receipts by search status and dates', async () => {
   })
 })
 
-it('uses purchase receipt presets, active chips, reset action, and exact PN search priority', async () => {
+it('uses purchase receipt presets and exact PN search priority without a reset action', async () => {
   const service = makeService()
 
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
@@ -243,10 +243,7 @@ it('uses purchase receipt presets, active chips, reset action, and exact PN sear
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({ search: 'PN000673', status: 'all', page: 1, page_size: 15 })
   expect(within(filterSidebar).queryByText(/Tìm: PN000673/)).not.toBeInTheDocument()
-
-  await userEvent.click(within(filterSidebar).getByRole('button', { name: 'Đặt lại bộ lọc' }))
-
-  expect(service.listReceipts).toHaveBeenLastCalledWith({ status: 'draft', page: 1, page_size: 15 })
+  expect(within(filterSidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
 })
 
 it('creates a draft receipt for normal items with computed totals shown locally', async () => {

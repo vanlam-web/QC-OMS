@@ -18,6 +18,15 @@ it('keeps shell account controls aligned with the management page header row', (
   expect(cssRule('.management-page-header')).toContain('padding-right: var(--shell-action-rail-reserved-width)')
 })
 
+it('places finance voucher actions beside the shell account controls', () => {
+  const rule = cssRule('.finance-voucher-actions')
+
+  expect(rule).toContain('position: fixed')
+  expect(rule).toContain('top: var(--shell-action-rail-top)')
+  expect(rule).toContain('right: calc(var(--space-4) + var(--shell-action-rail-reserved-width) + var(--space-2))')
+  expect(rule).toContain('z-index: calc(var(--z-shell) - 1)')
+})
+
 it('keeps login controls on theme colors so entered text remains visible', () => {
   expect(cssRule('.auth-shell')).toContain('background: var(--color-background)')
   expect(cssRule('.auth-shell form')).toContain('background: var(--color-surface)')
@@ -75,12 +84,30 @@ it('keeps management filter selects styled as shared compact controls', () => {
 it('lets feature forms live inside the shared filter sidebar without custom layout CSS', () => {
   expect(cssRule('.management-filter-sidebar-form')).toContain('display: contents')
   expect(cssRule('.management-filter-actions')).toContain('position: sticky')
+  expect(cssRule('.management-filter-actions')).toContain('display: grid')
+  expect(cssRule('.management-filter-actions')).toContain('grid-template-columns: 1fr')
+  expect(cssRule('.management-filter-actions')).toContain('padding-bottom: var(--space-1)')
+  expect(cssRule('.management-filter-actions .button')).toContain('width: 100%')
+  expect(cssRule('.management-filter-actions .button')).toContain('white-space: normal')
   expect(cssRule('.finance-cashbook-filter')).toBe('')
 })
 
 it('right aligns money values in shared tables', () => {
   expect(cssRule('td:has(.money-text)')).toContain('text-align: right')
   expect(cssRule('.money-text')).toContain('font-variant-numeric: tabular-nums')
+})
+
+it('keeps the cashbook data table in a KV-like layout with project colors', () => {
+  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('text-transform: uppercase')
+  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.finance-cashbook-data-table thead th')).not.toContain('#FEF3C7')
+  expect(cssRule('.finance-cashbook-data-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.finance-cashbook-code-link')).toContain('color: var(--color-primary)')
+  expect(cssRule('.finance-cashbook-money-column')).toContain('text-align: right')
+  expect(cssRule('.finance-cashbook-filter-summary .metric-grid')).toContain('grid-template-columns: 1fr')
+  expect(cssRule('.finance-cashbook-filter-summary .metric-grid')).toContain('margin-bottom: var(--space-2)')
+  expect(cssRule('.finance-cashbook-filter-summary .metric-card')).toContain('display: flex')
+  expect(cssRule('.finance-cashbook-filter-summary .metric-card')).toContain('background: var(--color-surface)')
 })
 
 it('keeps shared management table headers sticky and visually distinct', () => {

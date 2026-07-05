@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Banknote, ChevronLeft, ChevronRight, FilePlus2, PackageCheck, Pencil, Plus, RotateCcw, Save, Search, Trash2, WalletCards } from 'lucide-react'
+import { Banknote, ChevronLeft, ChevronRight, FilePlus2, PackageCheck, Pencil, Plus, Save, Search, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import type {
@@ -334,16 +334,6 @@ export function PurchaseReceiptsPage({
       page: 1,
       page_size: pageSize,
     })
-  }
-
-  async function resetReceiptFilters() {
-    setSearch('')
-    setStatus('draft')
-    setDateFrom('')
-    setDateTo('')
-    setActivePreset(null)
-    setPage(1)
-    await loadReceipts({ status: 'draft', page: 1, page_size: pageSize })
   }
 
   async function goToPage(nextPage: number) {
@@ -1210,12 +1200,6 @@ export function PurchaseReceiptsPage({
           activeSummary={activeFilterSummary || undefined}
           ariaLabel="Bộ lọc phiếu nhập"
           title="Bộ lọc"
-          actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetReceiptFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
-          }
         >
           <button
             aria-label="Ẩn bộ lọc phiếu nhập"
