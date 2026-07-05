@@ -6,6 +6,7 @@ import type { FinanceService } from './finance-service'
 import type {
   CashbookBalance,
   CashbookEntry,
+  CashbookEntryDetail,
   CashbookVoucher,
   CustomerDebtDetail,
   CustomerDebtSummary,
@@ -60,6 +61,24 @@ const entry: CashbookEntry = {
   note: 'Thu nợ',
 }
 
+const cashbookDetail: CashbookEntryDetail = {
+  ...entry,
+  created_by: { id: 'user-1', name: 'Văn Viết Phương Lâm' },
+  counterparty: { type: 'customer', name: 'Anh Nam', phone: '0900000000' },
+  payment_method: 'cash',
+  source: { type: 'payment_receipt', id: 'receipt-1', code: 'PT0001', order_code: 'HD0001' },
+  allocations: [
+    {
+      order_id: 'order-1',
+      order_code: 'HD0001',
+      order_total_amount: 700000,
+      collected_before: 200000,
+      allocated_amount: 500000,
+      remaining_after: 0,
+    },
+  ],
+}
+
 const voucher: CashbookVoucher = {
   id: 'voucher-1',
   code: 'PT0001',
@@ -75,6 +94,7 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
     getCustomerDebt: vi.fn(async () => debtDetail),
     collectCustomerDebt: vi.fn(async () => ({ payment_receipt_id: 'receipt-1', allocated_amount: 500000 })),
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
+    getCashbookEntry: vi.fn(async () => cashbookDetail),
     listCashbookEntries: vi.fn(async () => ({
       summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 500000 },
       items: [entry],
@@ -108,14 +128,51 @@ describe('FinancePage', () => {
 
     await userEvent.type(screen.getByLabelText('Tìm sổ quỹ'), 'PT0001')
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hướng thu chi' }), 'in')
-    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tìm sổ' }))
 
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
       search: 'PT0001',
+      finance_account_id: undefined,
       direction: 'in',
+      status: 'all',
+      is_business_accounted: undefined,
       page: 1,
       page_size: 15,
     })
+  })
+
+  it('filters cashbook by account status and business accounting', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('table', { name: 'Sổ quỹ' })
+    await userEvent.selectOptions(screen.getByLabelText('Quỹ tiền'), 'bank-1')
+    await userEvent.selectOptions(screen.getByLabelText('Trạng thái sổ quỹ'), 'posted')
+    await userEvent.selectOptions(screen.getByLabelText('Hạch toán KQKD'), 'false')
+    await userEvent.click(screen.getByRole('button', { name: 'Lọc sổ' }))
+
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith({
+      search: undefined,
+      finance_account_id: 'bank-1',
+      direction: 'all',
+      status: 'posted',
+      is_business_accounted: false,
+      page: 1,
+      page_size: 15,
+    })
+  })
+
+  it('opens cashbook entry detail with allocation rows', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PT0001' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT0001' })
+    expect(within(detail).getByText('Văn Viết Phương Lâm')).toBeInTheDocument()
+    expect(within(detail).getByText('Anh Nam')).toBeInTheDocument()
+    expect(within(detail).getAllByText('HD0001').length).toBeGreaterThan(0)
+    expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
   })
 
   it('opens debt detail and submits collection payload', async () => {

@@ -969,6 +969,7 @@ export interface FoundationRepository {
     search?: string;
     direction?: "in" | "out";
     sourceType?: "payment_receipt_method" | "cashbook_voucher";
+    status?: "posted" | "cancelled";
     isBusinessAccounted?: boolean;
     from?: string;
     to?: string;

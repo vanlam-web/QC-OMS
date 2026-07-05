@@ -120,6 +120,7 @@ export async function listCashbookEntries(
     search,
     direction: parseOptionalEnum(url.searchParams.get("direction"), ["in", "out"]),
     sourceType: parseOptionalEnum(url.searchParams.get("source_type"), ["payment_receipt_method", "cashbook_voucher"]),
+    status: parseOptionalEnum(url.searchParams.get("status"), ["posted", "cancelled"]),
     isBusinessAccounted: parseOptionalBoolean(url.searchParams.get("is_business_accounted")),
     from: isExactVoucherSearch ? undefined : url.searchParams.get("from")?.trim() || undefined,
     to: isExactVoucherSearch ? undefined : url.searchParams.get("to")?.trim() || undefined,
