@@ -2,20 +2,21 @@
 
 > **Xưởng Văn Lâm** — Hệ thống Quản lý Sản xuất & Bán hàng
 >
-> Root index chỉ để điều hướng. Trạng thái sống nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
+> File này chỉ để điều hướng. Trạng thái sống nằm ở [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md).
 
 ## Đọc Trước Khi Làm
 
 | Việc cần biết | File |
 |---|---|
 | Tổng quan hệ thống tài liệu | [00-OVERVIEW-TongQuan/README.md](./00-OVERVIEW-TongQuan/README.md) |
-| Source of Truth 8 tầng | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Nguồn đúng 8 tầng | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | Quy tắc viết tài liệu | [DOCUMENT_RULES.md](./DOCUMENT_RULES.md) |
 | Trạng thái sống / queue hiện tại | [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) |
 | Quy ước phối hợp Spec / Implement / Review | [WORKFLOW-SPEC-IMPLEMENT.md](./WORKFLOW-SPEC-IMPLEMENT.md) |
-| Quy ước specs/plans/drafts/handoff | [superpowers/README.md](./superpowers/README.md) |
+| Vòng lặp tự động giữa các luồng | [WORKFLOW-AUTO-SPEC-IMPLEMENT.md](./WORKFLOW-AUTO-SPEC-IMPLEMENT.md) |
+| Quy ước spec/plan/draft/handoff lịch sử | [superpowers/README.md](./superpowers/README.md) |
 
-## Source Of Truth Theo Tầng
+## Nguồn Đúng Theo Tầng
 
 | Tầng | Nội dung | Điểm vào |
 |---|---|---|
@@ -32,10 +33,12 @@
 
 | File | Vai trò |
 |---|---|
-| [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) | Live status board, queue hiện tại, handoff giữa luồng |
-| [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md) | Điều phối owner / next owner khi cần |
-| [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) | Issue tracker do Review Thread duy trì |
-| [IMPLEMENTATION-CHECKLIST.md](./IMPLEMENTATION-CHECKLIST.md) | Log baseline implementation, không phải roadmap sống |
+| [PHASE-CHECKLIST.md](./PHASE-CHECKLIST.md) | Bảng trạng thái sống, queue hiện tại, handoff giữa luồng |
+| [PROJECT-COORDINATION.md](./PROJECT-COORDINATION.md) | Điều phối luồng đang giữ / luồng nhận tiếp khi cần |
+| [REVIEW-ISSUES.md](./REVIEW-ISSUES.md) | Sổ theo dõi vấn đề do Review Thread duy trì |
+| [IMPLEMENTATION-CHECKLIST.md](./IMPLEMENTATION-CHECKLIST.md) | Log mốc kiểm implement gần nhất, không phải roadmap sống |
+| [PERFORMANCE-FIX-LOG.md](./PERFORMANCE-FIX-LOG.md) | Log đo và fix load chậm |
+| [KIOTVIET-REFERENCE-NOTES.md](./KIOTVIET-REFERENCE-NOTES.md) | Ghi chú tham khảo KiotViet phù hợp QC-OMS |
 | [CHANGELOG-AI.md](./CHANGELOG-AI.md) | Lịch sử phối hợp AI |
 
 ## Ghi Chú
