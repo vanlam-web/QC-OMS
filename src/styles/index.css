@@ -2167,6 +2167,29 @@ td:has(.money-text) {
   font-size: 0.8125rem;
 }
 
+.pos-cart-line-shortage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 42%, var(--color-border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface));
+  color: var(--color-warning-text);
+  padding: 0.125rem 0.375rem;
+}
+
+.pos-cart-line-shortage button {
+  min-height: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 56%, var(--color-border));
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .pos-cart-line-unit {
   justify-self: stretch;
   width: 100%;
@@ -3401,6 +3424,86 @@ td:has(.money-text) {
 }
 
 .pos-product-create-popover button[type="submit"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.pos-material-opening-dialog {
+  position: fixed;
+  z-index: calc(var(--z-shell) + 8);
+  inset: 5rem auto auto 50%;
+  width: min(34rem, calc(100vw - var(--space-4)));
+  max-height: calc(100vh - 7rem);
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-3);
+  transform: translateX(-50%);
+}
+
+.pos-material-opening-dialog form,
+.pos-material-opening-list,
+.pos-material-opening-item {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pos-material-opening-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pos-material-opening-dialog h2,
+.pos-material-opening-dialog p {
+  margin: 0;
+}
+
+.pos-material-opening-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  padding: var(--space-2);
+}
+
+.pos-material-opening-item label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.pos-material-opening-item label:first-child {
+  display: flex;
+  align-items: center;
+  color: var(--color-text);
+}
+
+.pos-material-opening-dialog input,
+.pos-material-opening-dialog select {
+  min-height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+}
+
+.pos-material-opening-dialog button {
+  min-height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  font-weight: 700;
+}
+
+.pos-material-opening-dialog button[type="submit"] {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-on-primary);

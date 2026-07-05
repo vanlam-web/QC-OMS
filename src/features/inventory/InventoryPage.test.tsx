@@ -52,6 +52,9 @@ function makeService(overrides: Partial<InventoryService> = {}): InventoryServic
     listStockMovements: vi.fn(async () => ({ items: [movement], page: 1, page_size: 10, total: 1 })),
     listStocktakes: vi.fn(async () => ({ items: [stocktake], page: 1, page_size: 10, total: 1 })),
     adjustNormalProductStock: vi.fn(async () => stocktake),
+    previewPosShortage: vi.fn(),
+    getMaterialOpeningOptions: vi.fn(),
+    createMaterialOpening: vi.fn(),
     ...overrides,
   }
 }

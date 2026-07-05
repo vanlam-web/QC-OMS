@@ -89,6 +89,7 @@ function PosRoute() {
   const { currentUser, initialized, accessConnection, signOut, getAccessToken } = useAuth()
   const navigate = useNavigate()
   const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
+  const inventoryService = useMemo(() => createBrowserInventoryService(getAccessToken), [getAccessToken])
   const orderService = useMemo(() => createBrowserOrderService(getAccessToken), [getAccessToken])
   const productionQueueService = useMemo(
     () => createBrowserProductionQueueService(getAccessToken),
@@ -100,6 +101,7 @@ function PosRoute() {
   return (
     <PosShell
       catalogService={catalogService}
+      inventoryService={inventoryService}
       orderService={orderService}
       productionQueueService={productionQueueService}
       currentUser={currentUser}
