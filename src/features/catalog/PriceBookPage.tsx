@@ -294,10 +294,13 @@ export function PriceBookPage({
           ariaLabel="Bộ lọc bảng giá"
           title="Bộ lọc"
           actions={
-            <button className="button button-secondary" type="button" onClick={() => void resetPriceBookFilters()}>
-              <RotateCcw aria-hidden="true" size={15} />
-              Đặt lại bộ lọc
-            </button>
+            <>
+              <button className="button button-primary" form="price-book-filter-form" type="submit">Áp dụng bộ lọc</button>
+              <button className="button button-secondary" type="button" onClick={() => void resetPriceBookFilters()}>
+                <RotateCcw aria-hidden="true" size={15} />
+                Đặt lại bộ lọc
+              </button>
+            </>
           }
         >
           <button
@@ -309,7 +312,7 @@ export function PriceBookPage({
           >
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
-          <form aria-label="Lọc bảng giá" onSubmit={filterProducts}>
+          <form id="price-book-filter-form" aria-label="Lọc bảng giá" className="management-filter-sidebar-form" onSubmit={filterProducts}>
             <ManagementFilterGroup title="Trạng thái">
               <label>
                 <input checked={status === 'active'} name="price-book-status" type="radio" onChange={() => setStatus('active')} />
@@ -329,9 +332,6 @@ export function PriceBookPage({
                 Tất cả
               </label>
             </ManagementFilterGroup>
-            <button className="button button-primary" type="submit">
-              Áp dụng
-            </button>
           </form>
         </ManagementFilterSidebar>
       }
