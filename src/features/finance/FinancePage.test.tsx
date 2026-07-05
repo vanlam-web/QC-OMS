@@ -144,17 +144,17 @@ describe('FinancePage', () => {
     expect(screen.queryByText('Công nợ khách')).not.toBeInTheDocument()
   })
 
-  it('moves opening and outflow summary cards into the left KPI stack', async () => {
+  it('keeps cashbook summary cards directly above the main table', async () => {
     render(<FinancePage service={makeService()} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    const sidebarSummary = screen.getByRole('region', { name: 'Tổng quan sổ quỹ' })
-    const sidebarLabels = within(sidebarSummary)
+    const mainSummary = screen.getByRole('region', { name: 'Tổng quan sổ quỹ' })
+    const summaryLabels = within(mainSummary)
       .getAllByText(/Quỹ đầu kỳ|Tổng chi|Tồn quỹ|Tổng thu/)
       .map((node) => node.textContent)
 
-    expect(sidebarLabels).toEqual(['Quỹ đầu kỳ', 'Tổng thu', 'Tổng chi', 'Tồn quỹ'])
-    expect(within(sidebarSummary).getByText('400 000')).toBeInTheDocument()
+    expect(summaryLabels).toEqual(['Quỹ đầu kỳ', 'Tổng thu', 'Tổng chi', 'Tồn quỹ'])
+    expect(within(mainSummary).getByText('400 000')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { level: 2, name: 'Sổ quỹ' })).not.toBeInTheDocument()
   })
 
@@ -312,11 +312,35 @@ describe('FinancePage', () => {
     click.mockRestore()
   })
 
+  it('keeps the cashbook result area aligned to the KiotViet-like main layout', async () => {
+    render(<FinancePage service={makeService()} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const voucherActions = screen.getByLabelText('Tạo phiếu thu chi')
+
+    expect(within(voucherActions).getByRole('button', { name: '+ Phiếu thu' })).toBeInTheDocument()
+    expect(within(voucherActions).getByRole('button', { name: '+ Phiếu chi' })).toBeInTheDocument()
+    expect(within(voucherActions).getByRole('button', { name: 'Xuất file' })).toBeInTheDocument()
+
+    expect(within(table).getByRole('checkbox', { name: 'Chọn tất cả dòng sổ quỹ' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Đánh dấu' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Mã phiếu' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Thời gian' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Loại thu chi' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Người nộp/nhận' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Loại sổ quỹ' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Giá trị' })).toBeInTheDocument()
+
+    const row = within(table).getByRole('row', { name: /PT0001/ })
+    expect(within(row).getByText('Tiền mặt')).toBeInTheDocument()
+    expect(within(row).queryByText('CASH · Quỹ tiền mặt')).not.toBeInTheDocument()
+  })
+
   it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Phiếu chi' }))
+    await userEvent.click(await screen.findByRole('button', { name: '+ Phiếu chi' }))
     const form = await screen.findByRole('form', { name: 'Tạo phiếu chi' })
 
     await userEvent.selectOptions(within(form).getByLabelText('Quỹ/tài khoản'), 'cash-1')

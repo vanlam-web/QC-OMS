@@ -117,15 +117,15 @@ Quan sát trước đó ngày `01/07/2026`:
 
 Màn Sổ quỹ cho phép xem dòng tiền vào/ra và tạo phiếu thu/chi thủ công.
 
-Hiện trạng sau PR #83 ngày `05/07/2026`:
+Hiện trạng sau các slice sổ quỹ ngày `05/07/2026`:
 
 - `/finance` là màn sổ quỹ chính; thân trang chỉ còn bảng sổ quỹ, inline detail dòng sổ và form phiếu thu/chi khi mở.
 - Các khối `Tài khoản quỹ`, `Công nợ khách hàng`, `Phiếu thu/chi` đã ẩn khỏi thân trang để tránh rối layout.
-- Header có ô `Tìm công nợ` theo kiểu search chung, nút `Phiếu thu`, `Phiếu chi`, `Xuất file`.
-- Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong cột filter bên trái và lấy từ `summary` của API sổ quỹ theo filter.
+- Header có ô `Tìm công nợ` theo kiểu search chung, nút `+ Phiếu thu`, `+ Phiếu chi`, `Xuất file`.
+- Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải, ngay trên bảng sổ quỹ, và lấy từ `summary` của API sổ quỹ theo filter.
 - `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
 - Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.
-- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet.
+- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị.
 
 MVP của QC-OMS hỗ trợ:
 
@@ -140,18 +140,14 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────┐
-│ Sổ quỹ                              [Tìm công nợ +] [Phiếu thu] [Phiếu chi] [Xuất] │
+│ Sổ quỹ                            [Tìm công nợ +] [+ Phiếu thu] [+ Phiếu chi] [Xuất]│
 ├───────────────────────┬────────────────────────────────────────────────────────────┤
-│ Quỹ đầu kỳ            │ Mã phiếu | Thời gian | Loại thu chi | Người | Quỹ | Giá trị │
-│ Tổng thu              │ CTM001170 | ... | Chi phí khác      | Tý    | CASH | -50,000│
-│ Tổng chi              │ TTHD010973| ... | Thu tiền khách trả| KL2   | MB01 | 114,000│
-│ Tồn quỹ               │                                                            │
-│                       │                                                            │
-│ Thời gian             │ Pagination                                                 │
-│ Quỹ tiền              │                                                            │
-│ Loại chứng từ         │                                                            │
-│ Trạng thái            │                                                            │
-│ Hạch toán KQKD        │                                                            │
+│ Thời gian             │ Quỹ đầu kỳ | Tổng thu | Tổng chi | Tồn quỹ                 │
+│ Quỹ tiền              │ [ ] | ☆ | Mã phiếu | Thời gian | Loại thu chi | Người      │
+│ Loại chứng từ         │     |   | Loại sổ quỹ | Giá trị                             │
+│ Trạng thái            │ CTM001170 | ... | Chi phí khác | Tý | Tiền mặt | -50,000    │
+│ Hạch toán KQKD        │ TTHD010973| ... | Thu tiền khách trả | KL2 | Ngân hàng      │
+│                       │ Pagination                                                 │
 └───────────────────────┴────────────────────────────────────────────────────────────┘
 ```
 
@@ -202,7 +198,7 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 | Thời gian | Ngày giờ ghi sổ |
 | Loại thu chi | Tên loại thu/chi |
 | Người nộp/nhận | Khách, nhân viên hoặc ghi chú |
-| Quỹ/tài khoản | Tiền mặt hoặc tên ngân hàng |
+| Loại sổ quỹ | Hiển thị loại quỹ như `Tiền mặt` hoặc `Ngân hàng` |
 | Giá trị | Thu dương, chi âm |
 | Hạch toán | Có/không tính vào báo cáo kinh doanh nếu cần |
 | Trạng thái | Đã ghi sổ/đã hủy |
@@ -211,7 +207,7 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 
 MVP nên cho cấu hình cột tương tự KV, nhưng có thể làm theo mức ưu tiên:
 
-1. Cột mặc định hiện tại: mã phiếu, thời gian, loại thu chi, người nộp/nhận, quỹ/tài khoản, giá trị, trạng thái.
+1. Cột mặc định hiện tại: checkbox chọn dòng, đánh dấu sao, mã phiếu, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ, giá trị.
 2. Cột mở rộng: thời gian tạo, người tạo, nhân viên, mã người nộp/nhận, số điện thoại, địa chỉ, nội dung chuyển khoản, ghi chú, loại sổ quỹ, hạch toán KQKD.
 3. Chi nhánh chỉ hiển thị khi hệ thống có nhiều chi nhánh.
 
