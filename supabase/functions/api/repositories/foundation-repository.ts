@@ -16,6 +16,8 @@ import type {
   FoundationRepository,
   GetCurrentUserInput,
   InventoryProductData,
+  MaterialOpeningOptionsData,
+  MaterialOpeningResultData,
   PermissionCode,
   PermissionData,
   PaymentReceiptAllocationData,
@@ -1712,6 +1714,25 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         note: data.note === null ? null : String(data.note),
       };
     },
+    async getMaterialOpeningOptions(input): Promise<MaterialOpeningOptionsData | null> {
+      return await loadMaterialOpeningOptions(client, input.organizationId, input.productId);
+    },
+    async createMaterialOpening(input): Promise<MaterialOpeningResultData> {
+      const { data, error } = await client.rpc("open_normal_material_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: {
+          product_id: input.productId,
+          inventory_shape: input.inventoryShape,
+          opened_unit_id: input.openedUnitId,
+          opened_qty: input.openedQty,
+          old_remaining_qty: input.oldRemainingQty ?? 0,
+          note: input.note ?? null,
+        },
+      });
+      if (error !== null) throw error;
+      return toMaterialOpeningResult(data);
+    },
     async listProductionQueue(input): Promise<{ items: ProductionQueueItemData[]; total: number }> {
       const { data, error, count } = await client
         .from("production_queue_items")
@@ -2293,6 +2314,22 @@ function toQuoteSummaryData(value: unknown): QuoteSummaryData {
     order_type: "quote",
     status: String(value.order.status) as QuoteSummaryData["status"],
     total_amount: Number(value.order.total_amount),
+  };
+}
+
+function toMaterialOpeningResult(value: unknown): MaterialOpeningResultData {
+  if (!isRecord(value)) throw new Error("MATERIAL_OPENING_RESULT_INVALID");
+  return {
+    id: String(value.id),
+    product_id: String(value.product_id),
+    inventory_shape: "normal",
+    source_type: "manual_normal",
+    opened_unit_id: String(value.opened_unit_id),
+    opened_qty: Number(value.opened_qty),
+    opened_stock_qty: Number(value.opened_stock_qty),
+    stock_movement_id: typeof value.stock_movement_id === "string" ? value.stock_movement_id : null,
+    warnings: Array.isArray(value.warnings) ? value.warnings.map(String) : [],
+    created_at: String(value.created_at),
   };
 }
 
@@ -3292,6 +3329,83 @@ async function hydrateInventoryProducts(
       is_negative: availableQty < 0,
     };
   });
+}
+
+async function loadMaterialOpeningOptions(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+): Promise<MaterialOpeningOptionsData | null> {
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id, code, name, status")
+    .eq("organization_id", organizationId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError !== null) throw productError;
+  if (product === null) return null;
+
+  const { data: settings, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("inventory_shape, stock_unit_id")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .maybeSingle();
+  if (settingsError !== null) throw settingsError;
+  if (settings === null || !isString(settings.stock_unit_id)) return null;
+
+  const { data: stockUnit, error: stockUnitError } = await client
+    .from("inventory_units")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .eq("id", settings.stock_unit_id)
+    .maybeSingle();
+  if (stockUnitError !== null) throw stockUnitError;
+  if (stockUnit === null) return null;
+
+  const { data: conversions, error: conversionError } = await client
+    .from("product_unit_conversions")
+    .select("sale_unit_id, stock_qty_per_sale_unit")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .eq("stock_unit_id", settings.stock_unit_id)
+    .eq("is_active", true);
+  if (conversionError !== null) throw conversionError;
+
+  const conversionUnitIds = [...new Set((conversions ?? []).map((row) => row.sale_unit_id).filter(isString))];
+  const unitsById = new Map<string, { code: string; name: string }>();
+  if (conversionUnitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("id", conversionUnitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, { code: unit.code, name: unit.name });
+  }
+
+  return {
+    product: {
+      id: product.id,
+      code: product.code,
+      name: product.name,
+      inventory_shape: settings.inventory_shape as "normal" | "roll" | "sheet",
+      stock_unit: { id: stockUnit.id, code: stockUnit.code, name: stockUnit.name },
+    },
+    conversions: (conversions ?? [])
+      .filter((row) => unitsById.has(row.sale_unit_id))
+      .map((row) => {
+        const unit = unitsById.get(row.sale_unit_id)!;
+        return {
+          unit_id: row.sale_unit_id,
+          code: unit.code,
+          name: unit.name,
+          stock_qty_per_unit: Number(row.stock_qty_per_sale_unit),
+        };
+      }),
+    warnings: settings.inventory_shape === "normal" && (conversions ?? []).length === 0 ? ["NO_ACTIVE_CONVERSION"] : [],
+  };
 }
 
 async function loadProductBom(

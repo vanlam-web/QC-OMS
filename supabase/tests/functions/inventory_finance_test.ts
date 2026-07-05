@@ -380,6 +380,123 @@ Deno.test("inventory products hide inactive rows for create_order-only actor", a
   assertEquals(requestedStatus, "active");
 });
 
+Deno.test("material opening options require order or inventory permission", async () => {
+  assertEquals(
+    (await call("/api/v1/inventory/material-openings/options?product_id=p-1", { method: "GET" }, repo([]))).status,
+    403,
+  );
+  assertEquals(
+    (await call(
+      "/api/v1/inventory/material-openings/options?product_id=p-1",
+      { method: "GET" },
+      repo(["perm.create_order"], {
+        getMaterialOpeningOptions: () =>
+          Promise.resolve({
+            product: {
+              id: "p-1",
+              code: "STANDEE",
+              name: "Standee chữ X",
+              inventory_shape: "normal",
+              stock_unit: { id: "unit-stock", code: "CAI", name: "Cái" },
+            },
+            conversions: [{ unit_id: "unit-pack", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+            warnings: [],
+          }),
+      }),
+    )).status,
+    200,
+  );
+});
+
+Deno.test("material opening options require product id and return conversions", async () => {
+  let observedProductId = "";
+  const missingProduct = await call(
+    "/api/v1/inventory/material-openings/options",
+    { method: "GET" },
+    repo(["perm.create_order"]),
+  );
+  assertEquals(missingProduct.status, 400);
+
+  const response = await call(
+    "/api/v1/inventory/material-openings/options?product_id=p-1",
+    { method: "GET" },
+    repo(["perm.create_order"], {
+      getMaterialOpeningOptions: (input: { productId: string }) => {
+        observedProductId = input.productId;
+        return Promise.resolve({
+          product: {
+            id: "p-1",
+            code: "STANDEE",
+            name: "Standee chữ X",
+            inventory_shape: "normal",
+            stock_unit: { id: "unit-stock", code: "CAI", name: "Cái" },
+          },
+          conversions: [{ unit_id: "unit-pack", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as {
+    product: { code: string };
+    conversions: Array<{ unit_id: string; stock_qty_per_unit: number }>;
+  };
+  assertEquals(response.status, 200);
+  assertEquals(observedProductId, "p-1");
+  assertEquals(result.product.code, "STANDEE");
+  assertEquals(result.conversions[0].stock_qty_per_unit, 500);
+});
+
+Deno.test("normal material opening validates request and calls repository", async () => {
+  let observedOpenedUnitId = "";
+  const invalid = await call(
+    "/api/v1/inventory/material-openings",
+    { method: "POST", body: JSON.stringify({ product_id: "p-1", inventory_shape: "normal", opened_qty: 0 }) },
+    repo(["perm.create_order"]),
+  );
+  assertEquals(invalid.status, 400);
+
+  const response = await call(
+    "/api/v1/inventory/material-openings",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: "p-1",
+        inventory_shape: "normal",
+        opened_unit_id: "unit-pack",
+        opened_qty: 1,
+        old_remaining_qty: 0,
+        note: " Khui ram giấy ",
+      }),
+    },
+    repo(["perm.create_order"], {
+      createMaterialOpening: (input: { openedUnitId: string; note?: string }) => {
+        observedOpenedUnitId = input.openedUnitId;
+        assertEquals(input.note, "Khui ram giấy");
+        return Promise.resolve({
+          id: "opening-1",
+          product_id: "p-1",
+          inventory_shape: "normal",
+          source_type: "manual_normal",
+          opened_unit_id: "unit-pack",
+          opened_qty: 1,
+          opened_stock_qty: 500,
+          stock_movement_id: null,
+          warnings: [],
+          created_at: "2026-07-05T09:00:00Z",
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { id: string; opened_stock_qty: number; stock_movement_id: string | null };
+  assertEquals(response.status, 201);
+  assertEquals(observedOpenedUnitId, "unit-pack");
+  assertEquals(result.opened_stock_qty, 500);
+  assertEquals(result.stock_movement_id, null);
+});
+
 Deno.test("normal product stock adjustment creates balanced stocktake", async () => {
   const response = await call(
     "/api/v1/inventory/products/p-1/adjust-stock",

@@ -527,6 +527,36 @@ export interface StocktakeData {
   note: string | null;
 }
 
+export interface MaterialOpeningOptionsData {
+  product: {
+    id: string;
+    code: string;
+    name: string;
+    inventory_shape: "normal" | "roll" | "sheet";
+    stock_unit: { id: string; code: string; name: string };
+  };
+  conversions: Array<{
+    unit_id: string;
+    code: string;
+    name: string;
+    stock_qty_per_unit: number;
+  }>;
+  warnings: string[];
+}
+
+export interface MaterialOpeningResultData {
+  id: string;
+  product_id: string;
+  inventory_shape: "normal";
+  source_type: "manual_normal";
+  opened_unit_id: string;
+  opened_qty: number;
+  opened_stock_qty: number;
+  stock_movement_id: string | null;
+  warnings: string[];
+  created_at: string;
+}
+
 export interface ProductionQueueItemData {
   id: string;
   production_machine: { id: string; code: string; name: string };
@@ -966,6 +996,20 @@ export interface FoundationRepository {
     actualQty: number;
     reason: string;
   }): Promise<StocktakeData>;
+  getMaterialOpeningOptions(input: {
+    organizationId: string;
+    productId: string;
+  }): Promise<MaterialOpeningOptionsData | null>;
+  createMaterialOpening(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    inventoryShape: "normal";
+    openedUnitId: string;
+    openedQty: number;
+    oldRemainingQty?: number;
+    note?: string;
+  }): Promise<MaterialOpeningResultData>;
   listProductionQueue(input: {
     organizationId: string;
     page: number;
