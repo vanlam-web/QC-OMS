@@ -301,6 +301,8 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `payment_status` | `text` | ❌ | `not_applicable`, `unpaid`, `partial`, `paid` |
 | `note` | `text` | ✅ | Ghi chú đơn |
 | `cancel_reason_type` | `text` | ✅ | `user_cancelled` hoặc `revised`; null nếu chưa hủy |
+| `cancel_reason_code` | `text` | ✅ | Lý do nhanh khi sửa/hủy: `wrong_price`, `wrong_dimension`, `wrong_customer`, `customer_changed_mind`, `other` |
+| `cancel_reason_note` | `text` | ✅ | Ghi chú thêm khi sửa/hủy; bắt buộc nếu `cancel_reason_code = 'other'` |
 | `cancelled_at` | `timestamptz` | ✅ | Thời điểm hủy nếu có |
 | `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
@@ -332,6 +334,9 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Với `order_type = 'invoice'`, nếu `debt_amount > 0` và `paid_amount = 0` thì `payment_status = 'unpaid'`.
 - Nếu `status = 'cancelled'`, `cancel_reason_type` bắt buộc.
 - `cancel_reason_type IN ('user_cancelled', 'revised')` khi không null.
+- Nếu `status = 'cancelled'`, `cancel_reason_code` bắt buộc.
+- `cancel_reason_code IN ('wrong_price', 'wrong_dimension', 'wrong_customer', 'customer_changed_mind', 'other')` khi không null.
+- Nếu `cancel_reason_code = 'other'`, `cancel_reason_note` bắt buộc.
 - `revision_no >= 0`
 - `base_code` không được rỗng sau khi trim.
 - Với bản gốc, `revision_no = 0`, `code = base_code`, `revised_from_order_id` null.
@@ -357,6 +362,7 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
 - Hủy hóa đơn không tạo bản sửa dùng `cancel_reason_type = 'user_cancelled'`.
 - Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
+- Đảo kho do sửa/hủy hóa đơn dùng `stock_movements.movement_type = 'invoice_reversal'`; nếu bản sửa ghi lại tồn theo hóa đơn mới thì dùng movement bán hàng chính thức tương ứng, hoặc `invoice_revision` nếu cần phân biệt rõ với checkout thường.
 - Nhân viên nội bộ được sửa/hủy trong 10 ngày; sau 10 ngày chỉ quản lý/admin hoặc quyền mạnh tương ứng.
 
 ### Index

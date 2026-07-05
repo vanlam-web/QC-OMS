@@ -453,7 +453,8 @@ Tạo bản sửa của hóa đơn đã chốt theo mã `MaCu.01`, không sửa 
     "bank_account_id": null,
     "old_debt_payment_amount": 0
   },
-  "revision_reason": "Sửa sai kích thước",
+  "revision_reason_code": "wrong_dimension",
+  "revision_reason_note": "Sửa sai kích thước",
   "note": "Nội dung sau sửa"
 }
 ```
@@ -463,7 +464,8 @@ Tạo bản sửa của hóa đơn đã chốt theo mã `MaCu.01`, không sửa 
 - Hóa đơn gốc phải cùng organization, `order_type = invoice`.
 - Chỉ cho sửa bản hóa đơn còn hiệu lực gần nhất trong chuỗi `base_code`.
 - Hóa đơn đang bị user khác lock thì trả `RESOURCE_CONFLICT`.
-- `revision_reason` bắt buộc; UI nên gửi lý do nhanh và ghi chú thêm nếu có.
+- `revision_reason_code` bắt buộc, thuộc nhóm `wrong_price`, `wrong_dimension`, `wrong_customer`, `customer_changed_mind`, `other`.
+- `revision_reason_note` không bắt buộc, trừ khi `revision_reason_code = other`.
 - Nhân viên nội bộ được sửa/hủy trong 10 ngày từ thời điểm tạo hóa đơn; sau 10 ngày endpoint yêu cầu quyền quản lý/admin hoặc quyền mạnh tương ứng.
 - Input giỏ hàng và payment validate như checkout.
 
@@ -474,7 +476,7 @@ Tạo bản sửa của hóa đơn đã chốt theo mã `MaCu.01`, không sửa 
 3. Tạo hóa đơn mới với cùng `base_code`, `revision_no` tăng 1 và mã dạng `HD000123.01`.
 4. Chuyển hóa đơn cũ sang `status = cancelled`, `cancel_reason_type = revised`, `replaced_by_order_id = hóa đơn mới`.
 5. Hóa đơn mới lưu `revised_from_order_id = hóa đơn cũ`.
-6. Đảo kho của hóa đơn cũ, rồi trừ kho lại theo hóa đơn mới.
+6. Đảo kho của hóa đơn cũ bằng `stock_movements.movement_type = invoice_reversal`, rồi trừ kho lại theo hóa đơn mới.
 7. Đảo công nợ của hóa đơn cũ, rồi ghi công nợ lại theo hóa đơn mới nếu còn nợ.
 8. Xử lý tiền theo chênh lệch: bản mới tăng tiền thì thu thêm hoặc ghi nợ; bản mới giảm tiền thì hoàn tiền hoặc cấn nợ cũ nếu khách còn nợ.
 9. Ghi `order_status_history` cho cả hóa đơn cũ và hóa đơn mới.

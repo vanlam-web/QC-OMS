@@ -565,7 +565,7 @@ Tra cứu sổ kho chính thức.
 | Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
 | `product_id` | `uuid` | Không | Lọc theo sản phẩm |
-| `movement_type` | `string` | Không | `sale_deduction`, `stocktake_adjustment`, `manual_adjustment`, `remnant_created`, `remnant_discarded`, `purchase_receipt`, `material_opening` |
+| `movement_type` | `string` | Không | `sale_deduction`, `invoice_reversal`, `invoice_revision`, `stocktake_adjustment`, `manual_adjustment`, `remnant_created`, `remnant_discarded`, `purchase_receipt`, `material_opening` |
 | `order_id` | `uuid` | Không | Lọc theo đơn |
 | `stocktake_id` | `uuid` | Không | Lọc theo phiếu kiểm kho |
 | `from` / `to` | `datetime` | Không | Khoảng thời gian |

@@ -418,6 +418,8 @@ Ghi mọi biến động tồn kho chính thức trong MVP.
 | Giá trị | Ý nghĩa |
 |---|---|
 | `sale_deduction` | Trừ kho khi tạo/lưu đơn bán chính thức |
+| `invoice_reversal` | Đảo tồn kho phát sinh từ hóa đơn bị hủy hoặc bị thay thế bởi bản sửa |
+| `invoice_revision` | Ghi tồn kho theo hóa đơn bản sửa nếu cần phân biệt với checkout thường |
 | `stocktake_adjustment` | Điều chỉnh từ kiểm kho/cân bằng kho |
 | `manual_adjustment` | Điều chỉnh thủ công có lý do |
 | `remnant_created` | Tạo tấm lỡ từ phần thừa |
@@ -428,7 +430,7 @@ Ghi mọi biến động tồn kho chính thức trong MVP.
 ### Ràng buộc
 
 - `quantity_delta <> 0`
-- `movement_type IN ('sale_deduction', 'stocktake_adjustment', 'manual_adjustment', 'remnant_created', 'remnant_discarded', 'purchase_receipt', 'material_opening')`
+- `movement_type IN ('sale_deduction', 'invoice_reversal', 'invoice_revision', 'stocktake_adjustment', 'manual_adjustment', 'remnant_created', 'remnant_discarded', 'purchase_receipt', 'material_opening')`
 - `stock_unit_id` phải thuộc cùng `organization_id`.
 - `product_id` phải cùng `organization_id`.
 - Nếu `inventory_object_type = 'roll'`, `inventory_roll_id` bắt buộc và `inventory_sheet_id` null.

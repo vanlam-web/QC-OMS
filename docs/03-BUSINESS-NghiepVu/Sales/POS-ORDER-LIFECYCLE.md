@@ -197,7 +197,11 @@ UI dùng danh sách lý do nhanh, ví dụ:
 - Khách đổi ý
 - Khác
 
-Nhân viên có thể nhập ghi chú thêm để giải thích rõ hơn.
+Nhân viên chỉ cần chọn lý do nhanh để thao tác không rườm rà.
+
+Ghi chú thêm không bắt buộc, trừ khi chọn lý do **Khác** thì phải nhập ghi chú ngắn.
+
+Lý do nhanh và ghi chú được lưu trên chứng từ bằng cột riêng để dễ lọc/xem lại, đồng thời ghi vào lịch sử trạng thái để truy vết.
 
 ### BR-INV-05C: Thời hạn và quyền sửa/hủy
 
