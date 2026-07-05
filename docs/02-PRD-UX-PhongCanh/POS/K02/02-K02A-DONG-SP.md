@@ -66,7 +66,7 @@
 7. **Deep-Scan khi thanh toán:** Không bắt buộc cho combo lồng nhau trong MVP. Chỉ bật khi BOM nhiều cấp đã có cấu hình, version và chống vòng lặp.
 8. **Quy đổi đơn vị:** POS vẫn hiển thị và thu tiền theo `m²`; quy đổi tồn kho thực tế do Backend xử lý.
 9. **Tấm lỡ khổ:** PRD chỉ hiển thị cảnh báo / lựa chọn thao tác nếu Backend xác định cần dùng tấm lỡ hoặc tấm nguyên.
-10. **Khui động tự do:** Nút `[🍾 KHUI VẬT TƯ]` nằm trên Top Bar hệ thống, độc lập với giỏ hàng POS. Dùng khi cuộn/tấm hỏng ngoài ý muốn hoặc cần khui độc lập không gắn đơn.
+10. **Khui vật tư:** Nút `[🍾 KHUI VẬT TƯ]` nằm trên Top Bar hệ thống, độc lập với giỏ hàng POS. Dùng khi vật tư phụ cần đưa phần dở/cũ về `0`, hoặc khi cuộn/tấm cần khui độc lập không gắn đơn.
 
 ---
 

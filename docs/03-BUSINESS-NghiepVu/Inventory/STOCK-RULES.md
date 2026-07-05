@@ -132,6 +132,17 @@ Ví dụ:
 
 Nếu tồn chính là `ram`, bán `tờ` sẽ quy đổi số tờ về ram để ghi stock movement.
 
+### BR-INV-05B: Khui vật tư phụ đưa phần dở/cũ về 0
+
+Vật tư phụ thuộc `normal` như keo, vít, nguồn, LED vẫn được phép đi qua popup khui nếu xưởng cần ghi nhận mở mới hoặc bỏ phần dở cũ.
+
+Quy tắc MVP:
+
+- Khui vật tư phụ không tạo cuộn/tấm vật lý.
+- Phần đang dùng dở/cũ được đưa về `0`.
+- Thao tác phải ghi log: ai khui, vật tư nào, số lượng khui mới nếu có, lý do/ghi chú nếu có.
+- Nếu tồn không đủ hoặc tồn âm, hệ thống chỉ cảnh báo nhẹ theo rule tồn âm, không chặn.
+
 ---
 
 ## 6. Hàng dạng cuộn
@@ -185,6 +196,13 @@ Khi khui, UI có ô `cuộn cũ còn lại`:
 - Nhập lớn hơn `0` nghĩa là phần cũ còn dùng được và được giữ lại để gợi ý khổ sau này.
 
 Chênh lệch giữa số hệ thống và số thực tế khi khui là dữ liệu phục vụ phân tích hao hụt sau này; MVP chỉ cần lưu vết, chưa cần báo cáo hao hụt đầy đủ.
+
+Nếu chưa có object cuộn chuẩn hóa nhưng mặt hàng còn tồn tạm KiotViet, hệ thống được phép khui từ tồn tạm:
+
+- UI phải báo rõ đây là thao tác chuẩn hóa từ tồn tạm.
+- Không bịa danh sách cuộn/tấm khác từ tổng m2.
+- Nếu backend đã có cơ chế tách tồn tạm, giảm phần tồn tạm tương ứng với object mới tạo.
+- Nếu chưa có cơ chế tách tồn tạm, lưu log chuẩn hóa để đối soát sau, không làm mất dấu nguồn dữ liệu.
 
 ### BR-INV-07: Đề xuất cuộn/khổ khi xuất vật tư cuộn
 
@@ -279,3 +297,4 @@ Sản phẩm ngưng bán:
 - Tấm rẻo nhỏ theo ngưỡng cạnh nhỏ nhất không tự tạo nếu nhân viên giữ tùy chọn bỏ rẻo.
 - Rẻo nhỏ không bị bỏ âm thầm; hệ thống đề xuất bỏ bằng checkbox và nhân viên có thể giữ lại.
 - Phần m tới còn dưới `0.2m` được đề xuất bỏ như rẻo nhỏ.
+- Khui vật tư phụ `normal` đưa phần dở/cũ về `0`, không tạo object cuộn/tấm.

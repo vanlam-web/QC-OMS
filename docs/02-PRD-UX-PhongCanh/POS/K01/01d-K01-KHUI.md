@@ -1,199 +1,220 @@
-# 01d-K01-KHUI.md — K01-D: POPUP KHUI VẬT TƯ TỰ DO
+# 01d-K01-KHUI — Khui vật tư thủ công
 
-> **Phần:** 2.1 — K01
+> **Phạm vi:** UX khui vật tư phụ, cuộn và tấm.
 > **Trở về:** [01-K01-TOPBAR.md](./01-K01-TOPBAR.md)
-> **File cha:** K01 — Thanh đỉnh Top Bar
+> **Business:** [STOCK-RULES.md](../../../03-BUSINESS-NghiepVu/Inventory/STOCK-RULES.md)
 
 ---
 
-## I. VỊ TRÍ & TẦM QUAN TRỌNG
+## 1. Mục tiêu
 
-**Vị trí:** Khu vực 3 trên Top Bar — nằm giữa thanh tab đa hóa đơn (Khu vực 2) và cụm tiện ích (Khu vực 4).
+Khui vật tư dùng khi nhân viên bắt đầu dùng một cuộn/tấm mới hoặc cần ghi nhận phần cũ còn lại.
 
-**Tầm với:** Top Bar hiển thị **trên mọi màn hình** hệ thống POS — kể cả khi đang ở giỏ hàng, hàng đợi máy sản xuất, hay báo cáo kho. Nút `[🍾 KHUI VẬT TƯ]` luôn sẵn sàng thao tác.
+Mục tiêu là vận hành nhanh và chuẩn hóa kho dần:
 
-**Người dùng mục tiêu:**
+- mỗi lần khui chỉ xử lý **một vật tư**
+- không bắt kiểm toàn bộ kho
+- không bắt chọn lô/ngày mua nếu nhiều cuộn cùng loại/cùng khổ
+- nếu chưa đủ dữ liệu vật lý thì vẫn cho ghi nhận từ tồn tạm
+- phần cũ còn lại do hệ thống gợi ý, nhân viên được sửa theo thực tế
 
-| Vai trò | Khi nào dùng |
+Vật tư phụ như keo/vít/nguồn/LED vẫn đi qua popup khui trong MVP, nhưng chỉ theo quy tắc đơn giản: phần đang dùng dở/cũ được đưa về `0`, rồi ghi nhận lần khui mới.
+
+---
+
+## 2. Vị trí
+
+Nút `Khui vật tư` nằm ở khu vực tiện ích của POS Top Bar, dùng được khi đang bán hàng hoặc khi nhân viên cần chuẩn hóa tồn.
+
+```text
+[Tìm hàng...] [Hóa đơn 1] [+] [Khui vật tư] [Tiện ích...]
+```
+
+Tên nút trong UI không cần icon chai nếu làm giao diện quản trị gọn hơn; chỉ cần nhất quán với bộ icon chung.
+
+---
+
+## 3. Luồng chung
+
+```text
+Chọn vật tư
+-> hệ thống nhận dạng normal/roll/sheet
+-> chọn khổ/kích thước cần khui
+-> nhập phần cũ còn lại nếu có
+-> xác nhận
+-> ghi stock movement/log; riêng roll/sheet tạo hoặc cập nhật object vật lý
+```
+
+Không có bước chọn nhà cung cấp, ngày mua, số lô trong MVP.
+
+---
+
+## 4. Khui vật tư phụ
+
+Áp dụng cho hàng `normal` là vật tư phụ có thể dùng dở: keo, vít, nguồn, LED hoặc vật tư phụ tương tự.
+
+### 4.1. Trường nhập
+
+| Trường | Quy tắc |
 |---|---|
-| **Thu ngân** | Phát hiện vật tư dùng cho đơn bị lỗi, cần ghi nhận hao hụt ngoài đơn |
-| **Thợ in / Thợ CNC** | Cuộn bạt bị chuột cắn, tấm alu bị cong vênh, led bị hỏng — cần khai báo thay thế |
-| **Quản lý kho** | Kiểm tra và xác nhận khui vật tư mới khi thợ báo hỏng |
+| Vật tư | Chỉ chọn sản phẩm `inventory_shape = normal` và thuộc nhóm vật tư phụ |
+| Số lượng khui mới | Theo đơn vị tồn hoặc đơn vị quy đổi đang cấu hình |
+| Phần dở/cũ còn lại | MVP mặc định `0` |
+| Ghi chú | Nên nhập khi bỏ phần cũ do hỏng, khô, rơi vãi hoặc không dùng tiếp |
+
+### 4.2. Quy tắc xử lý
+
+- Khi khui vật tư phụ, phần dở/cũ về `0`.
+- Hệ thống ghi log thao tác khui và lý do nếu có.
+- Không tạo cuộn/tấm vật lý cho vật tư phụ.
+- Nếu tồn không đủ, chỉ cảnh báo nhẹ theo rule tồn âm, vẫn cho ghi nhận nếu người dùng có quyền.
 
 ---
 
-## II. WIREFRAME TỔNG THỂ TOP BAR
+## 5. Khui cuộn
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  Khu vực 1                    │  Khu vực 2                              │  Khu vực 3         │  Khu vực 4              │
-│  ─────────────────────        │  ─────────────────────────────────      │  ───────────────    │  ─────────────────────  │
-│  [ 🔍 Tìm hàng... (F3) ]     │  [‹] [Hóa đơn 1 ✕] [Hóa đơn 2 ✕] [+] │  [🍾 KHUI VẬT TƯ]  │  🕒  🟢  [🔄]  [👤]  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-  II.1 — Search                  II.2 — Tabs Đa HĐ                        II.3 — Khui              II.4 — Tiện ích
-```
+### 5.1. Trường nhập
 
----
-
-## III. POPUP KHAI BÁO KHUI TỰ DO
-
-### 3.1. Trigger
-
-Nhấn nút `[🍾 KHUI VẬT TƯ]` trên Top Bar → Popup overlay hiện ra, che phủ 40% màn hình, backdrop mờ tối.
-
-### 3.2. Wireframe Popup
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ 🍾 KHAI BÁO KHUI VẬT TƯ TỰ DO                        [✕] │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│ Bước 1 — Chọn loại vật tư:                                │
-│   ○ Vật tư phụ (Keo / Vít / Nguồn / LED / Bu lông...)    │
-│   ● Khổ dài (Bạt Hiflex / Decal / PP / Canvas)           │
-│   ○ Tấm (Alu / Mica / Formex)                             │
-│                                                              │
-│ ─────────────────────────────────────────────────────────── │
-│                                                              │
-│ Bước 2 — Thông tin khui:                                   │
-│   Nhóm mã vật tư:  [ Bạt Hiflex 480g xuyên sáng    ▾]   │
-│   Khổ rộng cuộn:   [  2.2  ] m                            │
-│   Số mét/cuộn mới: [  80    ] m                            │
-│                                                              │
-│ ─────────────────────────────────────────────────────────── │
-│                                                              │
-│ Bước 3 — Ghi chú lý do khui:                              │
-│   [ Cuộn bị chuột cắn đầu cuốn, còn ~77m dở        ]   │
-│                                                              │
-│                        [ HUỶ ]      [ XÁC NHẬN KHUI ]     │
-└──────────────────────────────────────────────────────────────┘
-```
-
----
-
-## IV. CHI TIẾT TỪNG TRƯỜNG NHẬP LIỆU
-
-### 4.1. Bước 1 — Loại vật tư
-
-| Trường | Loại control | Bắt buộc | Mô tả |
-|---|---|---|---|
-| **Loại vật tư** | Radio button (3 lựa chọn) | ✅ | Chọn 1 trong 3 nhóm: Vật tư phụ / Khổ dài / Tấm |
-
-**Hành vi động:**
-- Khi chọn `Khổ dài` → Hiện trường: Nhóm mã vật tư, Khổ rộng cuộn, Số mét/cuộn mới.
-- Khi chọn `Tấm` → Hiện trường: Nhóm mã vật tư, kích thước mặc định `1.22m × 2.44m`.
-- Khi chọn `Vật tư phụ` → Hiện trường: Nhóm mã vật tư, Số lượng.
-
-### 4.2. Bước 2 — Thông tin khui
-
-| Trường | Hiện khi | Bắt buộc | Kiểu dữ liệu | Mô tả |
-|---|---|---|---|---|
-| **Nhóm mã vật tư** | Luôn hiện | ✅ | Dropdown tìm kiếm | Lọc động theo loại đã chọn ở Bước 1 |
-| **Khổ rộng cuộn** | `Khổ dài` | ✅ | Number (0.1m → 10m) | Chiều rộng cuộn mới |
-| **Số mét/cuộn mới** | `Khổ dài` | ✅ | Number (1m → 500m) | Chiều dài nguyên của cuộn mới |
-| **Kích thước tấm** | `Tấm` | ✅ | Auto-filled `1.22m × 2.44m` | Tấm nguyên quy chuẩn |
-| **Số lượng** | `Vật tư phụ` | ✅ | Integer (1 → 9999) | Số thùng/bao/hộp |
-
-### 4.3. Bước 3 — Ghi chú
-
-| Trường | Bắt buộc | Giới hạn | Ví dụ |
-|---|---|---|---|
-| **Lý do khui** | ✅ | 255 ký tự | `Cuộn bị chuột cắn đầu cuốn` / `Keo bị khô đông cứng` / `Tấm bị cong vênh` |
-
----
-
-## V. USE CASE CHI TIẾT
-
-### UC-01: Thợ in phát hiện cuộn bạt bị chuột cắn giữa chừng
-
-| Bước | Hành động người dùng | Hệ thống phản hồi |
-|---|---|---|
-| 1 | Thợ phát hiện cuộn bạt 2.2m bị chuột cắn ~3m đầu cuốn, không thể in tiếp | — |
-| 2 | Nhấn `[🍾 KHUI VẬT TƯ]` trên Top Bar | Popup khai báo hiện ra |
-| 3 | Chọn `Khổ dài` → `Bạt Hiflex 480g xuyên sáng` → Khổ `2.2m` → Mét `80m` | Các trường được điền |
-| 4 | Ghi chú: `Cuộn bị chuột cắn đầu cuốn, còn ~77m dở` | — |
-| 5 | Nhấn `[XÁC NHẬN KHUI]` | Popup đóng, toast `"Đã khui: Bạt Hiflex 480g — Khổ 2.2m — 80m"` |
-| 6 | *(Ngầm)* Trừ 1 cuộn nguyên khổ 2.2m khỏi kho lớn, nạp cuộn dở mới 80m vào phiên làm việc | — |
-
----
-
-### UC-02: Thợ CNC phát hiện tấm Alu bị cong vênh không thể cắt
-
-| Bước | Hành động người dùng | Hệ thống phản hồi |
-|---|---|---|
-| 1 | Thợ CNC kiểm tra tấm Alu 3mm chuẩn bị cong vênh nghiêm trọng | — |
-| 2 | Nhấn `[🍾 KHUI VẬT TƯ]` | Popup hiện ra |
-| 3 | Chọn `Tấm` → `Alu 3mm PNJ` | Hệ thống tự điền kích thước `1.22m × 2.44m` |
-| 4 | Ghi chú: `Tấm bị cong vênh, không cắt được` | — |
-| 5 | `[XÁC NHẬN KHUI]` | Đóng popup, toast `"Đã khui: Alu 3mm PNJ — 1.22×2.44m"` |
-| 6 | *(Ngầm)* Trừ 1 tấm Alu nguyên khổ 1.22×2.44m trong kho lớn, tạo phiên tấm dở mới | — |
-
----
-
-### UC-03: Nhân viên kho phát hiện hộp keo bị khô đông cứng
-
-| Bước | Hành động người dùng | Hệ thống phản hồi |
-|---|---|---|
-| 1 | Kho phát hiện hộp keo trung thủy 300ml bị khô đặc | — |
-| 2 | Nhấn `[🍾 KHUI VẬT TƯ]` | Popup hiện ra |
-| 3 | Chọn `Vật tư phụ` → `Keo trung thủy 300ml` | — |
-| 4 | Ghi chú: `Keo bị khô đông cứng, hết hạn sử dụng` | — |
-| 5 | `[XÁC NHẬN KHUI]` | Đóng popup, toast `"Đã khui: Keo trung thủy 300ml — 1 chai"` |
-| 6 | *(Ngầm)* Hủy số dở cũ về 0, trừ 1 chai keo nguyên khỏi kho, tính giá vốn bình quân gia quyền | — |
-
----
-
-## VI. XỬ LÝ NGẦM THEO TỪNG LOẠI
-
-| Loại vật tư | Xử lý ngầm khi Xác nhận |
+| Trường | Quy tắc |
 |---|---|
-| **Vật tư phụ** (Keo/Vít/Nguồn/LED/Bu lông...) | (1) Hủy số lượng dở ảo cũ về 0. (2) Trừ 1 thùng/bao/đơn vị nguyên từ kho lớn. (3) Tính **giá vốn bình quân gia quyền di động** cho mã đó. |
-| **Khổ dài** (Bạt/Decal/PP/Canvas) | (1) Ép mét dài cuộn dở cũ của khổ đó về 0. (2) Trừ 1 cuộn nguyên khổ tương ứng ở kho lớn. (3) Tạo phiên làm việc cuộn dở mới với số mét mới. |
-| **Tấm** (Alu/Mica/Formex) | (1) Ép tấm dở cũ về 0. (2) Trừ 1 tấm nguyên `1.22m × 2.44m` ở kho lớn. (3) Tạo phiên làm việc tấm dở mới với kích thước nguyên. |
+| Vật tư | Chỉ chọn sản phẩm `inventory_shape = roll` |
+| Khổ rộng | Dropdown từ cấu hình sản phẩm / cuộn đã nhập; ví dụ `1.6m`, `2.2m`, `3.2m` |
+| Cuộn mới | Mặc định khui `1` cuộn cùng loại/cùng khổ |
+| Dài cuộn mới | Tự điền từ dữ liệu nhập vật tư/phiếu nhập nếu có; cho sửa nếu cần |
+| Cuộn cũ còn lại | Hệ thống gợi ý, nhân viên được sửa |
+| Ghi chú | Không bắt buộc, nhưng nên nhập khi số thực tế khác số hệ thống |
 
----
+### 5.2. Gợi ý `cuộn cũ còn lại`
 
-## VII. GIAO DIỆN SAU KHI XÁC NHẬN
-
-| Kết quả | Hành vi |
+| Tình huống | Giá trị mặc định |
 |---|---|
-| **Thành công** | Popup tự đóng. Toast notification màu xanh hiển thị 3 giây ở góc phải dưới: `"Đã khui thành công: [Tên vật tư] — [Khổ] — [Số mét/số tấm]"`. |
-| **Lỗi kết nối Supabase** | Toast báo đỏ: `"Lỗi kết nối. Vui lòng thử lại."` kèm nút `[Thử lại]`. Popup vẫn mở để không mất dữ liệu đã nhập. |
-| **Click [X] hoặc bấm Escape** | Đóng popup, không lưu gì cả. |
+| Cuộn cũ đã chuẩn hóa | Chiều dài còn lại hệ thống đang tính |
+| Cuộn cũ chưa chuẩn hóa | `0` |
+| Nhân viên biết còn dùng được | Nhập số mét còn lại |
+| Còn ít, bỏ luôn | Nhập `0` |
+
+Nhập `0` nghĩa là phần cũ hết hoặc bỏ, không tạo object còn dùng.
+
+Nhập lớn hơn `0` nghĩa là phần cũ còn dùng được. Hệ thống giữ lại để sau này gợi ý khổ/cắt và phân tích hao hụt.
+
+Nếu chênh lệch giữa hệ thống và thực tế lớn, vẫn cho lưu nhưng phải ghi log giá trị cũ/mới.
+
+### 5.3. Nguồn cuộn mới
+
+Nếu đã có object cuộn `available` cùng vật tư/khổ:
+
+- chọn khui 1 cuộn bất kỳ cùng loại/cùng khổ
+- không bắt nhân viên chọn đúng lô/ngày mua
+- backend chọn object phù hợp theo quy tắc đơn giản, ví dụ cuộn chưa dùng cũ nhất
+
+Nếu chưa có object cuộn nhưng còn tồn tạm KiotViet:
+
+- cho khui từ tồn tạm
+- tạo object cuộn chuẩn hóa mới theo khổ/dài đã nhập
+- giảm phần tồn tạm tương ứng nếu backend đã có cơ chế tách tồn tạm
+- nếu chưa có cơ chế giảm tồn tạm, ghi log chuẩn hóa để đối soát, không bịa thêm cuộn khác
 
 ---
 
-## VIII. EDGE CASES — LỖI VÀ XỬ LÝ
+## 6. Khui tấm
 
-| # | Tình huống | Hành vi hệ thống |
-|---|---|---|
-| 1 | Chưa chọn loại vật tư mà đã nhấn Xác nhận | Nút `[XÁC NHẬN KHUI]` bị vô hiệu hóa (disabled), tooltip: `"Vui lòng chọn loại vật tư"` |
-| 2 | Chưa chọn mã vật tư | Tương tự — nút disabled, tooltip: `"Vui lòng chọn mã vật tư"` |
-| 3 | Khổ rộng nhập ≤ 0 hoặc không phải số | Border trường đỏ, thông báo: `"Khổ rộng phải là số > 0"` |
-| 4 | Số mét/cuộn nhập ≤ 0 | Tương tự — bắt buộc nhập số dương |
-| 5 | Kho lớn đang hết hàng (số lượng = 0) | Toast cảnh báo vàng: `"Kho đã hết [Tên vật tư]. Vẫn ghi nhận sự cố!"` — cho phép xác nhận để lưu log sự cố |
-| 6 | Nhập ký tự vào trường số | Bị loại bỏ tự động, chỉ chấp nhận số |
-| 7 | Ghi chú quá 255 ký tự | Counter đỏ: `"255/255"` — không cho nhập thêm |
+### 6.1. Trường nhập
+
+| Trường | Quy tắc |
+|---|---|
+| Vật tư | Chỉ chọn sản phẩm `inventory_shape = sheet` |
+| Khổ thao tác | Mặc định theo cấu hình, ví dụ `1.2m x 2.4m` |
+| Số tấm khui | MVP mặc định `1` |
+| Phần tấm cũ còn lại | Có thể nhập kích thước nếu còn dùng |
+| Ghi chú | Nên nhập khi bỏ phần cũ hoặc kích thước thực tế khác hệ thống |
+
+QC-OMS dùng khổ thao tác để nhập bán, tính tiền, tính phần còn lại và gợi ý vật tư. Khổ thật như `1.22m x 2.44m` chỉ là thông tin tham khảo nếu có.
+
+### 6.2. Phần tấm cũ còn lại
+
+Nếu phần cũ còn dùng được, nhân viên nhập kích thước thực tế. Ví dụ:
+
+```text
+1.2m x 1.9m
+0.5m x 0.5m
+```
+
+Nếu phần cũ còn quá nhỏ hoặc bỏ đi, nhân viên chọn bỏ phần cũ.
+
+Ngưỡng gợi ý:
+
+- phần còn lại dạng mét tới dưới `0.2m` thì hệ thống đề xuất bỏ
+- rẻo nhỏ dưới ngưỡng cấu hình thì hệ thống đề xuất bỏ
+- không bỏ âm thầm; nhân viên có thể giữ lại nếu thực tế còn dùng được
 
 ---
 
-## IX. PHÂN BIỆT VỚI CẢNH BÁO KHUI ĐỘNG (K02-D)
+## 7. Kết quả sau khi xác nhận
 
-| | **Popup Khui Tự do (K01-D — file này)** | **Cảnh báo Khui động (K02-D)** |
-|---|---|---|
-| **Vị trí** | Top Bar — mọi màn hình, mọi lúc | Dòng file trong hàng đợi máy sản xuất |
-| **Kích hoạt** | Thủ công — người dùng chủ động click | Tự động — hệ thống phát hiện thiếu vật tư |
-| **Trigger** | Click người dùng | `L_phôi > Chiều dài cuộn dở` hoặc không có tấm lỡ |
-| **Mục đích** | Ghi nhận vật tư hỏng/phanh, khai báo khui mới độc lập | Chặn lệnh in/CNC, bắt thợ khui đúng vật tư đang thiếu |
-| **Icon** | `[🍾 KHUI VẬT TƯ]` (tĩnh, cố định) | `[⚠️ 🍾 Khui cuộn mới]` (nhấp nháy đỏ, gắn trên dòng file) |
+### Vật tư phụ
+
+- phần dở/cũ được ghi nhận về `0`
+- lần khui mới được ghi log theo vật tư, số lượng, người thao tác và ghi chú
+- không tạo dữ liệu cuộn/tấm
+
+### Cuộn
+
+- cuộn mới chuyển sang trạng thái đang dùng / available theo cách backend đang quản lý
+- cuộn cũ được cập nhật còn lại hoặc kết thúc
+- ghi stock movement/log cho thao tác khui và phần chênh lệch nếu có
+
+### Tấm
+
+- tấm mới hoặc tấm đang dùng được ghi nhận
+- phần tấm cũ còn dùng được tạo/cập nhật thành tấm lỡ/tấm dở
+- phần bị bỏ ghi log, không tạo dữ liệu rác
+
+### Tồn tạm
+
+Nếu thao tác khui dùng dữ liệu tồn tạm KiotViet, UI phải hiển thị rõ:
+
+```text
+Đang chuẩn hóa từ tồn tạm KiotViet
+```
+
+Không hiển thị như thể toàn bộ kho đã chuẩn hóa.
 
 ---
 
-## X. LƯU VẾT KHUI VẬT TƯ
+## 8. Lỗi và cảnh báo
 
-Mỗi lần xác nhận khui phải để lại lịch sử đủ để truy vết: ai khui, vật tư nào, số lượng/khổ liên quan, lý do và thời điểm thực hiện.
+| Tình huống | Hành vi |
+|---|---|
+| Chưa chọn vật tư | Không cho xác nhận |
+| Vật tư không thuộc nhóm khui | Gợi ý dùng điều chỉnh tồn |
+| Khổ/kích thước thiếu | Không cho xác nhận |
+| Số mét hoặc kích thước <= 0 | Báo lỗi ngay tại ô nhập |
+| Không còn object chuẩn hóa để khui | Cho khui từ tồn tạm nếu còn tồn tạm; nếu không có thì cảnh báo thiếu tồn |
+| Thiếu tồn hoặc tồn âm | Cảnh báo nhẹ, vẫn cho ghi nhận nếu Owner cho tồn âm theo rule kho |
 
-Chi tiết bảng lưu log thuộc tầng Database/Backend khi module Inventory được đặc tả.
+---
+
+## 9. Không làm trong MVP
+
+- Không chọn lô/ngày mua/nhà cung cấp khi khui.
+- Không bắt quản lý mã từng cuộn/tấm trên UI.
+- Không tự tối ưu cắt nhiều bước trong popup khui.
+- Không tính báo cáo hao hụt đầy đủ ngay trong popup.
+- Không dùng khui vật tư để sửa giá vốn kế toán.
+
+---
+
+## 10. Acceptance Criteria
+
+1. Khui vật tư phụ đưa phần dở/cũ về `0` và ghi log.
+2. Khui cuộn chỉ cần chọn vật tư, khổ, dài cuộn mới và phần cũ còn lại.
+3. Nếu cuộn cũ đã chuẩn hóa, UI gợi ý số còn lại nhưng cho sửa.
+4. Nếu cuộn cũ chưa chuẩn hóa, UI mặc định phần cũ còn lại là `0`.
+5. Nhập phần cũ còn lại lớn hơn `0` giữ lại object để dùng tiếp.
+6. Nhập `0` kết thúc/bỏ phần cũ, không tạo object rác.
+7. Khui tấm dùng khổ thao tác như `1.2m x 2.4m`.
+8. Rẻo nhỏ hoặc phần m tới dưới `0.2m` chỉ được đề xuất bỏ, không bị bỏ âm thầm.
+9. Tất cả thao tác khui ghi log tối thiểu: ai, lúc nào, vật tư, khổ/kích thước, giá trị cũ/mới nếu có.
 
 ---
 

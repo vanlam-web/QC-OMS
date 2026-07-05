@@ -260,7 +260,7 @@ Quy tắc khôi phục:
 
 > **Lưu ý về cảnh báo khui động (`[⚠️ 🍾 Khui cuộn mới]` / `[⚠️ 🍾 Khui tấm mới]`):**
 > Icon động này hiển thị tại dòng file trong K02-D khi cuộn dở / tấm lỡ không đủ cho lệnh in/CNC.
-> Chi tiết trigger và xử lý ngầm xem [01d-K01-KHUI.md §IX](../K01/01d-K01-KHUI.md#ix-phân-biệt-với-cảnh-báo-khui-động-k02-d) và [02c-K02A-M2-KHUI.md §3](./02c-K02A-M2-KHUI.md#3-cơ-chế-cảnh-báo-khui-động-cho-cuộn--tấm).
+> Chi tiết trigger và xử lý xem [01d-K01-KHUI.md](../K01/01d-K01-KHUI.md) và [02c-K02A-M2-KHUI.md §3](./02c-K02A-M2-KHUI.md#3-canh-bao-thieu-vat-tu-va-goi-y-khui).
 
 ---
 
