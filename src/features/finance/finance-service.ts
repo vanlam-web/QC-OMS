@@ -7,7 +7,9 @@ import type {
   CashbookSearchScope,
   CashbookStatus,
   CashbookListResponse,
+  CashbookVoucher,
   CashbookVoucherListResponse,
+  CreateCashbookVoucherInput,
   CustomerDebtDetail,
   CustomerDebtListResponse,
   DebtCollectionInput,
@@ -72,6 +74,11 @@ export function createFinanceService(api: FinanceApiRequester) {
     },
     getCashbookEntry: (entryId: string) => api.request<CashbookEntryDetail>(`/api/v1/finance/cashbook/${entryId}`),
     listCashbookVouchers: () => api.request<CashbookVoucherListResponse>('/api/v1/finance/cashbook/vouchers'),
+    createCashbookVoucher: (input: CreateCashbookVoucherInput) =>
+      api.request<CashbookVoucher>('/api/v1/finance/cashbook-vouchers', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
   }
 }
 
