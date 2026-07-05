@@ -1,15 +1,28 @@
 # Inventory UI Implementation Bridge
 
 > Ngay lap: 2026-07-05
-> Trang thai: Draft bridge cho implementation, khong thay Source of Truth.
+> Trang thai: Bridge da dong bo voi main local sau commit `68f3cff`; khong thay Source of Truth.
 > Lien quan: `docs/02-PRD-UX-PhongCanh/Inventory/`, `docs/03-BUSINESS-NghiepVu/Inventory/`, `docs/04-DATABASE/Inventory/INVENTORY-TABLES.md`, `docs/05-BACKEND-MayChu/Inventory/INVENTORY-API.md`
 
-## 1. Muc tieu lat cat dau
+## 1. Hien trang main local
+
+- [x] `/inventory` route.
+- [x] Danh sach hang hoa/tong ton.
+- [x] Search, status filter, shape filter, pagination.
+- [x] KPI tong/so luong/ton am.
+- [x] Detail panel cho san pham.
+- [x] Stock movement history.
+- [x] Normal product stock adjustment UI.
+- [ ] Quan ly cuon/tam vat ly theo tung object trong UI.
+- [ ] Khui vat tu UI.
+- [ ] Stocktake UI day du.
+
+## 2. Muc tieu lat cat dau
 
 Lat cat Inventory UI dau tien chi lam:
 
 - danh sach hang hoa/tong ton
-- search, filter, table, footer/tong
+- search, filter, table, summary/KPI
 - mo chi tiet inline readonly cho hang thuong/cuon/tam neu API da co du lieu
 - hien ro ton am
 - hien nhan phan biet ton tam m2 va ton vat ly da chuan hoa
@@ -20,21 +33,21 @@ Chua lam trong lat cat dau:
 - production auto stock
 - auto match file may san xuat voi ton kho
 - purchase roll/sheet object nang cao
-- stocktake/sua ton neu UI/API/test chua san sang
+- stocktake neu UI/API/test chua san sang
 - tu dong quan ly tung cuon/tam neu du lieu hien tai chi la tong m2 tu KiotViet
 
-## 2. Route va page de xuat
+## 3. Route va page
 
 | Route | Muc dich | Trang thai |
 |---|---|---|
-| `/inventory` hoac `/products` hien co | Danh sach hang hoa va tong ton | Lam truoc |
-| `/inventory/:productId` inline/detail | Chi tiet ton san pham readonly mo duoi dong | Lam neu khong lam cham list |
+| `/inventory` | Danh sach hang hoa va tong ton | Da co |
+| Detail panel trong `/inventory` | Chi tiet ton san pham | Da co |
 | `/inventory/stocktake` | Kiem kho | De phase rieng |
 | `/inventory/movements` | Lich su stock movement | De sau list/detail |
 
-Neu code hien tai da co `/products`, khong tao route moi lam trung neu chua can. Uu tien gan them view ton kho vao module hang hoa hien co.
+Khong tao them route moi neu cung noi dung da nam trong `/inventory`.
 
-## 3. Mapping API -> UI
+## 4. Mapping API -> UI
 
 | UI | API/nguon | Ghi chu |
 |---|---|---|
@@ -48,7 +61,7 @@ Neu code hien tai da co `/products`, khong tao route moi lam trung neu chua can.
 | Tam/tam lo | detail response hoac `GET /inventory/sheets` | Chi doc trong lat cat dau |
 | Stock movement gan day | detail response | Chi hien 10 dong gan nhat neu co |
 
-## 3B. Nguyen tac du lieu hien tai
+## 4B. Nguyen tac du lieu hien tai
 
 Hien tai du lieu KiotViet cua nhieu hang cuon/tam chi co tong m2, chua du de biet tung cuon/tam con bao nhieu.
 
@@ -62,7 +75,7 @@ UI phai theo cac quy tac:
 - ton am khong bi an va co filter rieng
 - canh bao ton am/het ton chi nhe bang mau do/trang thai, khong modal chan thao tac
 
-## 4. Filter va table MVP
+## 5. Filter va table MVP
 
 Filter lam truoc:
 
@@ -87,7 +100,7 @@ Table mac dinh:
 
 Cot tien can canh phai. Cot so luong/ton can canh phai. Text dai trong ten hang khong lam nhay chieu cao bat thuong.
 
-## 5. Tong/footer
+## 6. Tong/footer
 
 Footer/list summary chi hien nhung so tinh duoc tu API/list hien tai:
 
@@ -97,7 +110,7 @@ Footer/list summary chi hien nhung so tinh duoc tu API/list hien tai:
 
 Khong hien `khach dat`, `kenh ban`, `thuong hieu`, `vi tri kho` trong lat cat dau.
 
-## 6. Detail readonly
+## 7. Detail
 
 Click row mo detail inline hoac panel:
 
@@ -111,7 +124,7 @@ Click row mo detail inline hoac panel:
 
 Detail phai hien loading ngay khi click, khong doi API xong moi mo UI.
 
-## 6B. Ghi chu UI cho khui va tấm
+## 7B. Ghi chu UI cho khui va tấm
 
 Khui vat tu khong nam trong lat cat UI dau tien neu chua du API, nhung khi lam phai theo huong:
 
@@ -131,7 +144,7 @@ Voi tam:
 - checkbox `Bo reo nho` mac dinh bat khi reo nho duoc de xuat bo
 - neu phan m toi con duoi `0.2m`, de xuat bo nhu reo nho
 
-## 7. State va performance
+## 8. State va performance
 
 - Initial page khong duoc goi detail per-row.
 - Lookup phu chi load khi can.
@@ -139,7 +152,7 @@ Voi tam:
 - Search code nen uu tien ra dung hang, khong bi filter thoi gian/trang thai che neu API cho phep.
 - Loi API hien trong vung workspace, co nut thu lai.
 
-## 8. Acceptance criteria
+## 9. Acceptance criteria
 
 1. Trang Inventory/Hang hoa load list bang 1 request chinh.
 2. Loc duoc active/inactive/all va ton am.

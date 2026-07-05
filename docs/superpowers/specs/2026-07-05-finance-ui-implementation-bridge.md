@@ -1,10 +1,21 @@
 # Finance UI Implementation Bridge
 
 > Ngay lap: 2026-07-05
-> Trang thai: Draft bridge cho implementation, khong thay Source of Truth.
+> Trang thai: Bridge da dong bo voi main local sau commit `68f3cff`; khong thay Source of Truth.
 > Lien quan: `docs/02-PRD-UX-PhongCanh/Finance/`, `docs/03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`, `docs/04-DATABASE/Finance/`, `docs/05-BACKEND-MayChu/Finance/FINANCE-API.md`
 
-## 1. Thu tu lam
+## 1. Hien trang main local
+
+- [x] `/finance` route.
+- [x] Finance accounts/cashbook view.
+- [x] Account balances.
+- [x] Customer debt list.
+- [x] Debt detail + debt collection form cho customer co `customer_id`.
+- [x] Voucher readonly list tu `/finance/cashbook/vouchers`.
+- [ ] Payment receipt list endpoint rieng.
+- [ ] Reconciliation UI.
+
+## 2. Thu tu lam
 
 Thu tu de xuat:
 
@@ -14,7 +25,7 @@ Thu tu de xuat:
 
 Ly do: So quy la nen de Reports va doi soat. Cong no can dung du lieu hoa don/thu no. Doi soat chi nen lam khi so quy hien dung.
 
-## 2. So quy
+## 3. So quy
 
 ### UI can co
 
@@ -29,7 +40,7 @@ Ly do: So quy la nen de Reports va doi soat. Cong no can dung du lieu hoa don/th
 |---|---|
 | Tai khoan/quy | `GET /finance/accounts` |
 | List so quy | `GET /finance/cashbook` |
-| Phieu thu lien quan hoa don | `GET /finance/payment-receipts` hoac detail tu cashbook entry |
+| Phieu thu lien quan hoa don | detail tu cashbook entry hoac payment receipt detail neu co id |
 | Chi tiet phieu thu | `GET /finance/payment-receipts/{id}` |
 
 ### Filter MVP
@@ -45,7 +56,9 @@ Ly do: So quy la nen de Reports va doi soat. Cong no can dung du lieu hoa don/th
 
 Tim theo ma phieu phai co co che khong bi filter thoi gian che ket qua.
 
-## 3. Cong no khach hang
+Hien trang: UI dang dung voucher readonly list vi chua co `GET /finance/payment-receipts` list endpoint.
+
+## 4. Cong no khach hang
 
 ### UI can co
 
@@ -65,7 +78,7 @@ Tim theo ma phieu phai co co che khong bi filter thoi gian che ket qua.
 
 Khong tao cong no am/khach tra truoc trong MVP. Neu thu vuot no, UI phai chan truoc va Backend van la nguon validate cuoi.
 
-## 4. Doi soat cuoi ngay
+## 5. Doi soat cuoi ngay
 
 Doi soat chi lam sau khi So quy list va account selector on dinh.
 
@@ -80,7 +93,7 @@ UI can tach:
 
 Khong doi soat chuyen khoan bang mot tong chung.
 
-## 5. Khong lam trong Finance bridge nay
+## 6. Khong lam trong Finance bridge nay
 
 - vi dien tu
 - QR ting ting/bank partner
@@ -90,7 +103,7 @@ Khong doi soat chuyen khoan bang mot tong chung.
 - mua dich vu thanh module rieng
 - tu dong doi soat API ngan hang
 
-## 6. Performance va UX
+## 7. Performance va UX
 
 - Initial So quy khong load detail phieu per-row.
 - Account list co the cache ngan han vi it doi.
@@ -98,7 +111,7 @@ Khong doi soat chuyen khoan bang mot tong chung.
 - Detail row/panel phai hien loading ngay khi click.
 - So tien thu/chi can canh phai; chi nen dung mau canh bao nhe, khong tao vien mau vang rieng le khac style.
 
-## 7. Acceptance criteria
+## 8. Acceptance criteria
 
 1. So quy load bang list request chinh va account lookup.
 2. Loc duoc tien mat/tung bank/tong quy.

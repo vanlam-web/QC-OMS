@@ -615,8 +615,9 @@ Mục này không tự mở scope mới. Nó ghi các lát cắt đã có đủ 
 ### Đang làm / ưu tiên hiện tại
 
 1. **Spec sync/correction**
-   - Trạng thái: đang đồng bộ luồng đặc tả thay thế với `main`.
-   - Mục tiêu: đưa docs điều phối và docs SoT còn thiếu vào `main`, sửa wording PriceBook/SalesDocuments bị cũ sau các PR #15/#17/#20.
+   - Trạng thái: ✅ đã đồng bộ vào main local ở commit `68f3cff`.
+   - Đã cập nhật: SalesDocuments docs, Inventory business rules, Inventory/Finance/Reports bridge docs, spec gap deduped checklist.
+   - Còn lại: push `main` lên remote và Owner review docs sau khi push.
 
 ### Có thể làm tiếp sau spec sync
 

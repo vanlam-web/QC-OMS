@@ -1,10 +1,21 @@
 # Reports API/UI Bridge
 
 > Ngay lap: 2026-07-05
-> Trang thai: Draft bridge cho implementation, khong thay Source of Truth.
+> Trang thai: Bridge da dong bo voi main local sau commit `68f3cff`; khong thay Source of Truth.
 > Lien quan: `docs/02-PRD-UX-PhongCanh/Reports/`, Sales/Finance/Inventory Source of Truth.
 
-## 1. Bao cao dau tien
+## 1. Hien trang main local
+
+- [x] `/reports` route.
+- [x] End of Day report baseline.
+- [x] Sales report baseline.
+- [x] Debt report baseline.
+- [x] Inventory report baseline.
+- [x] UI hien lay du lieu tu cac API san co.
+- [ ] Report aggregation API rieng `/reports/*`.
+- [ ] Loi nhuan/gia von chuan.
+
+## 2. Bao cao dau tien
 
 Bao cao dau tien nen lam: **Bao cao cuoi ngay**.
 
@@ -14,7 +25,7 @@ Ly do:
 - dung du lieu da co tu POS, hoa don, phieu thu, so quy, cong no
 - giup phat hien lech tien/cong no truoc khi lam report phuc tap
 
-## 2. Nguon du lieu
+## 3. Nguon du lieu
 
 | Chi so/UI | Nguon du lieu |
 |---|---|
@@ -30,7 +41,7 @@ Ly do:
 
 Backend/API report nen la nguon tong hop chinh. UI khong nen tu lay nhieu list roi cong so lieu quan trong.
 
-## 3. Filter mac dinh
+## 4. Filter mac dinh
 
 Filter can co:
 
@@ -46,9 +57,16 @@ Quy tac quan trong:
 - Empty state phai noi ro dang khong co du lieu hay dang bi filter.
 - Khong chi dua vao `Thang nay` de ket luan man hinh khong co du lieu.
 
-## 4. API de xuat khi implement
+## 5. API hien tai va API de xuat sau
 
-Neu chua co API report rieng, tao endpoints sau thay vi de UI tu tinh:
+Hien tai report baseline co the lay tu cac API san co:
+
+- `/api/v1/finance/cashbook`
+- `/api/v1/sales-documents`
+- `/api/v1/finance/customer-debts`
+- `/api/v1/inventory/products`
+
+Khi report can thanh nguon so lieu chinh thuc, tao endpoints tong hop sau thay vi de UI tu tinh:
 
 | Method | Path | Muc dich |
 |---|---|---|
@@ -64,7 +82,7 @@ Neu chua co API report rieng, tao endpoints sau thay vi de UI tu tinh:
 - rows chi tiet co `source_type`, `source_id`, `document_code`
 - pagination neu rows lon
 
-## 5. So chinh thuc va so tam thoi
+## 6. So chinh thuc va so tam thoi
 
 Chinh thuc trong MVP:
 
@@ -80,7 +98,7 @@ Tam thoi/chi tham khao:
 
 UI phai gan nhan ro so tham khao, khong goi la loi nhuan ke toan chuan.
 
-## 6. Khong lam
+## 7. Khong lam
 
 - kenh ban
 - VAT/HDĐT/thue ke toan
@@ -89,9 +107,9 @@ UI phai gan nhan ro so tham khao, khong goi la loi nhuan ke toan chuan.
 - bao cao dat hang/giao hang/van don/COD
 - bao cao tra hang ban trong scope hien tai
 
-## 7. Acceptance criteria
+## 8. Acceptance criteria
 
-1. Bao cao cuoi ngay lay du lieu tu API tong hop, khong tinh bang nhieu list tren UI.
+1. Bao cao cuoi ngay baseline co the lay du lieu tu API san co; khi lam report chinh thuc nen co API tong hop.
 2. So thuc thu khop So quy trong cung filter.
 3. Cong no moi/thu no cu khop cong no theo hoa don.
 4. Tien chuyen khoan tach theo tung tai khoan ngan hang.

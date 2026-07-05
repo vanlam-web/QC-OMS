@@ -2,7 +2,7 @@
 
 > Ngay lap: 2026-07-05
 > Nhanh: `codex/spec-docs`
-> Trang thai: Draft dieu phoi, chi dung de chon viec dac ta tiep theo.
+> Trang thai: Draft dieu phoi da dong bo voi main local sau commit `68f3cff`
 
 ## 1. Nguyen tac loc trung
 
@@ -14,6 +14,18 @@ Khong viet lai cac noi dung da co trong:
 - Source of Truth cac tang `02-PRD-UX`, `03-BUSINESS`, `04-DATABASE`, `05-BACKEND`
 
 File nay chi giu nhung viec con thieu o muc **implementation bridge**: noi giua dac ta da co va viec code can lam, de tranh AI sau viet lai roadmap hoac lam trung module.
+
+## 1B. Checklist hien trang
+
+- [x] Loai viec trung voi roadmap/checklist cu.
+- [x] Tao Inventory UI implementation bridge.
+- [x] Sync SalesDocuments docs theo filter/detail hien tai.
+- [x] Tao Finance UI implementation bridge.
+- [x] Tao Reports API/UI bridge.
+- [x] Bo sung Business Inventory ve ton tam m2, chuan hoa dan, khui vat tu, tam/reo.
+- [x] Dong bo docs vao main local trong commit `68f3cff`.
+- [ ] Push `main` len remote.
+- [ ] Owner review lai docs sau khi push.
 
 ## 2. Viec da loai vi trung
 
@@ -33,7 +45,9 @@ File nay chi giu nhung viec con thieu o muc **implementation bridge**: noi giua 
 
 ### P0 — Inventory UI implementation bridge
 
-Ly do giu: luong Plan dang/ sap lam Inventory UI, nhung docs hien co chu yeu la SoT nghiep vu/API. Can file ngan noi ro UI dung API nao, page nao lam truoc, field nao co that, field nao an lai.
+Trang thai hien tai: da tao bridge va main local da co Inventory UI baseline.
+
+Ly do giu: docs hien co chu yeu la SoT nghiep vu/API. Bridge noi ro UI dung API nao, page nao lam truoc, field nao co that, field nao an lai.
 
 Can dac ta:
 
@@ -48,9 +62,10 @@ Output de xuat:
 
 - `docs/superpowers/specs/2026-07-05-inventory-ui-implementation-bridge.md`
 
-Da tao bridge:
+Da lam:
 
-- `docs/superpowers/specs/2026-07-05-inventory-ui-implementation-bridge.md`
+- [x] `docs/superpowers/specs/2026-07-05-inventory-ui-implementation-bridge.md`
+- [x] Main local co `/inventory`, list, detail, movement history va normal stock adjustment UI.
 
 ### P1 — SalesDocuments docs sync
 
@@ -70,7 +85,7 @@ Output de xuat:
 
 Da sync:
 
-- filter hien tai, nguoi ban/nguoi tao gom mot, tab lich su thanh toan chua goi API rieng.
+- [x] filter hien tai, nguoi ban/nguoi tao gom mot, tab lich su thanh toan chua goi API rieng.
 
 ### P2 — Finance UI implementation bridge
 
@@ -88,9 +103,10 @@ Output de xuat:
 
 - `docs/superpowers/specs/2026-07-05-finance-ui-implementation-bridge.md`
 
-Da tao bridge:
+Da lam:
 
-- `docs/superpowers/specs/2026-07-05-finance-ui-implementation-bridge.md`
+- [x] `docs/superpowers/specs/2026-07-05-finance-ui-implementation-bridge.md`
+- [x] Main local co `/finance`, accounts/cashbook, customer debt, debt collection form va voucher readonly list.
 
 ### P3 — Reports API/UI bridge
 
@@ -108,9 +124,10 @@ Output de xuat:
 
 - `docs/superpowers/specs/2026-07-05-reports-api-ui-bridge.md`
 
-Da tao bridge:
+Da lam:
 
-- `docs/superpowers/specs/2026-07-05-reports-api-ui-bridge.md`
+- [x] `docs/superpowers/specs/2026-07-05-reports-api-ui-bridge.md`
+- [x] Main local co `/reports`, End of Day, Sales, Debt va Inventory report baseline.
 
 ## 4. Viec de sau, chua viet tiep bay gio
 
@@ -129,4 +146,4 @@ Da tao bridge:
 3. Finance UI implementation bridge.
 4. Reports API/UI bridge.
 
-Khong cap nhat `docs/IMPLEMENTATION-CHECKLIST.md` trong nhanh nay khi luong Plan con dang sua file do.
+`docs/IMPLEMENTATION-CHECKLIST.md` hien da duoc luong implement commit trong `68f3cff`; file nay chi giu checklist dac ta/dieu phoi de tranh trung roadmap.
