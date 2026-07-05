@@ -557,6 +557,28 @@ export interface MaterialOpeningResultData {
   created_at: string;
 }
 
+export interface PosMaterialShortageItemData {
+  product_id: string;
+  code: string;
+  name: string;
+  required_qty: number;
+  available_qty: number;
+  shortage_qty: number;
+  stock_unit: { id: string; code: string; name: string };
+  inventory_shape: "normal";
+  quick_material_opening_supported: boolean;
+  conversion_options: MaterialOpeningOptionsData["conversions"];
+}
+
+export interface PosMaterialShortagePreviewData {
+  product_id: string;
+  quantity: number;
+  source: "product" | "standard_bom";
+  bom_id?: string;
+  shortages: PosMaterialShortageItemData[];
+  warnings: string[];
+}
+
 export interface ProductionQueueItemData {
   id: string;
   production_machine: { id: string; code: string; name: string };
@@ -1000,6 +1022,11 @@ export interface FoundationRepository {
     organizationId: string;
     productId: string;
   }): Promise<MaterialOpeningOptionsData | null>;
+  previewPosMaterialShortage(input: {
+    organizationId: string;
+    productId: string;
+    quantity: number;
+  }): Promise<PosMaterialShortagePreviewData | null>;
   createMaterialOpening(input: {
     organizationId: string;
     actorUserId: string;

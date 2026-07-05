@@ -22,6 +22,7 @@ import type {
   PermissionData,
   PaymentReceiptAllocationData,
   PaymentReceiptDetailData,
+  PosMaterialShortagePreviewData,
   PriceFormulaPreviewData,
   PriceListData,
   ProductBomData,
@@ -1717,6 +1718,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async getMaterialOpeningOptions(input): Promise<MaterialOpeningOptionsData | null> {
       return await loadMaterialOpeningOptions(client, input.organizationId, input.productId);
     },
+    async previewPosMaterialShortage(input): Promise<PosMaterialShortagePreviewData | null> {
+      return await loadPosMaterialShortagePreview(client, input.organizationId, input.productId, input.quantity);
+    },
     async createMaterialOpening(input): Promise<MaterialOpeningResultData> {
       const { data, error } = await client.rpc("open_normal_material_tx", {
         p_actor_user_id: input.actorUserId,
@@ -3329,6 +3333,184 @@ async function hydrateInventoryProducts(
       is_negative: availableQty < 0,
     };
   });
+}
+
+async function loadPosMaterialShortagePreview(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+  quantity: number,
+): Promise<PosMaterialShortagePreviewData | null> {
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError !== null) throw productError;
+  if (product === null) return null;
+
+  const requiredByProduct = new Map<string, number>();
+  const bom = await loadProductBom(client, organizationId, productId);
+  const source = bom !== null && bom.items.length > 0 ? "standard_bom" : "product";
+
+  if (source === "standard_bom" && bom !== null) {
+    for (const item of bom.items) {
+      requiredByProduct.set(
+        item.component_product_id,
+        (requiredByProduct.get(item.component_product_id) ?? 0) + item.quantity * quantity,
+      );
+    }
+  } else {
+    requiredByProduct.set(productId, quantity);
+  }
+
+  const productIds = [...requiredByProduct.keys()];
+  const { data: settingsRows, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("product_id, inventory_shape, stock_unit_id")
+    .eq("organization_id", organizationId)
+    .in("product_id", productIds);
+  if (settingsError !== null) throw settingsError;
+
+  const settingsByProduct = new Map((settingsRows ?? []).map((row) => [row.product_id, row]));
+  const normalProductIds = productIds.filter((id) => settingsByProduct.get(id)?.inventory_shape === "normal");
+  const warnings = normalProductIds.length < productIds.length ? ["UNSUPPORTED_INVENTORY_SHAPE"] : [];
+  if (normalProductIds.length === 0) {
+    return {
+      product_id: productId,
+      quantity,
+      source,
+      ...(source === "standard_bom" && bom !== null ? { bom_id: bom.id } : {}),
+      shortages: [],
+      warnings,
+    };
+  }
+
+  const { data: products, error: productsError } = await client
+    .from("products")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .in("id", normalProductIds);
+  if (productsError !== null) throw productsError;
+
+  const stockUnitIds = [...new Set(
+    normalProductIds.map((id) => settingsByProduct.get(id)?.stock_unit_id).filter(isString),
+  )];
+  const { data: units, error: unitsError } = stockUnitIds.length === 0
+    ? { data: [], error: null }
+    : await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .in("id", stockUnitIds);
+  if (unitsError !== null) throw unitsError;
+
+  const { data: movements, error: movementsError } = await client
+    .from("stock_movements")
+    .select("product_id, quantity_delta")
+    .eq("organization_id", organizationId)
+    .in("product_id", normalProductIds);
+  if (movementsError !== null) throw movementsError;
+
+  const availableByProduct = new Map<string, number>();
+  for (const movement of movements ?? []) {
+    availableByProduct.set(
+      movement.product_id,
+      (availableByProduct.get(movement.product_id) ?? 0) + Number(movement.quantity_delta),
+    );
+  }
+
+  const shortagesProductIds = normalProductIds.filter((id) => {
+    const requiredQty = requiredByProduct.get(id) ?? 0;
+    const availableQty = availableByProduct.get(id) ?? 0;
+    return requiredQty > availableQty;
+  });
+  const conversionsByProduct = await loadNormalMaterialOpeningConversions(
+    client,
+    organizationId,
+    shortagesProductIds,
+    settingsByProduct,
+  );
+  const productsById = new Map((products ?? []).map((row) => [row.id, row]));
+  const unitsById = new Map((units ?? []).map((row) => [row.id, row]));
+
+  return {
+    product_id: productId,
+    quantity,
+    source,
+    ...(source === "standard_bom" && bom !== null ? { bom_id: bom.id } : {}),
+    shortages: shortagesProductIds.flatMap((id) => {
+      const productRow = productsById.get(id);
+      const settings = settingsByProduct.get(id);
+      const stockUnit = unitsById.get(settings?.stock_unit_id ?? "");
+      if (productRow === undefined || settings === undefined || stockUnit === undefined) return [];
+      const requiredQty = requiredByProduct.get(id) ?? 0;
+      const availableQty = availableByProduct.get(id) ?? 0;
+      const conversionOptions = conversionsByProduct.get(id) ?? [];
+      return [{
+        product_id: id,
+        code: productRow.code,
+        name: productRow.name,
+        required_qty: requiredQty,
+        available_qty: availableQty,
+        shortage_qty: requiredQty - availableQty,
+        stock_unit: { id: stockUnit.id, code: stockUnit.code, name: stockUnit.name },
+        inventory_shape: "normal" as const,
+        quick_material_opening_supported: conversionOptions.length > 0,
+        conversion_options: conversionOptions,
+      }];
+    }),
+    warnings,
+  };
+}
+
+async function loadNormalMaterialOpeningConversions(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+  settingsByProduct: Map<string, { product_id: string; inventory_shape: string; stock_unit_id: string }>,
+): Promise<Map<string, MaterialOpeningOptionsData["conversions"]>> {
+  if (productIds.length === 0) return new Map();
+  const { data: conversions, error: conversionError } = await client
+    .from("product_unit_conversions")
+    .select("product_id, sale_unit_id, stock_unit_id, stock_qty_per_sale_unit")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .in("product_id", productIds);
+  if (conversionError !== null) throw conversionError;
+
+  const filteredConversions = (conversions ?? []).filter((row) => {
+    const settings = settingsByProduct.get(row.product_id);
+    return settings !== undefined && row.stock_unit_id === settings.stock_unit_id;
+  });
+  const unitIds = [...new Set(filteredConversions.map((row) => row.sale_unit_id).filter(isString))];
+  const unitsById = new Map<string, { code: string; name: string }>();
+  if (unitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("id", unitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, { code: unit.code, name: unit.name });
+  }
+
+  const result = new Map<string, MaterialOpeningOptionsData["conversions"]>();
+  for (const conversion of filteredConversions) {
+    const unit = unitsById.get(conversion.sale_unit_id);
+    if (unit === undefined) continue;
+    const items = result.get(conversion.product_id) ?? [];
+    items.push({
+      unit_id: conversion.sale_unit_id,
+      code: unit.code,
+      name: unit.name,
+      stock_qty_per_unit: Number(conversion.stock_qty_per_sale_unit),
+    });
+    result.set(conversion.product_id, items);
+  }
+  return result;
 }
 
 async function loadMaterialOpeningOptions(

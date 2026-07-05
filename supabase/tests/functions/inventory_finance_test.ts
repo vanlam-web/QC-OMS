@@ -497,6 +497,108 @@ Deno.test("normal material opening validates request and calls repository", asyn
   assertEquals(result.stock_movement_id, null);
 });
 
+Deno.test("POS shortage preview requires order permission and returns normal product shortage", async () => {
+  assertEquals(
+    (await call(
+      "/api/v1/inventory/pos-shortage-preview",
+      { method: "POST", body: JSON.stringify({ product_id: "material-1", quantity: 5 }) },
+      repo([]),
+    )).status,
+    403,
+  );
+
+  let observedProductId = "";
+  let observedQuantity = 0;
+  const response = await call(
+    "/api/v1/inventory/pos-shortage-preview",
+    { method: "POST", body: JSON.stringify({ product_id: "material-1", quantity: 5 }) },
+    repo(["perm.create_order"], {
+      previewPosMaterialShortage: (input: { productId: string; quantity: number }) => {
+        observedProductId = input.productId;
+        observedQuantity = input.quantity;
+        return Promise.resolve({
+          product_id: "material-1",
+          quantity: 5,
+          source: "product",
+          shortages: [
+            {
+              product_id: "material-1",
+              code: "GIAY-A4",
+              name: "Giấy A4",
+              required_qty: 5,
+              available_qty: 2,
+              shortage_qty: 3,
+              stock_unit: { id: "unit-sheet", code: "TO", name: "Tờ" },
+              inventory_shape: "normal",
+              quick_material_opening_supported: true,
+              conversion_options: [{ unit_id: "unit-ram", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+            },
+          ],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as {
+    source: string;
+    shortages: Array<{
+      product_id: string;
+      shortage_qty: number;
+      quick_material_opening_supported: boolean;
+      conversion_options: Array<{ unit_id: string; stock_qty_per_unit: number }>;
+    }>;
+  };
+  assertEquals(response.status, 200);
+  assertEquals(observedProductId, "material-1");
+  assertEquals(observedQuantity, 5);
+  assertEquals(result.source, "product");
+  assertEquals(result.shortages[0].shortage_qty, 3);
+  assertEquals(result.shortages[0].quick_material_opening_supported, true);
+  assertEquals(result.shortages[0].conversion_options[0].stock_qty_per_unit, 500);
+});
+
+Deno.test("POS shortage preview returns standard single-level BOM normal component shortages", async () => {
+  const response = await call(
+    "/api/v1/inventory/pos-shortage-preview",
+    { method: "POST", body: JSON.stringify({ product_id: "combo-1", quantity: 2 }) },
+    repo(["perm.create_order"], {
+      previewPosMaterialShortage: (input: { productId: string; quantity: number }) => {
+        assertEquals(input.productId, "combo-1");
+        assertEquals(input.quantity, 2);
+        return Promise.resolve({
+          product_id: "combo-1",
+          quantity: 2,
+          source: "standard_bom",
+          bom_id: "bom-1",
+          shortages: [
+            {
+              product_id: "material-1",
+              code: "LED",
+              name: "Bóng LED",
+              required_qty: 10,
+              available_qty: 4,
+              shortage_qty: 6,
+              stock_unit: { id: "unit-led", code: "CON", name: "Con" },
+              inventory_shape: "normal",
+              quick_material_opening_supported: false,
+              conversion_options: [],
+            },
+          ],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { source: string; bom_id: string; shortages: Array<{ code: string; required_qty: number }> };
+  assertEquals(response.status, 200);
+  assertEquals(result.source, "standard_bom");
+  assertEquals(result.bom_id, "bom-1");
+  assertEquals(result.shortages[0].code, "LED");
+  assertEquals(result.shortages[0].required_qty, 10);
+});
+
 Deno.test("normal product stock adjustment creates balanced stocktake", async () => {
   const response = await call(
     "/api/v1/inventory/products/p-1/adjust-stock",
