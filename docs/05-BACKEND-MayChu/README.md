@@ -1,70 +1,55 @@
 # PHẦN 5: MÁY CHỦ & API (BACKEND)
 
-> 🔨 Đang xây dựng — Foundation đã chốt Giai đoạn 0; POS, Inventory, Finance, Purchase và Production Queue đã có một phần
+> Source of Truth cho API, use case, validation, permission, workflow thực thi và request/response model.
+>
+> File này chỉ là index. Việc đang làm / queue hiện tại nằm ở [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md).
 
----
+## Đọc Trước Khi Sửa Backend
 
-## Nội dung đã có
-
-| File | Mô tả | Trạng thái |
-|------|--------|------------|
-| [FOUNDATION-TECHNICAL-DESIGN.md](./FOUNDATION-TECHNICAL-DESIGN.md) | Kiến trúc FE–BE, source layout và security baseline | ✅ Chốt Giai đoạn 0 |
-| [FOUNDATION-API.md](./FOUNDATION-API.md) | API Auth/Profile/Permission/Workstation | ✅ Chốt Giai đoạn 0 |
-| `POS/ARCHITECTURE.md` | Kiến trúc State Manager, LocalStorage, Concurrency Lock | 🔨 Một phần |
-| `POS/AUTH.md` | Permission-based Access Control | ✅ Nền tảng Giai đoạn 0 |
-| `POS/TOAST-API.md` | API xử lý Toast SĐT (K03-B) | ✅ Hoàn tất |
-| `Inventory/INVENTORY-API.md` | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho | 🔨 Một phần |
-| `Finance/FINANCE-API.md` | API tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát | 🔨 Một phần |
-| `Purchase/PURCHASE-API.md` | API NCC, phiếu nhập, post nhập hàng và thanh toán NCC | 🔨 Một phần |
-| `Production/PRODUCTION-RECONCILIATION-API.md` | API đối soát sản xuất / hàng đợi máy | 🔨 Một phần |
-| `BOM/BOM-API.md` | API BOM/combo vật tư | 🔨 Draft |
-| `BACKEND_CONVENTIONS.md` | Quy ước API, naming, validation, error handling | ✅ Hoàn tất |
-
----
-
-## Nội dung dự kiến theo module
-
-| Module | Mô tả | Trạng thái |
-|--------|--------|------------|
-| **POS** | Customer/Product/Pricing, Order/Quote/Checkout/Sửa hóa đơn và Toast API đã có một phần | 🔨 Một phần |
-| **Inventory** | API tồn kho, cuộn/tấm/tấm lỡ, stock movement và kiểm kho đã có một phần | 🔨 Một phần |
-| **Finance** | API công nợ, thu nợ, sổ quỹ, phiếu thu/chi và đối soát đã có một phần | 🔨 Một phần |
-| **Purchase** | Supplier, purchase receipt draft/post, supplier payments, purchase roll/sheet objects | 🔨 Một phần |
-| **Production Queue** | Hàng đợi máy sản xuất, claim/add-to-draft/dismiss/restore | 🔨 Một phần |
-
-## Bằng chứng implement/test hiện có
-
-- Routes/use-cases: `routes/purchase.ts`, `use-cases/purchase.ts`, `routes/production-queue.ts`, `use-cases/production-queue.ts`.
-- Function tests: `purchase_receipts_test.ts`, `suppliers_test.ts`, `production_queue_test.ts`.
-
----
-
-## Mục đích
-
-Đây là **Source of Truth** cho cách hệ thống thực thi nghiệp vụ. Trả lời các câu hỏi:
-
-- API cung cấp những gì?
-- Validation thực hiện ở đâu?
-- Workflow thực thi ra sao?
-- Hệ thống kiểm tra quyền như thế nào?
-
----
-
-## Trách nhiệm tầng
-
-| Đặc tả | Chi tiết |
+| Cần biết | File |
 |---|---|
-| **CHỈ GHI** | API Specification · Use Case · Workflow · Validation · Auth · Permission · Error Handling · Request/Response Model |
-| **THAM CHIẾU** | Business Rule (03) · Database (04) · Feature (02) · Integration (06) — không đặc tả lại |
-| **KHÔNG GHI** | Vision · Feature đầy đủ · UI/Wireframe · Business Rule đầy đủ · Database Schema · Frontend Code · Hạ tầng |
+| Quy tắc tầng Backend | [_RULES.md](./_RULES.md) |
+| Quy ước backend chung | [BACKEND_CONVENTIONS.md](./BACKEND_CONVENTIONS.md) |
+| Việc đang làm / queue hiện tại | [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md) |
+| Nghiệp vụ nguồn | [../03-BUSINESS-NghiepVu/README.md](../03-BUSINESS-NghiepVu/README.md) |
+| Schema nguồn | [../04-DATABASE/README.md](../04-DATABASE/README.md) |
 
----
+## Nền Tảng Chung
 
-## Cấu trúc chuẩn mỗi file
+| File | Vai trò |
+|---|---|
+| [FOUNDATION-TECHNICAL-DESIGN.md](./FOUNDATION-TECHNICAL-DESIGN.md) | Kiến trúc FE-BE, source layout, security baseline |
+| [FOUNDATION-API.md](./FOUNDATION-API.md) | Auth, profile, permission, workstation |
+| [BACKEND_CONVENTIONS.md](./BACKEND_CONVENTIONS.md) | Naming, validation, error handling, API style |
 
-Mỗi tài liệu Backend nên có 8 phần (không bắt buộc nếu Use Case đơn giản):
+## Domain API
 
-```
+| Domain | Điểm vào | Nội dung |
+|---|---|---|
+| POS | [POS/README.md](./POS/README.md) | Pricing, customer/product lookup, order/quote/checkout, toast, POS auth |
+| Inventory | [Inventory/README.md](./Inventory/README.md) | Tồn kho, cuộn/tấm, stock movement, kiểm kho |
+| Finance | [Finance/README.md](./Finance/README.md) | Tài khoản quỹ, công nợ, thu nợ, sổ quỹ, phiếu thu/chi, đối soát |
+| Purchase | [Purchase/PURCHASE-API.md](./Purchase/PURCHASE-API.md) | Supplier, purchase receipt draft/post, supplier payment |
+| Production | [Production/PRODUCTION-RECONCILIATION-API.md](./Production/PRODUCTION-RECONCILIATION-API.md) | Đối soát sản xuất / hàng đợi máy |
+| BOM | [BOM/BOM-API.md](./BOM/BOM-API.md) | BOM/combo vật tư |
+
+## Phạm Vi Tầng
+
+| Loại | Ghi ở Backend |
+|---|---|
+| Chỉ ghi | API spec, use case, validation, permission, auth, error handling, request/response model |
+| Chỉ tham chiếu | PRD/UX, business rule, database schema, integration |
+| Không ghi | Vision, wireframe, business rule đầy đủ, schema đầy đủ, frontend code, hạ tầng |
+
+## Quy Ước
+
+- Khi nghiệp vụ thay đổi, cập nhật tầng Business trước, rồi Database, rồi Backend.
+- Backend không copy schema đầy đủ; link sang tầng 04 khi cần.
+- Backend không copy UI/wireframe; link sang tầng 02 khi cần.
+- Không dùng README này làm bảng trạng thái từng file.
+
+## Cấu Trúc Gợi Ý Cho API / Use Case
+
 1. Mục đích
 2. Input
 3. Validation
@@ -72,22 +57,6 @@ Mỗi tài liệu Backend nên có 8 phần (không bắt buộc nếu Use Case 
 5. Permission
 6. Output
 7. Error Handling
-8. Business Rule liên quan  ← chỉ tham chiếu, không đặc tả lại
-```
+8. Business Rule liên quan
 
----
-
-## Thứ tự phát triển
-
-Theo nguyên tắc top-down, **05-BACKEND chỉ được thiết kế khi**:
-
-1. ✅ 03-BUSINESS đã có Business Rule rõ ràng
-2. ✅ 04-DATABASE đã có Schema
-3. ✅ 02-PRD-UX đã có Feature Specification
-
-> Khi Business thay đổi → cập nhật 03-BUSINESS trước → rồi 04-DATABASE → rồi 05-BACKEND.
-> Không thiết kế Backend trước Business.
-
----
-
-← [ Quay về 00-OVERVIEW-TongQuan](../00-OVERVIEW-TongQuan/README.md)
+← [Quay về README chính](../README.md)
