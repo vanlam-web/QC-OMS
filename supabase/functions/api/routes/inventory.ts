@@ -10,6 +10,7 @@ import {
   listInventoryProducts,
   listStockMovements,
   listStocktakes,
+  previewPosMaterialShortage,
 } from "../use-cases/inventory.ts";
 
 export interface InventoryRouteDependencies {
@@ -63,6 +64,13 @@ export async function handleInventory(
       await createMaterialOpening(dependencies.repository, context, await request.json()),
       traceId,
       { status: 201 },
+    );
+  }
+
+  if (url.pathname === "/api/v1/inventory/pos-shortage-preview" && request.method === "POST") {
+    return successResponse(
+      await previewPosMaterialShortage(dependencies.repository, context, await request.json()),
+      traceId,
     );
   }
 

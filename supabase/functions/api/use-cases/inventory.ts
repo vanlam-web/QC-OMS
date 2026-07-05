@@ -4,6 +4,7 @@ import type {
   MaterialOpeningOptionsData,
   MaterialOpeningResultData,
   PermissionCode,
+  PosMaterialShortagePreviewData,
   ProductStatus,
   StockMovementData,
   StocktakeData,
@@ -121,6 +122,22 @@ export async function createMaterialOpening(
   }
 }
 
+export async function previewPosMaterialShortage(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  body: unknown,
+): Promise<PosMaterialShortagePreviewData> {
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
+  const payload = parsePosShortagePreview(body);
+  const result = await repository.previewPosMaterialShortage({
+    organizationId: context.organizationId,
+    productId: payload.productId,
+    quantity: payload.quantity,
+  });
+  if (result === null) throw notFound();
+  return result;
+}
+
 export async function adjustNormalProductStock(
   repository: FoundationRepository,
   context: InventoryContext,
@@ -158,6 +175,14 @@ function parseMaterialOpening(body: unknown): {
   const oldRemainingQty = body.old_remaining_qty === undefined ? undefined : parseNonNegativeNumber(body.old_remaining_qty);
   const note = typeof body.note === "string" && body.note.trim().length > 0 ? body.note.trim() : undefined;
   return { productId, inventoryShape: "normal", openedUnitId, openedQty, oldRemainingQty, note };
+}
+
+function parsePosShortagePreview(body: unknown): { productId: string; quantity: number } {
+  if (!isRecord(body)) throw validationError();
+  return {
+    productId: parseRequiredText(body.product_id),
+    quantity: parsePositiveNumber(body.quantity),
+  };
 }
 
 function parseInventoryProductList(
