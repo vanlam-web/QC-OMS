@@ -111,6 +111,18 @@ Quan sát trước đó ngày `01/07/2026`:
 - Người nộp/nhận có thể là khách hàng, nhà cung cấp, nhân viên hoặc đối tượng tự do.
 - `Ví điện tử` có trong KiotViet nhưng QC-OMS MVP vẫn chưa đưa vào nếu Owner chưa chốt nghiệp vụ riêng; cần thiết kế mở để thêm sau.
 
+Hiện trạng detail inline:
+
+- Click mã phiếu mở sub-panel ngay dưới dòng.
+- Panel có tab `Thông tin`, tiêu đề `Phiếu thu/chi <mã>`, chip `Đã thanh toán/Đã hủy`, chip `Có hạch toán/Không hạch toán`, nhãn `Chi nhánh trung tâm`.
+- Nhật ký hiển thị người tạo, người thu/chi tạm lấy theo `created_by`, và thời gian ghi sổ.
+- Grid thông tin hiển thị số tiền, loại thu/chi, đối tượng nộp/nhận, phương thức thanh toán, người nộp/nhận dạng link, quỹ/tài khoản nhận hoặc chi.
+- Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
+- Nếu không có `allocations`, panel dùng khu vực lý do/ghi chú thay cho bảng chứng từ.
+- Footer hiển thị ghi chú và cụm nút `Hủy`, `Chỉnh sửa`, `In`; các nút này đang disabled nếu chưa có API/hành vi an toàn cho dòng detail.
+
+Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, người thu/người chi riêng, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail.
+
 ---
 
 ## 1. Mục đích
@@ -225,7 +237,7 @@ Xuất file tối thiểu phải có các cột giống file KV mẫu:
 
 Sau đó thêm các cột QC-OMS cần đối soát: quỹ/tài khoản, trạng thái, ghi chú, người tạo, hạch toán KQKD.
 
-Hiện trạng UI: nút `Xuất file` nằm cạnh `Phiếu thu` và `Phiếu chi` ở header.
+Hiện trạng UI: nút `Xuất file` nằm cạnh `+ Phiếu thu` và `+ Phiếu chi` ở header.
 
 ---
 

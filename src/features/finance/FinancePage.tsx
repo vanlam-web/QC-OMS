@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { CalendarDays, ChevronRight, Download, Plus, Search, WalletCards } from 'lucide-react'
+import { CalendarDays, ChevronRight, Download, Edit3, MapPin, Plus, Printer, Search, StickyNote, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -87,6 +87,45 @@ function accountTypeText(type: FinanceAccount['account_type']) {
 
 function statusText(status: 'posted' | 'cancelled') {
   return status === 'posted' ? 'Đã ghi' : 'Đã hủy'
+}
+
+function cashbookDetailStatusText(status: CashbookStatus) {
+  return status === 'posted' ? 'Đã thanh toán' : 'Đã hủy'
+}
+
+function cashbookDetailTitle(entry: CashbookEntryDetail) {
+  return `${entry.direction === 'in' ? 'Phiếu thu' : 'Phiếu chi'} ${entry.code}`
+}
+
+function cashbookDetailActorLabel(entry: CashbookEntryDetail) {
+  return entry.direction === 'in' ? 'Người thu' : 'Người chi'
+}
+
+function cashbookDetailAmountLabel(entry: CashbookEntryDetail) {
+  return entry.direction === 'in' ? 'Loại thu' : 'Loại chi'
+}
+
+function cashbookDetailCounterpartyTypeLabel(entry: CashbookEntryDetail) {
+  if (entry.counterparty.type === 'customer') return 'Khách hàng'
+  if (entry.counterparty.type === 'supplier') return 'Nhà cung cấp'
+  if (entry.counterparty.type === 'employee') return 'Nhân viên'
+  if (entry.counterparty.type === 'other') return 'Khác'
+  return 'Không có'
+}
+
+function cashbookDetailCounterpartyLabel(entry: CashbookEntryDetail) {
+  return entry.direction === 'in' ? 'Người nộp' : 'Người nhận'
+}
+
+function cashbookDetailAccountLabel(entry: CashbookEntryDetail) {
+  if (entry.payment_method !== 'bank_transfer') return entry.direction === 'in' ? 'Đến quỹ' : 'Từ quỹ'
+  return entry.direction === 'in' ? 'Đến tài khoản' : 'Từ tài khoản'
+}
+
+function cashbookLinkedDocumentMessage(entry: CashbookEntryDetail) {
+  const code = entry.source.order_code ?? entry.source.code
+  if (entry.direction === 'in') return `Phiếu thu tự động được gắn với hóa đơn ${code}.`
+  return `Phiếu chi tự động được gắn với chứng từ ${code}.`
 }
 
 function businessAccountedText(value: CashbookBusinessAccountedFilter) {
@@ -1209,51 +1248,98 @@ export function FinancePage({ service }: { service: FinanceService }) {
                         <ManagementDetailRow colSpan={visibleCashbookColumns.length + 2} label={`Chi tiết sổ quỹ ${entry.code}`}>
                           {cashbookDetail === null ? <p>Đang tải chi tiết...</p> : (
                             <div className="finance-cashbook-detail">
+                              <div className="finance-cashbook-detail-tabs" role="tablist" aria-label="Chi tiết phiếu">
+                                <button aria-selected="true" role="tab" type="button">Thông tin</button>
+                              </div>
                               <header>
                                 <div>
-                                  <h3>{cashbookDetail.code}</h3>
-                                  <p>{statusText(cashbookDetail.status)} · {cashbookDetail.is_business_accounted ? 'Có hạch toán' : 'Không hạch toán'}</p>
+                                  <h3>{cashbookDetailTitle(cashbookDetail)}</h3>
+                                  <p className="finance-cashbook-detail-chips">
+                                    <StatusChip tone={cashbookDetail.status === 'posted' ? 'success' : 'neutral'}>{cashbookDetailStatusText(cashbookDetail.status)}</StatusChip>
+                                    <StatusChip tone={cashbookDetail.is_business_accounted ? 'info' : 'warning'}>{cashbookDetail.is_business_accounted ? 'Có hạch toán' : 'Không hạch toán'}</StatusChip>
+                                  </p>
                                 </div>
-                                <button className="button button-secondary" type="button" onClick={() => setSelectedCashbookEntry(null)}>Đóng</button>
+                                <div className="finance-cashbook-detail-branch">
+                                  <MapPin aria-hidden="true" size={16} />
+                                  Chi nhánh trung tâm
+                                </div>
                               </header>
+                              <p className="finance-cashbook-detail-log">
+                                Người tạo: {cashbookDetail.created_by.name} | {cashbookDetailActorLabel(cashbookDetail)}: {cashbookDetail.created_by.name} | Thời gian: {dateText(cashbookDetail.created_at)}
+                              </p>
                               <dl>
-                                <div><dt>Người tạo</dt><dd>{cashbookDetail.created_by.name}</dd></div>
-                                <div><dt>Thời gian</dt><dd>{dateText(cashbookDetail.created_at)}</dd></div>
+                                <div><dt>Số tiền</dt><dd><MoneyText value={cashbookDetail.amount_delta} /></dd></div>
+                                <div><dt>{cashbookDetailAmountLabel(cashbookDetail)}</dt><dd>{sourceTypeText(cashbookDetail.source_type)}</dd></div>
+                                <div><dt>{cashbookDetail.direction === 'in' ? 'Đối tượng nộp' : 'Đối tượng nhận'}</dt><dd>{cashbookDetailCounterpartyTypeLabel(cashbookDetail)}</dd></div>
                                 <div><dt>Phương thức thanh toán</dt><dd>{paymentMethodText(cashbookDetail.payment_method)}</dd></div>
-                                <div><dt>Người nộp/nhận</dt><dd>{cashbookDetail.counterparty.name ?? '-'}</dd></div>
-                                <div><dt>Số điện thoại</dt><dd>{cashbookDetail.counterparty.phone ?? '-'}</dd></div>
-                                <div><dt>Chứng từ gốc</dt><dd>{cashbookDetail.source.order_code ?? cashbookDetail.source.code}</dd></div>
-                                <div><dt>Ghi chú</dt><dd>{cashbookDetail.note ?? '-'}</dd></div>
+                                <div>
+                                  <dt>{cashbookDetailCounterpartyLabel(cashbookDetail)}</dt>
+                                  <dd>
+                                    <button aria-label={`${cashbookDetailCounterpartyLabel(cashbookDetail)} ${cashbookDetail.counterparty.name ?? '-'}`} className="finance-cashbook-detail-link" type="button">
+                                      {cashbookDetail.counterparty.name ?? '-'}
+                                    </button>
+                                  </dd>
+                                </div>
+                                <div><dt>{cashbookDetailAccountLabel(cashbookDetail)}</dt><dd>{cashbookDetail.finance_account.name}</dd></div>
                               </dl>
                               {cashbookDetail.allocations.length > 0 ? (
-                                <section aria-label="Phân bổ hóa đơn">
-                                  <h4>Phân bổ hóa đơn</h4>
+                                <section aria-label="Chứng từ liên kết" className="finance-cashbook-linked-documents">
+                                  <p>{cashbookLinkedDocumentMessage(cashbookDetail)}</p>
                                   <ManagementTableViewport>
-                                    <table aria-label="Phân bổ hóa đơn" className="management-table">
+                                    <table aria-label="Chứng từ liên kết" className="management-table">
                                       <thead>
                                         <tr>
-                                          <th>Mã hóa đơn</th>
+                                          <th>Mã chứng từ</th>
+                                          <th>Thời gian</th>
                                           <th>Giá trị phiếu</th>
                                           <th>Đã thu trước</th>
                                           <th>Giá trị thu</th>
-                                          <th>Còn lại</th>
+                                          <th>Trạng thái</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {cashbookDetail.allocations.map((allocation) => (
                                           <tr key={allocation.order_id}>
                                             <td>{allocation.order_code}</td>
+                                            <td>{dateText(cashbookDetail.created_at)}</td>
                                             <td><MoneyText value={allocation.order_total_amount} /></td>
                                             <td><MoneyText value={allocation.collected_before} /></td>
                                             <td><MoneyText value={allocation.allocated_amount} /></td>
-                                            <td><MoneyText value={allocation.remaining_after} /></td>
+                                            <td>{allocation.remaining_after === 0 ? 'Đã thanh toán' : 'Còn nợ'}</td>
                                           </tr>
                                         ))}
                                       </tbody>
                                     </table>
                                   </ManagementTableViewport>
                                 </section>
-                              ) : null}
+                              ) : (
+                                <section aria-label="Lý do chi tiết" className="finance-cashbook-linked-documents">
+                                  <p>{cashbookDetail.note ?? 'Chưa có chứng từ liên kết.'}</p>
+                                </section>
+                              )}
+                              <footer>
+                                <div className="finance-cashbook-detail-note">
+                                  <StickyNote aria-hidden="true" size={16} />
+                                  {cashbookDetail.note ?? 'Chưa có ghi chú'}
+                                </div>
+                                <div className="finance-cashbook-detail-actions">
+                                  <button aria-label={`Hủy phiếu ${cashbookDetail.code}`} className="button button-secondary" disabled type="button">
+                                    <Trash2 aria-hidden="true" size={16} />
+                                    Hủy
+                                  </button>
+                                  <button aria-label={`Chỉnh sửa phiếu ${cashbookDetail.code}`} className="button button-primary" disabled type="button">
+                                    <Edit3 aria-hidden="true" size={16} />
+                                    Chỉnh sửa
+                                  </button>
+                                  <button aria-label={`In phiếu ${cashbookDetail.code}`} className="button button-secondary" disabled type="button">
+                                    <Printer aria-hidden="true" size={16} />
+                                    In
+                                  </button>
+                                </div>
+                              </footer>
+                              <div className="finance-cashbook-detail-close">
+                                <button className="button button-secondary" type="button" onClick={() => setSelectedCashbookEntry(null)}>Đóng</button>
+                              </div>
                             </div>
                           )}
                         </ManagementDetailRow>
