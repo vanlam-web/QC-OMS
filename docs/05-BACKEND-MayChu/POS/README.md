@@ -1,10 +1,10 @@
 # POS — Màn hình bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> Index API và kiến trúc POS. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ---
 
-## 📁 Cấu trúc
+## Cấu trúc
 
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
@@ -16,11 +16,11 @@
 
 ---
 
-## 🔗 Tham chiếu
+## Tham chiếu
 
-- **PRD-UX (POS):** `02-PRD-UX-PhongCanh/POS/`
-- **Database (POS):** `04-DATABASE/Sales/`
-- **Business (Sales):** `03-BUSINESS-NghiepVu/Sales/`
+- [PRD-UX POS](../../02-PRD-UX-PhongCanh/POS/)
+- [Database Sales](../../04-DATABASE/Sales/)
+- [Business Sales](../../03-BUSINESS-NghiepVu/Sales/)
 
 ---
 

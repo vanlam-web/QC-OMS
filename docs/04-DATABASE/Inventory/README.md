@@ -1,7 +1,7 @@
 # INVENTORY — Schema kho vật tư
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Nguồn:** Business Inventory 2026-06-30
+> Index schema kho vật tư. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+> Nguồn: Business Inventory 2026-06-30.
 
 ---
 
@@ -15,9 +15,9 @@
 
 ## Tham chiếu
 
-- **Business Inventory:** `../../03-BUSINESS-NghiepVu/Inventory/`
-- **Sales Products:** `../Sales/POS-TABLES.md`
-- **System:** `../System/AUTH-PERMISSIONS.md`
+- [Business Inventory](../../03-BUSINESS-NghiepVu/Inventory/)
+- [Sales Products](../Sales/POS-TABLES.md)
+- [System](../System/AUTH-PERMISSIONS.md)
 
 ---
 

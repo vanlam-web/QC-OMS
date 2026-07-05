@@ -1,10 +1,10 @@
 # SALES — Nghiệp vụ Bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> Index nghiệp vụ bán hàng. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ---
 
-## 📁 Cấu trúc
+## Cấu trúc
 
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
@@ -27,15 +27,15 @@ BOM/Combo chưa phải nghiệp vụ đã chốt sâu trong MVP. Hiện tại ch
 - Nếu chọn **Lưu Combo mới**, cấu trúc đó được lưu thành combo mới trong danh mục để dùng lại sau.
 - Combo lồng nhau/deep-scan phức tạp để phase sau.
 
-Draft điều phối: `../../superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md`.
+Draft điều phối: [2026-07-01-bom-combo-mvp-boundary-draft.md](../../superpowers/specs/2026-07-01-bom-combo-mvp-boundary-draft.md).
 
 ---
 
-## 🔗 Tham chiếu
+## Tham chiếu
 
-- **PRD-UX (POS):** `02-PRD-UX-PhongCanh/POS/`
-- **Database (POS):** `04-DATABASE/Sales/`
-- **Backend (POS):** `05-BACKEND-MayChu/POS/`
+- [PRD-UX POS](../../02-PRD-UX-PhongCanh/POS/)
+- [Database Sales](../../04-DATABASE/Sales/)
+- [Backend POS](../../05-BACKEND-MayChu/POS/)
 
 ---
 

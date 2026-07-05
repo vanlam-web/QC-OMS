@@ -1,10 +1,10 @@
 # SALES — Domain POS / Bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> Index schema bán hàng/POS. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ---
 
-## 📁 Cấu trúc
+## Cấu trúc
 
 | File | Mô tả | Nguồn gốc |
 |---|---|---|
@@ -12,11 +12,11 @@
 
 ---
 
-## 🔗 Tham chiếu
+## Tham chiếu
 
-- **PRD-UX (POS):** `02-PRD-UX-PhongCanh/POS/`
-- **Backend (POS):** `05-BACKEND-MayChu/`
-- **Business (Sales):** `03-BUSINESS-NghiepVu/Sales/`
+- [PRD-UX POS](../../02-PRD-UX-PhongCanh/POS/)
+- [Backend POS](../../05-BACKEND-MayChu/POS/)
+- [Business Sales](../../03-BUSINESS-NghiepVu/Sales/)
 
 ---
 

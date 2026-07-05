@@ -1,7 +1,7 @@
 # Purchase/Supplier — Nghiệp vụ nhà cung cấp và nhập hàng
 
-> **Trạng thái:** Source of Truth nghiệp vụ sau rà KiotViet
-> **Nguồn:** KiotViet `Nhà cung cấp`, `Nhập hàng`; Owner chốt ngày 2026-07-01
+> Index nghiệp vụ nhà cung cấp và nhập hàng. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+> Nguồn: KiotViet `Nhà cung cấp`, `Nhập hàng`; Owner chốt ngày 2026-07-01.
 
 ---
 
@@ -31,3 +31,7 @@ Không làm trong lát cắt đầu tiên:
 - hóa đơn điện tử/VAT/thuế đầu vào
 - mua dịch vụ thành module riêng nếu phiếu chi sổ quỹ đã đủ dùng
 - báo cáo nhà cung cấp nâng cao trước khi có dữ liệu Purchase chuẩn
+
+---
+
+← [Quay về Business README](../README.md)

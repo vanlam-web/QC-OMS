@@ -1,7 +1,7 @@
 # FINANCE — Schema thanh toán, công nợ và sổ quỹ
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Nguồn:** Business Sales Checkout, Customer Debt và Finance Cashbook 2026-06-30
+> Index schema tài chính. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+> Nguồn: Business Sales Checkout, Customer Debt và Finance Cashbook 2026-06-30.
 
 ---
 
@@ -16,10 +16,10 @@
 
 ## Tham chiếu
 
-- **Sales Checkout:** `../../03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md`
-- **Customer Debt:** `../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md`
-- **Cashbook Business:** `../../03-BUSINESS-NghiepVu/Finance/CASHBOOK.md`
-- **Sales DB:** `../Sales/POS-TABLES.md`
+- [Sales Checkout](../../03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md)
+- [Customer Debt](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
+- [Cashbook Business](../../03-BUSINESS-NghiepVu/Finance/CASHBOOK.md)
+- [Sales DB](../Sales/POS-TABLES.md)
 
 ---
 
