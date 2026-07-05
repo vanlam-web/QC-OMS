@@ -88,7 +88,12 @@ Nhân viên được sửa dòng hàng, khách hàng, bảng giá, giá bán và
 
 Khi khách đồng ý, báo giá được mở lại thành đơn nháp để kiểm tra/sửa lần cuối rồi thanh toán.
 
-Khi thanh toán thành công, hệ thống tạo hóa đơn bán hàng với mã `HD...`; mã `BG...` vẫn được giữ trong lịch sử để truy vết nguồn gốc báo giá.
+Khi mở lại, POS xem nội dung báo giá như một nháp local độc lập. Nhân viên có thể:
+
+- sửa nội dung rồi lưu thành báo giá mới
+- sửa nội dung rồi thanh toán thành hóa đơn `HD...`
+
+Trong MVP, hóa đơn mới có thể giữ `source_quote_id` nếu frontend/backend còn truyền được nguồn báo giá. Nếu không giữ link, hóa đơn vẫn hợp lệ như hóa đơn bán thẳng. Mã `BG...` cũ vẫn nằm trong lịch sử báo giá để tra cứu.
 
 Không có bước đặt hàng/giao hàng trung gian giữa báo giá và hóa đơn trong MVP.
 
@@ -121,11 +126,13 @@ Checkout thất bại không được tạo hóa đơn bán hàng dở dang.
 
 Hóa đơn bán hàng phải giữ snapshot dòng hàng tương tự báo giá, để lịch sử bán hàng không thay đổi khi danh mục, bảng giá hoặc hồ sơ khách hàng thay đổi sau này.
 
-### BR-INV-03: Hóa đơn từ báo giá giữ liên kết nguồn
+### BR-INV-03: Hóa đơn có thể giữ liên kết báo giá nguồn
 
-Nếu hóa đơn được tạo từ báo giá, hóa đơn phải giữ liên kết đến báo giá nguồn.
+Nếu checkout còn truyền được nguồn báo giá, hóa đơn nên giữ `source_quote_id` để truy vết `BG... -> HD...`.
 
-Mã `BG...` không bị mất khi đã tạo `HD...`.
+Nếu nháp báo giá đã được sửa như một nháp local và checkout không truyền `source_quote_id`, hóa đơn vẫn hợp lệ như hóa đơn bán thẳng.
+
+Mã `BG...` không bị mất; báo giá cũ vẫn nằm trong lịch sử báo giá để tra cứu.
 
 ### BR-INV-04: Sửa hóa đơn đã chốt tạo chứng từ mới
 
@@ -177,7 +184,7 @@ Khóa mềm giúp giảm xung đột thao tác, nhưng không thay thế kiểm 
 3. Một khách hàng có thể có nhiều nháp trên cùng máy.
 4. Lưu báo giá sinh mã `BG...` và không phát sinh kho/tiền/công nợ/doanh thu.
 5. Mở lại báo giá đưa nội dung báo giá trở lại POS như một nháp có thể sửa.
-6. Thanh toán báo giá thành công sinh hóa đơn `HD...` và giữ liên kết tới mã `BG...`.
+6. Thanh toán nháp mở từ báo giá sinh hóa đơn `HD...`; link về `BG...` là tùy chọn trong MVP.
 7. Báo giá và hóa đơn bán hàng đều giữ snapshot dòng hàng tại thời điểm lưu.
 8. Sửa hóa đơn đã chốt không sửa đè hóa đơn cũ; hệ thống tạo mã mới dạng `MaCu.01` và giữ hóa đơn cũ ở trạng thái đã hủy để truy vết.
 9. Hệ thống không tạo đơn đặt hàng, vận đơn, COD hoặc kênh bán online trong MVP.

@@ -260,9 +260,9 @@ Hủy báo giá không xóa dữ liệu, chỉ đổi `status = cancelled` và g
 
 **Permission:** `perm.create_order`
 
-Endpoint này chỉ được gọi nội bộ sau khi checkout tạo hóa đơn `HD...` thành công.
+Endpoint này chỉ được gọi nội bộ sau khi checkout tạo hóa đơn `HD...` thành công và checkout có giữ `source_quote_id`.
 
-Frontend không gọi endpoint này trực tiếp trong MVP; checkout phải tự xử lý chuyển trạng thái báo giá trong cùng workflow.
+Frontend không gọi endpoint này trực tiếp trong MVP. Nếu checkout không truyền `source_quote_id`, báo giá cũ vẫn giữ trạng thái hiện tại và hóa đơn mới được xem như hóa đơn bán thẳng.
 
 **Input:**
 
@@ -339,6 +339,8 @@ Checkout giỏ hàng hiện tại thành hóa đơn bán hàng `HD...`.
 
 `source_quote_id`, `customer_id`, `price_list_id`, `bank_account_id` được phép null theo nghiệp vụ.
 
+Ghi chú: khi nhân viên mở báo giá về POS, POS tạo một nháp local có thể sửa. Nếu checkout gửi `source_quote_id`, backend giữ link `BG... -> HD...` và đổi báo giá sang `converted`. Nếu checkout không gửi `source_quote_id`, backend tạo hóa đơn như bán thẳng; đây vẫn là hành vi hợp lệ trong MVP.
+
 `payment.cash_amount` và `payment.bank_amount` là số tiền thực giữ lại để ghi quỹ, không bao gồm tiền thừa đã trả lại khách.
 
 Nếu khách trả dư và nhân viên chọn cấn vào nợ cũ, phần cấn nợ được đưa vào `old_debt_payment_amount`. Nếu trả lại khách, phần đó không đưa vào `cash_amount`/`bank_amount`.
@@ -368,7 +370,7 @@ Nếu khách trả dư và nhân viên chọn cấn vào nợ cũ, phần cấn 
 8. Tạo `cashbook_entries` từ từng dòng phương thức thu.
 9. Nếu hóa đơn mới còn nợ, tạo `customer_debt_entries` loại `invoice_debt`.
 10. Nếu có trả nợ cũ, phân bổ vào hóa đơn còn nợ cũ nhất trước bằng `customer_debt_allocations` và tạo `customer_debt_entries` loại `debt_payment`.
-11. Nếu sinh từ báo giá, đổi báo giá sang `converted`.
+11. Nếu có `source_quote_id`, đổi báo giá sang `converted`; nếu không có thì bỏ qua bước này.
 12. Ghi `order_status_history`.
 13. Trả hóa đơn, payment summary, debt summary và cảnh báo tồn kho nếu có.
 
