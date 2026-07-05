@@ -10,6 +10,7 @@ import type {
   PermissionCode,
   ReconciliationData,
   PaymentReceiptDetailData,
+  RetailDebtInvoiceData,
 } from "../contracts.ts";
 import { ApiError } from "../http.ts";
 
@@ -61,6 +62,21 @@ export async function getCustomerDebt(
   const result = await repository.getCustomerDebt({ organizationId: context.organizationId, customerId });
   if (result === null) throw notFound();
   return result;
+}
+
+export async function listRetailDebts(
+  repository: FoundationRepository,
+  context: FinanceContext,
+  url: URL,
+): Promise<{ items: RetailDebtInvoiceData[]; page: number; page_size: number; total: number }> {
+  requireAnyPermission(context, ["perm.manage_finance"]);
+  const { page, pageSize } = parsePagedSearch(url);
+  const result = await repository.listRetailDebts({
+    organizationId: context.organizationId,
+    page,
+    pageSize,
+  });
+  return { items: result.items, page, page_size: pageSize, total: result.total };
 }
 
 export async function collectCustomerDebt(

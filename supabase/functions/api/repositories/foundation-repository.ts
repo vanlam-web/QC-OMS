@@ -31,6 +31,7 @@ import type {
   QuoteReopenPayloadData,
   QuoteSummaryData,
   ReconciliationData,
+  RetailDebtInvoiceData,
   ResolvedPriceData,
   SalesDocumentDetailData,
   SalesDocumentListItemData,
@@ -1457,6 +1458,14 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           item.customer_name.toLocaleLowerCase("vi").includes(search)
         );
       return paginate(filtered, input.page, input.pageSize);
+    },
+    async listRetailDebts(input): Promise<{ items: RetailDebtInvoiceData[]; total: number }> {
+      const retailCustomer = await loadCustomerByCode(client, input.organizationId, "KH000001");
+      if (retailCustomer === null) {
+        throw { code: "22023", message: "default retail customer KH000001 is not configured" };
+      }
+      const invoices = await loadRetailDebtInvoices(client, input.organizationId, retailCustomer.id);
+      return paginate(invoices, input.page, input.pageSize);
     },
     async getCustomerDebt(input): Promise<CustomerDebtDetailData | null> {
       const { data: customer, error: customerError } = await client
@@ -2945,7 +2954,8 @@ async function loadCustomerDebtSummaries(
   const byCustomer = new Map<string, CustomerDebtSummaryData>();
 
   for (const invoice of invoices) {
-    const key = invoice.customer_id ?? `retail:${invoice.order_id}`;
+    if (invoice.customer_id === null) continue;
+    const key = invoice.customer_id;
     const current = byCustomer.get(key) ?? {
       customer_id: invoice.customer_id,
       customer_code: invoice.customer_code,
@@ -2963,6 +2973,43 @@ async function loadCustomerDebtSummaries(
   return [...byCustomer.values()]
     .filter((item) => item.total_debt > 0)
     .sort((left, right) => left.customer_name.localeCompare(right.customer_name, "vi"));
+}
+
+async function loadRetailDebtInvoices(
+  client: DatabaseClient,
+  organizationId: string,
+  retailCustomerId: string,
+): Promise<RetailDebtInvoiceData[]> {
+  const invoices = await loadOpenDebtInvoices(client, organizationId, retailCustomerId);
+  if (invoices.length === 0) return [];
+
+  const { data, error } = await client
+    .from("customer_debt_entries")
+    .select("order_id, retail_debt_note, created_at")
+    .eq("organization_id", organizationId)
+    .eq("customer_id", retailCustomerId)
+    .eq("entry_type", "invoice_debt")
+    .in("order_id", invoices.map((invoice) => invoice.order_id))
+    .order("created_at", { ascending: false });
+  if (error !== null) throw error;
+
+  const noteByOrder = new Map<string, string | null>();
+  for (const entry of data ?? []) {
+    if (!noteByOrder.has(entry.order_id)) {
+      noteByOrder.set(entry.order_id, entry.retail_debt_note ?? null);
+    }
+  }
+
+  return invoices.map((invoice) => ({
+    order_id: invoice.order_id,
+    order_code: invoice.order_code,
+    created_at: invoice.created_at,
+    total_amount: invoice.total_amount,
+    paid_amount: invoice.paid_amount,
+    debt_amount: invoice.debt_amount,
+    remaining_debt: invoice.remaining_debt,
+    retail_debt_note: noteByOrder.get(invoice.order_id) ?? null,
+  }));
 }
 
 async function loadOpenDebtInvoices(
