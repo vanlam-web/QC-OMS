@@ -1,8 +1,8 @@
 # SalesDocuments — Chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Phase hiện tại:** Đã có danh sách/chi tiết chứng từ và luồng báo giá `BG...` mở lại vào POS
-> **Phạm vi dài hạn:** Danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS
+> Index cho đặc tả UI SalesDocuments. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+>
+> Phạm vi dài hạn: danh sách và chi tiết báo giá/hóa đơn sau khi rời màn hình POS.
 
 ---
 
@@ -14,24 +14,24 @@ POS là nơi tạo/chốt đơn. SalesDocuments là nơi quản lý chứng từ
 
 Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản giá trước khi bán, không phải đơn đặt hàng, không giữ hàng, không giao hàng và không tạo công nợ/kho/tiền.
 
-## 1.1. Trạng thái triển khai
+## 1.1. Năng Lực Và Ranh Giới
 
-| Nhóm năng lực | Trạng thái | Ghi chú |
-|---|---|---|
-| Danh sách chứng từ | ✅ Đã có | List cho hóa đơn `HD...` và báo giá `BG...`, có tìm kiếm mã chứng từ |
-| Chi tiết chứng từ | ✅ Đã có | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements nếu có |
-| Mở lại báo giá | ✅ Đã có | Mở `BG...` active vào POS draft local, giữ snapshot và cảnh báo lệch |
-| In/xem báo giá | ⏭️ Phase 3B | Mẫu báo giá mặc định, frontend-only print view |
-| In lại bill hóa đơn | ⏭️ Future phase | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
-| Sửa hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
-| Hủy hóa đơn | ⏭️ Future phase | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
-| Đảo kho/tiền/công nợ | ⏭️ Future phase | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |
+| Nhóm năng lực | Ghi chú |
+|---|---|
+| Danh sách chứng từ | List cho hóa đơn `HD...` và báo giá `BG...`, có tìm kiếm mã chứng từ |
+| Chi tiết chứng từ | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements nếu có |
+| Mở lại báo giá | Mở `BG...` active vào POS draft local, giữ snapshot và cảnh báo lệch |
+| In/xem báo giá | Mẫu báo giá mặc định, frontend-only print view |
+| In lại bill hóa đơn | Chỉ bật sau khi Bill Preview/print flow được chốt và implement |
+| Sửa hóa đơn | Chỉ bật sau khi có transaction an toàn và rule đảo dữ liệu rõ |
+| Hủy hóa đơn | Chỉ bật sau khi có transaction an toàn và rule đảo kho/tiền/công nợ rõ |
+| Đảo kho/tiền/công nợ | Không làm bằng thao tác UI rời rạc; phải đi qua nghiệp vụ sửa/hủy an toàn |
 
 SalesDocuments hiện vẫn không phải module quản lý đầy đủ. Nó giúp tra cứu chứng từ đã phát sinh và mở lại báo giá; sửa/hủy hóa đơn, đảo kho/tiền/công nợ và in bill nâng cao vẫn là future phase.
 
 ---
 
-## 2. File trong module
+## 2. Entry Chính
 
 | File | Nội dung |
 |---|---|
@@ -41,13 +41,15 @@ SalesDocuments hiện vẫn không phải module quản lý đầy đủ. Nó gi
 
 ---
 
-## 3. Liên kết Source of Truth
+## 3. Tham Chiếu
 
-- Business vòng đời đơn: [POS-ORDER-LIFECYCLE.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md)
-- Business checkout: [POS-CHECKOUT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md)
-- Business công nợ: [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
-- Database Sales: [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md)
-- Backend Order API: [ORDER-API.md](../../05-BACKEND-MayChu/POS/ORDER-API.md)
+| Nguồn | File |
+|---|---|
+| Business vòng đời đơn | [POS-ORDER-LIFECYCLE.md](../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md) |
+| Business checkout | [POS-CHECKOUT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CHECKOUT.md) |
+| Business công nợ | [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md) |
+| Database Sales | [POS-TABLES.md](../../04-DATABASE/Sales/POS-TABLES.md) |
+| Backend Order API | [ORDER-API.md](../../05-BACKEND-MayChu/POS/ORDER-API.md) |
 
 ---
 
@@ -60,3 +62,5 @@ SalesDocuments hiện vẫn không phải module quản lý đầy đủ. Nó gi
 - Hóa đơn điện tử.
 - Đơn đa điểm, Ahamove/KShip.
 - Gộp đơn nhiều chứng từ.
+
+← [Quay về PRD/UX README](../README.md)
