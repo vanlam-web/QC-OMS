@@ -41,6 +41,14 @@ Tài liệu này là Source of Truth cho nghiệp vụ sổ quỹ của QC-OMS:
 - đối soát cuối ngày
 - quy tắc sửa phiếu bằng phiên bản mới
 
+Hiện trạng triển khai sau PR #83:
+
+- Màn `/finance` đã ưu tiên bảng sổ quỹ làm bề mặt chính.
+- Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` được lấy theo filter sổ quỹ; `Tồn quỹ` dùng số `ending_balance` của summary, không dùng tổng số dư tài khoản tĩnh.
+- Bộ lọc hiện có gồm thời gian, quỹ tiền, loại chứng từ, trạng thái và hạch toán KQKD; đổi filter là tự áp dụng.
+- Form phiếu thu/chi thủ công đã có công nợ đối tác mode, đối tượng nộp/nhận, số điện thoại, ghi chú và hạch toán KQKD.
+- Filter theo loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác và search sổ quỹ nâng cao vẫn là slice sau.
+
 ---
 
 ## 2. Quỹ và tài khoản

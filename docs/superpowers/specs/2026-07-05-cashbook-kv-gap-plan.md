@@ -2,11 +2,12 @@
 
 > Ngày lập: 2026-07-05
 > Nguồn: KiotViet `Sổ quỹ`, file xuất `SoQuy_KV05072026-185646-888.xlsx`, docs/code QC-OMS tại `origin/main` sau PR #71.
+> Cập nhật: 2026-07-06 theo `origin/main` sau PR #83 `finance-cashbook-table-layout`.
 > Loại tài liệu: gap/roadmap, không thay Source of Truth. Source of Truth nằm ở `Finance/CASHBOOK.md`, `Finance/02-CASHBOOK.md`, `CASHBOOK-TABLES.md`, `FINANCE-API.md`.
 
 ## 1. Kết luận nhanh
 
-Sổ quỹ hiện tại của QC-OMS chưa đủ hoàn chỉnh như KiotViet.
+Sổ quỹ QC-OMS đã có layout chính gần KiotViet hơn sau PR #83, nhưng chưa đủ hoàn chỉnh như KiotViet.
 
 Đã có nền chính:
 
@@ -16,16 +17,24 @@ Sổ quỹ hiện tại của QC-OMS chưa đủ hoàn chỉnh như KiotViet.
 - list sổ quỹ
 - detail cashbook/payment receipt backend
 - thu nợ khách tạo cashbook entry
+- UI `/finance` lấy sổ quỹ làm bảng chính, filter sidebar bên trái
+- summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong filter sidebar và đổi theo filter
+- `Tồn quỹ` dùng `summary.ending_balance`, không còn dùng tổng số dư tài khoản tĩnh
+- bộ lọc đang có tự áp dụng khi đổi giá trị: thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
+- quick time menu: hôm nay/hôm qua/tuần/tháng/quý/năm/toàn thời gian/tùy chỉnh
+- bảng sổ quỹ có inline detail và pagination footer
+- tạo phiếu thu/chi thủ công từ header
+- xuất file từ header
+- các panel phụ `Tài khoản quỹ`, `Công nợ khách hàng`, `Phiếu thu/chi` đã ẩn khỏi thân trang sổ quỹ
 
 Thiếu lớn:
 
-- UI sổ quỹ đúng layout KV
-- filter đầy đủ
-- detail inline đầy đủ
-- tạo/sửa/hủy phiếu thu/chi thủ công
+- filter đầy đủ như KV: loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác
+- search sổ quỹ theo mã phiếu/ghi chú/nội dung chuyển khoản ngay trên UI
+- detail inline còn cần hoàn thiện thêm các trường KV như người thu/chi, mã đối tượng, trạng thái chứng từ gốc
+- sửa/hủy phiếu thu/chi thủ công cần surface rõ trên UI chính hoặc detail
 - danh mục loại thu/chi thực tế
-- công nợ đối tác filter
-- xuất file/ẩn hiện cột
+- chọn cột
 - luồng chuyển/rút tạo cặp phiếu
 
 ## 2. KiotViet quan sát được
@@ -140,7 +149,7 @@ Thiếu/gap:
 
 - enum `voucher_type` còn hẹp, chưa chứa lương, vận chuyển, trả NCC, chuyển/rút, thuế/VAT, hoa hồng.
 - chưa có liên kết cặp phiếu chuyển/rút.
-- chưa có partner-debt mode rõ trong schema.
+- partner-debt mode đã có trong payload/UI phiếu thủ công ở mức MVP; cần rà schema/API để bảo đảm lưu và filter thống nhất theo SoT.
 - chưa có danh mục loại thu/chi cấu hình riêng.
 
 ### 3.2 Backend
@@ -162,79 +171,85 @@ Thiếu/gap:
 Thiếu/gap:
 
 - `GET /finance/payment-receipts` list.
-- `POST /finance/cashbook-vouchers`.
-- `POST /finance/cashbook-vouchers/{id}/revise`.
-- `POST /finance/cashbook-vouchers/{id}/cancel`.
+- API phiếu thủ công đã có theo các slice trước, nhưng docs/API cần giữ contract rõ cho create/revise/cancel và kiểm lại endpoint thực tế trước slice UI tiếp theo.
 - `POST /finance/cashbook-transfers`.
-- filter `status`, `voucher_type`, `counterparty`, `partner_debt_filter`, `search_scope`.
-- export cashbook.
+- filter còn thiếu hoặc chưa nối UI đầy đủ: `voucher_type`, `counterparty`, `partner_debt_filter`, `search_scope`.
+- export phía frontend đã có CSV theo dòng đang thấy; backend export theo filter và định dạng giống KV vẫn là future.
 - reconciliation create/update/balance/cancel routes dù docs đã mô tả.
 
 ### 3.3 Frontend
 
-Hiện tại `/finance` là màn gom nhiều mảng:
+Hiện tại `/finance` là màn sổ quỹ chính:
 
-- tài khoản quỹ
-- công nợ khách
-- thu nợ
-- sổ quỹ
-- phiếu thu/chi readonly
+- header: tìm công nợ nhanh, nút `Phiếu thu`, `Phiếu chi`, `Xuất file`
+- filter sidebar: summary sổ quỹ, thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD
+- main: bảng sổ quỹ, inline detail dòng sổ, pagination footer
+- form tạo/sửa phiếu thu/chi mở inline khi thao tác
+- các khối phụ tài khoản quỹ/công nợ/phiếu thu chi không hiển thị trong thân trang
 
 Thiếu/gap so với KV:
 
-- chưa có layout sổ quỹ riêng với filter trái.
-- chưa lọc theo quỹ/tài khoản bằng sidebar.
-- chưa lọc thời gian, trạng thái, loại thu chi, hạch toán, người tạo, người nộp/nhận, công nợ đối tác.
-- chưa mở detail inline cho dòng sổ quỹ.
-- chưa có tạo phiếu thu/chi thủ công.
-- chưa có sửa/hủy phiếu thủ công.
+- chưa có search sổ quỹ riêng theo mã phiếu/ghi chú/nội dung chuyển khoản.
+- chưa lọc theo loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác.
+- detail inline cần bổ sung các trường đối chiếu KV.
+- sửa/hủy phiếu thủ công chưa có điểm thao tác nổi bật trong bảng chính.
 - chưa có chọn cột.
-- chưa có xuất file.
+- xuất file hiện ở frontend; cần chốt format/cột giống KV nếu dùng vận hành thật.
 
 ## 4. Kế hoạch làm hoàn chỉnh
 
-### Slice 1 — Sổ quỹ list/filter/detail parity
+### Slice 1 — Sổ quỹ list/filter/detail parity — Đã làm một phần qua PR #83
 
-Mục tiêu: nhìn và tra cứu sổ quỹ giống KV trước, chưa tạo phiếu.
+Mục tiêu: nhìn và tra cứu sổ quỹ giống KV trước.
 
-Làm:
+Đã làm:
 
-- tách view `Sổ quỹ` trong finance.
-- sidebar filter: quỹ/tài khoản, thời gian, thu/chi, loại thu chi, trạng thái, hạch toán, người nộp/nhận.
+- `/finance` ưu tiên sổ quỹ, ẩn panel phụ khỏi thân trang.
+- sidebar filter: quỹ/tài khoản, thời gian, thu/chi, trạng thái, hạch toán.
 - summary: quỹ đầu kỳ, tổng thu, tổng chi, tồn quỹ.
-- table default cột giống KV.
+- table default cột giống KV cộng quỹ/tài khoản và trạng thái.
 - click dòng mở detail inline.
-- detail phiếu thu tự động hiển thị hóa đơn/phân bổ.
-- detail phiếu thủ công hiển thị người tạo/người thu/chi/đối tượng/ghi chú.
-- backend bổ sung filter còn thiếu nếu UI cần.
+- detail phiếu thu tự động hiển thị phân bổ nếu API trả allocations.
+- export file ở header.
+
+Còn lại:
+
+- search sổ quỹ theo mã/ghi chú/nội dung chuyển khoản.
+- filter loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác.
+- detail bổ sung đủ trường KV.
+- chọn cột.
 
 Không làm:
 
-- tạo/sửa/hủy phiếu.
 - chuyển/rút tự động.
 - ví điện tử.
 
-### Slice 2 — Manual phiếu thu/chi MVP
+### Slice 2 — Manual phiếu thu/chi MVP — Đã làm một phần
 
 Mục tiêu: tạo phiếu thu/chi thủ công tiền mặt/ngân hàng.
 
-Làm:
+Đã có:
 
 - API `POST /finance/cashbook-vouchers`.
 - form tạo phiếu thu/chi.
-- loại thu/chi theo danh mục nội bộ mở rộng.
 - người nộp/nhận: khách hàng, nhà cung cấp, nhân viên, khác, không có.
 - số điện thoại/ghi chú.
 - cờ hạch toán KQKD.
+- công nợ đối tác mode.
 - tạo dòng `cashbook_entries` trong cùng transaction.
+
+Còn lại:
+
+- loại thu/chi theo danh mục nội bộ mở rộng đầy đủ thực tế KV.
+- tạo mới đối tượng ngay trong form nếu Owner cần.
+- `Lưu & In` nếu có mẫu in.
 
 Không làm:
 
-- `Lưu & In` nếu chưa có mẫu in.
 - ví điện tử.
 - duyệt nhiều bước.
 
-### Slice 3 — Sửa/hủy phiếu thủ công
+### Slice 3 — Sửa/hủy phiếu thủ công — Backend/logic đã có, UI chính cần surface rõ
 
 Mục tiêu: sửa sai không mất lịch sử.
 
@@ -242,7 +257,7 @@ Làm:
 
 - API revise tạo `MaCu.01`.
 - API cancel.
-- UI action chỉ cho phiếu thủ công.
+- UI action chỉ cho phiếu thủ công, cần đặt ở nơi người dùng dễ thấy trong bảng/detail chính.
 - phiếu cũ `cancelled`, dòng cũ `cancelled`, bản mới `posted`.
 - detail vẫn xem được bản hủy.
 
@@ -267,7 +282,11 @@ Làm:
 
 Mục tiêu: phục vụ đối soát và gửi file.
 
-Làm:
+Đã có:
+
+- xuất file từ frontend theo dòng đang thấy.
+
+Còn lại:
 
 - chọn cột hiển thị.
 - export theo filter hiện tại.
