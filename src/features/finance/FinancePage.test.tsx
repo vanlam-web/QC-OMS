@@ -242,7 +242,8 @@ describe('FinancePage', () => {
     const form = await screen.findByRole('form', { name: 'Tạo phiếu chi' })
 
     await userEvent.selectOptions(within(form).getByLabelText('Quỹ/tài khoản'), 'cash-1')
-    await userEvent.selectOptions(within(form).getByLabelText('Loại phiếu'), 'operating_expense')
+    await userEvent.selectOptions(within(form).getByLabelText('Loại phiếu'), 'staff_salary')
+    await userEvent.selectOptions(within(form).getByLabelText('Công nợ đối tác'), 'not_affect_partner_debt')
     await userEvent.type(within(form).getByLabelText('Số tiền'), '45000')
     await userEvent.selectOptions(within(form).getByLabelText('Đối tượng'), 'employee')
     await userEvent.type(within(form).getByLabelText('Người nộp/nhận'), 'Nguyen Van A')
@@ -253,9 +254,10 @@ describe('FinancePage', () => {
 
     expect(service.createCashbookVoucher).toHaveBeenCalledWith({
       voucher_direction: 'out',
-      voucher_type: 'operating_expense',
+      voucher_type: 'staff_salary',
       finance_account_id: 'cash-1',
       amount: 45000,
+      partner_debt_mode: 'not_affect_partner_debt',
       is_business_accounted: false,
       counterparty_type: 'employee',
       counterparty_name: 'Nguyen Van A',
@@ -299,6 +301,7 @@ describe('FinancePage', () => {
       voucher_type: 'operating_expense',
       finance_account_id: 'cash-1',
       amount: 50000,
+      partner_debt_mode: 'no_partner_debt',
       is_business_accounted: true,
       counterparty_type: 'none',
       reason: 'Sửa phiếu chi',

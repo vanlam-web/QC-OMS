@@ -3,6 +3,20 @@ export type CashbookDirection = 'in' | 'out'
 export type CashbookStatus = 'posted' | 'cancelled'
 export type CashbookSourceType = 'payment_receipt_method' | 'cashbook_voucher'
 export type VoucherSourceType = 'payment_receipt' | 'manual_voucher'
+export type CashbookVoucherType =
+  | 'other_income'
+  | 'capital_contribution'
+  | 'transfer'
+  | 'material_purchase'
+  | 'supplier_payment'
+  | 'staff_salary'
+  | 'shipping_expense'
+  | 'customer_refund'
+  | 'operating_expense'
+  | 'tax_or_vat'
+  | 'commission'
+  | 'other_expense'
+export type PartnerDebtMode = 'affects_partner_debt' | 'not_affect_partner_debt' | 'no_partner_debt'
 export type CashbookBusinessAccountedFilter = 'all' | 'true' | 'false'
 export type CashbookSearchScope = 'all' | 'code' | 'note' | 'transfer_content'
 export type CashbookColumnKey =
@@ -141,9 +155,10 @@ export interface CashbookVoucher {
 
 export interface CreateCashbookVoucherInput {
   voucher_direction: CashbookDirection
-  voucher_type: 'other_income' | 'material_purchase' | 'customer_refund' | 'operating_expense' | 'other_expense'
+  voucher_type: CashbookVoucherType
   finance_account_id: string
   amount: number
+  partner_debt_mode?: PartnerDebtMode
   is_business_accounted?: boolean
   counterparty_type?: 'customer' | 'supplier' | 'employee' | 'other' | 'none'
   counterparty_name?: string

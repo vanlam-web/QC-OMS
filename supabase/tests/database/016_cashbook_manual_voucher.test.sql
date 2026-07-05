@@ -1,6 +1,6 @@
 begin;
 
-select plan(29);
+select plan(35);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -26,6 +26,13 @@ select has_function(
   'create_cashbook_voucher_tx',
   array['uuid', 'uuid', 'jsonb'],
   'manual cashbook voucher transaction rpc exists'
+);
+
+select has_column(
+  'public',
+  'cashbook_vouchers',
+  'partner_debt_mode',
+  'manual cashbook voucher stores partner debt mode'
 );
 
 select throws_ok(
@@ -68,6 +75,63 @@ values (
       'reason', 'Mua văn phòng phẩm'
     )
   )
+);
+
+insert into manual_voucher_results (name, result)
+values (
+  'salary_type',
+  public.create_cashbook_voucher_tx(
+    '20000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'voucher_direction', 'out',
+      'voucher_type', 'staff_salary',
+      'finance_account_id', (select id from public.finance_accounts where organization_id = '00000000-0000-4000-8000-000000000001' and code = 'CASH'),
+      'amount', 80000,
+      'partner_debt_mode', 'not_affect_partner_debt',
+      'counterparty_type', 'employee',
+      'counterparty_name', 'Nhan vien B',
+      'reason', 'Chi lương theo KV'
+    )
+  )
+);
+
+select is(
+  (
+    select voucher_type
+    from public.cashbook_vouchers
+    where id = ((select result->>'id' from manual_voucher_results where name = 'salary_type')::uuid)
+  ),
+  'staff_salary',
+  'manual voucher accepts KV staff salary type'
+);
+
+select is(
+  (
+    select partner_debt_mode
+    from public.cashbook_vouchers
+    where id = ((select result->>'id' from manual_voucher_results where name = 'salary_type')::uuid)
+  ),
+  'not_affect_partner_debt',
+  'manual voucher stores supplied partner debt mode'
+);
+
+select throws_ok(
+  $$ select public.create_cashbook_voucher_tx(
+    '20000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'voucher_direction', 'out',
+      'voucher_type', 'staff_salary',
+      'finance_account_id', (select id from public.finance_accounts where organization_id = '00000000-0000-4000-8000-000000000001' and code = 'CASH'),
+      'amount', 80000,
+      'partner_debt_mode', 'bad_mode',
+      'reason', 'Sai mode'
+    )
+  ) $$,
+  '22023',
+  'partner_debt_mode is invalid',
+  'manual voucher rejects invalid partner debt mode'
 );
 
 select ok(
@@ -255,6 +319,7 @@ values (
       'finance_account_id', (select id from public.finance_accounts where organization_id = '00000000-0000-4000-8000-000000000001' and code = 'CASH'),
       'amount', 350000,
       'is_business_accounted', true,
+      'partner_debt_mode', 'affects_partner_debt',
       'counterparty_type', 'employee',
       'counterparty_name', 'Tran Thi B',
       'reason', 'Sửa số tiền lương'
@@ -336,6 +401,35 @@ select is(
   ),
   ((select result->>'id' from manual_voucher_results where name = 'salary_revised')::uuid),
   'manual voucher revise links old voucher to replacement'
+);
+
+select is(
+  (
+    select partner_debt_mode
+    from public.cashbook_vouchers
+    where id = ((select result->>'id' from manual_voucher_results where name = 'salary_revised')::uuid)
+  ),
+  'affects_partner_debt',
+  'manual voucher revise stores partner debt mode'
+);
+
+select throws_ok(
+  $$ select public.revise_cashbook_voucher_tx(
+    '20000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000001',
+    ((select result->>'id' from manual_voucher_results where name = 'salary_revised')::uuid),
+    jsonb_build_object(
+      'voucher_direction', 'out',
+      'voucher_type', 'supplier_payment',
+      'finance_account_id', (select id from public.finance_accounts where organization_id = '00000000-0000-4000-8000-000000000001' and code = 'CASH'),
+      'amount', 360000,
+      'partner_debt_mode', 'bad_mode',
+      'reason', 'Sai mode'
+    )
+  ) $$,
+  '22023',
+  'partner_debt_mode is invalid',
+  'manual voucher revise rejects invalid partner debt mode'
 );
 
 select throws_ok(

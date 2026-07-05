@@ -253,13 +253,33 @@ function parseCashbookVoucherPayload(body: unknown): Record<string, unknown> {
   const direction = parseRequiredEnum(body.voucher_direction, ["in", "out"]);
   const voucherType = parseRequiredEnum(body.voucher_type, [
     "other_income",
+    "capital_contribution",
+    "transfer",
     "material_purchase",
+    "supplier_payment",
+    "staff_salary",
+    "shipping_expense",
     "customer_refund",
     "operating_expense",
+    "tax_or_vat",
+    "commission",
     "other_expense",
   ]);
-  if (direction === "in" && voucherType !== "other_income") throw validationError();
-  if (direction === "out" && voucherType === "other_income") throw validationError();
+  const inTypes = ["other_income", "capital_contribution", "transfer"];
+  const outTypes = [
+    "transfer",
+    "material_purchase",
+    "supplier_payment",
+    "staff_salary",
+    "shipping_expense",
+    "customer_refund",
+    "operating_expense",
+    "tax_or_vat",
+    "commission",
+    "other_expense",
+  ];
+  if (direction === "in" && !inTypes.includes(voucherType)) throw validationError();
+  if (direction === "out" && !outTypes.includes(voucherType)) throw validationError();
   if (!isNonEmptyString(body.finance_account_id)) throw validationError();
   const amount = parseMoney(body.amount);
   if (amount <= 0) throw validationError();
@@ -271,12 +291,18 @@ function parseCashbookVoucherPayload(body: unknown): Record<string, unknown> {
     "none",
   ]) ?? "none";
   if (!isNonEmptyString(body.reason)) throw validationError();
+  const partnerDebtMode = parseOptionalEnumValue(body.partner_debt_mode, [
+    "affects_partner_debt",
+    "not_affect_partner_debt",
+    "no_partner_debt",
+  ]) ?? "no_partner_debt";
 
   return {
     voucher_direction: direction,
     voucher_type: voucherType,
     finance_account_id: body.finance_account_id.trim(),
     amount,
+    partner_debt_mode: partnerDebtMode,
     is_business_accounted: typeof body.is_business_accounted === "boolean" ? body.is_business_accounted : true,
     counterparty_type: counterpartyType,
     counterparty_name: isNonEmptyString(body.counterparty_name) ? body.counterparty_name.trim() : null,

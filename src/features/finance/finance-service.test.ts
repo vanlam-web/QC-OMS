@@ -87,9 +87,10 @@ describe('finance-service', () => {
 
     await service.createCashbookVoucher({
       voucher_direction: 'out',
-      voucher_type: 'operating_expense',
+      voucher_type: 'staff_salary',
       finance_account_id: 'cash-1',
       amount: 45000,
+      partner_debt_mode: 'not_affect_partner_debt',
       is_business_accounted: false,
       counterparty_type: 'employee',
       counterparty_name: 'Nguyen Van A',
@@ -104,9 +105,10 @@ describe('finance-service', () => {
           method: 'POST',
           body: JSON.stringify({
             voucher_direction: 'out',
-            voucher_type: 'operating_expense',
+            voucher_type: 'staff_salary',
             finance_account_id: 'cash-1',
             amount: 45000,
+            partner_debt_mode: 'not_affect_partner_debt',
             is_business_accounted: false,
             counterparty_type: 'employee',
             counterparty_name: 'Nguyen Van A',
@@ -143,9 +145,10 @@ describe('finance-service', () => {
 
     await service.reviseCashbookVoucher('voucher-1', {
       voucher_direction: 'out',
-      voucher_type: 'operating_expense',
+      voucher_type: 'supplier_payment',
       finance_account_id: 'cash-1',
       amount: 50000,
+      partner_debt_mode: 'affects_partner_debt',
       is_business_accounted: false,
       counterparty_type: 'employee',
       counterparty_name: 'Nguyen Van A',
@@ -160,9 +163,10 @@ describe('finance-service', () => {
           method: 'POST',
           body: JSON.stringify({
             voucher_direction: 'out',
-            voucher_type: 'operating_expense',
+            voucher_type: 'supplier_payment',
             finance_account_id: 'cash-1',
             amount: 50000,
+            partner_debt_mode: 'affects_partner_debt',
             is_business_accounted: false,
             counterparty_type: 'employee',
             counterparty_name: 'Nguyen Van A',
