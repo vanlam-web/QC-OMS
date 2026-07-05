@@ -39,7 +39,6 @@
 | [IMPLEMENTATION-CHECKLIST.md](./IMPLEMENTATION-CHECKLIST.md) | Log mốc kiểm implement gần nhất, không phải roadmap sống |
 | [PERFORMANCE-FIX-LOG.md](./PERFORMANCE-FIX-LOG.md) | Log đo và fix load chậm |
 | [KIOTVIET-REFERENCE-NOTES.md](./KIOTVIET-REFERENCE-NOTES.md) | Ghi chú tham khảo KiotViet phù hợp QC-OMS |
-| [CHANGELOG-AI.md](./CHANGELOG-AI.md) | Lịch sử phối hợp AI |
 
 ## Ghi Chú
 
