@@ -153,9 +153,13 @@ Các thao tác sau nằm ngoài phạm vi hiện tại, không coi là đã có 
 Quy tắc sửa/hủy hóa đơn khi mở phạm vi:
 
 - Không sửa đè hóa đơn đã chốt.
-- Bấm **Sửa hóa đơn** mở chứng từ tại POS như một bản nháp sửa.
+- Bấm **Sửa hóa đơn** mở chứng từ tại POS như một bản nháp sửa, tab hiển thị `Sửa HD000123`.
 - Khi lưu lại, hệ thống tạo mã mới theo quy tắc `MaCu.01`, `MaCu.02`.
 - Chứng từ cũ chuyển sang trạng thái **Đã hủy** với lý do sửa chứng từ.
+- Hủy hóa đơn không tạo bản sửa cũng đưa chứng từ về trạng thái **Đã hủy**.
+- Chứng từ đã hủy/sửa xem lại qua filter trạng thái **Đã hủy** hiện có; không tạo khu riêng nếu chưa cần.
+- Sửa/hủy bắt buộc chọn lý do nhanh và có thể nhập ghi chú thêm.
+- Nhân viên được sửa/hủy trong 10 ngày; sau 10 ngày chỉ quản lý/admin hoặc quyền mạnh tương ứng.
 - Chỉ bật khi Backend có transaction an toàn để đồng bộ chứng từ, kho, sổ quỹ và công nợ.
 
 ---

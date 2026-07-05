@@ -234,6 +234,12 @@ Validation giống `POST /orders/quotes`.
 
 Chỉ cho cập nhật báo giá `order_type = quote` và `status = active`.
 
+Khi Frontend mở báo giá vào POS rồi nhân viên bấm **Báo giá**, UI phải hỏi lưu đè báo giá cũ hay lưu thành báo giá mới:
+
+- Lưu đè gọi `PUT /orders/quotes/{id}` và giữ mã `BG...`.
+- Lưu mới gọi `POST /orders/quotes` và sinh mã `BG...` mới.
+- Mặc định UI nên đề xuất lưu mới để tránh mất nội dung báo giá đã gửi.
+
 Workflow cập nhật:
 
 1. Validate input.
@@ -457,7 +463,8 @@ Tạo bản sửa của hóa đơn đã chốt theo mã `MaCu.01`, không sửa 
 - Hóa đơn gốc phải cùng organization, `order_type = invoice`.
 - Chỉ cho sửa bản hóa đơn còn hiệu lực gần nhất trong chuỗi `base_code`.
 - Hóa đơn đang bị user khác lock thì trả `RESOURCE_CONFLICT`.
-- `revision_reason` bắt buộc.
+- `revision_reason` bắt buộc; UI nên gửi lý do nhanh và ghi chú thêm nếu có.
+- Nhân viên nội bộ được sửa/hủy trong 10 ngày từ thời điểm tạo hóa đơn; sau 10 ngày endpoint yêu cầu quyền quản lý/admin hoặc quyền mạnh tương ứng.
 - Input giỏ hàng và payment validate như checkout.
 
 **Workflow:**
@@ -467,9 +474,11 @@ Tạo bản sửa của hóa đơn đã chốt theo mã `MaCu.01`, không sửa 
 3. Tạo hóa đơn mới với cùng `base_code`, `revision_no` tăng 1 và mã dạng `HD000123.01`.
 4. Chuyển hóa đơn cũ sang `status = cancelled`, `cancel_reason_type = revised`, `replaced_by_order_id = hóa đơn mới`.
 5. Hóa đơn mới lưu `revised_from_order_id = hóa đơn cũ`.
-6. Tạo giao dịch đảo/bổ sung cho Inventory và Finance theo chênh lệch nghiệp vụ; không sửa trực tiếp ledger cũ.
-7. Ghi `order_status_history` cho cả hóa đơn cũ và hóa đơn mới.
-8. Unlock hóa đơn.
+6. Đảo kho của hóa đơn cũ, rồi trừ kho lại theo hóa đơn mới.
+7. Đảo công nợ của hóa đơn cũ, rồi ghi công nợ lại theo hóa đơn mới nếu còn nợ.
+8. Xử lý tiền theo chênh lệch: bản mới tăng tiền thì thu thêm hoặc ghi nợ; bản mới giảm tiền thì hoàn tiền hoặc cấn nợ cũ nếu khách còn nợ.
+9. Ghi `order_status_history` cho cả hóa đơn cũ và hóa đơn mới.
+10. Unlock hóa đơn.
 
 **Response data:**
 

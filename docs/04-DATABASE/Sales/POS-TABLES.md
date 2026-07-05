@@ -355,7 +355,9 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Ví dụ: bản gốc `HD000123`; sửa lần 1 tạo `HD000123.01`; sửa lần 2 tạo `HD000123.02`.
 - Bản cũ chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và trỏ `replaced_by_order_id` tới bản mới.
 - Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
+- Hủy hóa đơn không tạo bản sửa dùng `cancel_reason_type = 'user_cancelled'`.
 - Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
+- Nhân viên nội bộ được sửa/hủy trong 10 ngày; sau 10 ngày chỉ quản lý/admin hoặc quyền mạnh tương ứng.
 
 ### Index
 
