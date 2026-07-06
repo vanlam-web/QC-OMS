@@ -101,6 +101,16 @@ function accountTypeText(type: FinanceAccount['account_type']) {
   return type === 'cash' ? 'Tiền mặt' : 'Ngân hàng'
 }
 
+function financeAccountChoiceLabel(account: FinanceAccount) {
+  if (account.account_type === 'cash') return 'Tiền mặt'
+  return `${account.code} · ${account.name}`
+}
+
+function cashFirstAccountSort(left: FinanceAccount, right: FinanceAccount) {
+  if (left.account_type !== right.account_type) return left.account_type === 'cash' ? -1 : 1
+  return left.code.localeCompare(right.code, 'vi')
+}
+
 function statusText(status: 'posted' | 'cancelled') {
   return status === 'posted' ? 'Đã ghi' : 'Đã hủy'
 }
@@ -423,6 +433,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
 
   const activeBankAccounts = accounts.filter((account) => account.is_active && account.account_type === 'bank')
   const activeAccounts = accounts.filter((account) => account.is_active)
+  const sortedActiveAccounts = [...activeAccounts].sort(cashFirstAccountSort)
   const visibleCashbookEntries = showCashbookFavoritesOnly
     ? (cashbookEntries ?? []).filter((entry) => cashbookFavoriteIds.includes(entry.id))
     : (cashbookEntries ?? [])
@@ -991,7 +1002,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
               ) : null}
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Quỹ tiền">
-              {accounts.map((account) => (
+              {sortedActiveAccounts.map((account) => (
                 <label
                   className={`management-filter-choice${cashbookAccountId === account.id ? ' management-filter-choice-active' : ''}`}
                   key={account.id}
@@ -1002,7 +1013,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
                     type="radio"
                     onChange={() => void chooseCashbookAccount(account.id)}
                   />
-                  <span>{account.code} · {account.name}</span>
+                  <span>{financeAccountChoiceLabel(account)}</span>
                 </label>
               ))}
               <label className={`management-filter-choice${cashbookAccountId === 'all' ? ' management-filter-choice-active' : ''}`}>
@@ -1097,8 +1108,8 @@ export function FinancePage({ service }: { service: FinanceService }) {
               Quỹ/tài khoản
               <select value={voucherAccountId} onChange={(event) => setVoucherAccountId(event.target.value)}>
                 <option value="">Chọn quỹ</option>
-                {activeAccounts.map((account) => (
-                  <option key={account.id} value={account.id}>{account.code} · {account.name}</option>
+                {sortedActiveAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{financeAccountChoiceLabel(account)}</option>
                 ))}
               </select>
             </label>

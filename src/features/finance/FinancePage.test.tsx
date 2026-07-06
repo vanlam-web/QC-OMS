@@ -270,7 +270,9 @@ describe('FinancePage', () => {
   })
 
   it('filters cashbook by account status and business accounting', async () => {
-    const service = makeService()
+    const service = makeService({
+      listAccounts: vi.fn(async () => ({ items: [accounts[1], accounts[0]] })),
+    })
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
@@ -278,8 +280,13 @@ describe('FinancePage', () => {
     expect(within(sidebar).queryByRole('heading', { name: 'Sổ quỹ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm sổ quỹ')).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm theo')).not.toBeInTheDocument()
-    expect(within(sidebar).getByRole('radio', { name: 'CASH · Quỹ tiền mặt' })).toBeChecked()
+    expect(within(sidebar).getByRole('radio', { name: 'Tiền mặt' })).toBeChecked()
     expect(within(sidebar).getByRole('radio', { name: 'MB01 · MB Bank' })).not.toBeChecked()
+    expect(within(sidebar).getAllByRole('radio', { name: /Tiền mặt|MB01|Tổng quỹ/ }).map((input) => input.closest('label')?.textContent)).toEqual([
+      'Tiền mặt',
+      'MB01 · MB Bank',
+      'Tổng quỹ',
+    ])
     expect(within(sidebar).queryByRole('combobox', { name: 'Quỹ tiền' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Loại chứng từ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Trạng thái sổ quỹ' })).not.toBeInTheDocument()

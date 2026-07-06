@@ -172,7 +172,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 | Bộ lọc | Giá trị |
 |---|---|
-| Quỹ tiền | Radio list chọn một: quỹ tiền mặt mặc định, từng tài khoản ngân hàng, tổng quỹ |
+| Quỹ tiền | Radio list chọn một: `Tiền mặt` đứng đầu và được chọn mặc định, sau đó tới từng tài khoản ngân hàng, cuối cùng là `Tổng quỹ` |
 | Thời gian | Hôm nay, hôm qua, tuần này, tuần trước, 7 ngày qua, tháng này, tháng trước, 30 ngày qua, quý này, quý trước, năm nay, năm trước, toàn thời gian, tùy chỉnh |
 | Loại chứng từ | Checkbox group: `Phiếu thu`, `Phiếu chi`; mặc định không tick nghĩa là xem cả hai |
 | Loại thu chi | Chưa có trong UI hiện tại; thuộc slice sau |
