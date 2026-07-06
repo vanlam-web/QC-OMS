@@ -62,7 +62,7 @@ Mục tiêu: quản lý nhiều dữ liệu và thao tác sâu.
 - không dùng sidebar trái rộng làm mặc định vì các màn quản lý cần chiều ngang
 - top navigation là module bar ngang: brand/logo nhỏ bên trái link về `/dashboard`, module ở giữa, cụm thao tác nhanh bên phải
 - không hiển thị mục chữ `Tổng quan` trong module bar; dashboard đi qua brand/logo để tiết kiệm chiều ngang
-- module bar chính chỉ chứa các khu vực quản lý như `Chứng từ`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Phiếu nhập`, `Quản trị`
+- module bar chính chỉ chứa các khu vực quản lý như `Hóa đơn`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Phiếu nhập`, `Quản trị`; route nội bộ vẫn là `/sales-documents`
 - POS là thao tác bán hàng nhanh nên đứng ở cụm thao tác nhanh bên phải, không chen vào module bar quản lý; quy tắc này supersede quy tắc PR #52 sau feedback preview của Owner trong PR #53
 - theme toggle và tài khoản/đăng xuất dùng control compact/icon trong một action rail ngoài topbar, không hiển thị block mô tả lớn kiểu `Xưởng Văn Lâm / Cloud Admin`
 - danh sách dạng table hoặc dense list

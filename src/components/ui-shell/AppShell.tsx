@@ -16,10 +16,10 @@ interface ShellNavItem {
 const shellNavItems: ShellNavItem[] = [
   { label: 'POS', shortLabel: 'POS', path: '/pos', marker: 'POS', permissions: ['perm.create_order'] },
   {
-    label: 'Chứng từ',
-    shortLabel: 'CT',
+    label: 'Hóa đơn',
+    shortLabel: 'HĐ',
     path: '/sales-documents',
-    marker: 'CT',
+    marker: 'HĐ',
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
   { label: 'Sổ quỹ', shortLabel: 'SQ', path: '/finance', marker: 'SQ', permissions: ['perm.manage_finance'] },
