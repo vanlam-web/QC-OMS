@@ -476,29 +476,33 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await userEvent.click(await screen.findByRole('button', { name: '+ Phiếu chi' }))
+    expect(await screen.findByRole('dialog', { name: 'Tạo phiếu chi' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Tạo phiếu chi tiền mặt' })).toBeInTheDocument()
     const form = await screen.findByRole('form', { name: 'Tạo phiếu chi' })
 
-    await userEvent.selectOptions(within(form).getByLabelText('Quỹ/tài khoản'), 'cash-1')
-    await userEvent.selectOptions(within(form).getByLabelText('Loại phiếu'), 'staff_salary')
-    await userEvent.selectOptions(within(form).getByLabelText('Công nợ đối tác'), 'not_affect_partner_debt')
+    expect(within(form).getByLabelText('Mã phiếu')).toHaveAttribute('placeholder', 'Tự động')
+    expect(within(form).getByLabelText('Người chi')).toHaveValue('Cloud Admin')
+    expect(within(form).getByLabelText('Hạch toán kết quả kinh doanh')).toBeChecked()
+    await userEvent.selectOptions(within(form).getByLabelText('Tài khoản chi'), 'cash-1')
+    await userEvent.selectOptions(within(form).getByLabelText('Loại chi'), 'staff_salary')
     await userEvent.type(within(form).getByLabelText('Số tiền'), '45000')
-    await userEvent.selectOptions(within(form).getByLabelText('Đối tượng'), 'employee')
-    await userEvent.type(within(form).getByLabelText('Người nộp/nhận'), 'Nguyen Van A')
-    await userEvent.type(within(form).getByLabelText('Số điện thoại'), '0900000000')
-    await userEvent.click(within(form).getByLabelText('Không hạch toán KQKD'))
-    await userEvent.type(within(form).getByLabelText('Lý do'), 'Mua văn phòng phẩm')
-    await userEvent.click(within(form).getByRole('button', { name: 'Lưu phiếu chi' }))
+    await userEvent.selectOptions(within(form).getByLabelText('Đối tượng nhận'), 'employee')
+    await userEvent.type(within(form).getByLabelText('Tên người nhận'), 'Nguyen Van A')
+    await userEvent.click(within(form).getByLabelText('Hạch toán kết quả kinh doanh'))
+    await userEvent.type(within(form).getByLabelText('Ghi chú'), 'Mua văn phòng phẩm')
+    expect(within(form).getByRole('button', { name: 'Bỏ qua' })).toBeInTheDocument()
+    expect(within(form).getByRole('button', { name: 'Lưu & In' })).toBeInTheDocument()
+    await userEvent.click(within(form).getByRole('button', { name: 'Lưu' }))
 
     expect(service.createCashbookVoucher).toHaveBeenCalledWith({
       voucher_direction: 'out',
       voucher_type: 'staff_salary',
       finance_account_id: 'cash-1',
       amount: 45000,
-      partner_debt_mode: 'not_affect_partner_debt',
+      partner_debt_mode: 'no_partner_debt',
       is_business_accounted: false,
       counterparty_type: 'employee',
       counterparty_name: 'Nguyen Van A',
-      counterparty_phone: '0900000000',
       reason: 'Mua văn phòng phẩm',
     })
     await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalledTimes(2))

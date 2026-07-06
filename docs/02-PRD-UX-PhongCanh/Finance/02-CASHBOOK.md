@@ -247,37 +247,47 @@ Hiện trạng UI: nút `Xuất file` nằm cạnh `+ Phiếu thu` và `+ Phiế
 
 ## 6. Phiếu thu/chi thủ công
 
+Hiện trạng UI sau ngày `06/07/2026`:
+
+- Nút `+ Phiếu thu` và `+ Phiếu chi` mở popup modal ở giữa màn hình, có backdrop mờ, không chuyển trang và không đẩy layout sổ quỹ.
+- Modal dùng CSS chung `management-modal-*`, không tạo layout riêng cho từng trang. Kích thước khoảng 800-900px, thân form dùng grid 2 cột.
+- Header hiển thị `Tạo phiếu thu tiền mặt/ngân hàng` hoặc `Tạo phiếu chi tiền mặt/ngân hàng` theo tài khoản đang chọn; bên phải có nút đóng `X`.
+- Footer modal có 3 nút cùng hàng, canh phải: `Bỏ qua`, `Lưu & In`, `Lưu`. Hiện `Lưu & In` dùng chung luồng lưu; in thật là slice sau.
+- Các field mã phiếu, thời gian, người thu/chi, phương thức thanh toán hiện mới phục vụ UI/đối soát nhanh; backend tạo mã và thời gian ghi thật khi lưu.
+
 ### Tạo phiếu thu
 
 Form tối thiểu:
 
-- quỹ/tài khoản nhận tiền
 - mã phiếu tự động từ backend
-- thời gian ghi theo backend hiện tại
+- thời gian hiển thị theo giờ hiện tại
 - loại thu
 - người thu là actor hiện tại nếu chưa có field riêng
 - đối tượng nộp: khách hàng, nhà cung cấp, nhân viên, khác, không có
-- tên/mã/số điện thoại người nộp nếu có
+- tên/mã người nộp nếu có, kèm nút `Tạo mới` tạm thời
+- phương thức thanh toán
+- tài khoản nhận tiền
 - số tiền
 - lý do/ghi chú
 - hạch toán kết quả kinh doanh
-- công nợ đối tác: không có, có đối tác nhưng không tính công nợ, hoặc tính vào công nợ
+- công nợ đối tác tạm dùng default backend hiện tại, chưa đưa ra UI modal
 
 ### Tạo phiếu chi
 
 Form tối thiểu:
 
-- quỹ/tài khoản chi tiền
 - mã phiếu tự động từ backend
-- thời gian ghi theo backend hiện tại
+- thời gian hiển thị theo giờ hiện tại
 - loại chi
 - người chi là actor hiện tại nếu chưa có field riêng
 - đối tượng nhận: khách hàng, nhà cung cấp, nhân viên, khác, không có
-- tên/mã/số điện thoại người nhận nếu có
+- tên/mã người nhận nếu có, kèm nút `Tạo mới` tạm thời
+- phương thức thanh toán
+- tài khoản chi tiền
 - số tiền
 - lý do/ghi chú
 - hạch toán kết quả kinh doanh
-- công nợ đối tác: không có, có đối tác nhưng không tính công nợ, hoặc tính vào công nợ
+- công nợ đối tác tạm dùng default backend hiện tại, chưa đưa ra UI modal
 
 ### Sửa phiếu
 

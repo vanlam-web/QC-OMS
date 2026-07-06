@@ -37,6 +37,17 @@ it('places finance voucher actions at the right edge of the finance action row',
   expect(rule).not.toContain('position: fixed')
 })
 
+it('shares modal layout for management forms', () => {
+  expect(cssRule('.management-modal-backdrop')).toContain('position: fixed')
+  expect(cssRule('.management-modal-backdrop')).toContain('place-items: center')
+  expect(cssRule('.management-modal-backdrop')).toContain('background: rgb(0 0 0 / 50%)')
+  expect(cssRule('.management-modal-dialog')).toContain('width: min(56rem, calc(100vw - var(--space-4)))')
+  expect(cssRule('.management-modal-dialog')).toContain('border-radius: var(--radius-md)')
+  expect(cssRule('.management-modal-form-grid')).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
+  expect(cssRule('.management-modal-field-wide')).toContain('grid-column: 1 / -1')
+  expect(cssRule('.management-modal-footer')).toContain('justify-content: flex-end')
+})
+
 it('keeps login controls on theme colors so entered text remains visible', () => {
   expect(cssRule('.auth-shell')).toContain('background: var(--color-background)')
   expect(cssRule('.auth-shell form')).toContain('background: var(--color-surface)')
