@@ -119,7 +119,7 @@ export interface CashbookEntry {
   source_type: CashbookSourceType
   created_at: string
   note: string | null
-  counterparty: CashbookCounterparty
+  counterparty?: CashbookCounterparty
 }
 
 export interface CashbookListResponse {
@@ -146,6 +146,7 @@ export interface PaymentReceiptAllocation {
 
 export interface CashbookEntryDetail extends CashbookEntry {
   created_by: { id: string; name: string }
+  counterparty: CashbookCounterparty
   payment_method: 'cash' | 'bank_transfer' | 'manual'
   source: { type: 'payment_receipt' | 'manual_voucher'; id: string; code: string; order_code: string | null }
   allocations: PaymentReceiptAllocation[]

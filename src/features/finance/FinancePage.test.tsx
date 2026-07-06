@@ -444,6 +444,26 @@ describe('FinancePage', () => {
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
   })
 
+  it('keeps cashbook rows visible when an older API response omits counterparty', async () => {
+    const legacyEntry = { ...entry }
+    delete (legacyEntry as Partial<CashbookEntry>).counterparty
+    const service = makeService({
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
+        items: [legacyEntry as CashbookEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const row = within(table).getByRole('row', { name: /PT0001/ })
+
+    expect(within(row).getByText('-')).toBeInTheDocument()
+  })
+
   it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)

@@ -100,7 +100,7 @@ export function buildCashbookCsv(items: CashbookEntry[]) {
       entry.code,
       entry.created_at,
       '',
-      entry.counterparty.name ?? '',
+      entry.counterparty?.name ?? '',
       String(entry.amount_delta),
       entry.finance_account.code,
       entry.status,

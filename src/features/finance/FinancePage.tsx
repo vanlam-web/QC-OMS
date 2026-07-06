@@ -725,7 +725,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
     if (column === 'finance_account') return accountTypeText(entry.finance_account.account_type)
     if (column === 'source_type') return sourceTypeText(entry.source_type)
     if (column === 'counterparty') {
-      if (entry.counterparty.name === null) return '-'
+      if (entry.counterparty?.name == null) return '-'
       const label = cashbookCounterpartyLabel(entry)
       return (
         <button
