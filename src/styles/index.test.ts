@@ -18,6 +18,16 @@ it('keeps shell account controls aligned with the management page header row', (
   expect(cssRule('.management-page-header')).toContain('padding-right: var(--shell-action-rail-reserved-width)')
 })
 
+it('keeps shared scrollbars subtle', () => {
+  expect(cssRule('*')).toContain('scrollbar-color: var(--color-scrollbar-thumb) transparent')
+  expect(cssRule('*')).toContain('scrollbar-width: thin')
+  expect(cssRule('*::-webkit-scrollbar')).toContain('width: 0.375rem')
+  expect(cssRule('*::-webkit-scrollbar')).toContain('height: 0.375rem')
+  expect(cssRule('*::-webkit-scrollbar-track')).toContain('background: transparent')
+  expect(cssRule('*::-webkit-scrollbar-thumb')).toContain('border-radius: 999px')
+  expect(cssRule('*::-webkit-scrollbar-thumb')).toContain('background: var(--color-scrollbar-thumb)')
+})
+
 it('places finance voucher actions at the right edge of the finance action row', () => {
   const rule = cssRule('.finance-voucher-actions')
   const actionsRule = cssRule('.finance-page-actions')
@@ -112,8 +122,9 @@ it('keeps shared filter choices compact with borders only on active state', () =
   expect(choiceRule).toContain('min-height: 2.25rem')
   expect(choiceRule).toContain('border: 1px solid transparent')
   expect(choiceRule).toContain('border-radius: var(--radius-sm)')
-  expect(activeRule).toContain('border-color: var(--color-selected-border)')
-  expect(activeRule).toContain('box-shadow: inset 0 0 0 1px var(--color-selected-border)')
+  expect(activeRule).toContain('border-color: transparent')
+  expect(activeRule).toContain('background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface))')
+  expect(activeRule).toContain('box-shadow: none')
 })
 
 it('lets feature forms live inside the shared filter sidebar without custom layout CSS', () => {
