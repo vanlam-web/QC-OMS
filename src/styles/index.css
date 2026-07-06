@@ -1619,6 +1619,7 @@ button {
 .finance-cashbook-star-column {
   width: 2.75rem;
   text-align: center;
+  line-height: 1;
   vertical-align: middle;
 }
 
@@ -1638,6 +1639,7 @@ button {
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
+  line-height: 1;
   cursor: pointer;
 }
 

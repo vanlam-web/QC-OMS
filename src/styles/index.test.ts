@@ -200,6 +200,8 @@ it('keeps the cashbook data table in a KV-like layout with project colors', () =
   expect(cssRule('.finance-cashbook-star-button')).toContain('cursor: pointer')
   expect(cssRule('.finance-cashbook-star-button')).toContain('display: inline-flex')
   expect(cssRule('.finance-cashbook-star-button')).toContain('height: 1.5rem')
+  expect(cssRule('.finance-cashbook-star-column')).toContain('line-height: 1')
+  expect(cssRule('.finance-cashbook-star-button')).toContain('line-height: 1')
   expect(cssRule('.finance-cashbook-star-column .finance-cashbook-star-button')).toContain('margin: 0 auto')
   expect(cssRule('.finance-cashbook-star-button:hover,\n.finance-cashbook-star-button-active')).toContain('color: var(--color-primary)')
 })
