@@ -3885,27 +3885,17 @@ td:has(.money-text) {
 }
 
 .sales-document-lines-table {
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .sales-document-lines-table th:nth-child(1),
 .sales-document-lines-table td:nth-child(1) {
-  width: 12%;
+  width: 7rem;
 }
 
 .sales-document-lines-table th:nth-child(2),
 .sales-document-lines-table td:nth-child(2) {
-  width: 26%;
-}
-
-.sales-document-lines-table th:nth-child(n + 3):nth-child(-n + 5),
-.sales-document-lines-table td:nth-child(n + 3):nth-child(-n + 5) {
-  width: 10%;
-}
-
-.sales-document-lines-table th:nth-child(n + 6),
-.sales-document-lines-table td:nth-child(n + 6) {
-  width: 16%;
+  width: auto;
 }
 
 .sales-document-lines-table th,
@@ -3927,9 +3917,14 @@ td:has(.money-text) {
   text-align: left;
 }
 
+.sales-document-lines-table th {
+  white-space: nowrap;
+}
+
 .sales-document-lines-table th:nth-child(n + 3),
 .sales-document-lines-table td:nth-child(n + 3) {
   text-align: right;
+  white-space: nowrap;
 }
 
 .sales-document-lines-table small {
