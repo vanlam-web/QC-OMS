@@ -276,6 +276,7 @@ it('keeps inline detail surfaces unframed and summary rows single-line', () => {
   expect(css).toContain('.management-compact-search:focus-within')
   expect(css).toContain('border-color: var(--color-selected-border)')
   expect(cssRule('.management-data-row-selected td')).toContain('border-top: 1px solid var(--color-selected-border)')
+  expect(cssRule('.management-data-row-selected td')).toContain('border-bottom: 1px solid var(--color-selected-border)')
   expect(cssRule('.management-data-row-selected td')).toContain('box-shadow: inset 0 1px 0 var(--color-selected-border)')
   expect(cssRule('.management-detail-row > td')).toContain('border: 0')
   expect(cssRule('.management-detail-row > td')).toContain('background: transparent')
