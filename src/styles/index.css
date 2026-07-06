@@ -1131,6 +1131,48 @@ button {
   font-weight: 700;
 }
 
+.management-detail-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: var(--space-2);
+}
+
+.management-detail-footer-actions-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.management-detail-footer-actions-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.management-detail-footer-actions .button {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding-inline: var(--space-2);
+  white-space: nowrap;
+}
+
+.management-detail-action-danger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-danger);
+}
+
 .finance-section-header {
   display: flex;
   flex-wrap: wrap;
@@ -1447,48 +1489,9 @@ button {
   padding: var(--space-2);
 }
 
-.finance-cashbook-detail footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  border-top: 1px solid var(--color-border-muted);
-  padding-top: var(--space-2);
-}
-
 .finance-cashbook-detail-note {
   color: var(--color-text-muted);
   font-size: 0.9rem;
-}
-
-.finance-cashbook-detail-actions {
-  justify-content: flex-start;
-}
-
-.finance-cashbook-detail-actions-right {
-  justify-content: flex-end;
-  margin-left: auto;
-}
-
-.finance-cashbook-detail-actions .button {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  min-height: 2rem;
-  padding-inline: var(--space-2);
-  white-space: nowrap;
-}
-
-.finance-cashbook-detail-action-cancel {
-  border-color: transparent;
-  background: transparent;
-  color: var(--color-danger);
-}
-
-.finance-cashbook-detail-action-print {
-  background: var(--color-surface);
 }
 
 .finance-cashbook-detail-close {

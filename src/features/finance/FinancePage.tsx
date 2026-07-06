@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useState } from 'react'
-import { CalendarDays, ChevronRight, Download, Edit3, Plus, Printer, Search, StickyNote, Trash2, WalletCards } from 'lucide-react'
+import { Fragment, useEffect, useState, type MouseEvent } from 'react'
+import { CalendarDays, ChevronRight, Download, Plus, Search, StickyNote, Trash2, WalletCards } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -707,6 +707,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
     writeCashbookFavoriteIds(nextIds)
   }
 
+  function stopCashbookRowAction(event: MouseEvent<HTMLElement>) {
+    event.stopPropagation()
+  }
+
   function exportCashbook() {
     const csv = buildCashbookCsv(cashbookEntries ?? [])
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -726,7 +730,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
           aria-label={`Mở chi tiết ${entry.code}`}
           className="management-link-button"
           type="button"
-          onClick={() => void openCashbookEntry(entry)}
+          onClick={(event) => {
+            event.stopPropagation()
+            void openCashbookEntry(entry)
+          }}
         >
           <strong>{entry.code}</strong>
         </button>
@@ -743,7 +750,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
           aria-label={`Mở chi tiết ${entry.code} từ ${label} ${entry.counterparty.name}`}
           className="management-link-button"
           type="button"
-          onClick={() => void openCashbookEntry(entry)}
+          onClick={(event) => {
+            event.stopPropagation()
+            void openCashbookEntry(entry)
+          }}
         >
           {entry.counterparty.name}
         </button>
@@ -1376,9 +1386,21 @@ export function FinancePage({ service }: { service: FinanceService }) {
                 <tbody>
                   {visibleCashbookEntries.map((entry) => (
                     <Fragment key={entry.id}>
-                      <tr>
+                      <tr
+                        aria-expanded={selectedCashbookEntry?.id === entry.id}
+                        className={`management-data-row${selectedCashbookEntry?.id === entry.id ? ' management-data-row-selected' : ''}`}
+                        tabIndex={0}
+                        onClick={() => void openCashbookEntry(entry)}
+                        onKeyDown={(event) => {
+                          if (event.target !== event.currentTarget) return
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            void openCashbookEntry(entry)
+                          }
+                        }}
+                      >
                         <td className="finance-cashbook-select-column">
-                          <input aria-label={`Chọn dòng ${entry.code}`} type="checkbox" />
+                          <input aria-label={`Chọn dòng ${entry.code}`} type="checkbox" onClick={stopCashbookRowAction} />
                         </td>
                         <td className="finance-cashbook-star-column">
                           <button
@@ -1386,7 +1408,10 @@ export function FinancePage({ service }: { service: FinanceService }) {
                             aria-pressed={cashbookFavoriteIds.includes(entry.id)}
                             className={`finance-cashbook-star-button${cashbookFavoriteIds.includes(entry.id) ? ' finance-cashbook-star-button-active' : ''}`}
                             type="button"
-                            onClick={() => toggleCashbookFavorite(entry)}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              toggleCashbookFavorite(entry)
+                            }}
                           >
                             ☆
                           </button>
@@ -1436,21 +1461,11 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                 {cashbookDetailNoteText(cashbookDetail)}
                               </div>
                               <CashbookLinkedDocuments entry={cashbookDetail} />
-                              <footer className="finance-cashbook-detail-footer-actions">
-                                <div className="finance-cashbook-detail-actions finance-cashbook-detail-actions-left">
-                                  <button aria-label={`Hủy phiếu ${cashbookDetail.code}`} className="button button-secondary finance-cashbook-detail-action-cancel" disabled type="button">
+                              <footer className="management-detail-footer-actions finance-cashbook-detail-footer-actions">
+                                <div className="management-detail-footer-actions-left">
+                                  <button aria-label={`Xóa phiếu ${cashbookDetail.code}`} className="button button-secondary management-detail-action-danger" disabled type="button">
                                     <Trash2 aria-hidden="true" size={16} />
-                                    Hủy
-                                  </button>
-                                </div>
-                                <div className="finance-cashbook-detail-actions finance-cashbook-detail-actions-right">
-                                  <button aria-label={`Chỉnh sửa phiếu ${cashbookDetail.code}`} className="button button-primary finance-cashbook-detail-action-edit" disabled type="button">
-                                    <Edit3 aria-hidden="true" size={16} />
-                                    Chỉnh sửa
-                                  </button>
-                                  <button aria-label={`In phiếu ${cashbookDetail.code}`} className="button button-secondary finance-cashbook-detail-action-print" disabled type="button">
-                                    <Printer aria-hidden="true" size={16} />
-                                    In
+                                    Xóa
                                   </button>
                                 </div>
                               </footer>

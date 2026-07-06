@@ -111,9 +111,10 @@ Quan sát trước đó ngày `01/07/2026`:
 - Người nộp/nhận có thể là khách hàng, nhà cung cấp, nhân viên hoặc đối tượng tự do.
 - `Ví điện tử` có trong KiotViet nhưng QC-OMS MVP vẫn chưa đưa vào nếu Owner chưa chốt nghiệp vụ riêng; cần thiết kế mở để thêm sau.
 
-Hiện trạng detail inline sau PR #91 ngày `06/07/2026`:
+Hiện trạng detail inline sau ngày `06/07/2026`:
 
-- Click mã phiếu mở sub-panel ngay dưới dòng.
+- Click bất kỳ vùng dữ liệu nào trên dòng sổ quỹ sẽ mở sub-panel ngay dưới dòng, cùng pattern với trang chứng từ bán hàng. Mã phiếu và người nộp/nhận vẫn hiển thị dạng link, nhưng hành vi mở detail là của cả dòng.
+- Dòng đang mở detail dùng trạng thái selected chung của bảng quản trị; checkbox chọn dòng và sao ưu tiên không làm bung detail.
 - Panel có tab `Thông tin`, tiêu đề `Phiếu thu/chi <mã>`, chip `Đã thanh toán/Đã hủy`, chip `Có hạch toán/Không hạch toán`. QC-OMS không hiển thị `Chi nhánh trung tâm` vì MVP không quản lý theo chi nhánh.
 - Nhật ký chỉ hiển thị `Người tạo` và `Thời gian`; mặc định `Người tạo` chính là người thu/chi nếu backend chưa tách trường riêng.
 - Grid thông tin chính chia 4 cột: số tiền, loại thu/chi, đối tượng nộp/nhận, phương thức thanh toán. Các dòng phụ bên dưới hiển thị người nộp/nhận dạng link và quỹ/tài khoản nhận hoặc chi.
@@ -121,7 +122,7 @@ Hiện trạng detail inline sau PR #91 ngày `06/07/2026`:
 - Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
 - Nếu không có `allocations` nhưng ghi chú/source chứa mã `HD...` hoặc `PN...`, panel vẫn hiển thị dòng chứng từ liên kết suy luận để người dùng thấy phiếu thu/chi gắn với hóa đơn/phiếu nhập nào. Nếu không có dữ liệu liên kết, bảng con hiển thị trạng thái rỗng.
 - Không hiển thị dòng `Tiền chưa phân bổ: 0` trong detail.
-- Footer chỉ chứa actions: `Hủy` canh trái; `Chỉnh sửa` và `In` canh phải. Nhãn và icon trong từng nút luôn nằm trên một hàng, không wrap xuống dòng. Các nút này đang disabled nếu chưa có API/hành vi an toàn cho dòng detail.
+- Footer detail dùng CSS chung `management-detail-footer-actions` để các trang danh sách có cùng hàng action cuối. Hiện sổ quỹ chỉ giữ một nút `Xóa` tạm thời và đang disabled nếu chưa có API/hành vi an toàn; các nút khác sẽ bổ sung theo tác vụ từng trang.
 
 Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail. Không hiển thị `Người thu`/`Người chi` riêng khi backend chưa cần tách trường này.
 
@@ -139,7 +140,7 @@ Hiện trạng sau các slice sổ quỹ ngày `06/07/2026`:
 - Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải, ngay trên bảng sổ quỹ, và lấy từ `summary` của API sổ quỹ theo filter.
 - `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
 - Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.
-- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Cột người nộp/nhận lấy `counterparty` từ API list sổ quỹ; nếu có tên thì hiển thị dạng link mở inline detail cùng dòng, nếu chưa có thì hiển thị `-`. Sao từng dòng lưu ưu tiên cục bộ; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
+- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Cột người nộp/nhận lấy `counterparty` từ API list sổ quỹ; nếu có tên thì hiển thị dạng link mở inline detail cùng dòng, nếu chưa có thì hiển thị `-`. Click cả hàng mở detail; sao từng dòng lưu ưu tiên cục bộ và không làm bung detail; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
 - Surface bảng dùng viền/padding ngoài mỏng để bảng sát khung hơn; vẫn giữ border và hover theo design system.
 
 MVP của QC-OMS hỗ trợ:
