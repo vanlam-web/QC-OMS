@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Pencil, Plus, Save, Search, WalletCards, X }
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
 import type { Supplier, SupplierCustomerOption, SupplierFinanceAccount, SupplierPayableReceipt, SupplierStatus } from './types'
-import type { SupplierInput, SupplierService } from './supplier-service'
+import type { SupplierInput, SupplierListFilters, SupplierService } from './supplier-service'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
   ManagementCompactCreateAction,
@@ -37,10 +37,9 @@ const blankForm: SupplierInput = {
 
 const supplierPageSize = 15
 
-function supplierStatusText(status: SupplierStatus | 'all') {
-  if (status === 'active') return 'Đang hoạt động'
-  if (status === 'inactive') return 'Ngừng hoạt động'
-  return 'Tất cả'
+function numberFilterValue(value: string) {
+  const parsed = Number(value)
+  return value.trim() === '' || !Number.isFinite(parsed) ? undefined : parsed
 }
 
 export function SuppliersPage({
@@ -59,6 +58,14 @@ export function SuppliersPage({
   const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<SupplierStatus | 'all'>('active')
   const [lastStatus, setLastStatus] = useState<SupplierStatus | 'all'>('active')
+  const [totalPurchaseMin, setTotalPurchaseMin] = useState('')
+  const [totalPurchaseMax, setTotalPurchaseMax] = useState('')
+  const [currentPayableMin, setCurrentPayableMin] = useState('')
+  const [currentPayableMax, setCurrentPayableMax] = useState('')
+  const [lastTotalPurchaseMin, setLastTotalPurchaseMin] = useState('')
+  const [lastTotalPurchaseMax, setLastTotalPurchaseMax] = useState('')
+  const [lastCurrentPayableMin, setLastCurrentPayableMin] = useState('')
+  const [lastCurrentPayableMax, setLastCurrentPayableMax] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(supplierPageSize)
   const [showFilters, setShowFilters] = useState(true)
@@ -82,29 +89,54 @@ export function SuppliersPage({
   const isCreatingSupplier = detailOpen && editingId === null && paymentSupplier === null
 
   async function loadSuppliers(
-    input: { search?: string; status?: SupplierStatus | 'all'; page?: number; page_size?: number } = {
+    input: SupplierListFilters & {
+      totalPurchaseMinValue?: string
+      totalPurchaseMaxValue?: string
+      currentPayableMinValue?: string
+      currentPayableMaxValue?: string
+    } = {
       search: lastSearch,
       status: lastStatus,
+      totalPurchaseMinValue: lastTotalPurchaseMin,
+      totalPurchaseMaxValue: lastTotalPurchaseMax,
+      currentPayableMinValue: lastCurrentPayableMin,
+      currentPayableMaxValue: lastCurrentPayableMax,
       page,
       page_size: pageSize,
     },
   ) {
     const nextSearch = input.search ?? lastSearch
     const nextStatus = input.status ?? lastStatus
+    const nextTotalPurchaseMin = input.totalPurchaseMinValue ?? lastTotalPurchaseMin
+    const nextTotalPurchaseMax = input.totalPurchaseMaxValue ?? lastTotalPurchaseMax
+    const nextCurrentPayableMin = input.currentPayableMinValue ?? lastCurrentPayableMin
+    const nextCurrentPayableMax = input.currentPayableMaxValue ?? lastCurrentPayableMax
     const nextPage = input.page ?? page
     const nextPageSize = input.page_size ?? pageSize
     setError(null)
     try {
+      const totalPurchaseMinFilter = numberFilterValue(nextTotalPurchaseMin)
+      const totalPurchaseMaxFilter = numberFilterValue(nextTotalPurchaseMax)
+      const currentPayableMinFilter = numberFilterValue(nextCurrentPayableMin)
+      const currentPayableMaxFilter = numberFilterValue(nextCurrentPayableMax)
       const result = await service.listSuppliers({
         page: nextPage,
         page_size: nextPageSize,
         search: nextSearch?.trim() || undefined,
         status: nextStatus,
+        ...(totalPurchaseMinFilter === undefined ? {} : { total_purchase_min: totalPurchaseMinFilter }),
+        ...(totalPurchaseMaxFilter === undefined ? {} : { total_purchase_max: totalPurchaseMaxFilter }),
+        ...(currentPayableMinFilter === undefined ? {} : { current_payable_min: currentPayableMinFilter }),
+        ...(currentPayableMaxFilter === undefined ? {} : { current_payable_max: currentPayableMaxFilter }),
       })
       setSuppliers(result.items)
       setTotal(result.total)
       setLastSearch(nextSearch?.trim() ?? '')
       setLastStatus(nextStatus)
+      setLastTotalPurchaseMin(nextTotalPurchaseMin)
+      setLastTotalPurchaseMax(nextTotalPurchaseMax)
+      setLastCurrentPayableMin(nextCurrentPayableMin)
+      setLastCurrentPayableMax(nextCurrentPayableMax)
       setPage(result.page)
       setPageSize(result.page_size)
     } catch (cause) {
@@ -153,7 +185,46 @@ export function SuppliersPage({
   async function filterSuppliers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPage(1)
-    await loadSuppliers({ search: search.trim(), status, page: 1 })
+    await loadSuppliers({
+      search: search.trim(),
+      status,
+      totalPurchaseMinValue: totalPurchaseMin,
+      totalPurchaseMaxValue: totalPurchaseMax,
+      currentPayableMinValue: currentPayableMin,
+      currentPayableMaxValue: currentPayableMax,
+      page: 1,
+    })
+  }
+
+  async function applySidebarFilters(
+    nextFilters: Partial<{
+      status: SupplierStatus | 'all'
+      totalPurchaseMin: string
+      totalPurchaseMax: string
+      currentPayableMin: string
+      currentPayableMax: string
+    }>,
+  ) {
+    const nextStatus = nextFilters.status ?? status
+    const nextTotalPurchaseMin = nextFilters.totalPurchaseMin ?? totalPurchaseMin
+    const nextTotalPurchaseMax = nextFilters.totalPurchaseMax ?? totalPurchaseMax
+    const nextCurrentPayableMin = nextFilters.currentPayableMin ?? currentPayableMin
+    const nextCurrentPayableMax = nextFilters.currentPayableMax ?? currentPayableMax
+    setStatus(nextStatus)
+    setTotalPurchaseMin(nextTotalPurchaseMin)
+    setTotalPurchaseMax(nextTotalPurchaseMax)
+    setCurrentPayableMin(nextCurrentPayableMin)
+    setCurrentPayableMax(nextCurrentPayableMax)
+    setPage(1)
+    await loadSuppliers({
+      search: search.trim(),
+      status: nextStatus,
+      totalPurchaseMinValue: nextTotalPurchaseMin,
+      totalPurchaseMaxValue: nextTotalPurchaseMax,
+      currentPayableMinValue: nextCurrentPayableMin,
+      currentPayableMaxValue: nextCurrentPayableMax,
+      page: 1,
+    })
   }
 
   async function goToPage(nextPage: number) {
@@ -315,9 +386,13 @@ export function SuppliersPage({
   const canGoNext = page < totalPages
   const activeFilterSummary = lastSearch
     ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active'
+    : lastStatus === 'active' &&
+        lastTotalPurchaseMin === '' &&
+        lastTotalPurchaseMax === '' &&
+        lastCurrentPayableMin === '' &&
+        lastCurrentPayableMax === ''
       ? 'Đang hoạt động'
-      : `Trạng thái: ${supplierStatusText(lastStatus)}`
+      : 'Bộ lọc nhà cung cấp'
 
   const supplierKpis = (
     <MetricGrid ariaLabel="Tổng quan nhà cung cấp">
@@ -519,18 +594,75 @@ export function SuppliersPage({
           >
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
+          <ManagementFilterGroup title="Tổng mua">
+            <label>
+              <span className="sr-only">Tổng mua từ</span>
+              <input
+                aria-label="Tổng mua từ"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Từ"
+                type="number"
+                value={totalPurchaseMin}
+                onChange={(event) => void applySidebarFilters({ totalPurchaseMin: event.target.value })}
+              />
+            </label>
+            <label>
+              <span className="sr-only">Tổng mua tới</span>
+              <input
+                aria-label="Tổng mua tới"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Tới"
+                type="number"
+                value={totalPurchaseMax}
+                onChange={(event) => void applySidebarFilters({ totalPurchaseMax: event.target.value })}
+              />
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Nợ hiện tại">
+            <label>
+              <span className="sr-only">Nợ hiện tại từ</span>
+              <input
+                aria-label="Nợ hiện tại từ"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Từ"
+                type="number"
+                value={currentPayableMin}
+                onChange={(event) => void applySidebarFilters({ currentPayableMin: event.target.value })}
+              />
+            </label>
+            <label>
+              <span className="sr-only">Nợ hiện tại tới</span>
+              <input
+                aria-label="Nợ hiện tại tới"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Tới"
+                type="number"
+                value={currentPayableMax}
+                onChange={(event) => void applySidebarFilters({ currentPayableMax: event.target.value })}
+              />
+            </label>
+          </ManagementFilterGroup>
           <ManagementFilterGroup title="Trạng thái">
             <label>
-              <input checked={status === 'active'} name="supplier-status" type="radio" onChange={() => setStatus('active')} />
-              Đang hoạt động
-            </label>
-            <label>
-              <input checked={status === 'inactive'} name="supplier-status" type="radio" onChange={() => setStatus('inactive')} />
-              Ngừng hoạt động
-            </label>
-            <label>
-              <input checked={status === 'all'} name="supplier-status" type="radio" onChange={() => setStatus('all')} />
-              Tất cả
+              <span className="sr-only">Trạng thái</span>
+              <select
+                aria-label="Trạng thái"
+                className="management-filter-select"
+                value={status}
+                onChange={(event) => void applySidebarFilters({ status: event.target.value as SupplierStatus | 'all' })}
+              >
+                <option value="all">Tất cả</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Ngừng hoạt động</option>
+              </select>
             </label>
           </ManagementFilterGroup>
         </ManagementFilterSidebar>

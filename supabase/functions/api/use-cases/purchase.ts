@@ -42,11 +42,24 @@ export async function listSuppliers(
   url: URL,
 ): Promise<SupplierListResponse> {
   requireAnyPermission(context, ["perm.manage_inventory"]);
-  const { search, status, page, pageSize } = parseSupplierList(url);
+  const {
+    search,
+    status,
+    totalPurchaseMin,
+    totalPurchaseMax,
+    currentPayableMin,
+    currentPayableMax,
+    page,
+    pageSize,
+  } = parseSupplierList(url);
   const result = await repository.listSuppliers({
     organizationId: context.organizationId,
     search,
     status,
+    totalPurchaseMin,
+    totalPurchaseMax,
+    currentPayableMin,
+    currentPayableMax,
     page,
     pageSize,
   });
@@ -219,18 +232,35 @@ export async function postPurchaseReceipt(
 function parseSupplierList(url: URL): {
   search?: string;
   status: "active" | "inactive" | "all";
+  totalPurchaseMin?: number;
+  totalPurchaseMax?: number;
+  currentPayableMin?: number;
+  currentPayableMax?: number;
   page: number;
   pageSize: number;
 } {
   const search = url.searchParams.get("q")?.trim() || url.searchParams.get("search")?.trim();
   const status = parseSupplierListStatus(url.searchParams.get("status") ?? "active");
+  const totalPurchaseMin = parseOptionalMoneyFilter(url.searchParams.get("total_purchase_min"));
+  const totalPurchaseMax = parseOptionalMoneyFilter(url.searchParams.get("total_purchase_max"));
+  const currentPayableMin = parseOptionalMoneyFilter(url.searchParams.get("current_payable_min"));
+  const currentPayableMax = parseOptionalMoneyFilter(url.searchParams.get("current_payable_max"));
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
     throw validationError();
   }
   if (search !== undefined && search.length > 100) throw validationError();
-  return { search: search || undefined, status, page, pageSize };
+  return {
+    search: search || undefined,
+    status,
+    totalPurchaseMin,
+    totalPurchaseMax,
+    currentPayableMin,
+    currentPayableMax,
+    page,
+    pageSize,
+  };
 }
 
 function parsePurchaseReceiptList(url: URL): {
@@ -597,6 +627,11 @@ function parseNonNegativeAmount(value: unknown): number {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount < 0) throw validationError();
   return amount;
+}
+
+function parseOptionalMoneyFilter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  return parseNonNegativeAmount(value);
 }
 
 function parsePositiveMoney(value: unknown): number {

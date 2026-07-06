@@ -27,12 +27,27 @@ export interface SupplierInput {
   status: SupplierStatus
 }
 
+export interface SupplierListFilters {
+  search?: string
+  status?: SupplierStatus | 'all'
+  total_purchase_min?: number
+  total_purchase_max?: number
+  current_payable_min?: number
+  current_payable_max?: number
+  page?: number
+  page_size?: number
+}
+
 export function createSupplierService(api: SupplierApiRequester) {
   return {
-    listSuppliers: (input: { search?: string; status?: SupplierStatus | 'all'; page?: number; page_size?: number } = {}) => {
+    listSuppliers: (input: SupplierListFilters = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('q', input.search)
       if (input.status) params.set('status', input.status)
+      if (input.total_purchase_min !== undefined) params.set('total_purchase_min', String(input.total_purchase_min))
+      if (input.total_purchase_max !== undefined) params.set('total_purchase_max', String(input.total_purchase_max))
+      if (input.current_payable_min !== undefined) params.set('current_payable_min', String(input.current_payable_min))
+      if (input.current_payable_max !== undefined) params.set('current_payable_max', String(input.current_payable_max))
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()

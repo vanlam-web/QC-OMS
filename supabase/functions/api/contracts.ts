@@ -755,6 +755,10 @@ export interface FoundationRepository {
     organizationId: string;
     search?: string;
     status: "active" | "inactive" | "all";
+    totalPurchaseMin?: number;
+    totalPurchaseMax?: number;
+    currentPayableMin?: number;
+    currentPayableMax?: number;
     page: number;
     pageSize: number;
   }): Promise<{ items: SupplierData[]; total: number }>;

@@ -131,8 +131,9 @@ it('filters suppliers by search and status', async () => {
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
   const searchInput = within(filterForm).getByLabelText('Tìm NCC')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
   await userEvent.type(searchInput, 'Nguyen')
-  await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái' }), 'all')
   await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
@@ -152,8 +153,9 @@ it('uses supplier sidebar filters without a reset action', async () => {
   await screen.findByText('NCC000031')
   const filterForm = screen.getByRole('search', { name: 'Lọc nhà cung cấp' })
   const searchInput = within(filterForm).getByLabelText('Tìm NCC')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
   await userEvent.type(searchInput, 'NCC000031')
-  await userEvent.click(screen.getByRole('radio', { name: 'Ngừng hoạt động' }))
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái' }), 'inactive')
   await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listSuppliers).toHaveBeenLastCalledWith({
@@ -164,6 +166,50 @@ it('uses supplier sidebar filters without a reset action', async () => {
   })
   expect(screen.queryByText('Tìm: NCC000031')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
+})
+
+it('reactively filters suppliers by payable, purchase totals, and status in the shared sidebar', async () => {
+  const service = makeService()
+
+  render(<SuppliersPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('NCC000031')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc nhà cung cấp' })
+
+  expect(within(sidebar).queryByRole('region', { name: 'Nhóm nhà cung cấp' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Thời gian' })).not.toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Tổng mua' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Nợ hiện tại' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Trạng thái' })).toBeInTheDocument()
+
+  await userEvent.type(within(sidebar).getByLabelText('Tổng mua từ'), '100000')
+  expect(service.listSuppliers).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    total_purchase_min: 100000,
+  })
+
+  await userEvent.type(within(sidebar).getByLabelText('Nợ hiện tại tới'), '500000')
+  expect(service.listSuppliers).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    total_purchase_min: 100000,
+    current_payable_max: 500000,
+  })
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái' }), 'all')
+  expect(service.listSuppliers).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'all',
+    total_purchase_min: 100000,
+    current_payable_max: 500000,
+  })
 })
 
 it('uses 15-row pagination range and navigates pages through the list footer', async () => {

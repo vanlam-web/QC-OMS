@@ -929,25 +929,41 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return toCustomerData(data, creatorMap, salesTotalMap);
     },
     async listSuppliers(input): Promise<{ items: SupplierData[]; total: number }> {
+      const hasAmountFilters =
+        input.totalPurchaseMin !== undefined ||
+        input.totalPurchaseMax !== undefined ||
+        input.currentPayableMin !== undefined ||
+        input.currentPayableMax !== undefined;
       let query = client
         .from("suppliers")
         .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)", {
           count: "exact",
         })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
 
       if (input.status !== "all") query = query.eq("status", input.status);
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
       }
+      if (!hasAmountFilters) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      }
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
       const items = await attachSupplierPurchaseTotals(client, input.organizationId, (data ?? []).map(toSupplierData));
-      return { items, total: count ?? 0 };
+      if (!hasAmountFilters) return { items, total: count ?? 0 };
+
+      const filteredItems = items.filter((supplier) =>
+        (input.totalPurchaseMin === undefined || supplier.total_purchase_amount >= input.totalPurchaseMin) &&
+        (input.totalPurchaseMax === undefined || supplier.total_purchase_amount <= input.totalPurchaseMax) &&
+        (input.currentPayableMin === undefined || supplier.current_payable_amount >= input.currentPayableMin) &&
+        (input.currentPayableMax === undefined || supplier.current_payable_amount <= input.currentPayableMax)
+      );
+      const start = (input.page - 1) * input.pageSize;
+      return { items: filteredItems.slice(start, start + input.pageSize), total: filteredItems.length };
     },
     async getSupplier(input): Promise<SupplierData | null> {
       const { data, error } = await client
