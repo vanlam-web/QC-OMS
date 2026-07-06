@@ -120,10 +120,10 @@ it('keeps shared filter choices compact with borders only on active state', () =
   const activeRule = cssRule('.management-filter-options .management-filter-choice-active')
 
   expect(choiceRule).toContain('min-height: 2.25rem')
-  expect(choiceRule).toContain('border: 1px solid transparent')
+  expect(choiceRule).toContain('border: 1px solid var(--color-border)')
   expect(choiceRule).toContain('border-radius: var(--radius-sm)')
-  expect(activeRule).toContain('border-color: transparent')
-  expect(activeRule).toContain('background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface))')
+  expect(activeRule).toContain('border-color: var(--color-selected-border)')
+  expect(activeRule).toContain('background: var(--color-surface)')
   expect(activeRule).toContain('box-shadow: none')
 })
 
