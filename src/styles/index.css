@@ -1713,12 +1713,12 @@ button {
 }
 
 .management-link-button:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .management-link-button:focus-visible {
   outline: none;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .finance-cashbook-detail {

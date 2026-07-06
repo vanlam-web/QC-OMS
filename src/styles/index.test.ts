@@ -182,9 +182,9 @@ it('keeps management code links styled like cashbook voucher codes', () => {
   expect(cssRule('.management-link-button')).toContain('cursor: pointer')
   expect(cssRule('.management-link-button strong')).toContain('font: inherit')
   expect(cssRule('.management-link-button strong')).toContain('font-weight: inherit')
-  expect(cssRule('.management-link-button:hover')).toContain('text-decoration: underline')
+  expect(cssRule('.management-link-button:hover')).toContain('text-decoration: none')
   expect(cssRule('.management-link-button:focus-visible')).toContain('outline: none')
-  expect(cssRule('.management-link-button:focus-visible')).toContain('text-decoration: underline')
+  expect(cssRule('.management-link-button:focus-visible')).toContain('text-decoration: none')
 })
 
 it('keeps feature data tables on the shared management table geometry', () => {
