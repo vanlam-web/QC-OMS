@@ -226,6 +226,7 @@ it('keeps the cashbook data table in a KV-like layout with project colors', () =
   expect(cssRule('.finance-cashbook-select-column input[type=\'checkbox\']')).toContain('display: block')
   expect(cssRule('.finance-cashbook-select-column input[type=\'checkbox\']')).toContain('margin: 0 auto')
   expect(cssRule('.finance-cashbook-star-column .finance-cashbook-star-button')).toContain('margin: 0 auto')
+  expect(cssRule('.finance-cashbook-data-table thead .finance-cashbook-star-button')).toContain('transform: translateY(-1px)')
   expect(cssRule('.finance-cashbook-star-button:hover,\n.finance-cashbook-star-button-active')).toContain('color: var(--color-primary)')
 })
 

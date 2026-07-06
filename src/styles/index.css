@@ -1665,6 +1665,10 @@ button {
   margin: 0 auto;
 }
 
+.finance-cashbook-data-table thead .finance-cashbook-star-button {
+  transform: translateY(-1px);
+}
+
 .finance-cashbook-star-button:hover,
 .finance-cashbook-star-button-active {
   background: var(--color-surface-muted);
