@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   Bell,
-  CreditCard,
   DollarSign,
   PackagePlus,
   ReceiptText,
@@ -11,9 +10,12 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import type { LucideIcon } from 'lucide-react'
 import type { CurrentUserData } from '../../lib/api/types'
 
+const chartWidth = 640
+const chartHeight = 180
+const chartInnerHeight = 136
+const chartPaddingY = 24
 const revenuePoints = [34, 46, 42, 58, 52, 74, 68, 86, 80, 98, 92, 116]
 const weekdayBars = [
   { label: 'T2', value: 42 },
@@ -46,18 +48,19 @@ const activities = [
 ]
 
 function wavePath(points: number[]) {
+  return chartPoints(points)
+    .map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`)
+    .join(' ')
+}
+
+function chartPoints(points: number[]) {
   const max = Math.max(...points)
   const min = Math.min(...points)
-  const width = 640
-  const height = 160
-  const step = width / (points.length - 1)
-  return points
-    .map((point, index) => {
-      const x = index * step
-      const y = height - ((point - min) / (max - min || 1)) * 118 - 22
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
-    })
-    .join(' ')
+  const step = chartWidth / (points.length - 1)
+  return points.map((point, index) => ({
+    x: index * step,
+    y: chartHeight - chartPaddingY - ((point - min) / (max - min || 1)) * chartInnerHeight,
+  }))
 }
 
 export function DashboardPage({
@@ -119,12 +122,6 @@ export function DashboardPage({
                 <small>12 hóa đơn</small>
               </article>
               <article>
-                <ReceiptText aria-hidden="true" size={20} />
-                <span>Trả hàng</span>
-                <strong>650 000</strong>
-                <small>1 phiếu trả</small>
-              </article>
-              <article>
                 <TrendingUp aria-hidden="true" size={20} />
                 <span>Doanh thu thuần</span>
                 <strong>17 800 000</strong>
@@ -163,8 +160,14 @@ export function DashboardPage({
                     <stop offset="100%" stopColor="#0f8f7d" stopOpacity="0" />
                   </linearGradient>
                 </defs>
+                {[36, 72, 108, 144].map((y) => (
+                  <line className="dashboard-chart-gridline" key={y} x1="0" x2="640" y1={y} y2={y} />
+                ))}
                 <path d={`${wavePath(revenuePoints)} L 640 180 L 0 180 Z`} fill="url(#dashboardWaveFill)" />
                 <path d={wavePath(revenuePoints)} fill="none" stroke="url(#dashboardWaveStroke)" strokeLinecap="round" strokeWidth="5" />
+                {chartPoints(revenuePoints).map(({ x, y }, index) => (
+                  <circle key={`${x}-${y}`} cx={x} cy={y} r={index === revenuePoints.length - 1 ? 5 : 3.5} />
+                ))}
               </svg>
               <div className="dashboard-bar-strip" aria-hidden="true">
                 {weekdayBars.map((bar) => (
@@ -184,11 +187,6 @@ export function DashboardPage({
         </div>
 
         <aside className="dashboard-side-column" aria-label="Thông tin phụ">
-          <section className="dashboard-card dashboard-utility-card" aria-label="Tiện ích">
-            <UtilityRow icon={CreditCard} title="Thanh toán" description="Cài đặt QR và phương thức thu tiền" />
-            <UtilityRow icon={TrendingUp} title="Vay vốn" description="Theo dõi hạn mức và đề xuất vốn" />
-          </section>
-
           <section className="dashboard-card dashboard-security-card" aria-label="Cảnh báo bảo mật">
             <ShieldAlert aria-hidden="true" size={22} />
             <div>
@@ -248,26 +246,5 @@ function RankCard({ title, items }: { title: string; items: Array<{ label: strin
         ))}
       </ol>
     </section>
-  )
-}
-
-function UtilityRow({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: LucideIcon
-  title: string
-  description: string
-}) {
-  return (
-    <button className="dashboard-utility-row" type="button">
-      <Icon aria-hidden="true" size={18} />
-      <span>
-        <strong>{title}</strong>
-        <small>{description}</small>
-      </span>
-      <ArrowRight aria-hidden="true" size={16} />
-    </button>
   )
 }

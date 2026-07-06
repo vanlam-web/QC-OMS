@@ -206,6 +206,19 @@ it('keeps shared management table headers visually consistent', () => {
   expect(cssRule('.management-list-surface thead th')).toContain('text-transform: uppercase')
 })
 
+it('keeps dashboard activity sidebar sticky and chart surface modern', () => {
+  expect(cssRule('.dashboard-side-column')).toContain('position: sticky')
+  expect(cssRule('.dashboard-side-column')).toContain('top: calc(var(--shell-topbar-block-size) + var(--space-4))')
+  expect(cssRule('.dashboard-side-column')).toContain('max-height: calc(100dvh - var(--shell-topbar-block-size) - var(--space-8))')
+  expect(cssRule('.dashboard-side-column')).toContain('grid-template-rows: auto minmax(0, 1fr)')
+  expect(cssRule('.dashboard-activity-card')).toContain('min-height: 0')
+  expect(cssRule('.dashboard-activity-card')).toContain('grid-template-rows: auto minmax(0, 1fr)')
+  expect(cssRule('.dashboard-wave-chart')).toContain('border: 1px solid color-mix')
+  expect(cssRule('.dashboard-wave-chart')).toContain('background:')
+  expect(cssRule('.dashboard-wave-chart svg')).toContain('filter: drop-shadow')
+  expect(cssRule('.dashboard-chart-gridline')).toContain('stroke: color-mix')
+})
+
 it('keeps the cashbook data table in a KV-like layout with project colors', () => {
   expect(cssRule('.finance-cashbook-data-table thead th')).toBe('')
   expect(cssRule('.management-table-viewport > table tbody tr.management-data-row:hover td')).toContain('background: var(--color-surface-muted)')
