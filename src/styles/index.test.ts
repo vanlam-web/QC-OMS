@@ -157,6 +157,8 @@ it('right aligns money values in shared tables', () => {
 it('keeps the cashbook data table in a KV-like layout with project colors', () => {
   expect(cssRule('.finance-cashbook-data-table thead th')).toContain('text-transform: uppercase')
   expect(cssRule('.finance-cashbook-data-table thead th')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('font-size: 0.8125rem')
+  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('font-weight: 700')
   expect(cssRule('.finance-cashbook-data-table thead th')).not.toContain('#FEF3C7')
   expect(cssRule('.management-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
   expect(cssRule('.finance-cashbook-data-table tbody tr:hover td')).toBe('')
@@ -204,6 +206,8 @@ it('keeps shared management table headers sticky and visually distinct', () => {
   expect(headerRule).toContain('z-index: 2')
   expect(headerRule).toContain('background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-primary))')
   expect(headerRule).toContain('box-shadow: inset 0 -1px 0 var(--color-border)')
+  expect(headerRule).toContain('font-size: 0.8125rem')
+  expect(headerRule).toContain('font-weight: 700')
 })
 
 it('shares inline detail tab styling outside customer-only pages', () => {
