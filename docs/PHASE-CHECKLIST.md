@@ -47,6 +47,7 @@ Quy trình phối hợp:
 | PriceBook UI refinement | PR #20, `3374312` | Grid-first UI, cột Chi phí/Lợi nhuận |
 | Docs/spec sync | PR #21, `b8c1af7` | Đồng bộ SoT và bridge docs |
 | Quote print Phase 3B | PR #22, `2c5e067` | In/xem báo giá đơn giản |
+| Sales Documents payment history | Commit `ec23e1b` | Nối tab lịch sử thanh toán từ `payment_receipts`, fallback dữ liệu thiếu để không sập detail |
 | Purchase P1 — Supplier foundation | PR #23, `ad19559` | Danh sách/chi tiết NCC, linked customer |
 | Purchase P2 — Receipt draft/list/detail | PR #24, `0239061` | Phiếu nhập draft/list/detail cho hàng thường |
 | Purchase P3 — Post normal receipt | PR #26, `2c87a6e` | Hoàn thành phiếu nhập hàng thường, tăng tồn/công nợ/cashbook |

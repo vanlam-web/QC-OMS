@@ -19,7 +19,7 @@ Phạm vi bán hàng là **bán đứt**. Báo giá nếu có chỉ là bản gi
 | Nhóm năng lực | Ghi chú |
 |---|---|
 | Danh sách chứng từ | List cho hóa đơn `HD...` và báo giá `BG...`, có tìm kiếm mã chứng từ |
-| Chi tiết chứng từ | Readonly detail, hiển thị snapshot dòng hàng, thanh toán, công nợ và stock movements nếu có |
+| Chi tiết chứng từ | Readonly detail, hiển thị snapshot dòng hàng, lịch sử thanh toán từ phiếu thu liên quan, công nợ và stock movements nếu có |
 | Mở lại báo giá | Mở `BG...` active vào POS draft local, giữ snapshot và cảnh báo lệch |
 | In/xem báo giá | Mẫu báo giá mặc định, frontend-only print view |
 | In lại bill hóa đơn | Ngoài phạm vi hiện tại; chỉ bật sau khi Bill Preview/print flow được chốt và implement |
