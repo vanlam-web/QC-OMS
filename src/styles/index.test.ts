@@ -172,7 +172,7 @@ it('keeps shared management data rows visually consistent', () => {
   expect(cssRule('.management-table-viewport > table tbody td')).toContain('font-weight: 400')
   expect(cssRule('.management-table-viewport > table tbody td')).toContain('line-height: 1.35')
   expect(cssRule('.management-table-viewport > table tbody td')).toContain('vertical-align: middle')
-  expect(cssRule('.management-table-viewport > table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.management-table-viewport > table tbody tr.management-data-row:hover td')).toContain('background: var(--color-surface-muted)')
 })
 
 it('keeps management code links styled like cashbook voucher codes', () => {
@@ -208,7 +208,7 @@ it('keeps shared management table headers visually consistent', () => {
 
 it('keeps the cashbook data table in a KV-like layout with project colors', () => {
   expect(cssRule('.finance-cashbook-data-table thead th')).toBe('')
-  expect(cssRule('.management-table-viewport > table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.management-table-viewport > table tbody tr.management-data-row:hover td')).toContain('background: var(--color-surface-muted)')
   expect(cssRule('.finance-cashbook-data-table tbody td')).toBe('')
   expect(cssRule('.finance-cashbook-data-table tbody tr:hover td')).toBe('')
   expect(cssRule('.finance-cashbook-code-link')).toContain('color: var(--color-primary)')
@@ -242,7 +242,7 @@ it('keeps cashbook detail panel aligned to the KV expanded row structure', () =>
   expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('padding: var(--space-2)')
   expect(cssRule('.management-detail-footer-actions')).toContain('align-items: center')
   expect(cssRule('.management-detail-footer-actions')).toContain('justify-content: space-between')
-  expect(cssRule('.management-detail-footer-actions')).toContain('border-top: 1px solid var(--color-selected-border)')
+  expect(cssRule('.management-detail-footer-actions')).toContain('border-top: 1px solid var(--color-border-muted)')
   expect(cssRule('.management-detail-footer-actions-right')).toContain('justify-content: flex-end')
   expect(cssRule('.management-detail-footer-actions-right')).toContain('margin-left: auto')
   expect(cssRule('.management-detail-footer-actions .button')).toContain('display: inline-flex')
@@ -287,6 +287,7 @@ it('keeps inline detail surfaces unframed and summary rows single-line', () => {
   expect(cssRule('.management-detail-row-selected > td')).toContain('border-bottom: 1px solid var(--color-selected-border)')
   expect(cssRule('.management-detail-row-selected > td')).toContain('border-left: 1px solid var(--color-selected-border)')
   expect(cssRule('.management-detail-row-selected > td')).toContain('background: transparent')
+  expect(cssRule('.management-detail-row-selected > td')).toContain('box-shadow: inset 0 -1px 0 var(--color-selected-border)')
   expect(cssRule('.management-inline-detail')).toContain('border: 0')
   expect(cssRule('.management-inline-detail')).toContain('background: transparent')
   expect(cssRule('.management-inline-detail')).toContain('padding: 0')

@@ -1053,7 +1053,7 @@ button {
   padding-right: var(--space-1);
 }
 
-.management-table-viewport > table tbody tr:hover td {
+.management-table-viewport > table tbody tr.management-data-row:hover td {
   background: var(--color-surface-muted);
 }
 
@@ -1275,6 +1275,7 @@ button {
   border-left: 1px solid var(--color-selected-border);
   background: transparent;
   padding: 0;
+  box-shadow: inset 0 -1px 0 var(--color-selected-border);
 }
 
 .management-inline-detail {
@@ -1309,7 +1310,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  border-top: 1px solid var(--color-selected-border);
+  border-top: 1px solid var(--color-border-muted);
   padding-top: var(--space-2);
 }
 
