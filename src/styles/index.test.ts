@@ -88,6 +88,7 @@ it('keeps management KPI summaries compact above filters', () => {
   expect(cssRule('.management-kpis .metric-card:first-child')).toContain('border-radius: var(--radius-sm) var(--radius-sm) 0 0')
   expect(cssRule('.management-kpis .metric-card:last-child')).toContain('border-radius: 0 0 var(--radius-sm) var(--radius-sm)')
   expect(cssRule('.management-kpis .metric-card > span')).toContain('color: var(--color-text)')
+  expect(cssRule('.management-kpis .metric-card > span')).toContain('font-size: 0.875rem')
   expect(cssRule('.management-kpis .metric-card > span')).toContain('font-weight: 400')
   expect(cssRule('.management-kpis .metric-card > small')).toContain('display: none')
   expect(cssRule('.management-filter-sidebar')).toContain('position: relative')
