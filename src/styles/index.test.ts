@@ -174,6 +174,8 @@ it('keeps management code links styled like cashbook voucher codes', () => {
   expect(cssRule('.management-link-button strong')).toContain('font: inherit')
   expect(cssRule('.management-link-button strong')).toContain('font-weight: inherit')
   expect(cssRule('.management-link-button:hover')).toContain('text-decoration: underline')
+  expect(cssRule('.management-link-button:focus-visible')).toContain('outline: none')
+  expect(cssRule('.management-link-button:focus-visible')).toContain('text-decoration: underline')
 })
 
 it('keeps feature data tables on the shared management table geometry', () => {
@@ -212,6 +214,8 @@ it('keeps the cashbook data table in a KV-like layout with project colors', () =
   expect(cssRule('.finance-cashbook-star-button')).toContain('height: 1.5rem')
   expect(cssRule('.finance-cashbook-star-column')).toContain('line-height: 1')
   expect(cssRule('.finance-cashbook-star-button')).toContain('line-height: 1')
+  expect(cssRule('.finance-cashbook-select-column input[type=\'checkbox\']')).toContain('display: block')
+  expect(cssRule('.finance-cashbook-select-column input[type=\'checkbox\']')).toContain('margin: 0 auto')
   expect(cssRule('.finance-cashbook-star-column .finance-cashbook-star-button')).toContain('margin: 0 auto')
   expect(cssRule('.finance-cashbook-star-button:hover,\n.finance-cashbook-star-button-active')).toContain('color: var(--color-primary)')
 })

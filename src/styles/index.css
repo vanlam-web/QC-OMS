@@ -1628,6 +1628,11 @@ button {
   font-size: 1rem;
 }
 
+.finance-cashbook-select-column input[type='checkbox'] {
+  display: block;
+  margin: 0 auto;
+}
+
 .finance-cashbook-star-button {
   display: inline-flex;
   align-items: center;
@@ -1691,6 +1696,11 @@ button {
 }
 
 .management-link-button:hover {
+  text-decoration: underline;
+}
+
+.management-link-button:focus-visible {
+  outline: none;
   text-decoration: underline;
 }
 
