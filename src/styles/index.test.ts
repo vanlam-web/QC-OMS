@@ -166,6 +166,16 @@ it('keeps shared management data rows visually consistent', () => {
   expect(cssRule('.management-table-viewport > table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
 })
 
+it('keeps management code links styled like cashbook voucher codes', () => {
+  expect(cssRule('.management-link-button')).toContain('color: var(--color-primary)')
+  expect(cssRule('.management-link-button')).toContain('font: inherit')
+  expect(cssRule('.management-link-button')).toContain('font-weight: 800')
+  expect(cssRule('.management-link-button')).toContain('cursor: pointer')
+  expect(cssRule('.management-link-button strong')).toContain('font: inherit')
+  expect(cssRule('.management-link-button strong')).toContain('font-weight: inherit')
+  expect(cssRule('.management-link-button:hover')).toContain('text-decoration: underline')
+})
+
 it('keeps feature data tables on the shared management table geometry', () => {
   expect(cssRule('.sales-documents-management-table')).toBe('')
   expect(cssRule('.customer-management-table')).toBe('')

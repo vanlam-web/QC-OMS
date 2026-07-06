@@ -581,7 +581,15 @@ export function SuppliersPage({
                       return (
                         <Fragment key={supplier.id}>
                           <tr className={detailForRow || loadingForRow ? 'management-data-row-selected' : undefined}>
-                            <td>{supplier.code}</td>
+                            <td>
+                              <button
+                                className="management-link-button"
+                                type="button"
+                                onClick={() => void openSupplier(supplier)}
+                              >
+                                <strong>{supplier.code}</strong>
+                              </button>
+                            </td>
                             <td>{supplier.name}</td>
                             <td>{supplier.phone ?? '-'}</td>
                             <td>{supplier.email ?? '-'}</td>

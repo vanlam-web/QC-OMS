@@ -375,7 +375,18 @@ export function CustomersPage({
                         }
                       }}
                     >
-                      <td>{customer.code}</td>
+                      <td>
+                        <button
+                          className="management-link-button"
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            toggleCustomerDetail(customer)
+                          }}
+                        >
+                          <strong>{customer.code}</strong>
+                        </button>
+                      </td>
                       <td>{customer.name}</td>
                       <td>{customer.phone ?? '-'}</td>
                       <td>{customer.customer_group?.name ?? '-'}</td>

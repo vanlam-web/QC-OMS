@@ -377,7 +377,18 @@ export function CatalogPage({
                           }
                         }}
                       >
-                        <td>{product.code}</td>
+                        <td>
+                          <button
+                            className="management-link-button"
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void toggleProductDetail(product)
+                            }}
+                          >
+                            <strong>{product.code}</strong>
+                          </button>
+                        </td>
                         <td>{product.name}</td>
                         <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
                         <td>{product.unit_name}</td>

@@ -1679,7 +1679,19 @@ button {
   background: transparent;
   color: var(--color-primary);
   padding: 0;
+  font: inherit;
+  font-weight: 800;
   text-align: left;
+  cursor: pointer;
+}
+
+.management-link-button strong {
+  font: inherit;
+  font-weight: inherit;
+}
+
+.management-link-button:hover {
+  text-decoration: underline;
 }
 
 .finance-cashbook-detail {

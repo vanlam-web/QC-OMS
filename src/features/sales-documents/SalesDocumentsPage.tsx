@@ -688,7 +688,16 @@ export function SalesDocumentsPage({
                           }}
                         >
                           <td>
-                            <strong>{document.code}</strong>
+                            <button
+                              className="management-link-button"
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                void openDocument(document)
+                              }}
+                            >
+                              <strong>{document.code}</strong>
+                            </button>
                           </td>
                           <td>{dateTime(document.created_at)}</td>
                           <td>{document.customer.name}</td>
