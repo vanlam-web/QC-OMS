@@ -20,7 +20,7 @@ Quan sát bổ sung ngày `05/07/2026` từ KiotViet đang mở và file xuất 
   - chọn cột hiển thị
   - thiết lập/hướng dẫn
 - Bộ lọc trái có:
-  - Quỹ tiền: Tiền mặt, Ngân hàng, Ví điện tử, Tổng quỹ
+  - Quỹ tiền: Tiền mặt, Ngân hàng, Ví điện tử, Tổng quỹ; khi chọn Ngân hàng mới chọn tài khoản cụ thể ở ô riêng
   - Thời gian: Tháng này, Tùy chỉnh
   - Loại chứng từ: Phiếu thu, Phiếu chi
   - Loại thu chi
@@ -173,7 +173,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 | Bộ lọc | Giá trị |
 |---|---|
-| Quỹ tiền | Radio list chọn một: `Tiền mặt` đứng đầu và được chọn mặc định, sau đó tới từng tài khoản ngân hàng, cuối cùng là `Tổng quỹ` |
+| Quỹ tiền | Radio list chọn một: `Tiền mặt`, `Ngân hàng`, `Tổng quỹ`. `Ngân hàng` là phương thức, không phải từng tài khoản. Khi chọn `Ngân hàng`, UI hiện khối `Tài khoản` bên dưới để chọn tài khoản cụ thể |
 | Thời gian | Hôm nay, hôm qua, tuần này, tuần trước, 7 ngày qua, tháng này, tháng trước, 30 ngày qua, quý này, quý trước, năm nay, năm trước, toàn thời gian, tùy chỉnh |
 | Loại chứng từ | Checkbox group: `Phiếu thu`, `Phiếu chi`; mặc định không tick nghĩa là xem cả hai |
 | Loại thu chi | Chưa có trong UI hiện tại; thuộc slice sau |
@@ -187,6 +187,8 @@ Ghi chú:
 
 - Filter hiện tại tự gọi lại danh sách sổ quỹ khi đổi thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD.
 - UI filter dùng hình thái giống KiotViet cho những phần đã đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs. Màu sắc vẫn theo design system QC-OMS.
+- Khi chọn `Ngân hàng`, khối `Tài khoản` hiện nút `Thêm` ở góc phải tiêu đề và ô `Chọn tài khoản`. Click ô này xổ dropdown có ô tìm kiếm nhanh và danh sách tài khoản dạng `Ngân hàng - Số tài khoản - Chủ tài khoản`; chọn dòng sẽ lọc sổ quỹ theo `finance_account_id`.
+- Popup `Thêm tài khoản ngân hàng` hiện là UI local trong frontend vì backend chưa có endpoint tạo tài khoản quỹ. Popup dùng shared modal compact, gồm số tài khoản, ngân hàng, chủ tài khoản, số dư ban đầu, ghi chú, checkbox bật thông báo và footer `Bỏ qua`/`Lưu`.
 - `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp; hiện đã có trường khi tạo phiếu thủ công, chưa có filter list.
 - `Người nộp/nhận` đã hiển thị được tên trong bảng khi API list trả `counterparty`; slice sau cần bổ sung tìm theo tên, mã và số điện thoại.
 - Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả; hiện UI sổ quỹ chưa có ô tìm mã phiếu riêng.

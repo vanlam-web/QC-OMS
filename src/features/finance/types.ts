@@ -37,6 +37,11 @@ export interface FinanceAccount {
   account_type: FinanceAccountType
   is_default_cash: boolean
   is_active: boolean
+  account_number?: string
+  account_holder?: string
+  opening_balance?: number
+  note?: string
+  notify_on_transaction?: boolean
 }
 
 export interface FinanceAccountListResponse {

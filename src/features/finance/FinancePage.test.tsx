@@ -281,10 +281,10 @@ describe('FinancePage', () => {
     expect(within(sidebar).queryByLabelText('Tìm sổ quỹ')).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm theo')).not.toBeInTheDocument()
     expect(within(sidebar).getByRole('radio', { name: 'Tiền mặt' })).toBeChecked()
-    expect(within(sidebar).getByRole('radio', { name: 'MB01 · MB Bank' })).not.toBeChecked()
-    expect(within(sidebar).getAllByRole('radio', { name: /Tiền mặt|MB01|Tổng quỹ/ }).map((input) => input.closest('label')?.textContent)).toEqual([
+    expect(within(sidebar).getByRole('radio', { name: 'Ngân hàng' })).not.toBeChecked()
+    expect(within(sidebar).getAllByRole('radio', { name: /Tiền mặt|Ngân hàng|Tổng quỹ/ }).map((input) => input.closest('label')?.textContent)).toEqual([
       'Tiền mặt',
-      'MB01 · MB Bank',
+      'Ngân hàng',
       'Tổng quỹ',
     ])
     expect(within(sidebar).queryByRole('combobox', { name: 'Quỹ tiền' })).not.toBeInTheDocument()
@@ -292,7 +292,11 @@ describe('FinancePage', () => {
     expect(within(sidebar).queryByRole('combobox', { name: 'Trạng thái sổ quỹ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Hạch toán KQKD' })).not.toBeInTheDocument()
 
-    await userEvent.click(within(sidebar).getByRole('radio', { name: 'MB01 · MB Bank' }))
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'Ngân hàng' }))
+    expect(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' })).toHaveTextContent('Chọn tài khoản')
+    await userEvent.click(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' }))
+    expect(within(sidebar).getByRole('textbox', { name: 'Tìm kiếm tài khoản' })).toBeInTheDocument()
+    await userEvent.click(within(sidebar).getByRole('option', { name: /MB01 - MB Bank/ }))
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Phiếu thu' }))
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' }))
     await userEvent.click(within(sidebar).getByRole('radio', { name: 'Không' }))
@@ -340,6 +344,28 @@ describe('FinancePage', () => {
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'cancelled' }))
   })
 
+  it('adds a local bank account from the cashbook bank picker', async () => {
+    const service = makeService()
+    render(<FinancePage service={service} />)
+
+    const sidebar = await screen.findByRole('complementary', { name: 'Bộ lọc tài chính' })
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'Ngân hàng' }))
+    await userEvent.click(within(sidebar).getByRole('button', { name: 'Thêm' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Thêm tài khoản ngân hàng' })
+    const form = within(dialog).getByRole('form', { name: 'Thêm tài khoản ngân hàng' })
+    await userEvent.selectOptions(within(form).getByLabelText('Ngân hàng'), 'Vietcombank')
+    await userEvent.type(within(form).getByLabelText('Số tài khoản'), '0771000598653')
+    await userEvent.type(within(form).getByLabelText('Chủ tài khoản'), 'van viet phuong lam')
+    await userEvent.type(within(form).getByLabelText('Số dư ban đầu'), '1500000')
+    expect(within(form).getByLabelText('Bật thông báo tiền về')).toBeChecked()
+    await userEvent.click(within(form).getByRole('button', { name: 'Lưu' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Thêm tài khoản ngân hàng' })).not.toBeInTheDocument()
+    expect(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' })).toHaveTextContent('Vietcombank - 0771000598653 - VAN VIET PHUONG LAM')
+    expect(screen.getByRole('status')).toHaveTextContent('Đã thêm tài khoản ngân hàng.')
+  })
+
   it('filters cashbook by date range', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
@@ -371,7 +397,7 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    await userEvent.click(screen.getByRole('radio', { name: 'MB01 · MB Bank' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Ngân hàng' }))
 
     const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
     expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc tài chính' })).not.toBeInTheDocument()

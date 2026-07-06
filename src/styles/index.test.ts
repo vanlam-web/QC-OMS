@@ -127,6 +127,17 @@ it('keeps shared filter choices compact with borders only on active state', () =
   expect(activeRule).toContain('box-shadow: none')
 })
 
+it('keeps shared filter account picker compact and layered', () => {
+  expect(cssRule('.management-filter-account-picker')).toContain('position: relative')
+  expect(cssRule('.management-filter-account-menu')).toContain('position: absolute')
+  expect(cssRule('.management-filter-account-menu')).toContain('max-height: 18rem')
+  expect(cssRule('.management-filter-account-menu')).toContain('box-shadow: var(--shadow-md)')
+  expect(cssRule('.management-filter-account-search')).toContain('min-height: 2rem')
+  expect(cssRule(".management-filter-account-list button:hover,\n.management-filter-account-list button[aria-selected='true']")).toContain('background: color-mix')
+  expect(cssRule('.management-modal-dialog-compact')).toContain('width: min(31.25rem, calc(100vw - var(--space-4)))')
+  expect(cssRule('.management-modal-form-stack')).toContain('display: grid')
+})
+
 it('lets feature forms live inside the shared filter sidebar without custom layout CSS', () => {
   expect(cssRule('.management-filter-sidebar-form')).toContain('display: contents')
   expect(cssRule('.management-filter-actions')).toContain('position: sticky')

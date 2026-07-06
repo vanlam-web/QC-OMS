@@ -670,6 +670,116 @@ button {
   color: var(--color-text);
 }
 
+.management-filter-account-picker {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
+}
+
+.management-filter-subheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.management-filter-subheading button {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  padding: 0;
+  font-weight: 900;
+}
+
+.management-filter-account-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  text-align: left;
+}
+
+.management-filter-account-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-filter-account-menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  left: var(--space-4);
+  z-index: 8;
+  display: grid;
+  gap: var(--space-2);
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2);
+}
+
+.management-filter-account-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2rem;
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  padding: 0 var(--space-2);
+}
+
+.management-filter-account-search input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.management-filter-account-list {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.management-filter-account-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  text-align: left;
+}
+
+.management-filter-account-list button:hover,
+.management-filter-account-list button[aria-selected='true'] {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.management-filter-account-empty {
+  color: var(--color-text-muted);
+  padding: var(--space-2);
+  font-size: 0.875rem;
+}
+
 .management-filter-options .management-filter-choice-active {
   border-color: transparent;
   background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
@@ -1230,6 +1340,10 @@ button {
   padding: var(--space-4);
 }
 
+.management-modal-dialog-compact {
+  width: min(31.25rem, calc(100vw - var(--space-4)));
+}
+
 .management-modal-header,
 .management-modal-footer,
 .management-field-heading,
@@ -1274,6 +1388,11 @@ button {
 .management-modal-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.management-modal-form-stack {
+  display: grid;
   gap: var(--space-3);
 }
 
@@ -1352,6 +1471,12 @@ button {
 
 .management-modal-checkbox-row svg {
   color: var(--color-text-muted);
+}
+
+.management-modal-helper-text {
+  margin: calc(var(--space-2) * -1) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
 }
 
 .management-modal-footer {

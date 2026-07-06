@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, type MouseEvent } from 'react'
-import { CalendarDays, ChevronRight, Download, Info, Plus, Search, StickyNote, Trash2, WalletCards, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Download, Info, Plus, Search, StickyNote, Trash2, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -36,6 +36,7 @@ import { buildCashbookCsv } from './finance-service'
 const pageSizeDefault = 15
 const cashbookFavoritesStorageKey = 'finance.cashbook.favoriteEntryIds'
 type CashbookTimeFilter = 'all' | 'today' | 'yesterday' | 'week' | 'last_week' | 'last_7_days' | 'month' | 'last_month' | 'last_30_days' | 'quarter' | 'last_quarter' | 'year' | 'last_year' | 'custom'
+type CashbookFundMode = 'cash' | 'bank' | 'all'
 const showAuxiliaryFinanceSections = false
 const defaultCashbookColumns: CashbookColumnKey[] = [
   'code',
@@ -104,6 +105,18 @@ function accountTypeText(type: FinanceAccount['account_type']) {
 function financeAccountChoiceLabel(account: FinanceAccount) {
   if (account.account_type === 'cash') return 'Tiền mặt'
   return `${account.code} · ${account.name}`
+}
+
+function bankAccountDisplayText(account: FinanceAccount) {
+  return [account.code, account.account_number ?? account.name, account.account_holder].filter(Boolean).join(' - ')
+}
+
+function bankAccountMatches(account: FinanceAccount, query: string) {
+  const normalized = query.trim().toLocaleLowerCase('vi')
+  if (normalized === '') return true
+  return [account.code, account.name, account.account_number, account.account_holder]
+    .filter(Boolean)
+    .some((value) => value!.toLocaleLowerCase('vi').includes(normalized))
 }
 
 function cashFirstAccountSort(left: FinanceAccount, right: FinanceAccount) {
@@ -407,8 +420,18 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const [cashbookTo, setCashbookTo] = useState(() => currentMonthRange().to)
   const [lastCashbookTo, setLastCashbookTo] = useState(() => currentMonthRange().to)
   const [cashbookQuickTimeOpen, setCashbookQuickTimeOpen] = useState(false)
+  const [cashbookFundMode, setCashbookFundMode] = useState<CashbookFundMode>('cash')
   const [cashbookAccountId, setCashbookAccountId] = useState('')
   const [lastCashbookAccountId, setLastCashbookAccountId] = useState('')
+  const [bankAccountMenuOpen, setBankAccountMenuOpen] = useState(false)
+  const [bankAccountSearch, setBankAccountSearch] = useState('')
+  const [bankAccountModalOpen, setBankAccountModalOpen] = useState(false)
+  const [newBankCode, setNewBankCode] = useState('MB')
+  const [newBankAccountNumber, setNewBankAccountNumber] = useState('')
+  const [newBankAccountHolder, setNewBankAccountHolder] = useState('')
+  const [newBankOpeningBalance, setNewBankOpeningBalance] = useState('0')
+  const [newBankNote, setNewBankNote] = useState('')
+  const [newBankNotify, setNewBankNotify] = useState(true)
   const [cashbookDirectionSelection, setCashbookDirectionSelection] = useState<CashbookDirection[]>([])
   const cashbookDirection = directionFilterFromSelection(cashbookDirectionSelection)
   const [lastCashbookDirection, setLastCashbookDirection] = useState<CashbookDirection | 'all'>('all')
@@ -451,6 +474,12 @@ export function FinancePage({ service }: { service: FinanceService }) {
   const activeBankAccounts = accounts.filter((account) => account.is_active && account.account_type === 'bank')
   const activeAccounts = accounts.filter((account) => account.is_active)
   const sortedActiveAccounts = [...activeAccounts].sort(cashFirstAccountSort)
+  const defaultCashAccountId = sortedActiveAccounts.find((account) => account.account_type === 'cash' && account.is_default_cash)?.id
+    ?? sortedActiveAccounts.find((account) => account.account_type === 'cash')?.id
+    ?? ''
+  const sortedBankAccounts = sortedActiveAccounts.filter((account) => account.account_type === 'bank')
+  const filteredBankAccounts = sortedBankAccounts.filter((account) => bankAccountMatches(account, bankAccountSearch))
+  const selectedBankAccount = sortedBankAccounts.find((account) => account.id === cashbookAccountId)
   const visibleCashbookEntries = showCashbookFavoritesOnly
     ? (cashbookEntries ?? []).filter((entry) => cashbookFavoriteIds.includes(entry.id))
     : (cashbookEntries ?? [])
@@ -705,9 +734,66 @@ export function FinancePage({ service }: { service: FinanceService }) {
     })
   }
 
-  async function chooseCashbookAccount(nextValue: string) {
-    setCashbookAccountId(nextValue)
-    await applyCashbookFilters({ finance_account_id: nextValue })
+  async function chooseCashbookFund(nextMode: CashbookFundMode) {
+    setCashbookFundMode(nextMode)
+    setBankAccountMenuOpen(false)
+    if (nextMode === 'cash') {
+      setCashbookAccountId(defaultCashAccountId)
+      await applyCashbookFilters({ finance_account_id: defaultCashAccountId })
+      return
+    }
+    if (nextMode === 'all') {
+      setCashbookAccountId('all')
+      await applyCashbookFilters({ finance_account_id: 'all' })
+      return
+    }
+    setCashbookAccountId('')
+    setBankAccountSearch('')
+  }
+
+  async function chooseCashbookBankAccount(accountId: string) {
+    setCashbookFundMode('bank')
+    setCashbookAccountId(accountId)
+    setBankAccountMenuOpen(false)
+    await applyCashbookFilters({ finance_account_id: accountId })
+  }
+
+  function openBankAccountModal() {
+    setBankAccountModalOpen(true)
+    setNewBankCode('MB')
+    setNewBankAccountNumber('')
+    setNewBankAccountHolder('')
+    setNewBankOpeningBalance('0')
+    setNewBankNote('')
+    setNewBankNotify(true)
+  }
+
+  async function saveBankAccount(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (newBankAccountNumber.trim() === '' || newBankAccountHolder.trim() === '') {
+      setError('Nhập số tài khoản và chủ tài khoản.')
+      return
+    }
+    const accountNumber = newBankAccountNumber.trim()
+    const nextAccount: FinanceAccount = {
+      id: `local-bank-${accountNumber.replace(/\W/g, '')}`,
+      code: newBankCode,
+      name: newBankCode,
+      account_type: 'bank',
+      is_default_cash: false,
+      is_active: true,
+      account_number: accountNumber,
+      account_holder: newBankAccountHolder.trim().toLocaleUpperCase('vi'),
+      opening_balance: parseVoucherAmountInput(newBankOpeningBalance),
+      note: newBankNote.trim() || undefined,
+      notify_on_transaction: newBankNotify,
+    }
+    setAccounts((current) => [...current, nextAccount])
+    setCashbookFundMode('bank')
+    setCashbookAccountId(nextAccount.id)
+    setBankAccountModalOpen(false)
+    setMessage('Đã thêm tài khoản ngân hàng.')
+    await applyCashbookFilters({ finance_account_id: nextAccount.id })
   }
 
   async function toggleCashbookDirection(nextValue: CashbookDirection) {
@@ -1072,26 +1158,75 @@ export function FinancePage({ service }: { service: FinanceService }) {
               ) : null}
             </ManagementFilterGroup>
             <ManagementFilterGroup title="Quỹ tiền">
-              {sortedActiveAccounts.map((account) => (
-                <label
-                  className={`management-filter-choice${cashbookAccountId === account.id ? ' management-filter-choice-active' : ''}`}
-                  key={account.id}
-                >
-                  <input
-                    checked={cashbookAccountId === account.id}
-                    name="cashbook-account"
-                    type="radio"
-                    onChange={() => void chooseCashbookAccount(account.id)}
-                  />
-                  <span>{financeAccountChoiceLabel(account)}</span>
-                </label>
-              ))}
-              <label className={`management-filter-choice${cashbookAccountId === 'all' ? ' management-filter-choice-active' : ''}`}>
+              <label className={`management-filter-choice${cashbookFundMode === 'cash' ? ' management-filter-choice-active' : ''}`}>
                 <input
-                  checked={cashbookAccountId === 'all'}
-                  name="cashbook-account"
+                  checked={cashbookFundMode === 'cash'}
+                  name="cashbook-fund"
                   type="radio"
-                  onChange={() => void chooseCashbookAccount('all')}
+                  onChange={() => void chooseCashbookFund('cash')}
+                />
+                <span>Tiền mặt</span>
+              </label>
+              <label className={`management-filter-choice${cashbookFundMode === 'bank' ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookFundMode === 'bank'}
+                  name="cashbook-fund"
+                  type="radio"
+                  onChange={() => void chooseCashbookFund('bank')}
+                />
+                <span>Ngân hàng</span>
+              </label>
+              {cashbookFundMode === 'bank' ? (
+                <div className="management-filter-account-picker">
+                  <div className="management-filter-subheading">
+                    <span>Tài khoản</span>
+                    <button type="button" onClick={openBankAccountModal}>Thêm</button>
+                  </div>
+                  <button
+                    aria-expanded={bankAccountMenuOpen}
+                    aria-label="Chọn tài khoản"
+                    className="management-filter-account-trigger"
+                    type="button"
+                    onClick={() => setBankAccountMenuOpen((current) => !current)}
+                  >
+                    <span>{selectedBankAccount ? bankAccountDisplayText(selectedBankAccount) : 'Chọn tài khoản'}</span>
+                    <ChevronRight aria-hidden="true" size={16} />
+                  </button>
+                  {bankAccountMenuOpen ? (
+                    <div className="management-filter-account-menu" role="listbox" aria-label="Danh sách tài khoản ngân hàng">
+                      <label className="management-filter-account-search">
+                        <Search aria-hidden="true" size={15} />
+                        <input
+                          aria-label="Tìm kiếm tài khoản"
+                          placeholder="Tìm kiếm"
+                          value={bankAccountSearch}
+                          onChange={(event) => setBankAccountSearch(event.target.value)}
+                        />
+                      </label>
+                      <div className="management-filter-account-list">
+                        {filteredBankAccounts.length > 0 ? filteredBankAccounts.map((account) => (
+                          <button
+                            aria-selected={cashbookAccountId === account.id}
+                            key={account.id}
+                            role="option"
+                            type="button"
+                            onClick={() => void chooseCashbookBankAccount(account.id)}
+                          >
+                            <span>{bankAccountDisplayText(account)}</span>
+                            {cashbookAccountId === account.id ? <Check aria-hidden="true" size={15} /> : null}
+                          </button>
+                        )) : <span className="management-filter-account-empty">Không có tài khoản phù hợp</span>}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              <label className={`management-filter-choice${cashbookFundMode === 'all' ? ' management-filter-choice-active' : ''}`}>
+                <input
+                  checked={cashbookFundMode === 'all'}
+                  name="cashbook-fund"
+                  type="radio"
+                  onChange={() => void chooseCashbookFund('all')}
                 />
                 <span>Tổng quỹ</span>
               </label>
@@ -1270,6 +1405,71 @@ export function FinancePage({ service }: { service: FinanceService }) {
                 <button className="button button-secondary" type="button" onClick={closeVoucherForm}>Bỏ qua</button>
                 <button className="button button-secondary" disabled={savingVoucher} type="submit">Lưu & In</button>
                 <button className="button button-primary" disabled={savingVoucher} type="submit">Lưu</button>
+              </footer>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {bankAccountModalOpen ? (
+        <div className="management-modal-backdrop">
+          <section aria-label="Thêm tài khoản ngân hàng" aria-modal="true" className="management-modal-dialog management-modal-dialog-compact" role="dialog">
+            <header className="management-modal-header">
+              <h2>Thêm tài khoản ngân hàng</h2>
+              <button aria-label="Đóng popup thêm tài khoản ngân hàng" className="management-icon-button" type="button" onClick={() => setBankAccountModalOpen(false)}>
+                <X aria-hidden="true" size={18} />
+              </button>
+            </header>
+            <div className="finance-cashbook-detail-tabs" role="tablist" aria-label="Tài khoản ngân hàng">
+              <button aria-selected="true" role="tab" type="button">Thông tin</button>
+            </div>
+            <form aria-label="Thêm tài khoản ngân hàng" className="management-modal-form" onSubmit={saveBankAccount}>
+              <div className="management-modal-form-stack">
+                <label>
+                  Số tài khoản
+                  <input placeholder="Nhập số tài khoản" value={newBankAccountNumber} onChange={(event) => setNewBankAccountNumber(event.target.value)} />
+                </label>
+                <label>
+                  Ngân hàng
+                  <select value={newBankCode} onChange={(event) => setNewBankCode(event.target.value)}>
+                    <option value="Vietcombank">Vietcombank</option>
+                    <option value="Techcombank">Techcombank</option>
+                    <option value="MB">MB</option>
+                    <option value="ACB">ACB</option>
+                    <option value="BIDV">BIDV</option>
+                    <option value="VietinBank">VietinBank</option>
+                  </select>
+                </label>
+                <label>
+                  Chủ tài khoản
+                  <input
+                    placeholder="Nhập tên chủ tài khoản"
+                    value={newBankAccountHolder}
+                    onChange={(event) => setNewBankAccountHolder(event.target.value.toLocaleUpperCase('vi'))}
+                  />
+                </label>
+                <label>
+                  Số dư ban đầu
+                  <input
+                    inputMode="numeric"
+                    value={newBankOpeningBalance}
+                    onChange={(event) => setNewBankOpeningBalance(formatVoucherAmountInput(event.target.value))}
+                  />
+                </label>
+                <label>
+                  Ghi chú
+                  <textarea placeholder="Nhập ghi chú" rows={3} value={newBankNote} onChange={(event) => setNewBankNote(event.target.value)} />
+                </label>
+                <label className="management-modal-checkbox-row">
+                  <input checked={newBankNotify} type="checkbox" onChange={(event) => setNewBankNotify(event.target.checked)} />
+                  <span>Bật thông báo tiền về</span>
+                  <Info aria-hidden="true" size={15} />
+                </label>
+                <p className="management-modal-helper-text">Xác nhận nhanh giao dịch, giảm thiểu thất thoát.</p>
+              </div>
+              <footer className="management-modal-footer">
+                <button className="button button-secondary" type="button" onClick={() => setBankAccountModalOpen(false)}>Bỏ qua</button>
+                <button className="button button-primary" type="submit">Lưu</button>
               </footer>
             </form>
           </section>
