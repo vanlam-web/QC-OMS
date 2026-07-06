@@ -769,7 +769,7 @@ function SalesDocumentDetailView({
   if (loading || !document) return <p>Đang tải chi tiết...</p>
 
   return (
-    <div className="sales-document-detail">
+    <div className="management-detail-panel sales-document-detail">
       <div className="inline-detail-tabbar">
         <div aria-label="Chi tiết chứng từ" className="inline-detail-tabs" role="tablist">
           <button

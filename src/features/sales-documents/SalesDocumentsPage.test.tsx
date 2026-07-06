@@ -636,6 +636,7 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
   expect(detailRegion).toHaveClass('management-inline-detail')
   expect(detailRegion.closest('.management-detail-row')).not.toBeNull()
+  expect(detailRegion.querySelector('.sales-document-detail')).toHaveClass('management-detail-panel')
   const detailHeader = within(detailRegion).getByRole('banner')
   expect(detailHeader).toHaveClass('sales-document-detail-header')
   expect(detailHeader.querySelector('.sales-document-detail-title-line')).toBeNull()
