@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, type MouseEvent } from 'react'
-import { CalendarDays, Check, ChevronRight, Download, Info, Plus, Search, StickyNote, Trash2, WalletCards, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Download, Edit3, Info, Plus, Printer, Search, StickyNote, Trash2, WalletCards, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
 import {
@@ -1753,6 +1753,16 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                   <button aria-label={`Xóa phiếu ${cashbookDetail.code}`} className="button button-secondary management-detail-action-danger" disabled type="button">
                                     <Trash2 aria-hidden="true" size={16} />
                                     Xóa
+                                  </button>
+                                </div>
+                                <div className="management-detail-footer-actions-right">
+                                  <button aria-label={`Chỉnh sửa phiếu ${cashbookDetail.code}`} className="button button-primary" disabled type="button">
+                                    <Edit3 aria-hidden="true" size={16} />
+                                    Chỉnh sửa
+                                  </button>
+                                  <button aria-label={`In phiếu ${cashbookDetail.code}`} className="button button-secondary" disabled type="button">
+                                    <Printer aria-hidden="true" size={16} />
+                                    In
                                   </button>
                                 </div>
                               </footer>

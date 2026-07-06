@@ -122,7 +122,7 @@ Hiện trạng detail inline sau ngày `06/07/2026`:
 - Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
 - Nếu không có `allocations` nhưng ghi chú/source chứa mã `HD...` hoặc `PN...`, panel vẫn hiển thị dòng chứng từ liên kết suy luận để người dùng thấy phiếu thu/chi gắn với hóa đơn/phiếu nhập nào. Nếu không có dữ liệu liên kết, bảng con hiển thị trạng thái rỗng.
 - Không hiển thị dòng `Tiền chưa phân bổ: 0` trong detail.
-- Footer detail dùng CSS chung `management-detail-footer-actions` để các trang danh sách có cùng hàng action cuối. Hiện sổ quỹ chỉ giữ một nút `Xóa` tạm thời và đang disabled nếu chưa có API/hành vi an toàn; các nút khác sẽ bổ sung theo tác vụ từng trang.
+- Footer detail dùng CSS chung `management-detail-footer-actions` để các trang danh sách có cùng hàng action cuối. Hiện sổ quỹ có `Xóa` canh trái, `Chỉnh sửa` và `In` canh phải; các nút đang disabled nếu chưa có API/hành vi an toàn.
 
 Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail. Không hiển thị `Người thu`/`Người chi` riêng khi backend chưa cần tách trường này.
 
