@@ -2343,7 +2343,6 @@ td:has(.money-text) {
 }
 
 .dashboard-icon-button,
-.dashboard-sale-button,
 .dashboard-signout-button {
   min-height: 2.25rem;
   border: 1px solid var(--color-border);
@@ -2360,7 +2359,6 @@ td:has(.money-text) {
   padding: 0;
 }
 
-.dashboard-sale-button,
 .dashboard-signout-button {
   display: inline-flex;
   align-items: center;
@@ -2368,12 +2366,6 @@ td:has(.money-text) {
   padding: 0 var(--space-3);
   font-weight: 700;
   white-space: nowrap;
-}
-
-.dashboard-sale-button {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #fff;
 }
 
 .dashboard-grid {

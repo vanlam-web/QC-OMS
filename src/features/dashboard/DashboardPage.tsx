@@ -119,10 +119,6 @@ export function DashboardPage({
           <button aria-label="Tài khoản" className="dashboard-icon-button" type="button">
             <UserCircle aria-hidden="true" size={19} />
           </button>
-          <button className="dashboard-sale-button" type="button" onClick={onOpenPos}>
-            <ShoppingCart aria-hidden="true" size={18} />
-            Bán hàng
-          </button>
           {showSignOut ? (
             <button className="dashboard-signout-button" type="button" onClick={onSignOut}>
               Đăng xuất
