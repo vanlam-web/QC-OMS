@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Pencil, Printer, Save, Search, XCircle } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Pencil, Printer, Save, Search, Trash2 } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailActionFooter,
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
@@ -897,32 +898,17 @@ function SalesDocumentDetailView({
           </table>
         </section>
       )}
-      <footer className="management-detail-footer-actions">
-        <div className="management-detail-footer-actions-left">
-          <button className="button button-secondary management-detail-action-danger" disabled type="button">
-            <XCircle aria-hidden="true" size={15} />
-            Hủy
-          </button>
-          <button className="button button-secondary" disabled type="button">
-            <Copy aria-hidden="true" size={15} />
-            Sao chép
-          </button>
-        </div>
-        <div className="management-detail-footer-actions-right">
-          <button className="button button-secondary" disabled type="button">
-            <Pencil aria-hidden="true" size={15} />
-            Chỉnh sửa
-          </button>
-          <button className="button button-primary" disabled type="button">
-            <Save aria-hidden="true" size={15} />
-            Lưu
-          </button>
-          <button className="button button-secondary" disabled type="button">
-            <Printer aria-hidden="true" size={15} />
-            In
-          </button>
-        </div>
-      </footer>
+      <ManagementDetailActionFooter
+        leftActions={[
+          { label: 'Hủy', danger: true, disabled: true, icon: <Trash2 aria-hidden="true" size={15} /> },
+          { label: 'Sao chép', disabled: true, icon: <Copy aria-hidden="true" size={15} /> },
+        ]}
+        rightActions={[
+          { label: 'Chỉnh sửa', disabled: true, icon: <Pencil aria-hidden="true" size={15} /> },
+          { label: 'Lưu', variant: 'primary', disabled: true, icon: <Save aria-hidden="true" size={15} /> },
+          { label: 'In', disabled: true, icon: <Printer aria-hidden="true" size={15} /> },
+        ]}
+      />
     </div>
   )
 }

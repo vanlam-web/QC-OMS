@@ -292,6 +292,54 @@ export function ManagementRowActionButton({
   )
 }
 
+export interface ManagementDetailAction {
+  label: string
+  icon?: ReactNode
+  ariaLabel?: string
+  disabled?: boolean
+  variant?: 'primary' | 'secondary'
+  danger?: boolean
+  onClick?: () => void
+}
+
+function ManagementDetailActionButton({ action }: { action: ManagementDetailAction }) {
+  return (
+    <button
+      aria-label={action.ariaLabel}
+      className={`button button-${action.variant ?? 'secondary'}${action.danger ? ' management-detail-action-danger' : ''}`}
+      disabled={action.disabled}
+      type="button"
+      onClick={action.onClick}
+    >
+      {action.icon}
+      {action.label}
+    </button>
+  )
+}
+
+export function ManagementDetailActionFooter({
+  leftActions,
+  rightActions,
+}: {
+  leftActions?: ManagementDetailAction[]
+  rightActions?: ManagementDetailAction[]
+}) {
+  return (
+    <footer className="management-detail-footer-actions">
+      <div className="management-detail-footer-actions-left">
+        {leftActions?.map((action) => (
+          <ManagementDetailActionButton key={action.label} action={action} />
+        ))}
+      </div>
+      <div className="management-detail-footer-actions-right">
+        {rightActions?.map((action) => (
+          <ManagementDetailActionButton key={action.label} action={action} />
+        ))}
+      </div>
+    </footer>
+  )
+}
+
 export function ManagementDetailRow({
   colSpan,
   label,

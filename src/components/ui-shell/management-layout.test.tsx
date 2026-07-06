@@ -8,6 +8,7 @@ import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailActionFooter,
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
@@ -282,4 +283,30 @@ it('renders compact row action buttons and inline detail rows tied to the table'
   expect(detailRegion).toHaveClass('management-inline-detail')
   expect(detailRegion.closest('tr')).toHaveClass('management-detail-row-selected')
   expect(screen.getByRole('cell', { name: /Chi tiết/ })).toHaveAttribute('colspan', '2')
+})
+
+it('renders shared detail action footer with left and right action groups', () => {
+  const onPrint = vi.fn()
+
+  render(
+    <ManagementDetailActionFooter
+      leftActions={[
+        { label: 'Hủy', danger: true, disabled: true, icon: <span data-testid="cancel-icon" /> },
+        { label: 'Sao chép', disabled: true },
+      ]}
+      rightActions={[
+        { label: 'Chỉnh sửa', disabled: true },
+        { label: 'Lưu', variant: 'primary', disabled: true },
+        { label: 'In', onClick: onPrint },
+      ]}
+    />,
+  )
+
+  const footer = screen.getByText('Hủy').closest('.management-detail-footer-actions')
+  expect(footer).not.toBeNull()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toHaveClass('management-detail-action-danger')
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toHaveClass('button-primary')
+  expect(footer?.querySelector('.management-detail-footer-actions-left')).toContainElement(screen.getByTestId('cancel-icon'))
+  expect(footer?.querySelector('.management-detail-footer-actions-right')).toContainElement(screen.getByRole('button', { name: 'In' }))
 })

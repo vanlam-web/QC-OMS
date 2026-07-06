@@ -5,6 +5,7 @@ import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../..
 import {
   ManagementCompactSearch,
   ManagementCompactToolbar,
+  ManagementDetailActionFooter,
   ManagementDetailRow,
   ManagementFilterGroup,
   ManagementFilterSidebar,
@@ -1753,24 +1754,32 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                 {cashbookDetailNoteText(cashbookDetail)}
                               </div>
                               <CashbookLinkedDocuments entry={cashbookDetail} />
-                              <footer className="management-detail-footer-actions finance-cashbook-detail-footer-actions">
-                                <div className="management-detail-footer-actions-left">
-                                  <button aria-label={`Xóa phiếu ${cashbookDetail.code}`} className="button button-secondary management-detail-action-danger" disabled type="button">
-                                    <Trash2 aria-hidden="true" size={16} />
-                                    Xóa
-                                  </button>
-                                </div>
-                                <div className="management-detail-footer-actions-right">
-                                  <button aria-label={`Chỉnh sửa phiếu ${cashbookDetail.code}`} className="button button-primary" disabled type="button">
-                                    <Edit3 aria-hidden="true" size={16} />
-                                    Chỉnh sửa
-                                  </button>
-                                  <button aria-label={`In phiếu ${cashbookDetail.code}`} className="button button-secondary" disabled type="button">
-                                    <Printer aria-hidden="true" size={16} />
-                                    In
-                                  </button>
-                                </div>
-                              </footer>
+                              <ManagementDetailActionFooter
+                                leftActions={[
+                                  {
+                                    label: 'Xóa',
+                                    ariaLabel: `Xóa phiếu ${cashbookDetail.code}`,
+                                    danger: true,
+                                    disabled: true,
+                                    icon: <Trash2 aria-hidden="true" size={16} />,
+                                  },
+                                ]}
+                                rightActions={[
+                                  {
+                                    label: 'Chỉnh sửa',
+                                    ariaLabel: `Chỉnh sửa phiếu ${cashbookDetail.code}`,
+                                    variant: 'primary',
+                                    disabled: true,
+                                    icon: <Edit3 aria-hidden="true" size={16} />,
+                                  },
+                                  {
+                                    label: 'In',
+                                    ariaLabel: `In phiếu ${cashbookDetail.code}`,
+                                    disabled: true,
+                                    icon: <Printer aria-hidden="true" size={16} />,
+                                  },
+                                ]}
+                              />
                             </div>
                           )}
                         </ManagementDetailRow>
