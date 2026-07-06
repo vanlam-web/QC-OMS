@@ -9,12 +9,10 @@ import {
   ShieldAlert,
   ShoppingCart,
   TrendingUp,
-  UserCircle,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { CurrentUserData } from '../../lib/api/types'
-import { canOpenModule, phaseOneModules } from '../navigation/module-boundaries'
 
 const revenuePoints = [34, 46, 42, 58, 52, 74, 68, 86, 80, 98, 92, 116]
 const weekdayBars = [
@@ -63,13 +61,6 @@ function wavePath(points: number[]) {
 }
 
 export function DashboardPage({
-  currentUser,
-  onOpenPos,
-  onOpenAdmin,
-  onOpenPriceBook,
-  onOpenSalesDocuments,
-  onOpenSuppliers,
-  onOpenPurchaseReceipts,
   onSignOut,
   showSignOut = true,
 }: {
@@ -83,23 +74,9 @@ export function DashboardPage({
   onSignOut: () => void
   showSignOut?: boolean
 }) {
-  const canAdmin = currentUser.permissions.includes('perm.access_admin_panel')
-
-  function openModule(moduleId: string) {
-    if (moduleId === 'pos') onOpenPos()
-    if (moduleId === 'price-book') onOpenPriceBook()
-    if (moduleId === 'sales-documents') onOpenSalesDocuments()
-    if (moduleId === 'suppliers') onOpenSuppliers()
-    if (moduleId === 'purchase-receipts') onOpenPurchaseReceipts()
-  }
-
   return (
     <main className="dashboard-shell">
       <header className="dashboard-header">
-        <div className="dashboard-brand">
-          <h1>QC-OMS</h1>
-          <p>{currentUser.user.display_name}</p>
-        </div>
         <nav aria-label="Điều hướng tổng quan" className="dashboard-nav">
           <span aria-current="page">Tổng quan</span>
           <span>Hàng hóa</span>
@@ -115,9 +92,6 @@ export function DashboardPage({
           </button>
           <button aria-label="Cài đặt" className="dashboard-icon-button" type="button">
             <Settings aria-hidden="true" size={18} />
-          </button>
-          <button aria-label="Tài khoản" className="dashboard-icon-button" type="button">
-            <UserCircle aria-hidden="true" size={19} />
           </button>
           {showSignOut ? (
             <button className="dashboard-signout-button" type="button" onClick={onSignOut}>
@@ -247,30 +221,6 @@ export function DashboardPage({
         </aside>
       </section>
 
-      <section aria-label="Module hệ thống" className="module-grid dashboard-module-grid">
-        {phaseOneModules.map((module) => {
-          const enabled = canOpenModule(currentUser, module)
-          const implemented =
-            module.id === 'pos' ||
-            module.id === 'price-book' ||
-            module.id === 'sales-documents' ||
-            module.id === 'suppliers' ||
-            module.id === 'purchase-receipts'
-          return (
-            <button
-              disabled={!enabled || !implemented}
-              key={module.id}
-              type="button"
-              onClick={() => openModule(module.id)}
-            >
-              {module.label}
-            </button>
-          )
-        })}
-        <button disabled={!canAdmin} type="button" onClick={onOpenAdmin}>
-          Quản trị
-        </button>
-      </section>
     </main>
   )
 }
