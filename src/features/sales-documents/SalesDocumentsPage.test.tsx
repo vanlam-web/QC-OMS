@@ -694,10 +694,18 @@ it('keeps the info tab visible when an invoice has no payment history', async ()
 
   await clickDocumentRow('HD010985')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+  const historyTab = within(detailRegion).getByRole('tab', { name: 'Lịch sử thanh toán' })
 
   expect(within(detailRegion).getByRole('tab', { name: 'Thông tin' })).toHaveAttribute('aria-selected', 'true')
-  expect(within(detailRegion).getByRole('tab', { name: 'Lịch sử thanh toán' })).toHaveAttribute('aria-selected', 'false')
-  expect(within(detailRegion).getByRole('tabpanel', { name: 'Thông tin chứng từ' })).toBeInTheDocument()
+  expect(historyTab).toHaveAttribute('aria-selected', 'false')
+  expect(within(detailRegion).getByRole('tabpanel', { name: 'Thông tin' })).toBeInTheDocument()
+
+  await userEvent.click(historyTab)
+
+  expect(historyTab).toHaveAttribute('aria-selected', 'true')
+  expect(within(detailRegion).queryByRole('tabpanel', { name: 'Thông tin' })).not.toBeInTheDocument()
+  expect(within(detailRegion).getByRole('tabpanel', { name: 'Lịch sử thanh toán' })).toBeInTheDocument()
+  expect(within(detailRegion).getByText('Chưa có lịch sử thanh toán.')).toBeInTheDocument()
 })
 
 it('shows payment receipt rows in the payment history tab', async () => {

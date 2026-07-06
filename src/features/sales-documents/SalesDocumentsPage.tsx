@@ -764,6 +764,10 @@ function SalesDocumentDetailView({
   onOpenQuotePrint?: (documentId: string) => void
 }) {
   const [activeTab, setActiveTab] = useState<'info' | 'payment-history'>('info')
+  const infoTabId = `sales-document-${document?.id ?? 'loading'}-info-tab`
+  const infoPanelId = `sales-document-${document?.id ?? 'loading'}-info-panel`
+  const paymentTabId = `sales-document-${document?.id ?? 'loading'}-payment-tab`
+  const paymentPanelId = `sales-document-${document?.id ?? 'loading'}-payment-panel`
 
   if (error) return <p role="alert">{error}</p>
   if (loading || !document) return <p>Đang tải chi tiết...</p>
@@ -773,7 +777,9 @@ function SalesDocumentDetailView({
       <div className="inline-detail-tabbar">
         <div aria-label="Chi tiết chứng từ" className="inline-detail-tabs" role="tablist">
           <button
+            aria-controls={infoPanelId}
             aria-selected={activeTab === 'info'}
+            id={infoTabId}
             role="tab"
             type="button"
             onClick={() => setActiveTab('info')}
@@ -781,7 +787,9 @@ function SalesDocumentDetailView({
             Thông tin
           </button>
           <button
+            aria-controls={paymentPanelId}
             aria-selected={activeTab === 'payment-history'}
+            id={paymentTabId}
             role="tab"
             type="button"
             onClick={() => setActiveTab('payment-history')}
@@ -791,7 +799,7 @@ function SalesDocumentDetailView({
         </div>
       </div>
       {activeTab === 'info' ? (
-        <section aria-label="Thông tin chứng từ" role="tabpanel">
+        <section aria-label="Thông tin chứng từ" aria-labelledby={infoTabId} id={infoPanelId} role="tabpanel">
           <header className="management-detail-header">
             <h2>{document.customer.name}</h2>
             <span>{document.code}</span>
@@ -881,33 +889,37 @@ function SalesDocumentDetailView({
           </div>
         </section>
       ) : (
-        <section aria-label="Lịch sử thanh toán" role="tabpanel">
-          <table aria-label="Lịch sử thanh toán" className="management-detail-table">
-            <thead>
-              <tr>
-                <th>Mã phiếu</th>
-                <th>Thời gian</th>
-                <th>Người thu</th>
-                <th>Giá trị phiếu</th>
-                <th>Phương thức</th>
-                <th>Trạng thái</th>
-                <th>Tiền thu/chi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {document.payment_receipts.map((receipt) => (
-                <tr key={receipt.id}>
-                  <td>{receipt.code}</td>
-                  <td>{dateTime(receipt.created_at)}</td>
-                  <td>{receipt.created_by.name || receipt.created_by.id}</td>
-                  <td><MoneyText value={receipt.total_received_amount} /></td>
-                  <td>{paymentReceiptMethodLabel(receipt)}</td>
-                  <td>{paymentReceiptStatusLabel(receipt.status)}</td>
-                  <td><MoneyText value={paymentReceiptMethodTotal(receipt)} /></td>
+        <section aria-label="Lịch sử thanh toán" aria-labelledby={paymentTabId} id={paymentPanelId} role="tabpanel">
+          {document.payment_receipts.length === 0 ? (
+            <p className="management-detail-inline-note">Chưa có lịch sử thanh toán.</p>
+          ) : (
+            <table aria-label="Lịch sử thanh toán" className="management-detail-table">
+              <thead>
+                <tr>
+                  <th>Mã phiếu</th>
+                  <th>Thời gian</th>
+                  <th>Người thu</th>
+                  <th>Giá trị phiếu</th>
+                  <th>Phương thức</th>
+                  <th>Trạng thái</th>
+                  <th>Tiền thu/chi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {document.payment_receipts.map((receipt) => (
+                  <tr key={receipt.id}>
+                    <td>{receipt.code}</td>
+                    <td>{dateTime(receipt.created_at)}</td>
+                    <td>{receipt.created_by.name || receipt.created_by.id}</td>
+                    <td><MoneyText value={receipt.total_received_amount} /></td>
+                    <td>{paymentReceiptMethodLabel(receipt)}</td>
+                    <td>{paymentReceiptStatusLabel(receipt.status)}</td>
+                    <td><MoneyText value={paymentReceiptMethodTotal(receipt)} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
       )}
       <ManagementDetailActionFooter
