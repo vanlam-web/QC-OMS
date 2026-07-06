@@ -110,6 +110,16 @@ it('keeps the cashbook data table in a KV-like layout with project colors', () =
   expect(cssRule('.finance-cashbook-filter-summary .metric-card')).toContain('background: var(--color-surface)')
 })
 
+it('keeps cashbook detail panel aligned to the KV expanded row structure', () => {
+  expect(cssRule('.finance-cashbook-detail-header')).toContain('display: flex')
+  expect(cssRule('.finance-cashbook-detail-header')).toContain('justify-content: space-between')
+  expect(cssRule('.finance-cashbook-detail-title-line')).toContain('align-items: center')
+  expect(cssRule('.finance-cashbook-detail-core-grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))')
+  expect(cssRule('.finance-cashbook-detail-core-grid > div,\n.finance-cashbook-detail-extra-rows > div')).toContain('border-bottom: 1px solid var(--color-border-muted)')
+  expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('border: 1px solid var(--color-border-muted)')
+  expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('padding: var(--space-3)')
+})
+
 it('keeps shared management table headers sticky and visually distinct', () => {
   const headerRule = cssRule('.management-list-surface thead th')
 
