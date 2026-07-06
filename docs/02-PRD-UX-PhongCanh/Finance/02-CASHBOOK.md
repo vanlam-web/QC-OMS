@@ -113,7 +113,7 @@ Quan sát trước đó ngày `01/07/2026`:
 
 Hiện trạng detail inline sau ngày `06/07/2026`:
 
-- Click bất kỳ vùng dữ liệu nào trên dòng sổ quỹ sẽ mở sub-panel ngay dưới dòng, cùng pattern với trang chứng từ bán hàng. Mã phiếu và người nộp/nhận vẫn hiển thị dạng link, nhưng hành vi mở detail là của cả dòng.
+- Click bất kỳ vùng dữ liệu nào trên dòng sổ quỹ sẽ mở sub-panel ngay dưới dòng, cùng pattern với trang chứng từ bán hàng. Click lại chính dòng đang mở sẽ đóng sub-panel. Mã phiếu và người nộp/nhận vẫn hiển thị dạng link, nhưng hành vi mở/đóng detail là của cả dòng.
 - Dòng đang mở detail dùng trạng thái selected chung của bảng quản trị; checkbox chọn dòng và sao ưu tiên không làm bung detail.
 - Panel có tab `Thông tin`, tiêu đề `Phiếu thu/chi <mã>`, chip `Đã thanh toán/Đã hủy`, chip `Có hạch toán/Không hạch toán`. QC-OMS không hiển thị `Chi nhánh trung tâm` vì MVP không quản lý theo chi nhánh.
 - Nhật ký chỉ hiển thị `Người tạo` và `Thời gian`; mặc định `Người tạo` chính là người thu/chi nếu backend chưa tách trường riêng.

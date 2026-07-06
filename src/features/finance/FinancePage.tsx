@@ -816,6 +816,11 @@ export function FinancePage({ service }: { service: FinanceService }) {
   }
 
   async function openCashbookEntry(entry: CashbookEntry) {
+    if (selectedCashbookEntry?.id === entry.id) {
+      setSelectedCashbookEntry(null)
+      setCashbookDetail(null)
+      return
+    }
     setSelectedCashbookEntry(entry)
     setCashbookDetail(null)
     setError(null)

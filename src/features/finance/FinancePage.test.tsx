@@ -582,6 +582,12 @@ describe('FinancePage', () => {
     expect(within(detail).getByRole('button', { name: 'In phiếu PT0001' })).toBeDisabled()
     expect(within(detail).getAllByText('HD0001').length).toBeGreaterThan(0)
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
+    expect(service.getCashbookEntry).toHaveBeenCalledTimes(1)
+
+    await userEvent.click(cashbookRow as HTMLTableRowElement)
+    expect(screen.queryByRole('region', { name: 'Chi tiết sổ quỹ PT0001' })).not.toBeInTheDocument()
+    expect(cashbookRow).not.toHaveClass('management-data-row-selected')
+    expect(service.getCashbookEntry).toHaveBeenCalledTimes(1)
   })
 
   it('keeps cashbook row utilities from opening inline detail', async () => {
