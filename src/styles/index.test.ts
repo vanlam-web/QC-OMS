@@ -18,6 +18,30 @@ it('keeps shell account controls aligned with the management page header row', (
   expect(cssRule('.management-page-header')).toContain('padding-right: var(--shell-action-rail-reserved-width)')
 })
 
+it('keeps selected shell and dashboard menu items on the same active treatment', () => {
+  const shellBaseRule = cssRule('.shell-nav-link')
+  const dashboardBaseRule = cssRule('.dashboard-nav span')
+  const shellActiveRule = cssRule(".shell-nav-link[aria-current='page']")
+  const dashboardActiveRule = cssRule(".dashboard-nav span[aria-current='page']")
+
+  expect(shellBaseRule).toContain('border-radius: var(--radius-sm)')
+  expect(shellBaseRule).toContain('color: var(--color-text-muted)')
+  expect(shellBaseRule).toContain('padding: var(--space-2) var(--space-3)')
+  expect(shellBaseRule).toContain('font-size: 0.875rem')
+  expect(shellBaseRule).toContain('font-weight: 650')
+  expect(dashboardBaseRule).toContain('border-radius: var(--radius-sm)')
+  expect(dashboardBaseRule).toContain('color: var(--color-text-muted)')
+  expect(dashboardBaseRule).toContain('padding: var(--space-2) var(--space-3)')
+  expect(dashboardBaseRule).toContain('font-size: 0.875rem')
+  expect(dashboardBaseRule).toContain('font-weight: 650')
+  expect(shellActiveRule).toContain('background: var(--color-surface)')
+  expect(shellActiveRule).toContain('color: var(--color-primary)')
+  expect(shellActiveRule).toContain('box-shadow: inset 0 -2px 0 var(--color-primary)')
+  expect(dashboardActiveRule).toContain('background: var(--color-surface)')
+  expect(dashboardActiveRule).toContain('color: var(--color-primary)')
+  expect(dashboardActiveRule).toContain('box-shadow: inset 0 -2px 0 var(--color-primary)')
+})
+
 it('keeps shared scrollbars subtle', () => {
   expect(cssRule('*')).toContain('scrollbar-color: var(--color-scrollbar-thumb) transparent')
   expect(cssRule('*')).toContain('scrollbar-width: thin')
