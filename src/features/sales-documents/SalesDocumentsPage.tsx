@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, type MouseEvent } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Pencil, Printer, Save, Search, Trash2 } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
@@ -21,12 +21,15 @@ import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { FoundationService } from '../users/foundation-service'
 
-function dateTime(value: string) {
+function dateTime(value: string | null | undefined) {
+  if (!value) return '-'
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return '-'
   return new Intl.DateTimeFormat('vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(value))
+  }).format(parsed)
 }
 
 const salesDocumentsPageSize = 15
@@ -390,6 +393,16 @@ export function SalesDocumentsPage({
     await loadDocuments({ page: nextPage })
   }
 
+  function isDetailInteractionTarget(target: EventTarget | null) {
+    return target instanceof Element && target.closest('.management-inline-detail, .management-detail-row, .management-detail-panel') !== null
+  }
+
+  function isOutsideRowClick(event: MouseEvent<HTMLTableRowElement>) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return false
+    return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom
+  }
+
   async function openDocument(document: SalesDocumentListItem) {
     if (selected?.id === document.id) {
       setSelected(null)
@@ -680,7 +693,11 @@ export function SalesDocumentsPage({
                           aria-expanded={selected?.id === document.id}
                           className={`management-data-row${selected?.id === document.id ? ' management-data-row-selected' : ''}`}
                           tabIndex={0}
-                          onClick={() => void openDocument(document)}
+                          onClick={(event: MouseEvent<HTMLTableRowElement>) => {
+                            if (isDetailInteractionTarget(event.target)) return
+                            if (selected?.id === document.id && isOutsideRowClick(event)) return
+                            void openDocument(document)
+                          }}
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault()
@@ -772,6 +789,8 @@ function SalesDocumentDetailView({
   if (error) return <p role="alert">{error}</p>
   if (loading || !document) return <p>Đang tải chi tiết...</p>
 
+  const paymentReceipts = Array.isArray(document.payment_receipts) ? document.payment_receipts : []
+
   return (
     <div className="management-detail-panel">
       <div className="inline-detail-tabbar">
@@ -782,7 +801,10 @@ function SalesDocumentDetailView({
             id={infoTabId}
             role="tab"
             type="button"
-            onClick={() => setActiveTab('info')}
+            onClick={(event) => {
+              event.stopPropagation()
+              setActiveTab('info')
+            }}
           >
             Thông tin
           </button>
@@ -792,7 +814,10 @@ function SalesDocumentDetailView({
             id={paymentTabId}
             role="tab"
             type="button"
-            onClick={() => setActiveTab('payment-history')}
+            onClick={(event) => {
+              event.stopPropagation()
+              setActiveTab('payment-history')
+            }}
           >
             Lịch sử thanh toán
           </button>
@@ -890,7 +915,7 @@ function SalesDocumentDetailView({
         </section>
       ) : (
         <section aria-label="Lịch sử thanh toán" aria-labelledby={paymentTabId} id={paymentPanelId} role="tabpanel">
-          {document.payment_receipts.length === 0 ? (
+          {paymentReceipts.length === 0 ? (
             <p className="management-detail-inline-note">Chưa có lịch sử thanh toán.</p>
           ) : (
             <table aria-label="Lịch sử thanh toán" className="management-detail-table">
@@ -906,11 +931,11 @@ function SalesDocumentDetailView({
                 </tr>
               </thead>
               <tbody>
-                {document.payment_receipts.map((receipt) => (
+                {paymentReceipts.map((receipt) => (
                   <tr key={receipt.id}>
                     <td>{receipt.code}</td>
                     <td>{dateTime(receipt.created_at)}</td>
-                    <td>{receipt.created_by.name || receipt.created_by.id}</td>
+                    <td>{paymentReceiptCreatorLabel(receipt)}</td>
                     <td><MoneyText value={receipt.total_received_amount} /></td>
                     <td>{paymentReceiptMethodLabel(receipt)}</td>
                     <td>{paymentReceiptStatusLabel(receipt.status)}</td>
@@ -972,15 +997,23 @@ function paymentMethodFilterLabel(value: PaymentMethodFilter) {
 }
 
 function paymentReceiptMethodLabel(receipt: SalesDocumentDetail['payment_receipts'][number]) {
-  const labels = receipt.methods.map((method) => (method.method_type === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'))
+  const labels = paymentReceiptMethods(receipt).map((method) => (method.method_type === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'))
   return Array.from(new Set(labels)).join(', ') || '-'
 }
 
 function paymentReceiptMethodTotal(receipt: SalesDocumentDetail['payment_receipts'][number]) {
-  const methodTotal = receipt.methods.reduce((sum, method) => sum + method.amount, 0)
+  const methodTotal = paymentReceiptMethods(receipt).reduce((sum, method) => sum + method.amount, 0)
   return methodTotal || receipt.total_received_amount
 }
 
 function paymentReceiptStatusLabel(status: SalesDocumentDetail['payment_receipts'][number]['status']) {
   return status === 'posted' ? 'Đã ghi nhận' : 'Đã hủy'
+}
+
+function paymentReceiptCreatorLabel(receipt: SalesDocumentDetail['payment_receipts'][number]) {
+  return receipt.created_by?.name || receipt.created_by?.id || 'Chưa có dữ liệu'
+}
+
+function paymentReceiptMethods(receipt: SalesDocumentDetail['payment_receipts'][number]) {
+  return Array.isArray(receipt.methods) ? receipt.methods : []
 }

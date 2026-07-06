@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SalesDocumentsPage } from './SalesDocumentsPage'
 import type { SalesDocumentDetail, SalesDocumentService } from './sales-document-service'
@@ -708,6 +708,31 @@ it('keeps the info tab visible when an invoice has no payment history', async ()
   expect(within(detailRegion).getByText('Chưa có lịch sử thanh toán.')).toBeInTheDocument()
 })
 
+it('keeps invoice detail open when a bubbled click reports coordinates outside the selected row', async () => {
+  const service = makeService()
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await clickDocumentRow('HD010985')
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+  const selectedRow = screen.getByRole('button', { name: 'HD010985' }).closest('tr') as HTMLTableRowElement
+  vi.spyOn(selectedRow, 'getBoundingClientRect').mockReturnValue({
+    bottom: 120,
+    height: 20,
+    left: 0,
+    right: 800,
+    top: 100,
+    width: 800,
+    x: 0,
+    y: 100,
+    toJSON: () => ({}),
+  })
+
+  fireEvent.click(selectedRow, { clientX: 420, clientY: 180 })
+
+  expect(detailRegion).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Chi tiết chứng từ HD010985' })).toBeInTheDocument()
+})
+
 it('shows payment receipt rows in the payment history tab', async () => {
   const service = makeService({
     getSalesDocument: vi.fn(async () => paidDetail),
@@ -730,6 +755,34 @@ it('shows payment receipt rows in the payment history tab', async () => {
   expect(within(paymentHistory).getByText('Thu ngân')).toBeInTheDocument()
   expect(within(paymentHistory).getByText('Chuyển khoản')).toBeInTheDocument()
   expect(within(paymentHistory).getAllByText('150 000').length).toBeGreaterThan(0)
+})
+
+it('keeps payment history visible when receipt data misses optional nested fields', async () => {
+  const fragilePaymentDetail = {
+    ...paidDetail,
+    payment_receipts: [
+      {
+        ...paidDetail.payment_receipts[0],
+        created_at: '',
+        created_by: null,
+        methods: undefined,
+      },
+    ],
+  } as unknown as SalesDocumentDetail
+  const service = makeService({
+    getSalesDocument: vi.fn(async () => fragilePaymentDetail),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await clickDocumentRow('HD010985')
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+
+  await userEvent.click(within(detailRegion).getByRole('tab', { name: 'Lịch sử thanh toán' }))
+
+  const paymentHistory = within(detailRegion).getByRole('table', { name: 'Lịch sử thanh toán' })
+  expect(within(paymentHistory).getByText('PT000125')).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('Chưa có dữ liệu')).toBeInTheDocument()
+  expect(within(paymentHistory).getAllByText('-')).toHaveLength(2)
 })
 
 it('shows disabled invoice detail action placeholders until flows exist', async () => {

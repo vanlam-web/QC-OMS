@@ -261,9 +261,11 @@ it('renders a reusable management table footer with range page and disabled cont
   expect(within(footer).getByRole('button', { name: 'Trang cuối' })).toBeEnabled()
 })
 
-it('renders compact row action buttons and inline detail rows tied to the table', () => {
+it('renders compact row action buttons and inline detail rows tied to the table', async () => {
+  const onTableClick = vi.fn()
+
   render(
-    <table>
+    <table onClick={onTableClick}>
       <tbody>
         <tr className="management-data-row-selected">
           <td>HD010985</td>
@@ -283,6 +285,14 @@ it('renders compact row action buttons and inline detail rows tied to the table'
   expect(detailRegion).toHaveClass('management-inline-detail')
   expect(detailRegion.closest('tr')).toHaveClass('management-detail-row-selected')
   expect(screen.getByRole('cell', { name: /Chi tiết/ })).toHaveAttribute('colspan', '2')
+
+  await userEvent.click(within(detailRegion).getByText('Chi tiết'))
+
+  expect(onTableClick).not.toHaveBeenCalled()
+
+  await userEvent.click(screen.getByRole('cell', { name: /Chi tiết/ }))
+
+  expect(onTableClick).not.toHaveBeenCalled()
 })
 
 it('renders shared detail action footer with left and right action groups', () => {

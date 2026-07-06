@@ -1,4 +1,4 @@
-import type { FormEvent, ReactNode } from 'react'
+import type { FormEvent, ReactNode, SyntheticEvent } from 'react'
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 export function ManagementPage({
@@ -353,10 +353,37 @@ export function ManagementDetailRow({
   detailClassName?: string
   children: ReactNode
 }) {
+  const stopDetailEvent = (event: SyntheticEvent) => {
+    event.stopPropagation()
+  }
+
   return (
-    <tr className={`management-detail-row management-detail-row-selected${rowClassName ? ` ${rowClassName}` : ''}`}>
-      <td colSpan={colSpan}>
-        <section aria-label={label} className={`management-inline-detail${detailClassName ? ` ${detailClassName}` : ''}`} role="region">
+    <tr
+      className={`management-detail-row management-detail-row-selected${rowClassName ? ` ${rowClassName}` : ''}`}
+      onClick={stopDetailEvent}
+      onDoubleClick={stopDetailEvent}
+      onKeyDown={stopDetailEvent}
+      onMouseDown={stopDetailEvent}
+      onPointerDown={stopDetailEvent}
+    >
+      <td
+        colSpan={colSpan}
+        onClick={stopDetailEvent}
+        onDoubleClick={stopDetailEvent}
+        onKeyDown={stopDetailEvent}
+        onMouseDown={stopDetailEvent}
+        onPointerDown={stopDetailEvent}
+      >
+        <section
+          aria-label={label}
+          className={`management-inline-detail${detailClassName ? ` ${detailClassName}` : ''}`}
+          role="region"
+          onClick={stopDetailEvent}
+          onDoubleClick={stopDetailEvent}
+          onKeyDown={stopDetailEvent}
+          onMouseDown={stopDetailEvent}
+          onPointerDown={stopDetailEvent}
+        >
           {children}
         </section>
       </td>
