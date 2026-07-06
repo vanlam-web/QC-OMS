@@ -887,14 +887,26 @@ function SalesDocumentDetailView({
               <tr>
                 <th>Mã phiếu</th>
                 <th>Thời gian</th>
-                <th>Người tạo</th>
+                <th>Người thu</th>
                 <th>Giá trị phiếu</th>
                 <th>Phương thức</th>
                 <th>Trạng thái</th>
                 <th>Tiền thu/chi</th>
               </tr>
             </thead>
-            <tbody />
+            <tbody>
+              {document.payment_receipts.map((receipt) => (
+                <tr key={receipt.id}>
+                  <td>{receipt.code}</td>
+                  <td>{dateTime(receipt.created_at)}</td>
+                  <td>{receipt.created_by.name || receipt.created_by.id}</td>
+                  <td><MoneyText value={receipt.total_received_amount} /></td>
+                  <td>{paymentReceiptMethodLabel(receipt)}</td>
+                  <td>{paymentReceiptStatusLabel(receipt.status)}</td>
+                  <td><MoneyText value={paymentReceiptMethodTotal(receipt)} /></td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </section>
       )}
@@ -945,4 +957,18 @@ function paymentMethodFilterLabel(value: PaymentMethodFilter) {
   if (value === 'cash') return 'Tiền mặt'
   if (value === 'bank_transfer') return 'Chuyển khoản'
   return 'Tất cả'
+}
+
+function paymentReceiptMethodLabel(receipt: SalesDocumentDetail['payment_receipts'][number]) {
+  const labels = receipt.methods.map((method) => (method.method_type === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'))
+  return Array.from(new Set(labels)).join(', ') || '-'
+}
+
+function paymentReceiptMethodTotal(receipt: SalesDocumentDetail['payment_receipts'][number]) {
+  const methodTotal = receipt.methods.reduce((sum, method) => sum + method.amount, 0)
+  return methodTotal || receipt.total_received_amount
+}
+
+function paymentReceiptStatusLabel(status: SalesDocumentDetail['payment_receipts'][number]['status']) {
+  return status === 'posted' ? 'Đã ghi nhận' : 'Đã hủy'
 }

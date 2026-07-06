@@ -114,6 +114,7 @@ const paidDetail = {
       receipt_type: 'sale_payment',
       total_received_amount: 150000,
       created_at: '2026-06-30T17:09:00Z',
+      created_by: { id: 'cashier-1', name: 'Thu ngân' },
       methods: [
         {
           method_type: 'bank_transfer',
@@ -697,7 +698,7 @@ it('keeps the info tab visible when an invoice has no payment history', async ()
   expect(within(detailRegion).getByRole('tabpanel', { name: 'Thông tin chứng từ' })).toBeInTheDocument()
 })
 
-it('shows payment history tab without rendering API receipt rows until cashbook data is ready', async () => {
+it('shows payment receipt rows in the payment history tab', async () => {
   const service = makeService({
     getSalesDocument: vi.fn(async () => paidDetail),
   })
@@ -714,8 +715,11 @@ it('shows payment history tab without rendering API receipt rows until cashbook 
 
   const paymentHistory = within(detailRegion).getByRole('table', { name: 'Lịch sử thanh toán' })
   expect(within(paymentHistory).getByRole('columnheader', { name: 'Mã phiếu' })).toBeInTheDocument()
-  expect(within(paymentHistory).queryByText('PT000125')).not.toBeInTheDocument()
-  expect(within(paymentHistory).queryByText('Chuyển khoản')).not.toBeInTheDocument()
+  expect(within(paymentHistory).getByRole('columnheader', { name: 'Người thu' })).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('PT000125')).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('Thu ngân')).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('Chuyển khoản')).toBeInTheDocument()
+  expect(within(paymentHistory).getAllByText('150 000').length).toBeGreaterThan(0)
 })
 
 it('shows disabled invoice detail action placeholders until flows exist', async () => {

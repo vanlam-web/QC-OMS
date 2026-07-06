@@ -77,6 +77,7 @@ const documentDetail: SalesDocumentDetailData = {
       receipt_type: "sale_payment",
       total_received_amount: 0,
       created_at: "2026-06-30T17:08:00Z",
+      created_by: { id: "cashier-1", name: "Thu ngân" },
       methods: [],
       allocations: [],
     },
@@ -233,6 +234,7 @@ Deno.test("sales document detail returns snapshots, payments, debt and stock mov
   assertEquals(data.items[0].linear_m, null);
   assertEquals(data.items[0].note, "2.5m x 3.3m x 1 = 8.25m2");
   assertEquals(data.payment_receipts.length, 1);
+  assertEquals(data.payment_receipts[0].created_by.name, "Thu ngân");
   assertEquals(data.debt_entries[0].amount_delta, 150000);
   assertEquals(data.stock_movements[0].movement_type, "sale_deduction");
 });

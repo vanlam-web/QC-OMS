@@ -2742,6 +2742,7 @@ async function loadSalesDocumentPaymentReceipts(
     receipt_type: receipt.receipt_type,
     total_received_amount: receipt.total_received_amount,
     created_at: receipt.created_at,
+    created_by: receipt.created_by,
     methods: receipt.methods,
     allocations: receipt.allocations,
   }));
@@ -2971,7 +2972,7 @@ async function loadPaymentReceiptDetail(
 ): Promise<PaymentReceiptDetailData | null> {
   const { data: receipt, error } = await client
     .from("payment_receipts")
-    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_at")
+    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_by, created_at")
     .eq("id", receiptId)
     .eq("organization_id", organizationId)
     .maybeSingle();
@@ -3000,6 +3001,7 @@ async function loadPaymentReceiptDetail(
     receipt_type: receipt.receipt_type,
     total_received_amount: Number(receipt.total_received_amount),
     created_at: receipt.created_at,
+    created_by: { id: String(receipt.created_by ?? ""), name: await loadProfileName(client, String(receipt.created_by ?? "")) },
     customer,
     source_order: sourceOrder,
     methods: (methods ?? []).map((method) => {

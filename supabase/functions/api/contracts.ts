@@ -347,6 +347,7 @@ export interface SalesDocumentDetailData extends SalesDocumentListItemData {
     receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
     total_received_amount: number;
     created_at: string;
+    created_by: { id: string; name: string };
     methods: Array<{
       method_type: "cash" | "bank_transfer";
       amount: number;
@@ -480,6 +481,7 @@ export interface PaymentReceiptDetailData {
   receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
   total_received_amount: number;
   created_at: string;
+  created_by: { id: string; name: string };
   customer: { id: string; code: string; name: string } | null;
   source_order: { id: string; code: string; total_amount: number } | null;
   methods: Array<{
