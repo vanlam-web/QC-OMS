@@ -899,6 +899,10 @@ button {
   padding-right: var(--space-1);
 }
 
+.management-table tbody tr:hover td {
+  background: var(--color-surface-muted);
+}
+
 .management-pagination {
   display: flex;
   flex: 0 0 auto;
@@ -1256,10 +1260,6 @@ button {
 
 .finance-cashbook-data-table tbody td {
   border-bottom: 1px solid var(--color-border-muted);
-}
-
-.finance-cashbook-data-table tbody tr:hover td {
-  background: var(--color-surface-muted);
 }
 
 .finance-cashbook-select-column,
