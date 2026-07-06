@@ -640,6 +640,19 @@ button {
   color: var(--color-text);
 }
 
+.management-filter-options label.management-filter-choice:has(input[type='checkbox']) {
+  min-height: 1.75rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.management-filter-options label.management-filter-choice-active:has(input[type='checkbox']) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .management-filter-choice > span:not(.management-filter-choice-trailing) {
   flex: 1;
 }

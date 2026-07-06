@@ -119,6 +119,8 @@ it('keeps management filter selects styled as shared compact controls', () => {
 it('keeps shared filter choices compact with borders only on active state', () => {
   const choiceRule = cssRule('.management-filter-options .management-filter-choice')
   const activeRule = cssRule('.management-filter-options .management-filter-choice-active')
+  const checkboxChoiceRule = cssRule('.management-filter-options label.management-filter-choice:has(input[type=\'checkbox\'])')
+  const activeCheckboxChoiceRule = cssRule('.management-filter-options label.management-filter-choice-active:has(input[type=\'checkbox\'])')
 
   expect(choiceRule).toContain('min-height: 2.25rem')
   expect(choiceRule).toContain('border: 1px solid var(--color-border)')
@@ -126,6 +128,13 @@ it('keeps shared filter choices compact with borders only on active state', () =
   expect(activeRule).toContain('border-color: var(--color-selected-border)')
   expect(activeRule).toContain('background: var(--color-surface)')
   expect(activeRule).toContain('box-shadow: none')
+  expect(checkboxChoiceRule).toContain('min-height: 1.75rem')
+  expect(checkboxChoiceRule).toContain('border: 0')
+  expect(checkboxChoiceRule).toContain('background: transparent')
+  expect(checkboxChoiceRule).toContain('padding: 0')
+  expect(activeCheckboxChoiceRule).toContain('border: 0')
+  expect(activeCheckboxChoiceRule).toContain('background: transparent')
+  expect(activeCheckboxChoiceRule).toContain('box-shadow: none')
 })
 
 it('keeps shared filter account picker compact and layered', () => {
