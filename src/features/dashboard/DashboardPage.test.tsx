@@ -35,6 +35,12 @@ it('shows account-based modules without requiring a POS machine', async () => {
   expect(screen.getByRole('heading', { name: 'QC-OMS' })).toBeInTheDocument()
   expect(screen.getByText('Admin')).toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
+  expect(screen.getByRole('navigation', { name: 'Điều hướng tổng quan' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Kết quả bán hàng hôm nay' })).toHaveClass('dashboard-kpi-card')
+  expect(screen.getByRole('region', { name: 'Biểu đồ doanh thu thuần' })).toHaveClass('dashboard-chart-card')
+  expect(screen.getByRole('img', { name: 'Sóng doanh thu thuần' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Top hàng bán chạy' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Hoạt động gần đây' })).toHaveClass('dashboard-activity-card')
 
   await userEvent.click(screen.getByRole('button', { name: 'POS' }))
   await userEvent.click(screen.getByRole('button', { name: 'Quản trị' }))
