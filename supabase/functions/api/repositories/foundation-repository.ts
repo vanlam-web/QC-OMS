@@ -2793,19 +2793,26 @@ async function hydrateCashbookEntry(
   const account = Array.isArray(row.finance_accounts) ? row.finance_accounts[0] : row.finance_accounts;
   let code = String(row.id);
   let note = row.description === null ? null : String(row.description ?? "");
+  let counterparty: CashbookEntryData["counterparty"] = { type: "none", name: null, phone: null };
 
   if (row.source_type === "payment_receipt_method" && typeof row.payment_receipt_method_id === "string") {
     const receipt = await loadReceiptForPaymentMethod(client, organizationId, row.payment_receipt_method_id);
     if (receipt !== null) {
       code = receipt.code;
       note = note || `Thu ${receipt.code}`;
+      const receiptDetail = await loadPaymentReceiptDetail(client, organizationId, receipt.id);
+      counterparty = {
+        type: receiptDetail?.customer == null ? "none" : "customer",
+        name: receiptDetail?.customer?.name ?? null,
+        phone: null,
+      };
     }
   }
 
   if (row.source_type === "cashbook_voucher" && typeof row.cashbook_voucher_id === "string") {
     const { data: voucher, error } = await client
       .from("cashbook_vouchers")
-      .select("code, reason")
+      .select("code, reason, counterparty_type, counterparty_name, counterparty_phone")
       .eq("id", row.cashbook_voucher_id)
       .eq("organization_id", organizationId)
       .maybeSingle();
@@ -2813,6 +2820,11 @@ async function hydrateCashbookEntry(
     if (voucher !== null) {
       code = voucher.code;
       note = voucher.reason;
+      counterparty = {
+        type: voucher.counterparty_type,
+        name: voucher.counterparty_name,
+        phone: voucher.counterparty_phone,
+      };
     }
   }
 
@@ -2827,6 +2839,7 @@ async function hydrateCashbookEntry(
     source_type: String(row.source_type) as "payment_receipt_method" | "cashbook_voucher",
     created_at: String(row.entry_time ?? row.created_at),
     note,
+    counterparty,
   };
 }
 
@@ -2840,7 +2853,6 @@ async function hydrateCashbookEntryDetail(
   const detail: CashbookEntryDetailData = {
     ...base,
     created_by: { id: String(row.created_by), name: createdBy },
-    counterparty: { type: "none", name: null, phone: null },
     payment_method: "manual",
     source: { type: "manual_voucher", id: String(row.cashbook_voucher_id ?? ""), code: base.code, order_code: null },
     allocations: [],

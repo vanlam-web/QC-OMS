@@ -44,6 +44,7 @@ const cashbookEntry: CashbookEntry = {
   source_type: 'payment_receipt_method',
   created_at: '2026-07-05T02:05:00Z',
   note: null,
+  counterparty: { type: 'none', name: null, phone: null },
 }
 
 const inventoryProduct: InventoryProduct = {

@@ -129,6 +129,10 @@ function cashbookDetailCounterpartyLabel(entry: CashbookEntryDetail) {
   return entry.direction === 'in' ? 'Người nộp' : 'Người nhận'
 }
 
+function cashbookCounterpartyLabel(entry: CashbookEntry) {
+  return entry.direction === 'in' ? 'Người nộp' : 'Người nhận'
+}
+
 function cashbookDetailAccountLabel(entry: CashbookEntryDetail) {
   if (entry.payment_method !== 'bank_transfer') return entry.direction === 'in' ? 'Đến quỹ' : 'Từ quỹ'
   return entry.direction === 'in' ? 'Đến tài khoản' : 'Từ tài khoản'
@@ -720,7 +724,20 @@ export function FinancePage({ service }: { service: FinanceService }) {
     if (column === 'created_at') return dateText(entry.created_at)
     if (column === 'finance_account') return accountTypeText(entry.finance_account.account_type)
     if (column === 'source_type') return sourceTypeText(entry.source_type)
-    if (column === 'counterparty') return '-'
+    if (column === 'counterparty') {
+      if (entry.counterparty.name === null) return '-'
+      const label = cashbookCounterpartyLabel(entry)
+      return (
+        <button
+          aria-label={`Mở chi tiết ${entry.code} từ ${label} ${entry.counterparty.name}`}
+          className="management-link-button"
+          type="button"
+          onClick={() => void openCashbookEntry(entry)}
+        >
+          {entry.counterparty.name}
+        </button>
+      )
+    }
     if (column === 'amount_delta') return <MoneyText value={entry.amount_delta} />
     if (column === 'status') return <StatusChip tone={entry.status === 'posted' ? 'success' : 'neutral'}>{statusText(entry.status)}</StatusChip>
     if (column === 'note') return entry.note ?? '-'

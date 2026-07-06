@@ -441,6 +441,7 @@ export interface CashbookEntryData {
   source_type: "payment_receipt_method" | "cashbook_voucher";
   created_at: string;
   note: string | null;
+  counterparty: { type: "customer" | "supplier" | "employee" | "other" | "none"; name: string | null; phone: string | null };
 }
 
 export interface CashbookListData {
@@ -467,7 +468,6 @@ export interface PaymentReceiptAllocationData {
 
 export interface CashbookEntryDetailData extends CashbookEntryData {
   created_by: { id: string; name: string };
-  counterparty: { type: "customer" | "supplier" | "employee" | "other" | "none"; name: string | null; phone: string | null };
   payment_method: "cash" | "bank_transfer" | "manual";
   source: { type: "payment_receipt" | "manual_voucher"; id: string; code: string; order_code: string | null };
   allocations: PaymentReceiptAllocationData[];

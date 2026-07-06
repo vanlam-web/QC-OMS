@@ -139,7 +139,7 @@ Hiện trạng sau các slice sổ quỹ ngày `06/07/2026`:
 - Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải, ngay trên bảng sổ quỹ, và lấy từ `summary` của API sổ quỹ theo filter.
 - `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
 - Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.
-- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Sao từng dòng lưu ưu tiên cục bộ; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
+- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Cột người nộp/nhận lấy `counterparty` từ API list sổ quỹ; nếu có tên thì hiển thị dạng link mở inline detail cùng dòng, nếu chưa có thì hiển thị `-`. Sao từng dòng lưu ưu tiên cục bộ; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
 - Surface bảng dùng viền/padding ngoài mỏng để bảng sát khung hơn; vẫn giữ border và hover theo design system.
 
 MVP của QC-OMS hỗ trợ:
@@ -187,7 +187,7 @@ Ghi chú:
 - Filter hiện tại tự gọi lại danh sách sổ quỹ khi đổi thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD.
 - UI filter dùng hình thái giống KiotViet cho những phần đã đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs. Màu sắc vẫn theo design system QC-OMS.
 - `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp; hiện đã có trường khi tạo phiếu thủ công, chưa có filter list.
-- `Người nộp/nhận` cần tìm được theo tên, mã và số điện thoại ở slice sau.
+- `Người nộp/nhận` đã hiển thị được tên trong bảng khi API list trả `counterparty`; slice sau cần bổ sung tìm theo tên, mã và số điện thoại.
 - Nếu tìm đúng mã phiếu, hệ thống phải bỏ qua filter tháng hiện tại khi filter đó che kết quả; hiện UI sổ quỹ chưa có ô tìm mã phiếu riêng.
 
 ---
@@ -222,7 +222,7 @@ Nếu chọn `Tổng quỹ`, UI vẫn cần tách chi tiết theo từng tài kh
 
 MVP nên cho cấu hình cột tương tự KV, nhưng có thể làm theo mức ưu tiên:
 
-1. Cột mặc định hiện tại: checkbox chọn dòng, đánh dấu sao, mã phiếu, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ, giá trị.
+1. Cột mặc định hiện tại: checkbox chọn dòng, đánh dấu sao, mã phiếu, thời gian, loại thu chi, người nộp/nhận dạng link detail khi có dữ liệu, loại sổ quỹ, giá trị.
 2. Cột mở rộng: thời gian tạo, người tạo, nhân viên, mã người nộp/nhận, số điện thoại, địa chỉ, nội dung chuyển khoản, ghi chú, loại sổ quỹ, hạch toán KQKD.
 3. Chi nhánh chỉ hiển thị khi hệ thống có nhiều chi nhánh.
 

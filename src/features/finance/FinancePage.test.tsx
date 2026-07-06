@@ -23,6 +23,8 @@ const balances: CashbookBalance[] = [
   { finance_account_id: 'bank-1', code: 'MB01', name: 'MB Bank', account_type: 'bank', balance: 300000 },
 ]
 
+const noCounterparty = { type: 'none' as const, name: null, phone: null }
+
 const debt: CustomerDebtSummary = {
   customer_id: 'customer-1',
   customer_code: 'KH001',
@@ -59,6 +61,7 @@ const entry: CashbookEntry = {
   source_type: 'payment_receipt_method',
   created_at: '2026-07-05T02:05:00Z',
   note: 'Thu nợ',
+  counterparty: noCounterparty,
 }
 
 const cashbookDetail: CashbookEntryDetail = {
@@ -90,6 +93,7 @@ const expenseEntry: CashbookEntry = {
   source_type: 'cashbook_voucher',
   created_at: '2026-07-04T09:34:00Z',
   note: null,
+  counterparty: noCounterparty,
 }
 
 const expenseCashbookDetail: CashbookEntryDetail = {
@@ -121,6 +125,7 @@ const unallocatedExpenseEntry: CashbookEntry = {
   source_type: 'cashbook_voucher',
   created_at: '2026-07-06T01:11:00Z',
   note: 'Ứng lần 2',
+  counterparty: noCounterparty,
 }
 
 const unallocatedExpenseDetail: CashbookEntryDetail = {
@@ -143,6 +148,7 @@ const noteLinkedReceiptEntry: CashbookEntry = {
   source_type: 'payment_receipt_method',
   created_at: '2026-07-06T03:22:00Z',
   note: 'Checkout HD000015',
+  counterparty: noCounterparty,
 }
 
 const noteLinkedReceiptDetail: CashbookEntryDetail = {
@@ -411,6 +417,33 @@ describe('FinancePage', () => {
     expect(within(row).queryByText('CASH · Quỹ tiền mặt')).not.toBeInTheDocument()
   })
 
+  it('shows payer or receiver from cashbook rows as a detail link', async () => {
+    const entryWithCounterparty = {
+      ...entry,
+      counterparty: { type: 'customer', name: 'Anh Nam', phone: '0900000000' },
+    } satisfies CashbookEntry
+    const service = makeService({
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
+        items: [entryWithCounterparty],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const row = within(table).getByRole('row', { name: /PT0001/ })
+    const counterpartyLink = within(row).getByRole('button', { name: 'Mở chi tiết PT0001 từ Người nộp Anh Nam' })
+
+    expect(counterpartyLink).toHaveTextContent('Anh Nam')
+    await userEvent.click(counterpartyLink)
+
+    expect(await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT0001' })).toBeInTheDocument()
+    expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
+  })
+
   it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
@@ -567,6 +600,7 @@ describe('FinancePage', () => {
       direction: 'in',
       amount_delta: 360000,
       source_type: 'payment_receipt_method',
+      counterparty: noCounterparty,
     }
     const service = makeService({
       listCashbookEntries: vi.fn(async () => ({
