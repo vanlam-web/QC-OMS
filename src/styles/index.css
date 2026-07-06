@@ -1040,11 +1040,11 @@ button {
   padding-right: var(--space-1);
 }
 
-.management-table tbody tr:hover td {
+.management-table-viewport > table tbody tr:hover td {
   background: var(--color-surface-muted);
 }
 
-.management-table tbody td {
+.management-table-viewport > table tbody td {
   border-bottom: 1px solid var(--color-border-muted);
   color: var(--color-text);
   font-family: inherit;
@@ -1943,42 +1943,6 @@ button {
   padding: 0 var(--space-3);
   background: var(--color-surface);
   color: var(--color-text);
-}
-
-.customer-management-table {
-  table-layout: fixed;
-}
-
-.customer-management-table th,
-.customer-management-table td {
-  overflow-wrap: anywhere;
-}
-
-.customer-management-table th:nth-child(1),
-.customer-management-table td:nth-child(1) {
-  width: 13%;
-}
-
-.customer-management-table th:nth-child(2),
-.customer-management-table td:nth-child(2) {
-  width: 28%;
-}
-
-.customer-management-table th:nth-child(3),
-.customer-management-table td:nth-child(3) {
-  width: 15%;
-}
-
-.customer-management-table th:nth-child(4),
-.customer-management-table td:nth-child(4) {
-  width: 18%;
-}
-
-.customer-management-table th:nth-child(5),
-.customer-management-table td:nth-child(5),
-.customer-management-table th:nth-child(6),
-.customer-management-table td:nth-child(6) {
-  width: 13%;
 }
 
 .customer-inline-detail {
@@ -4497,10 +4461,6 @@ td:has(.money-text) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-.sales-documents-management-table {
-  min-width: 76rem;
 }
 
 .receipt-lines {

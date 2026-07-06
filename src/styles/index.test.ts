@@ -156,14 +156,25 @@ it('right aligns money values in shared tables', () => {
 })
 
 it('keeps shared management data rows visually consistent', () => {
-  expect(cssRule('.management-table tbody td')).toContain('border-bottom: 1px solid var(--color-border-muted)')
-  expect(cssRule('.management-table tbody td')).toContain('color: var(--color-text)')
-  expect(cssRule('.management-table tbody td')).toContain('font-family: inherit')
-  expect(cssRule('.management-table tbody td')).toContain('font-size: 0.875rem')
-  expect(cssRule('.management-table tbody td')).toContain('font-weight: 400')
-  expect(cssRule('.management-table tbody td')).toContain('line-height: 1.35')
-  expect(cssRule('.management-table tbody td')).toContain('vertical-align: middle')
-  expect(cssRule('.management-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('border-bottom: 1px solid var(--color-border-muted)')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('color: var(--color-text)')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('font-family: inherit')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('font-size: 0.875rem')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('font-weight: 400')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('line-height: 1.35')
+  expect(cssRule('.management-table-viewport > table tbody td')).toContain('vertical-align: middle')
+  expect(cssRule('.management-table-viewport > table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+})
+
+it('keeps feature data tables on the shared management table geometry', () => {
+  expect(cssRule('.sales-documents-management-table')).toBe('')
+  expect(cssRule('.customer-management-table')).toBe('')
+  expect(cssRule('.customer-management-table th,\n.customer-management-table td')).toBe('')
+  expect(cssRule('.customer-management-table th:nth-child(1),\n.customer-management-table td:nth-child(1)')).toBe('')
+  expect(cssRule('.customer-management-table th:nth-child(2),\n.customer-management-table td:nth-child(2)')).toBe('')
+  expect(cssRule('.customer-management-table th:nth-child(3),\n.customer-management-table td:nth-child(3)')).toBe('')
+  expect(cssRule('.customer-management-table th:nth-child(4),\n.customer-management-table td:nth-child(4)')).toBe('')
+  expect(cssRule('.customer-management-table th:nth-child(5),\n.customer-management-table td:nth-child(5),\n.customer-management-table th:nth-child(6),\n.customer-management-table td:nth-child(6)')).toBe('')
 })
 
 it('keeps shared management table headers visually consistent', () => {
@@ -176,7 +187,7 @@ it('keeps shared management table headers visually consistent', () => {
 
 it('keeps the cashbook data table in a KV-like layout with project colors', () => {
   expect(cssRule('.finance-cashbook-data-table thead th')).toBe('')
-  expect(cssRule('.management-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.management-table-viewport > table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
   expect(cssRule('.finance-cashbook-data-table tbody td')).toBe('')
   expect(cssRule('.finance-cashbook-data-table tbody tr:hover td')).toBe('')
   expect(cssRule('.finance-cashbook-code-link')).toContain('color: var(--color-primary)')
