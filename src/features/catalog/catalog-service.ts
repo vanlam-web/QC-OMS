@@ -21,10 +21,19 @@ export interface CatalogApiRequester {
 
 export function createCatalogService(api: CatalogApiRequester) {
   return {
-    listProducts: (input: { search?: string; status?: ProductStatus | 'all'; page?: number; page_size?: number } = {}) => {
+    listProducts: (input: {
+      search?: string
+      status?: ProductStatus | 'all'
+      sell_method?: SellMethod
+      inventory_shape?: Product['inventory_shape']
+      page?: number
+      page_size?: number
+    } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
       if (input.status) params.set('status', input.status)
+      if (input.sell_method) params.set('sell_method', input.sell_method)
+      if (input.inventory_shape) params.set('inventory_shape', input.inventory_shape)
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()

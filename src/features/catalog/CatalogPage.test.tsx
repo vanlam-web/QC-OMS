@@ -160,13 +160,51 @@ it('filters by status and toggles product active state', async () => {
   expect(createAction.closest('.management-compact-search')).not.toBeNull()
   expect(createAction).toHaveClass('management-compact-create-action')
   const searchInput = within(filterForm).getByLabelText('Tìm hàng hóa')
-  await userEvent.click(screen.getByRole('radio', { name: 'Tất cả' }))
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+  expect(within(sidebar).getByRole('combobox', { name: 'Loại hàng' })).toHaveValue('all')
+  expect(within(sidebar).getByRole('combobox', { name: 'Cách bán' })).toHaveValue('all')
+  expect(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' })).toHaveValue('active')
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' }), 'all')
+  expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
   await userEvent.type(searchInput, '{Enter}')
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
   expect(screen.queryByText('Trạng thái: Tất cả')).not.toBeInTheDocument()
 
   await userEvent.click(screen.getAllByRole('button', { name: 'Ngưng bán' })[0])
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
+})
+
+it('reactively filters products by existing product fields in the shared sidebar', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('MICA-3MM')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+
+  expect(within(sidebar).getByRole('region', { name: 'Loại hàng' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Cách bán' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Trạng thái hàng hóa' })).toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Nhà cung cấp' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Thương hiệu' })).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Loại hàng' }), 'roll')
+  expect(service.listProducts).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    inventory_shape: 'roll',
+  })
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Cách bán' }), 'combo')
+  expect(service.listProducts).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    inventory_shape: 'roll',
+    sell_method: 'combo',
+  })
 })
 
 it('renders products as a goods and inventory-oriented list, not a pricebook workspace', async () => {

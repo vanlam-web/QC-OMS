@@ -3,6 +3,28 @@ import { createCatalogService } from './catalog-service'
 import type { CatalogApiRequester } from './catalog-service'
 
 describe('catalog-service', () => {
+  it('builds product list filters from existing product fields', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return null as T
+    }
+    const service = createCatalogService({ request })
+
+    await service.listProducts({
+      search: 'mica',
+      status: 'active',
+      sell_method: 'combo',
+      inventory_shape: 'roll',
+      page: 2,
+      page_size: 15,
+    })
+
+    expect(calls).toEqual([
+      ['/api/v1/products?search=mica&status=active&sell_method=combo&inventory_shape=roll&page=2&page_size=15', undefined],
+    ])
+  })
+
   it('gets and saves product BOM', async () => {
     const calls: Array<[string, RequestInit | undefined]> = []
     const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {

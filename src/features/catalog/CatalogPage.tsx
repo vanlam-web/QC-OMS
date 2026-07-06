@@ -25,6 +25,8 @@ interface CatalogState {
 }
 
 const productPageSize = 15
+type ProductInventoryShapeFilter = NonNullable<Product['inventory_shape']> | 'all'
+type ProductSellMethodFilter = SellMethod | 'all'
 
 const sellMethodLabels: Record<SellMethod, string> = {
   quantity: 'Số lượng',
@@ -53,6 +55,10 @@ export function CatalogPage({
   const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
   const [lastStatus, setLastStatus] = useState<ProductStatus | 'all'>('active')
+  const [sellMethodFilter, setSellMethodFilter] = useState<ProductSellMethodFilter>('all')
+  const [lastSellMethodFilter, setLastSellMethodFilter] = useState<ProductSellMethodFilter>('all')
+  const [inventoryShapeFilter, setInventoryShapeFilter] = useState<ProductInventoryShapeFilter>('all')
+  const [lastInventoryShapeFilter, setLastInventoryShapeFilter] = useState<ProductInventoryShapeFilter>('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(productPageSize)
   const [form, setForm] = useState<{
@@ -69,9 +75,18 @@ export function CatalogPage({
     status: 'active',
   })
 
-  async function load(filters: { search?: string; status?: ProductStatus | 'all'; page?: number; page_size?: number } = {}) {
+  async function load(filters: {
+    search?: string
+    status?: ProductStatus | 'all'
+    sell_method?: ProductSellMethodFilter
+    inventory_shape?: ProductInventoryShapeFilter
+    page?: number
+    page_size?: number
+  } = {}) {
     const nextSearch = filters.search ?? lastSearch
     const nextStatus = filters.status ?? lastStatus
+    const nextSellMethod = filters.sell_method ?? lastSellMethodFilter
+    const nextInventoryShape = filters.inventory_shape ?? lastInventoryShapeFilter
     const nextPage = filters.page ?? page
     const nextPageSize = filters.page_size ?? pageSize
     setError(null)
@@ -81,10 +96,14 @@ export function CatalogPage({
         page_size: nextPageSize,
         search: nextSearch || undefined,
         status: nextStatus,
+        ...(nextSellMethod === 'all' ? {} : { sell_method: nextSellMethod }),
+        ...(nextInventoryShape === 'all' ? {} : { inventory_shape: nextInventoryShape }),
       })
       setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
       setLastSearch(nextSearch)
       setLastStatus(nextStatus)
+      setLastSellMethodFilter(nextSellMethod)
+      setLastInventoryShapeFilter(nextInventoryShape)
       setPage(result.page)
       setPageSize(result.page_size)
       setSelectedProductId(null)
@@ -119,7 +138,28 @@ export function CatalogPage({
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPage(1)
-    await load({ search: search.trim(), status, page: 1 })
+    await load({ search: search.trim(), status, sell_method: sellMethodFilter, inventory_shape: inventoryShapeFilter, page: 1 })
+  }
+
+  async function applySidebarFilters(nextFilters: Partial<{
+    status: ProductStatus | 'all'
+    sell_method: ProductSellMethodFilter
+    inventory_shape: ProductInventoryShapeFilter
+  }>) {
+    const nextStatus = nextFilters.status ?? status
+    const nextSellMethod = nextFilters.sell_method ?? sellMethodFilter
+    const nextInventoryShape = nextFilters.inventory_shape ?? inventoryShapeFilter
+    setStatus(nextStatus)
+    setSellMethodFilter(nextSellMethod)
+    setInventoryShapeFilter(nextInventoryShape)
+    setPage(1)
+    await load({
+      search: search.trim(),
+      status: nextStatus,
+      sell_method: nextSellMethod,
+      inventory_shape: nextInventoryShape,
+      page: 1,
+    })
   }
 
   async function goToPage(nextPage: number) {
@@ -230,11 +270,9 @@ export function CatalogPage({
   const canGoNext = page < totalPages
   const activeFilterSummary = lastSearch
     ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active'
-      ? 'Đang bán'
-      : lastStatus === 'inactive'
-        ? 'Trạng thái: Ngưng bán'
-        : 'Trạng thái: Tất cả'
+    : lastStatus === 'active' && lastSellMethodFilter === 'all' && lastInventoryShapeFilter === 'all'
+      ? 'Đang kinh doanh'
+      : 'Bộ lọc hàng hóa'
 
   return (
     <ManagementPage
@@ -268,18 +306,53 @@ export function CatalogPage({
           >
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
-          <ManagementFilterGroup title="Trạng thái">
+          <ManagementFilterGroup title="Loại hàng">
             <label>
-              <input checked={status === 'active'} name="product-status" type="radio" onChange={() => setStatus('active')} />
-              Đang bán
+              <span className="sr-only">Loại hàng</span>
+              <select
+                aria-label="Loại hàng"
+                className="management-filter-select"
+                value={inventoryShapeFilter}
+                onChange={(event) => void applySidebarFilters({ inventory_shape: event.target.value as ProductInventoryShapeFilter })}
+              >
+                <option value="all">Tất cả</option>
+                <option value="normal">Hàng hóa thường</option>
+                <option value="roll">Cuộn</option>
+                <option value="sheet">Tấm</option>
+              </select>
             </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Cách bán">
             <label>
-              <input checked={status === 'inactive'} name="product-status" type="radio" onChange={() => setStatus('inactive')} />
-              Ngưng bán
+              <span className="sr-only">Cách bán</span>
+              <select
+                aria-label="Cách bán"
+                className="management-filter-select"
+                value={sellMethodFilter}
+                onChange={(event) => void applySidebarFilters({ sell_method: event.target.value as ProductSellMethodFilter })}
+              >
+                <option value="all">Tất cả</option>
+                {Object.entries(sellMethodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Trạng thái hàng hóa">
             <label>
-              <input checked={status === 'all'} name="product-status" type="radio" onChange={() => setStatus('all')} />
-              Tất cả
+              <span className="sr-only">Trạng thái hàng hóa</span>
+              <select
+                aria-label="Trạng thái hàng hóa"
+                className="management-filter-select"
+                value={status}
+                onChange={(event) => void applySidebarFilters({ status: event.target.value as ProductStatus | 'all' })}
+              >
+                <option value="active">Hàng đang kinh doanh</option>
+                <option value="inactive">Hàng ngừng kinh doanh</option>
+                <option value="all">Tất cả</option>
+              </select>
             </label>
           </ManagementFilterGroup>
         </ManagementFilterSidebar>
