@@ -443,8 +443,11 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ BG000123' })
   expect(within(detailRegion).getByRole('button', { name: 'Mở tại POS' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'In' })).not.toBeInTheDocument()
+  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeDisabled()
 })
 
 it('filters sales documents by supported invoice payment seller and price list fields', async () => {
@@ -666,6 +669,15 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(within(detailRegion).getByText('Công nợ')).toBeInTheDocument()
   expect(detailRegion.querySelector('.sales-document-summary-box')).toHaveClass('sales-document-summary-box-right')
   expect(detailRegion.querySelector('.sales-document-detail-lower')).toHaveClass('sales-document-detail-lower-right')
+  const footer = detailRegion.querySelector('.management-detail-footer-actions')
+  expect(footer).not.toBeNull()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'In' })).toBeDisabled()
+  expect(footer?.querySelector('.management-detail-footer-actions-left')).not.toBeNull()
+  expect(footer?.querySelector('.management-detail-footer-actions-right')).not.toBeNull()
 
   await clickDocumentRow('HD010985')
   expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
@@ -704,16 +716,19 @@ it('shows payment history tab without rendering API receipt rows until cashbook 
   expect(within(paymentHistory).queryByText('Chuyển khoản')).not.toBeInTheDocument()
 })
 
-it('keeps saved invoice detail read-only until safe revise cancel and print flows exist', async () => {
+it('shows disabled invoice detail action placeholders until flows exist', async () => {
   const service = makeService()
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await clickDocumentRow('HD010985')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
 
+  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeDisabled()
   expect(within(detailRegion).queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
-  expect(within(detailRegion).queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument()
   expect(within(detailRegion).queryByRole('button', { name: 'Huỷ' })).not.toBeInTheDocument()
-  expect(within(detailRegion).queryByRole('button', { name: 'In' })).not.toBeInTheDocument()
   expect(within(detailRegion).queryByRole('button', { name: 'In lại' })).not.toBeInTheDocument()
 })

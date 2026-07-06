@@ -897,6 +897,27 @@ function SalesDocumentDetailView({
           </table>
         </section>
       )}
+      <footer className="management-detail-footer-actions">
+        <div className="management-detail-footer-actions-left">
+          <button className="button button-secondary management-detail-action-danger" disabled type="button">
+            Hủy
+          </button>
+          <button className="button button-secondary" disabled type="button">
+            Sao chép
+          </button>
+        </div>
+        <div className="management-detail-footer-actions-right">
+          <button className="button button-secondary" disabled type="button">
+            Chỉnh sửa
+          </button>
+          <button className="button button-primary" disabled type="button">
+            Lưu
+          </button>
+          <button className="button button-secondary" disabled type="button">
+            In
+          </button>
+        </div>
+      </footer>
     </div>
   )
 }
