@@ -1312,6 +1312,25 @@ button {
   gap: var(--space-3);
 }
 
+.management-detail-heading,
+.management-detail-title-line,
+.management-detail-inline-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.management-detail-title-line {
+  align-items: center;
+}
+
+.management-detail-log {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
 .management-detail-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1769,17 +1788,7 @@ button {
   padding: 0 var(--space-1) var(--space-1);
 }
 
-.finance-cashbook-detail-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.finance-cashbook-detail-heading,
-.finance-cashbook-detail-title-line,
 .finance-cashbook-detail-branch,
-.finance-cashbook-detail-note,
 .finance-cashbook-detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1788,53 +1797,9 @@ button {
   gap: var(--space-2);
 }
 
-.finance-cashbook-detail-title-line {
-  align-items: center;
-}
-
 .finance-cashbook-detail-branch {
   color: var(--color-text-muted);
   font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.finance-cashbook-detail h3,
-.finance-cashbook-detail h4,
-.finance-cashbook-detail p {
-  margin: 0;
-}
-
-.finance-cashbook-detail-log {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.finance-cashbook-detail-core-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.finance-cashbook-detail-core-grid > div,
-.finance-cashbook-detail-extra-rows > div {
-  border-bottom: 1px solid var(--color-border-muted);
-  padding-bottom: var(--space-1);
-}
-
-.finance-cashbook-detail-extra-rows {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.finance-cashbook-detail dt {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-}
-
-.finance-cashbook-detail dd {
-  margin: 0;
   font-weight: 700;
 }
 
@@ -1872,18 +1837,13 @@ button {
   padding: var(--space-2);
 }
 
-.finance-cashbook-detail-note {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
 .finance-cashbook-detail-close {
   display: flex;
   justify-content: flex-end;
 }
 
 @media (max-width: 900px) {
-  .finance-cashbook-detail-core-grid {
+  .management-detail-panel .management-detail-meta-grid-four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -4254,12 +4214,13 @@ td:has(.money-text) {
   color: var(--color-text-muted);
 }
 
-.sales-document-detail h2,
-.sales-document-detail p {
+.management-detail-panel h2,
+.management-detail-panel h3,
+.management-detail-panel p {
   margin: 0;
 }
 
-.sales-document-detail-header {
+.management-detail-header {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -4267,41 +4228,57 @@ td:has(.money-text) {
   min-width: 0;
 }
 
-.sales-document-detail-header h2 {
+.management-detail-header h2,
+.management-detail-header h3 {
   margin: 0;
   font-size: 1.15rem;
 }
 
-.sales-document-detail-header > span:not(.status-chip) {
+.management-detail-header > span:not(.status-chip) {
   color: var(--color-text-muted);
   white-space: nowrap;
 }
 
-.sales-document-meta-grid {
+.management-detail-meta-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-2);
   margin: 0;
 }
 
-.sales-document-meta-grid div {
+.management-detail-meta-grid div,
+.management-detail-meta-rows > div {
   display: flex;
   gap: var(--space-2);
   min-width: 0;
+  border-bottom: 1px solid var(--color-border-muted);
+  padding-bottom: var(--space-1);
 }
 
-.sales-document-meta-grid dt {
+.management-detail-meta-rows {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.management-detail-meta-grid dt,
+.management-detail-meta-rows dt {
   color: var(--color-text-muted);
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
-.sales-document-meta-grid dd {
+.management-detail-meta-grid dd,
+.management-detail-meta-rows dd {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.sales-document-lines-table,
-.sales-document-payment-history-table {
+.management-detail-meta-grid-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.management-detail-table {
   width: 100%;
   border-collapse: collapse;
 }
@@ -4320,16 +4297,13 @@ td:has(.money-text) {
   width: auto;
 }
 
-.sales-document-lines-table th,
-.sales-document-payment-history-table th {
+.management-detail-table th {
   background: var(--color-surface-muted);
   color: var(--color-text);
 }
 
-.sales-document-lines-table th,
-.sales-document-lines-table td,
-.sales-document-payment-history-table th,
-.sales-document-payment-history-table td {
+.management-detail-table th,
+.management-detail-table td {
   border-bottom: 1px solid var(--color-border-muted);
   padding: var(--space-2);
 }
@@ -4355,14 +4329,14 @@ td:has(.money-text) {
   color: var(--color-text-muted);
 }
 
-.sales-document-detail-lower {
+.management-detail-lower {
   display: grid;
   grid-template-columns: 12% minmax(14rem, 1fr) repeat(5, minmax(5.5rem, 1fr));
   gap: 0;
   align-items: start;
 }
 
-.sales-document-note {
+.management-detail-note {
   grid-column: 1 / 6;
   min-height: 5.5rem;
   border: 1px solid var(--color-border-muted);
@@ -4371,7 +4345,12 @@ td:has(.money-text) {
   color: var(--color-text-muted);
 }
 
-.sales-document-summary-box {
+.management-detail-inline-note {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.management-detail-summary-box {
   display: grid;
   grid-template-columns: 12% 26% repeat(3, 10%) repeat(2, 16%);
   column-gap: 0;
@@ -4379,17 +4358,17 @@ td:has(.money-text) {
   margin: 0;
 }
 
-.sales-document-summary-box-right {
+.management-detail-summary-box-right {
   grid-column: 1 / -1;
   width: 100%;
   margin-left: 0;
 }
 
-.sales-document-summary-box div {
+.management-detail-summary-box div {
   display: contents;
 }
 
-.sales-document-summary-box dt {
+.management-detail-summary-box dt {
   margin: 0;
   grid-column: 1 / 7;
   color: var(--color-text);
@@ -4399,7 +4378,7 @@ td:has(.money-text) {
   padding: 0 var(--space-2);
 }
 
-.sales-document-summary-box dd {
+.management-detail-summary-box dd {
   margin: 0;
   grid-column: 7;
   text-align: right;

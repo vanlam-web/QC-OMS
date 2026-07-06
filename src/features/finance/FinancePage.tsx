@@ -1716,29 +1716,29 @@ export function FinancePage({ service }: { service: FinanceService }) {
                       {selectedCashbookEntry?.id === entry.id ? (
                         <ManagementDetailRow colSpan={visibleCashbookColumns.length + 2} label={`Chi tiết sổ quỹ ${entry.code}`}>
                           {cashbookDetail === null ? <p>Đang tải chi tiết...</p> : (
-                            <div className="finance-cashbook-detail">
+                            <div className="management-detail-panel finance-cashbook-detail">
                               <div className="finance-cashbook-detail-tabs" role="tablist" aria-label="Chi tiết phiếu">
                                 <button aria-selected="true" role="tab" type="button">Thông tin</button>
                               </div>
-                              <header className="finance-cashbook-detail-header">
-                                <div className="finance-cashbook-detail-heading">
-                                  <div className="finance-cashbook-detail-title-line">
+                              <header className="management-detail-header">
+                                <div className="management-detail-heading">
+                                  <div className="management-detail-title-line">
                                     <h3>{cashbookDetailTitle(cashbookDetail)}</h3>
                                     <StatusChip tone={cashbookDetail.status === 'posted' ? 'success' : 'neutral'}>{cashbookDetailStatusText(cashbookDetail.status)}</StatusChip>
                                     <StatusChip tone={cashbookDetail.is_business_accounted ? 'info' : 'warning'}>{cashbookDetail.is_business_accounted ? 'Có hạch toán' : 'Không hạch toán'}</StatusChip>
                                   </div>
                                 </div>
                               </header>
-                              <p className="finance-cashbook-detail-log">
+                              <p className="management-detail-log finance-cashbook-detail-log">
                                 Người tạo: {cashbookDetail.created_by.name} | Thời gian: {dateText(cashbookDetail.created_at)}
                               </p>
-                              <dl className="finance-cashbook-detail-core-grid">
+                              <dl className="management-detail-meta-grid management-detail-meta-grid-four">
                                 <div><dt>Số tiền</dt><dd><MoneyText value={cashbookDetail.amount_delta} /></dd></div>
                                 <div><dt>{cashbookDetailAmountLabel(cashbookDetail)}</dt><dd>{sourceTypeText(cashbookDetail.source_type)}</dd></div>
                                 <div><dt>{cashbookDetail.direction === 'in' ? 'Đối tượng nộp' : 'Đối tượng nhận'}</dt><dd>{cashbookDetailCounterpartyTypeLabel(cashbookDetail)}</dd></div>
                                 <div><dt>Phương thức thanh toán</dt><dd>{paymentMethodText(cashbookDetail.payment_method)}</dd></div>
                               </dl>
-                              <dl className="finance-cashbook-detail-extra-rows">
+                              <dl className="management-detail-meta-rows">
                                 <div>
                                   <dt>{cashbookDetailCounterpartyLabel(cashbookDetail)}</dt>
                                   <dd>
@@ -1749,7 +1749,7 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                 </div>
                                 <div><dt>{cashbookDetailAccountLabel(cashbookDetail)}</dt><dd>{cashbookDetail.finance_account.name}</dd></div>
                               </dl>
-                              <div className="finance-cashbook-detail-note">
+                              <div className="management-detail-inline-note">
                                 <StickyNote aria-hidden="true" size={16} />
                                 {cashbookDetailNoteText(cashbookDetail)}
                               </div>

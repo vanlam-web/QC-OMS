@@ -769,7 +769,7 @@ function SalesDocumentDetailView({
   if (loading || !document) return <p>Đang tải chi tiết...</p>
 
   return (
-    <div className="management-detail-panel sales-document-detail">
+    <div className="management-detail-panel">
       <div className="inline-detail-tabbar">
         <div aria-label="Chi tiết chứng từ" className="inline-detail-tabs" role="tablist">
           <button
@@ -792,7 +792,7 @@ function SalesDocumentDetailView({
       </div>
       {activeTab === 'info' ? (
         <section aria-label="Thông tin chứng từ" role="tabpanel">
-          <header className="sales-document-detail-header">
+          <header className="management-detail-header">
             <h2>{document.customer.name}</h2>
             <span>{document.code}</span>
             <StatusChip tone={document.status === 'cancelled' ? 'danger' : document.status === 'completed' ? 'success' : 'info'}>
@@ -805,7 +805,7 @@ function SalesDocumentDetailView({
             ) : null}
           </header>
 
-          <dl className="sales-document-meta-grid">
+          <dl className="management-detail-meta-grid">
             <div>
               <dt>Người bán:</dt>
               <dd>{document.seller.name}</dd>
@@ -822,7 +822,7 @@ function SalesDocumentDetailView({
             ) : null}
           </dl>
 
-          <table aria-label="Dòng hàng" className="sales-document-lines-table">
+          <table aria-label="Dòng hàng" className="management-detail-table sales-document-lines-table">
             <thead>
               <tr>
                 <th>Mã hàng</th>
@@ -852,9 +852,9 @@ function SalesDocumentDetailView({
             </tbody>
           </table>
 
-          <div className="sales-document-detail-lower sales-document-detail-lower-right">
-            {document.note ? <p className="sales-document-note">{document.note}</p> : null}
-            <dl className="sales-document-summary-box sales-document-summary-box-right">
+          <div className="management-detail-lower management-detail-lower-right">
+            {document.note ? <p className="management-detail-note sales-document-note">{document.note}</p> : null}
+            <dl className="management-detail-summary-box management-detail-summary-box-right">
               <div>
                 <dt>{`Tổng tiền hàng (${document.items.length})`}</dt>
                 <dd><MoneyText value={document.subtotal_amount} /></dd>
@@ -882,7 +882,7 @@ function SalesDocumentDetailView({
         </section>
       ) : (
         <section aria-label="Lịch sử thanh toán" role="tabpanel">
-          <table aria-label="Lịch sử thanh toán" className="sales-document-payment-history-table">
+          <table aria-label="Lịch sử thanh toán" className="management-detail-table">
             <thead>
               <tr>
                 <th>Mã phiếu</th>

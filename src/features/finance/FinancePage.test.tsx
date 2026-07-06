@@ -553,12 +553,15 @@ describe('FinancePage', () => {
     expect(within(detail).getAllByText('Đã thanh toán').length).toBeGreaterThan(0)
     expect(within(detail).getByText('Có hạch toán')).toBeInTheDocument()
     expect(within(detail).queryByText('Chi nhánh trung tâm')).not.toBeInTheDocument()
-    expect(detail.querySelector('.finance-cashbook-detail-header')).not.toBeNull()
-    expect(detail.querySelector('.finance-cashbook-detail-core-grid')).not.toBeNull()
-    expect(detail.querySelector('.finance-cashbook-detail-extra-rows')).not.toBeNull()
+    expect(detail.querySelector('.finance-cashbook-detail')).toHaveClass('management-detail-panel')
+    expect(detail.querySelector('.management-detail-header')).not.toBeNull()
+    expect(detail.querySelector('.management-detail-title-line')).not.toBeNull()
+    expect(detail.querySelector('.management-detail-meta-grid')).toHaveClass('management-detail-meta-grid-four')
+    expect(detail.querySelector('.management-detail-meta-rows')).not.toBeNull()
     expect(detail.querySelector('.finance-cashbook-linked-documents-inner')).not.toBeNull()
+    expect(detail.querySelector('.management-detail-inline-note')).not.toBeNull()
     expect(
-      detail.querySelector('.finance-cashbook-detail-note')?.compareDocumentPosition(
+      detail.querySelector('.management-detail-inline-note')?.compareDocumentPosition(
         detail.querySelector('.finance-cashbook-linked-documents') as Node,
       ),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
