@@ -97,10 +97,6 @@ function cashbookDetailTitle(entry: CashbookEntryDetail) {
   return `${entry.direction === 'in' ? 'Phiếu thu' : 'Phiếu chi'} ${entry.code}`
 }
 
-function cashbookDetailActorLabel(entry: CashbookEntryDetail) {
-  return entry.direction === 'in' ? 'Người thu' : 'Người chi'
-}
-
 function cashbookDetailAmountLabel(entry: CashbookEntryDetail) {
   return entry.direction === 'in' ? 'Loại thu' : 'Loại chi'
 }
@@ -125,7 +121,7 @@ function cashbookDetailAccountLabel(entry: CashbookEntryDetail) {
 function cashbookLinkedDocumentMessage(entry: CashbookEntryDetail) {
   const code = entry.source.order_code ?? entry.source.code
   if (entry.direction === 'in') return `Phiếu thu tự động được gắn với hóa đơn ${code}.`
-  return `Phiếu chi tự động được gắn với chứng từ ${code}.`
+  return `Phiếu chi tự động được gắn với phiếu nhập hàng ${code}.`
 }
 
 function businessAccountedText(value: CashbookBusinessAccountedFilter) {
@@ -1251,13 +1247,13 @@ export function FinancePage({ service }: { service: FinanceService }) {
                               <div className="finance-cashbook-detail-tabs" role="tablist" aria-label="Chi tiết phiếu">
                                 <button aria-selected="true" role="tab" type="button">Thông tin</button>
                               </div>
-                              <header>
-                                <div>
-                                  <h3>{cashbookDetailTitle(cashbookDetail)}</h3>
-                                  <p className="finance-cashbook-detail-chips">
+                              <header className="finance-cashbook-detail-header">
+                                <div className="finance-cashbook-detail-heading">
+                                  <div className="finance-cashbook-detail-title-line">
+                                    <h3>{cashbookDetailTitle(cashbookDetail)}</h3>
                                     <StatusChip tone={cashbookDetail.status === 'posted' ? 'success' : 'neutral'}>{cashbookDetailStatusText(cashbookDetail.status)}</StatusChip>
                                     <StatusChip tone={cashbookDetail.is_business_accounted ? 'info' : 'warning'}>{cashbookDetail.is_business_accounted ? 'Có hạch toán' : 'Không hạch toán'}</StatusChip>
-                                  </p>
+                                  </div>
                                 </div>
                                 <div className="finance-cashbook-detail-branch">
                                   <MapPin aria-hidden="true" size={16} />
@@ -1265,13 +1261,15 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                 </div>
                               </header>
                               <p className="finance-cashbook-detail-log">
-                                Người tạo: {cashbookDetail.created_by.name} | {cashbookDetailActorLabel(cashbookDetail)}: {cashbookDetail.created_by.name} | Thời gian: {dateText(cashbookDetail.created_at)}
+                                Người tạo: {cashbookDetail.created_by.name} | Thời gian: {dateText(cashbookDetail.created_at)}
                               </p>
-                              <dl>
+                              <dl className="finance-cashbook-detail-core-grid">
                                 <div><dt>Số tiền</dt><dd><MoneyText value={cashbookDetail.amount_delta} /></dd></div>
                                 <div><dt>{cashbookDetailAmountLabel(cashbookDetail)}</dt><dd>{sourceTypeText(cashbookDetail.source_type)}</dd></div>
                                 <div><dt>{cashbookDetail.direction === 'in' ? 'Đối tượng nộp' : 'Đối tượng nhận'}</dt><dd>{cashbookDetailCounterpartyTypeLabel(cashbookDetail)}</dd></div>
                                 <div><dt>Phương thức thanh toán</dt><dd>{paymentMethodText(cashbookDetail.payment_method)}</dd></div>
+                              </dl>
+                              <dl className="finance-cashbook-detail-extra-rows">
                                 <div>
                                   <dt>{cashbookDetailCounterpartyLabel(cashbookDetail)}</dt>
                                   <dd>
@@ -1284,33 +1282,35 @@ export function FinancePage({ service }: { service: FinanceService }) {
                               </dl>
                               {cashbookDetail.allocations.length > 0 ? (
                                 <section aria-label="Chứng từ liên kết" className="finance-cashbook-linked-documents">
-                                  <p>{cashbookLinkedDocumentMessage(cashbookDetail)}</p>
-                                  <ManagementTableViewport>
-                                    <table aria-label="Chứng từ liên kết" className="management-table">
-                                      <thead>
-                                        <tr>
-                                          <th>Mã chứng từ</th>
-                                          <th>Thời gian</th>
-                                          <th>Giá trị phiếu</th>
-                                          <th>Đã thu trước</th>
-                                          <th>Giá trị thu</th>
-                                          <th>Trạng thái</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {cashbookDetail.allocations.map((allocation) => (
-                                          <tr key={allocation.order_id}>
-                                            <td>{allocation.order_code}</td>
-                                            <td>{dateText(cashbookDetail.created_at)}</td>
-                                            <td><MoneyText value={allocation.order_total_amount} /></td>
-                                            <td><MoneyText value={allocation.collected_before} /></td>
-                                            <td><MoneyText value={allocation.allocated_amount} /></td>
-                                            <td>{allocation.remaining_after === 0 ? 'Đã thanh toán' : 'Còn nợ'}</td>
+                                  <div className="finance-cashbook-linked-documents-inner">
+                                    <p>{cashbookLinkedDocumentMessage(cashbookDetail)}</p>
+                                    <ManagementTableViewport>
+                                      <table aria-label="Chứng từ liên kết" className="management-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Mã chứng từ</th>
+                                            <th>Thời gian</th>
+                                            <th>Giá trị phiếu</th>
+                                            <th>{cashbookDetail.direction === 'in' ? 'Đã thu trước' : 'Đã trả trước'}</th>
+                                            <th>{cashbookDetail.direction === 'in' ? 'Giá trị thu' : 'Giá trị chi'}</th>
+                                            <th>Trạng thái</th>
                                           </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </ManagementTableViewport>
+                                        </thead>
+                                        <tbody>
+                                          {cashbookDetail.allocations.map((allocation) => (
+                                            <tr key={allocation.order_id}>
+                                              <td>{allocation.order_code}</td>
+                                              <td>{dateText(cashbookDetail.created_at)}</td>
+                                              <td><MoneyText value={allocation.order_total_amount} /></td>
+                                              <td><MoneyText value={allocation.collected_before} /></td>
+                                              <td><MoneyText value={allocation.allocated_amount} /></td>
+                                              <td>{allocation.remaining_after === 0 ? 'Đã thanh toán' : 'Còn nợ'}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </ManagementTableViewport>
+                                  </div>
                                 </section>
                               ) : (
                                 <section aria-label="Lý do chi tiết" className="finance-cashbook-linked-documents">
@@ -1337,9 +1337,6 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                   </button>
                                 </div>
                               </footer>
-                              <div className="finance-cashbook-detail-close">
-                                <button className="button button-secondary" type="button" onClick={() => setSelectedCashbookEntry(null)}>Đóng</button>
-                              </div>
                             </div>
                           )}
                         </ManagementDetailRow>

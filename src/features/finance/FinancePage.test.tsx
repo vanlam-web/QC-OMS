@@ -79,6 +79,37 @@ const cashbookDetail: CashbookEntryDetail = {
   ],
 }
 
+const expenseEntry: CashbookEntry = {
+  id: 'entry-out-1',
+  code: 'PCPN000679',
+  status: 'posted',
+  direction: 'out',
+  amount_delta: -6899000,
+  finance_account: { id: 'bank-1', code: 'MB01', name: 'MB Bank', account_type: 'bank' },
+  is_business_accounted: false,
+  source_type: 'cashbook_voucher',
+  created_at: '2026-07-04T09:34:00Z',
+  note: null,
+}
+
+const expenseCashbookDetail: CashbookEntryDetail = {
+  ...expenseEntry,
+  created_by: { id: 'user-1', name: 'Văn Viết Phương Lâm' },
+  counterparty: { type: 'supplier', name: 'Thu Nghĩa', phone: '000100' },
+  payment_method: 'bank_transfer',
+  source: { type: 'manual_voucher', id: 'voucher-out-1', code: 'PCPN000679', order_code: 'PN000679' },
+  allocations: [
+    {
+      order_id: 'receipt-1',
+      order_code: 'PN000679',
+      order_total_amount: 6899000,
+      collected_before: 0,
+      allocated_amount: 6899000,
+      remaining_after: 0,
+    },
+  ],
+}
+
 const voucher: CashbookVoucher = {
   id: 'voucher-1',
   code: 'PT0001',
@@ -382,9 +413,14 @@ describe('FinancePage', () => {
     expect(within(detail).getAllByText('Đã thanh toán').length).toBeGreaterThan(0)
     expect(within(detail).getByText('Có hạch toán')).toBeInTheDocument()
     expect(within(detail).getByText('Chi nhánh trung tâm')).toBeInTheDocument()
+    expect(detail.querySelector('.finance-cashbook-detail-header')).not.toBeNull()
+    expect(detail.querySelector('.finance-cashbook-detail-core-grid')).not.toBeNull()
+    expect(detail.querySelector('.finance-cashbook-detail-extra-rows')).not.toBeNull()
+    expect(detail.querySelector('.finance-cashbook-linked-documents-inner')).not.toBeNull()
     const detailText = detail.textContent ?? ''
     expect(detailText).toContain('Người tạo: Văn Viết Phương Lâm')
-    expect(detailText).toContain('Người thu: Văn Viết Phương Lâm')
+    expect(detailText).not.toContain('Người thu')
+    expect(detailText).not.toContain('Người chi')
     expect(detailText).toContain('Thời gian:')
     expect(within(detail).getByText('Số tiền')).toBeInTheDocument()
     expect(within(detail).getByText('Loại thu')).toBeInTheDocument()
@@ -400,6 +436,31 @@ describe('FinancePage', () => {
     expect(within(detail).getByRole('button', { name: 'In phiếu PT0001' })).toBeDisabled()
     expect(within(detail).getAllByText('HD0001').length).toBeGreaterThan(0)
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
+  })
+
+  it('shows expense cashbook detail with payer-free log and expense allocation wording', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => expenseCashbookDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 0, total_out: 6899000, ending_balance: -6799000 },
+        items: [expenseEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PCPN000679' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PCPN000679' })
+    expect(within(detail).getByRole('heading', { name: 'Phiếu chi PCPN000679' })).toBeInTheDocument()
+    const detailText = detail.textContent ?? ''
+    expect(detailText).toContain('Người tạo: Văn Viết Phương Lâm')
+    expect(detailText).not.toContain('Người chi')
+    expect(within(detail).getByText('Phiếu chi tự động được gắn với phiếu nhập hàng PN000679.')).toBeInTheDocument()
+    expect(within(detail).getByText('Đã trả trước')).toBeInTheDocument()
+    expect(within(detail).getByText('Giá trị chi')).toBeInTheDocument()
   })
 
 })

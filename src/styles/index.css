@@ -1307,14 +1307,15 @@ button {
   padding: 0 var(--space-1) var(--space-2);
 }
 
-.finance-cashbook-detail header {
+.finance-cashbook-detail-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
-.finance-cashbook-detail-chips,
+.finance-cashbook-detail-heading,
+.finance-cashbook-detail-title-line,
 .finance-cashbook-detail-branch,
 .finance-cashbook-detail-note,
 .finance-cashbook-detail-actions {
@@ -1322,6 +1323,10 @@ button {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+.finance-cashbook-detail-title-line {
+  align-items: center;
 }
 
 .finance-cashbook-detail-branch {
@@ -1341,9 +1346,21 @@ button {
   font-size: 0.85rem;
 }
 
-.finance-cashbook-detail dl {
+.finance-cashbook-detail-core-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.finance-cashbook-detail-core-grid > div,
+.finance-cashbook-detail-extra-rows > div {
+  border-bottom: 1px solid var(--color-border-muted);
+  padding-bottom: var(--space-2);
+}
+
+.finance-cashbook-detail-extra-rows {
+  display: grid;
   gap: var(--space-3);
   margin: 0;
 }
@@ -1376,13 +1393,20 @@ button {
 .finance-cashbook-linked-documents {
   display: grid;
   gap: var(--space-2);
-  border-top: 1px solid var(--color-border-muted);
-  padding-top: var(--space-3);
+  padding-top: var(--space-2);
 }
 
 .finance-cashbook-linked-documents > p {
   color: var(--color-text-muted);
   font-size: 0.9rem;
+}
+
+.finance-cashbook-linked-documents-inner {
+  display: grid;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
 }
 
 .finance-cashbook-detail footer {
@@ -1403,6 +1427,12 @@ button {
 .finance-cashbook-detail-close {
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .finance-cashbook-detail-core-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .finance-collection-panel {
