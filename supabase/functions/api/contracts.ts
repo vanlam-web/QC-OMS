@@ -482,7 +482,7 @@ export interface PaymentReceiptDetailData {
   total_received_amount: number;
   created_at: string;
   created_by: { id: string; name: string };
-  customer: { id: string; code: string; name: string } | null;
+  customer: { id: string | null; code: string | null; name: string } | null;
   source_order: { id: string; code: string; total_amount: number } | null;
   methods: Array<{
     method_type: "cash" | "bank_transfer";

@@ -781,9 +781,10 @@ it('keeps payment history visible when receipt data misses optional nested field
 
   const paymentHistory = within(detailRegion).getByRole('table', { name: 'Lịch sử thanh toán' })
   expect(within(paymentHistory).getByText('PT000125')).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('00:08 1/7/26')).toBeInTheDocument()
   expect(within(paymentHistory).getByText('Admin')).toBeInTheDocument()
   expect(within(paymentHistory).queryByText('Chưa có dữ liệu')).not.toBeInTheDocument()
-  expect(within(paymentHistory).getAllByText('-')).toHaveLength(2)
+  expect(within(paymentHistory).getAllByText('-')).toHaveLength(1)
 })
 
 it('shows disabled invoice detail action placeholders until flows exist', async () => {

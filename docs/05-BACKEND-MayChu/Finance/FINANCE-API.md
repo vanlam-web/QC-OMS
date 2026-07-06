@@ -266,6 +266,8 @@ Chỉ tính số dư hiệu lực từ `cashbook_entries.status = posted`.
 
 Khi `search` khớp chính xác mã phiếu, backend phải tìm trên toàn bộ lịch sử hoặc bỏ qua `from/to` nếu client đang dùng filter thời gian mặc định. Không trả rỗng chỉ vì mã phiếu nằm ngoài tháng hiện tại.
 
+`counterparty` trên list và detail phải dùng cùng nguồn dữ liệu. Dòng sinh từ `payment_receipt_method` lấy khách từ `payment_receipts.customer_id`; nếu phiếu thu không có `customer_id` nhưng có `order_id`, dùng `orders.customer_snapshot` để hiển thị `Khách lẻ` hoặc tên khách đã lưu lúc bán hàng.
+
 Response list phải có summary theo filter:
 
 ```json

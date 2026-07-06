@@ -497,6 +497,31 @@ describe('FinancePage', () => {
     expect(within(row).getByText('-')).toBeInTheDocument()
   })
 
+  it('hydrates the cashbook row counterparty from opened detail', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => noteLinkedReceiptDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
+        items: [noteLinkedReceiptEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const row = within(table).getByRole('row', { name: /PT000015/ })
+
+    expect(within(row).getByText('-')).toBeInTheDocument()
+    await userEvent.click(row)
+
+    expect(await screen.findByRole('button', { name: 'Người nộp Khách lẻ' })).toBeInTheDocument()
+    await waitFor(() => {
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp Khách lẻ' })).toBeInTheDocument()
+    })
+  })
+
   it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)

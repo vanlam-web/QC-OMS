@@ -826,7 +826,9 @@ export function FinancePage({ service }: { service: FinanceService }) {
     setCashbookDetail(null)
     setError(null)
     try {
-      setCashbookDetail(await service.getCashbookEntry(entry.id))
+      const detail = await service.getCashbookEntry(entry.id)
+      setCashbookDetail(detail)
+      setCashbookEntries((current) => current?.map((item) => (item.id === detail.id ? { ...item, ...detail } : item)) ?? current)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được chi tiết sổ quỹ.'))
     }

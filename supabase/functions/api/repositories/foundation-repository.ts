@@ -2987,12 +2987,16 @@ async function loadPaymentReceiptDetail(
     .order("line_no", { ascending: true });
   if (methodsError !== null) throw methodsError;
 
-  const customer = typeof receipt.customer_id === "string"
+  const receiptCustomer = typeof receipt.customer_id === "string"
     ? await loadCustomerRef(client, organizationId, receipt.customer_id)
     : null;
   const sourceOrder = typeof receipt.order_id === "string"
     ? await loadOrderRef(client, organizationId, receipt.order_id)
     : null;
+  const orderCustomer = receiptCustomer === null && typeof receipt.order_id === "string"
+    ? await loadOrderCustomerRef(client, organizationId, receipt.order_id)
+    : null;
+  const customer = receiptCustomer ?? orderCustomer;
 
   return {
     id: receipt.id,
@@ -3074,6 +3078,23 @@ async function loadOrderRef(
     .maybeSingle();
   if (error !== null) throw error;
   return data === null ? null : { id: data.id, code: data.code, total_amount: Number(data.total_amount) };
+}
+
+async function loadOrderCustomerRef(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<{ id: string | null; code: string | null; name: string } | null> {
+  const { data, error } = await client
+    .from("orders")
+    .select("customer_snapshot")
+    .eq("id", orderId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  if (data === null) return null;
+  const customer = customerSnapshot(data.customer_snapshot);
+  return { id: customer.id, code: customer.code, name: customer.name };
 }
 
 async function loadProfileName(client: DatabaseClient, userId: string): Promise<string> {

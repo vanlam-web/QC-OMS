@@ -57,6 +57,7 @@ const receiptDetail: PaymentReceiptDetailData = {
   receipt_type: "sale_payment",
   total_received_amount: 120000,
   created_at: "2026-06-30T10:00:00Z",
+  created_by: { id: actorId, name: "Admin" },
   customer: { id: "customer-1", code: "KH000001", name: "Cong ty ABC" },
   source_order: { id: "order-1", code: "HD010973", total_amount: 240000 },
   methods: [{ method_type: "cash", amount: 120000, finance_account: { id: "cash-1", code: "CASH", name: "Tiền mặt" } }],

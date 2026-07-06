@@ -21,10 +21,10 @@ import type { OrderService, QuoteReopenPayload } from '../orders/order-service'
 import type { CatalogService } from '../catalog/catalog-service'
 import type { FoundationService } from '../users/foundation-service'
 
-function dateTime(value: string | null | undefined) {
-  if (!value) return '-'
+function dateTime(value: string | null | undefined, fallback?: string | null): string {
+  if (!value) return fallback ? dateTime(fallback) : '-'
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return '-'
+  if (Number.isNaN(parsed.getTime())) return fallback ? dateTime(fallback) : '-'
   return new Intl.DateTimeFormat('vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -934,7 +934,7 @@ function SalesDocumentDetailView({
                 {paymentReceipts.map((receipt) => (
                   <tr key={receipt.id}>
                     <td>{receipt.code}</td>
-                    <td>{dateTime(receipt.created_at)}</td>
+                    <td>{dateTime(receipt.created_at, document.created_at)}</td>
                     <td>{paymentReceiptCreatorLabel(receipt, document.seller)}</td>
                     <td><MoneyText value={receipt.total_received_amount} /></td>
                     <td>{paymentReceiptMethodLabel(receipt)}</td>
