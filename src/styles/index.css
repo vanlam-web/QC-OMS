@@ -393,7 +393,7 @@ button {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  padding: var(--space-4);
+  padding: var(--space-1);
 }
 
 .management-filter-column {
@@ -1146,18 +1146,28 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: var(--space-2);
 }
 
+.finance-page-actions .management-compact-toolbar {
+  flex: 1 1 28rem;
+  width: auto;
+}
+
 .finance-voucher-actions {
-  position: fixed;
-  top: var(--shell-action-rail-top);
-  right: calc(var(--space-4) + var(--shell-action-rail-reserved-width) + var(--space-2));
-  z-index: calc(var(--z-shell) - 1);
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
   gap: var(--space-2);
+}
+
+.finance-voucher-actions .button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .finance-voucher-panel {
@@ -1252,11 +1262,36 @@ button {
 .finance-cashbook-star-column {
   width: 2.75rem;
   text-align: center;
+  vertical-align: middle;
 }
 
 .finance-cashbook-star-column {
   color: var(--color-text-muted);
   font-size: 1rem;
+}
+
+.finance-cashbook-star-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.finance-cashbook-star-column .finance-cashbook-star-button {
+  margin: 0 auto;
+}
+
+.finance-cashbook-star-button:hover,
+.finance-cashbook-star-button-active {
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
 }
 
 .finance-cashbook-money-column {
@@ -1323,6 +1358,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-2);
 }
 
@@ -1410,14 +1446,6 @@ button {
   padding: var(--space-2);
 }
 
-.finance-cashbook-unallocated {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
 .finance-cashbook-detail footer {
   display: flex;
   flex-wrap: wrap;
@@ -1431,6 +1459,30 @@ button {
 .finance-cashbook-detail-note {
   color: var(--color-text-muted);
   font-size: 0.9rem;
+}
+
+.finance-cashbook-detail-actions {
+  justify-content: flex-start;
+}
+
+.finance-cashbook-detail-actions-right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.finance-cashbook-detail-actions .button {
+  min-height: 2rem;
+  padding-inline: var(--space-2);
+}
+
+.finance-cashbook-detail-action-cancel {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.finance-cashbook-detail-action-print {
+  background: var(--color-surface);
 }
 
 .finance-cashbook-detail-close {
@@ -4433,7 +4485,7 @@ td:has(.money-text) {
   }
 
   .management-list-surface {
-    padding: var(--space-3);
+    padding: var(--space-1);
   }
 
   .management-pagination {
