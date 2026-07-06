@@ -118,7 +118,7 @@ Hiện trạng detail inline:
 - Nhật ký chỉ hiển thị `Người tạo` và `Thời gian`; mặc định `Người tạo` chính là người thu/chi nếu backend chưa tách trường riêng.
 - Grid thông tin chính chia 4 cột: số tiền, loại thu/chi, đối tượng nộp/nhận, phương thức thanh toán. Các dòng phụ bên dưới hiển thị người nộp/nhận dạng link và quỹ/tài khoản nhận hoặc chi.
 - Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
-- Nếu không có `allocations`, panel dùng khu vực lý do/ghi chú thay cho bảng chứng từ.
+- Nếu không có `allocations`, panel vẫn giữ khung bảng chứng từ rỗng và dòng `Tiền chưa phân bổ: 0`; ghi chú chỉ nằm ở footer.
 - Footer hiển thị ghi chú và cụm nút `Hủy`, `Chỉnh sửa`, `In`; các nút này đang disabled nếu chưa có API/hành vi an toàn cho dòng detail.
 
 Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail. Không hiển thị `Người thu`/`Người chi` riêng khi backend chưa cần tách trường này.

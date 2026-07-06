@@ -1290,7 +1290,7 @@ button {
 
 .finance-cashbook-detail {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .finance-cashbook-detail-tabs {
@@ -1298,13 +1298,13 @@ button {
 }
 
 .finance-cashbook-detail-tabs button {
-  min-height: 2.25rem;
+  min-height: 2rem;
   border: 0;
   border-bottom: 2px solid var(--color-primary);
   background: transparent;
   color: var(--color-text);
   font-weight: 800;
-  padding: 0 var(--space-1) var(--space-2);
+  padding: 0 var(--space-1) var(--space-1);
 }
 
 .finance-cashbook-detail-header {
@@ -1349,19 +1349,19 @@ button {
 .finance-cashbook-detail-core-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin: 0;
 }
 
 .finance-cashbook-detail-core-grid > div,
 .finance-cashbook-detail-extra-rows > div {
   border-bottom: 1px solid var(--color-border-muted);
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
 }
 
 .finance-cashbook-detail-extra-rows {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin: 0;
 }
 
@@ -1403,10 +1403,18 @@ button {
 
 .finance-cashbook-linked-documents-inner {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   border: 1px solid var(--color-border-muted);
   border-radius: var(--radius-sm);
-  padding: var(--space-3);
+  padding: var(--space-2);
+}
+
+.finance-cashbook-unallocated {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
 }
 
 .finance-cashbook-detail footer {
@@ -1414,9 +1422,9 @@ button {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   border-top: 1px solid var(--color-border-muted);
-  padding-top: var(--space-3);
+  padding-top: var(--space-2);
 }
 
 .finance-cashbook-detail-note {

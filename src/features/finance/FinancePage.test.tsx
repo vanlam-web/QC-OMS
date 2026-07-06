@@ -110,6 +110,28 @@ const expenseCashbookDetail: CashbookEntryDetail = {
   ],
 }
 
+const unallocatedExpenseEntry: CashbookEntry = {
+  id: 'entry-out-empty',
+  code: 'CTM001181',
+  status: 'posted',
+  direction: 'out',
+  amount_delta: -100000,
+  finance_account: { id: 'cash-1', code: 'CASH', name: 'Quỹ tiền mặt', account_type: 'cash' },
+  is_business_accounted: true,
+  source_type: 'cashbook_voucher',
+  created_at: '2026-07-06T01:11:00Z',
+  note: 'Ứng lần 2',
+}
+
+const unallocatedExpenseDetail: CashbookEntryDetail = {
+  ...unallocatedExpenseEntry,
+  created_by: { id: 'user-2', name: 'Nguyễn Thị Bích Nương' },
+  counterparty: { type: 'other', name: 'Tý', phone: '0964917315' },
+  payment_method: 'cash',
+  source: { type: 'manual_voucher', id: 'voucher-empty-1', code: 'CTM001181', order_code: null },
+  allocations: [],
+}
+
 const voucher: CashbookVoucher = {
   id: 'voucher-1',
   code: 'PT0001',
@@ -461,6 +483,28 @@ describe('FinancePage', () => {
     expect(within(detail).getByText('Phiếu chi tự động được gắn với phiếu nhập hàng PN000679.')).toBeInTheDocument()
     expect(within(detail).getByText('Đã trả trước')).toBeInTheDocument()
     expect(within(detail).getByText('Giá trị chi')).toBeInTheDocument()
+  })
+
+  it('keeps an empty linked document shell before the cashbook detail note', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => unallocatedExpenseDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 0, total_out: 100000, ending_balance: 0 },
+        items: [unallocatedExpenseEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết CTM001181' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ CTM001181' })
+    expect(within(detail).getByRole('table', { name: 'Chứng từ liên kết' })).toBeInTheDocument()
+    expect(within(detail).getByText('Không có chứng từ liên kết.')).toBeInTheDocument()
+    expect(within(detail).getByText('Tiền chưa phân bổ:')).toBeInTheDocument()
+    expect(within(detail).getByText('Ứng lần 2')).toBeInTheDocument()
   })
 
 })

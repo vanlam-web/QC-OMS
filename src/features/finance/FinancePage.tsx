@@ -1280,43 +1280,45 @@ export function FinancePage({ service }: { service: FinanceService }) {
                                 </div>
                                 <div><dt>{cashbookDetailAccountLabel(cashbookDetail)}</dt><dd>{cashbookDetail.finance_account.name}</dd></div>
                               </dl>
-                              {cashbookDetail.allocations.length > 0 ? (
-                                <section aria-label="Chứng từ liên kết" className="finance-cashbook-linked-documents">
-                                  <div className="finance-cashbook-linked-documents-inner">
-                                    <p>{cashbookLinkedDocumentMessage(cashbookDetail)}</p>
-                                    <ManagementTableViewport>
-                                      <table aria-label="Chứng từ liên kết" className="management-table">
-                                        <thead>
-                                          <tr>
-                                            <th>Mã chứng từ</th>
-                                            <th>Thời gian</th>
-                                            <th>Giá trị phiếu</th>
-                                            <th>{cashbookDetail.direction === 'in' ? 'Đã thu trước' : 'Đã trả trước'}</th>
-                                            <th>{cashbookDetail.direction === 'in' ? 'Giá trị thu' : 'Giá trị chi'}</th>
-                                            <th>Trạng thái</th>
+                              <section aria-label="Chứng từ liên kết" className="finance-cashbook-linked-documents">
+                                <div className="finance-cashbook-linked-documents-inner">
+                                  <p>{cashbookDetail.allocations.length > 0 ? cashbookLinkedDocumentMessage(cashbookDetail) : 'Không có chứng từ liên kết.'}</p>
+                                  <ManagementTableViewport>
+                                    <table aria-label="Chứng từ liên kết" className="management-table">
+                                      <thead>
+                                        <tr>
+                                          <th>Mã chứng từ</th>
+                                          <th>Thời gian</th>
+                                          <th>Giá trị phiếu</th>
+                                          <th>{cashbookDetail.direction === 'in' ? 'Đã thu trước' : 'Đã trả trước'}</th>
+                                          <th>{cashbookDetail.direction === 'in' ? 'Giá trị thu' : 'Giá trị chi'}</th>
+                                          <th>Trạng thái</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {cashbookDetail.allocations.length > 0 ? cashbookDetail.allocations.map((allocation) => (
+                                          <tr key={allocation.order_id}>
+                                            <td>{allocation.order_code}</td>
+                                            <td>{dateText(cashbookDetail.created_at)}</td>
+                                            <td><MoneyText value={allocation.order_total_amount} /></td>
+                                            <td><MoneyText value={allocation.collected_before} /></td>
+                                            <td><MoneyText value={allocation.allocated_amount} /></td>
+                                            <td>{allocation.remaining_after === 0 ? 'Đã thanh toán' : 'Còn nợ'}</td>
                                           </tr>
-                                        </thead>
-                                        <tbody>
-                                          {cashbookDetail.allocations.map((allocation) => (
-                                            <tr key={allocation.order_id}>
-                                              <td>{allocation.order_code}</td>
-                                              <td>{dateText(cashbookDetail.created_at)}</td>
-                                              <td><MoneyText value={allocation.order_total_amount} /></td>
-                                              <td><MoneyText value={allocation.collected_before} /></td>
-                                              <td><MoneyText value={allocation.allocated_amount} /></td>
-                                              <td>{allocation.remaining_after === 0 ? 'Đã thanh toán' : 'Còn nợ'}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </ManagementTableViewport>
-                                  </div>
-                                </section>
-                              ) : (
-                                <section aria-label="Lý do chi tiết" className="finance-cashbook-linked-documents">
-                                  <p>{cashbookDetail.note ?? 'Chưa có chứng từ liên kết.'}</p>
-                                </section>
-                              )}
+                                        )) : (
+                                          <tr>
+                                            <td colSpan={6}>Không có kết quả phù hợp</td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </ManagementTableViewport>
+                                  <p className="finance-cashbook-unallocated">
+                                    <span>Tiền chưa phân bổ:</span>
+                                    <MoneyText value={0} />
+                                  </p>
+                                </div>
+                              </section>
                               <footer>
                                 <div className="finance-cashbook-detail-note">
                                   <StickyNote aria-hidden="true" size={16} />
