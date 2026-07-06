@@ -130,8 +130,8 @@ Quy tắc:
 - Thu thêm nợ thực hiện ở module Công nợ/Sổ quỹ theo quy tắc phân bổ hóa đơn cũ nhất trước.
 - Nếu hóa đơn bị sửa/hủy, tác động đảo tiền/công nợ phải được ghi thành lịch sử, không xóa dòng cũ.
 - Tab `Lịch sử thanh toán` đọc từ `payment_receipts` trong detail response. Nếu chưa có phiếu thu hoặc dữ liệu liên kết chưa đủ, UI giữ tab và hiển thị trạng thái trống/chưa có dữ liệu.
-- Dữ liệu phiếu thu từ hệ thống cũ/API cũ có thể thiếu ngày, người thu hoặc phương thức. UI phải hiển thị fallback (`-`, `Chưa có dữ liệu`) thay vì làm sập detail.
-- `created_by` của phiếu thu được xem là người thu tiền/thu ngân, tức user dùng phần mềm ở thời điểm ghi nhận phiếu.
+- Dữ liệu phiếu thu từ hệ thống cũ/API cũ có thể thiếu ngày, người thu hoặc phương thức. UI phải hiển thị fallback thay vì làm sập detail.
+- `created_by` của phiếu thu được xem là người thu tiền/thu ngân, tức user dùng phần mềm ở thời điểm ghi nhận phiếu. Nếu phiếu thu thiếu `created_by`, dùng người bán/user của chứng từ bán hàng làm người thu.
 
 ---
 

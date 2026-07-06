@@ -935,7 +935,7 @@ function SalesDocumentDetailView({
                   <tr key={receipt.id}>
                     <td>{receipt.code}</td>
                     <td>{dateTime(receipt.created_at)}</td>
-                    <td>{paymentReceiptCreatorLabel(receipt)}</td>
+                    <td>{paymentReceiptCreatorLabel(receipt, document.seller)}</td>
                     <td><MoneyText value={receipt.total_received_amount} /></td>
                     <td>{paymentReceiptMethodLabel(receipt)}</td>
                     <td>{paymentReceiptStatusLabel(receipt.status)}</td>
@@ -1010,8 +1010,11 @@ function paymentReceiptStatusLabel(status: SalesDocumentDetail['payment_receipts
   return status === 'posted' ? 'Đã ghi nhận' : 'Đã hủy'
 }
 
-function paymentReceiptCreatorLabel(receipt: SalesDocumentDetail['payment_receipts'][number]) {
-  return receipt.created_by?.name || receipt.created_by?.id || 'Chưa có dữ liệu'
+function paymentReceiptCreatorLabel(
+  receipt: SalesDocumentDetail['payment_receipts'][number],
+  seller: SalesDocumentDetail['seller'],
+) {
+  return receipt.created_by?.name || receipt.created_by?.id || seller.name || seller.id || 'Chưa có dữ liệu'
 }
 
 function paymentReceiptMethods(receipt: SalesDocumentDetail['payment_receipts'][number]) {
