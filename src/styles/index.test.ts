@@ -117,7 +117,9 @@ it('keeps cashbook detail panel aligned to the KV expanded row structure', () =>
   expect(cssRule('.finance-cashbook-detail-core-grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))')
   expect(cssRule('.finance-cashbook-detail-core-grid > div,\n.finance-cashbook-detail-extra-rows > div')).toContain('border-bottom: 1px solid var(--color-border-muted)')
   expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('border: 1px solid var(--color-border-muted)')
-  expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('padding: var(--space-3)')
+  expect(cssRule('.finance-cashbook-detail')).toContain('gap: var(--space-3)')
+  expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('padding: var(--space-2)')
+  expect(cssRule('.finance-cashbook-unallocated')).toContain('justify-content: flex-end')
 })
 
 it('keeps shared management table headers sticky and visually distinct', () => {
