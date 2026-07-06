@@ -121,7 +121,7 @@ Hiện trạng detail inline sau PR #91 ngày `06/07/2026`:
 - Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
 - Nếu không có `allocations` nhưng ghi chú/source chứa mã `HD...` hoặc `PN...`, panel vẫn hiển thị dòng chứng từ liên kết suy luận để người dùng thấy phiếu thu/chi gắn với hóa đơn/phiếu nhập nào. Nếu không có dữ liệu liên kết, bảng con hiển thị trạng thái rỗng.
 - Không hiển thị dòng `Tiền chưa phân bổ: 0` trong detail.
-- Footer chỉ chứa actions: `Hủy` canh trái; `Chỉnh sửa` và `In` canh phải. Các nút này đang disabled nếu chưa có API/hành vi an toàn cho dòng detail.
+- Footer chỉ chứa actions: `Hủy` canh trái; `Chỉnh sửa` và `In` canh phải. Nhãn và icon trong từng nút luôn nằm trên một hàng, không wrap xuống dòng. Các nút này đang disabled nếu chưa có API/hành vi an toàn cho dòng detail.
 
 Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail. Không hiển thị `Người thu`/`Người chi` riêng khi backend chưa cần tách trường này.
 
@@ -135,7 +135,7 @@ Hiện trạng sau các slice sổ quỹ ngày `06/07/2026`:
 
 - `/finance` là màn sổ quỹ chính; thân trang chỉ còn bảng sổ quỹ, inline detail dòng sổ và form phiếu thu/chi khi mở.
 - Các khối `Tài khoản quỹ`, `Công nợ khách hàng`, `Phiếu thu/chi` đã ẩn khỏi thân trang để tránh rối layout.
-- Header có ô `Tìm công nợ` theo kiểu search chung; nút `+ Phiếu thu`, `+ Phiếu chi`, `Xuất file` nằm cùng hàng và canh phải trước cụm tài khoản/giao diện của shell.
+- Header có ô `Tìm công nợ` theo kiểu search chung; nút `+ Phiếu thu`, `+ Phiếu chi`, `Xuất file` nằm cùng hàng, nhãn không wrap xuống dòng, và canh phải trước cụm tài khoản/giao diện của shell.
 - Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải, ngay trên bảng sổ quỹ, và lấy từ `summary` của API sổ quỹ theo filter.
 - `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
 - Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.

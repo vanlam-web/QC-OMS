@@ -1166,7 +1166,11 @@ button {
 }
 
 .finance-voucher-actions .button {
+  display: inline-flex;
   flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
   white-space: nowrap;
 }
 
@@ -1471,8 +1475,13 @@ button {
 }
 
 .finance-cashbook-detail-actions .button {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
   min-height: 2rem;
   padding-inline: var(--space-2);
+  white-space: nowrap;
 }
 
 .finance-cashbook-detail-action-cancel {
