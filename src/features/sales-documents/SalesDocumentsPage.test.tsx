@@ -678,6 +678,7 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(within(footer as HTMLElement).getByRole('button', { name: 'In' })).toBeDisabled()
   expect(footer?.querySelector('.management-detail-footer-actions-left')).not.toBeNull()
   expect(footer?.querySelector('.management-detail-footer-actions-right')).not.toBeNull()
+  expect(footer?.querySelectorAll('svg')).toHaveLength(5)
 
   await clickDocumentRow('HD010985')
   expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()

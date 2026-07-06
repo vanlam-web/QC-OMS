@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Search } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Pencil, Printer, Save, Search, XCircle } from 'lucide-react'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
@@ -900,20 +900,25 @@ function SalesDocumentDetailView({
       <footer className="management-detail-footer-actions">
         <div className="management-detail-footer-actions-left">
           <button className="button button-secondary management-detail-action-danger" disabled type="button">
+            <XCircle aria-hidden="true" size={15} />
             Hủy
           </button>
           <button className="button button-secondary" disabled type="button">
+            <Copy aria-hidden="true" size={15} />
             Sao chép
           </button>
         </div>
         <div className="management-detail-footer-actions-right">
           <button className="button button-secondary" disabled type="button">
+            <Pencil aria-hidden="true" size={15} />
             Chỉnh sửa
           </button>
           <button className="button button-primary" disabled type="button">
+            <Save aria-hidden="true" size={15} />
             Lưu
           </button>
           <button className="button button-secondary" disabled type="button">
+            <Printer aria-hidden="true" size={15} />
             In
           </button>
         </div>
