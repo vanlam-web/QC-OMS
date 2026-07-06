@@ -46,6 +46,7 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
       page_size: 20,
       total: 1,
     })),
+    listCustomerGroups: vi.fn(async () => ({ items: [] })),
     createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({
       items: [

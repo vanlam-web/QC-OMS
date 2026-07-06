@@ -346,6 +346,38 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
   assertEquals((body.created_by as Record<string, unknown>).name, "Admin");
 });
 
+Deno.test("customer list maps existing filter fields", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.create_order"], {
+    listCustomers: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/customers?search=phong&customer_group_id=cg-1&created_from=2026-07-01&created_to=2026-07-06&created_by=user-admin&total_sales_min=500000&total_sales_max=900000&total_debt_min=100000&total_debt_max=300000&page=2&page_size=15",
+    { method: "GET" },
+    repository,
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(captured, {
+    organizationId,
+    search: "phong",
+    customerGroupId: "cg-1",
+    createdFrom: "2026-07-01",
+    createdTo: "2026-07-06",
+    createdBy: "user-admin",
+    totalSalesMin: 500000,
+    totalSalesMax: 900000,
+    totalDebtMin: 100000,
+    totalDebtMax: 300000,
+    page: 2,
+    pageSize: 15,
+  });
+});
+
 Deno.test("customer routes map duplicate name or phone to resource conflict", async () => {
   const duplicateError = { code: "23505", message: "duplicate key value violates unique constraint" };
   const createResponse = await call(

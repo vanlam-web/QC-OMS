@@ -25,6 +25,38 @@ describe('catalog-service', () => {
     ])
   })
 
+  it('builds customer list filters from existing customer fields', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return null as T
+    }
+    const service = createCatalogService({ request })
+
+    await service.listCustomers({
+      search: 'phong',
+      customer_group_id: 'cg-1',
+      created_from: '2026-07-01',
+      created_to: '2026-07-06',
+      created_by: 'user-admin',
+      total_sales_min: 500000,
+      total_sales_max: 900000,
+      total_debt_min: 100000,
+      total_debt_max: 300000,
+      page: 2,
+      page_size: 15,
+    })
+    await service.listCustomerGroups()
+
+    expect(calls).toEqual([
+      [
+        '/api/v1/customers?search=phong&customer_group_id=cg-1&created_from=2026-07-01&created_to=2026-07-06&created_by=user-admin&total_sales_min=500000&total_sales_max=900000&total_debt_min=100000&total_debt_max=300000&page=2&page_size=15',
+        undefined,
+      ],
+      ['/api/v1/customer-groups', undefined],
+    ])
+  })
+
   it('gets and saves product BOM', async () => {
     const calls: Array<[string, RequestInit | undefined]> = []
     const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {

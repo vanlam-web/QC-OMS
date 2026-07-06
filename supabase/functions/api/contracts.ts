@@ -748,6 +748,14 @@ export interface FoundationRepository {
   listCustomers(input: {
     organizationId: string;
     search?: string;
+    customerGroupId?: string;
+    createdFrom?: string;
+    createdTo?: string;
+    createdBy?: string;
+    totalSalesMin?: number;
+    totalSalesMax?: number;
+    totalDebtMin?: number;
+    totalDebtMax?: number;
     page: number;
     pageSize: number;
   }): Promise<{ items: CustomerData[]; total: number }>;

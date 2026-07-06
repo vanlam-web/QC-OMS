@@ -33,6 +33,11 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       page_size: 15,
       total: 1,
     })),
+    listCustomerGroups: vi.fn(async () => ({
+      items: [
+        { id: 'cg-1', code: 'VIP', name: 'Khách VIP', price_list_id: 'pl-1', is_active: true },
+      ],
+    })),
     createCustomer: vi.fn(async () => ({
       id: 'customer-2',
       code: 'KH000124',
@@ -299,6 +304,47 @@ it('searches and creates a customer from the search action', async () => {
     tax_code: '0311111111',
     address: '99 Lê Lợi',
     customer_group_id: null,
+  })
+})
+
+it('reactively filters customers by existing customer fields in the shared sidebar', async () => {
+  const service = makeService()
+  render(<CustomersPage service={service} orderService={makeOrderService()} />)
+
+  await screen.findByText('KH000123')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc khách hàng' })
+
+  expect(within(sidebar).getByRole('region', { name: 'Nhóm khách hàng' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Ngày tạo' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Người tạo' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Tổng bán' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Nợ hiện tại' })).toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Giới tính' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Sinh nhật' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Trạng thái' })).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Nhóm khách hàng' }), 'cg-1')
+  expect(service.listCustomers).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    customer_group_id: 'cg-1',
+  })
+
+  await userEvent.type(within(sidebar).getByLabelText('Ngày tạo từ'), '2026-07-01')
+  await userEvent.type(within(sidebar).getByLabelText('Tổng bán từ'), '500000')
+  await userEvent.type(within(sidebar).getByLabelText('Nợ hiện tại tới'), '300000')
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Người tạo' }), 'user-admin')
+
+  expect(service.listCustomers).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    customer_group_id: 'cg-1',
+    created_from: '2026-07-01',
+    created_by: 'user-admin',
+    total_sales_min: 500000,
+    total_debt_max: 300000,
   })
 })
 

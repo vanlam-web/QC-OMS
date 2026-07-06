@@ -836,16 +836,27 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return data as { formula_rule_id: string; affected_count: number };
     },
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
+      const hasAmountFilters =
+        input.totalSalesMin !== undefined ||
+        input.totalSalesMax !== undefined ||
+        input.totalDebtMin !== undefined ||
+        input.totalDebtMax !== undefined;
       let query = client
         .from("customers")
         .select(customerExtendedSelect, { count: "exact" })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
 
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+      }
+      if (input.customerGroupId !== undefined) query = query.eq("customer_group_id", input.customerGroupId);
+      if (input.createdFrom !== undefined) query = query.gte("created_at", input.createdFrom);
+      if (input.createdTo !== undefined) query = query.lte("created_at", input.createdTo);
+      if (input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
+      if (!hasAmountFilters) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
       }
 
       const result = await query;
@@ -857,12 +868,15 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           .from("customers")
           .select(customerBaseSelect, { count: "exact" })
           .eq("organization_id", input.organizationId)
-          .order("code", { ascending: true })
-          .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+          .order("code", { ascending: true });
 
         if (input.search !== undefined) {
           const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
           fallbackQuery = fallbackQuery.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+        }
+        if (input.customerGroupId !== undefined) fallbackQuery = fallbackQuery.eq("customer_group_id", input.customerGroupId);
+        if (!hasAmountFilters) {
+          fallbackQuery = fallbackQuery.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
         }
 
         const fallback = await fallbackQuery;
@@ -877,7 +891,17 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         loadCustomerSalesTotals(client, input.organizationId, customerIds),
         loadCustomerDebtTotals(client, input.organizationId, customerIds),
       ]);
-      return { items: (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap, debtTotalMap)), total: count ?? 0 };
+      const items = (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap, debtTotalMap));
+      if (!hasAmountFilters) return { items, total: count ?? 0 };
+
+      const filteredItems = items.filter((customer) =>
+        (input.totalSalesMin === undefined || customer.total_sales_amount >= input.totalSalesMin) &&
+        (input.totalSalesMax === undefined || customer.total_sales_amount <= input.totalSalesMax) &&
+        (input.totalDebtMin === undefined || customer.total_debt_amount >= input.totalDebtMin) &&
+        (input.totalDebtMax === undefined || customer.total_debt_amount <= input.totalDebtMax)
+      );
+      const start = (input.page - 1) * input.pageSize;
+      return { items: filteredItems.slice(start, start + input.pageSize), total: filteredItems.length };
     },
     async createCustomer(input): Promise<CustomerData> {
       const code = input.code ?? await nextCustomerCode(client, input.organizationId);

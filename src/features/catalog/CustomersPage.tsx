@@ -14,8 +14,8 @@ import {
   ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
-import type { CatalogService } from './catalog-service'
-import type { Customer } from './types'
+import type { CatalogService, CustomerListFilters } from './catalog-service'
+import type { Customer, CustomerGroup } from './types'
 import type { CustomerDebtDetail, OrderService } from '../orders/order-service'
 import type { SalesDocumentListItem, SalesDocumentService } from '../sales-documents/sales-document-service'
 
@@ -32,6 +32,11 @@ type CustomerDetailTab = 'info' | 'debt' | 'history'
 type CustomerHistoryType = 'invoice' | 'quote'
 const customerPageSize = 15
 const customerHistoryPageSize = 10
+
+function numberFilterValue(value: string) {
+  const parsed = Number(value)
+  return value.trim() === '' || !Number.isFinite(parsed) ? undefined : parsed
+}
 
 function customerHistoryKey(customerId: string, historyType: CustomerHistoryType) {
   return `${customerId}:${historyType}`
@@ -55,12 +60,29 @@ export function CustomersPage({
   const [customerHistoryType, setCustomerHistoryType] = useState<CustomerHistoryType>('invoice')
   const [customerDebts, setCustomerDebts] = useState<Record<string, CustomerDebtState>>({})
   const [customerHistories, setCustomerHistories] = useState<Record<string, CustomerHistoryState>>({})
+  const [customerGroups, setCustomerGroups] = useState<CustomerGroup[]>([])
   const [analysisCustomer, setAnalysisCustomer] = useState<Customer | null>(null)
   const customerDebtRequestsRef = useRef(new Set<string>())
   const customerHistoryRequestsRef = useRef(new Set<string>())
   const [showFilters, setShowFilters] = useState(true)
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
+  const [customerGroupId, setCustomerGroupId] = useState('all')
+  const [createdFrom, setCreatedFrom] = useState('')
+  const [createdTo, setCreatedTo] = useState('')
+  const [createdBy, setCreatedBy] = useState('all')
+  const [totalSalesMin, setTotalSalesMin] = useState('')
+  const [totalSalesMax, setTotalSalesMax] = useState('')
+  const [totalDebtMin, setTotalDebtMin] = useState('')
+  const [totalDebtMax, setTotalDebtMax] = useState('')
+  const [lastCustomerGroupId, setLastCustomerGroupId] = useState('all')
+  const [lastCreatedFrom, setLastCreatedFrom] = useState('')
+  const [lastCreatedTo, setLastCreatedTo] = useState('')
+  const [lastCreatedBy, setLastCreatedBy] = useState('all')
+  const [lastTotalSalesMin, setLastTotalSalesMin] = useState('')
+  const [lastTotalSalesMax, setLastTotalSalesMax] = useState('')
+  const [lastTotalDebtMin, setLastTotalDebtMin] = useState('')
+  const [lastTotalDebtMax, setLastTotalDebtMax] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(customerPageSize)
   const [form, setForm] = useState({
@@ -71,15 +93,56 @@ export function CustomersPage({
     address: '',
   })
 
-  async function load(filters: { search?: string; page?: number; page_size?: number } = {}) {
+  async function load(filters: CustomerListFilters & {
+    customerGroupIdValue?: string
+    createdFromValue?: string
+    createdToValue?: string
+    createdByValue?: string
+    totalSalesMinValue?: string
+    totalSalesMaxValue?: string
+    totalDebtMinValue?: string
+    totalDebtMaxValue?: string
+  } = {}) {
     const nextSearch = filters.search ?? lastSearch
+    const nextCustomerGroupId = filters.customerGroupIdValue ?? lastCustomerGroupId
+    const nextCreatedFrom = filters.createdFromValue ?? lastCreatedFrom
+    const nextCreatedTo = filters.createdToValue ?? lastCreatedTo
+    const nextCreatedBy = filters.createdByValue ?? lastCreatedBy
+    const nextTotalSalesMin = filters.totalSalesMinValue ?? lastTotalSalesMin
+    const nextTotalSalesMax = filters.totalSalesMaxValue ?? lastTotalSalesMax
+    const nextTotalDebtMin = filters.totalDebtMinValue ?? lastTotalDebtMin
+    const nextTotalDebtMax = filters.totalDebtMaxValue ?? lastTotalDebtMax
     const nextPage = filters.page ?? page
     const nextPageSize = filters.page_size ?? pageSize
     setError(null)
     try {
-      const result = await service.listCustomers({ search: nextSearch || undefined, page: nextPage, page_size: nextPageSize })
+      const totalSalesMinFilter = numberFilterValue(nextTotalSalesMin)
+      const totalSalesMaxFilter = numberFilterValue(nextTotalSalesMax)
+      const totalDebtMinFilter = numberFilterValue(nextTotalDebtMin)
+      const totalDebtMaxFilter = numberFilterValue(nextTotalDebtMax)
+      const result = await service.listCustomers({
+        search: nextSearch || undefined,
+        page: nextPage,
+        page_size: nextPageSize,
+        ...(nextCustomerGroupId === 'all' ? {} : { customer_group_id: nextCustomerGroupId }),
+        ...(nextCreatedFrom === '' ? {} : { created_from: nextCreatedFrom }),
+        ...(nextCreatedTo === '' ? {} : { created_to: nextCreatedTo }),
+        ...(nextCreatedBy === 'all' ? {} : { created_by: nextCreatedBy }),
+        ...(totalSalesMinFilter === undefined ? {} : { total_sales_min: totalSalesMinFilter }),
+        ...(totalSalesMaxFilter === undefined ? {} : { total_sales_max: totalSalesMaxFilter }),
+        ...(totalDebtMinFilter === undefined ? {} : { total_debt_min: totalDebtMinFilter }),
+        ...(totalDebtMaxFilter === undefined ? {} : { total_debt_max: totalDebtMaxFilter }),
+      })
       setState({ customers: result.items, total: result.total, page: result.page, pageSize: result.page_size })
       setLastSearch(nextSearch)
+      setLastCustomerGroupId(nextCustomerGroupId)
+      setLastCreatedFrom(nextCreatedFrom)
+      setLastCreatedTo(nextCreatedTo)
+      setLastCreatedBy(nextCreatedBy)
+      setLastTotalSalesMin(nextTotalSalesMin)
+      setLastTotalSalesMax(nextTotalSalesMax)
+      setLastTotalDebtMin(nextTotalDebtMin)
+      setLastTotalDebtMax(nextTotalDebtMax)
       setPage(result.page)
       setPageSize(result.page_size)
       setSelectedCustomerId(null)
@@ -111,11 +174,80 @@ export function CustomersPage({
     }
   }, [service])
 
+  useEffect(() => {
+    let active = true
+
+    service
+      .listCustomerGroups()
+      .then((result) => {
+        if (active) setCustomerGroups(result.items)
+      })
+      .catch(() => {
+        if (active) setCustomerGroups([])
+      })
+
+    return () => {
+      active = false
+    }
+  }, [service])
+
   async function filterCustomers(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = search.trim()
     setPage(1)
-    await load({ search: trimmed, page: 1 })
+    await load({
+      search: trimmed,
+      customerGroupIdValue: customerGroupId,
+      createdFromValue: createdFrom,
+      createdToValue: createdTo,
+      createdByValue: createdBy,
+      totalSalesMinValue: totalSalesMin,
+      totalSalesMaxValue: totalSalesMax,
+      totalDebtMinValue: totalDebtMin,
+      totalDebtMaxValue: totalDebtMax,
+      page: 1,
+    })
+  }
+
+  async function applySidebarFilters(nextFilters: Partial<{
+    customerGroupId: string
+    createdFrom: string
+    createdTo: string
+    createdBy: string
+    totalSalesMin: string
+    totalSalesMax: string
+    totalDebtMin: string
+    totalDebtMax: string
+  }>) {
+    const nextCustomerGroupId = nextFilters.customerGroupId ?? customerGroupId
+    const nextCreatedFrom = nextFilters.createdFrom ?? createdFrom
+    const nextCreatedTo = nextFilters.createdTo ?? createdTo
+    const nextCreatedBy = nextFilters.createdBy ?? createdBy
+    const nextTotalSalesMin = nextFilters.totalSalesMin ?? totalSalesMin
+    const nextTotalSalesMax = nextFilters.totalSalesMax ?? totalSalesMax
+    const nextTotalDebtMin = nextFilters.totalDebtMin ?? totalDebtMin
+    const nextTotalDebtMax = nextFilters.totalDebtMax ?? totalDebtMax
+    setCustomerGroupId(nextCustomerGroupId)
+    setCreatedFrom(nextCreatedFrom)
+    setCreatedTo(nextCreatedTo)
+    setCreatedBy(nextCreatedBy)
+    setTotalSalesMin(nextTotalSalesMin)
+    setTotalSalesMax(nextTotalSalesMax)
+    setTotalDebtMin(nextTotalDebtMin)
+    setTotalDebtMax(nextTotalDebtMax)
+    setPage(1)
+    await load({
+      search: search.trim(),
+      customerGroupIdValue: nextCustomerGroupId,
+      createdFromValue: nextCreatedFrom,
+      createdToValue: nextCreatedTo,
+      createdByValue: nextCreatedBy,
+      totalSalesMinValue: nextTotalSalesMin,
+      totalSalesMaxValue: nextTotalSalesMax,
+      totalDebtMinValue: nextTotalDebtMin,
+      totalDebtMaxValue: nextTotalDebtMax,
+      page: 1,
+    })
   }
 
   async function goToPage(nextPage: number) {
@@ -199,7 +331,26 @@ export function CustomersPage({
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
-  const activeFilterSummary = lastSearch ? `Tìm: ${lastSearch}` : 'Đang hoạt động'
+  const activeFilterSummary = lastSearch
+    ? `Tìm: ${lastSearch}`
+    : lastCustomerGroupId === 'all' &&
+        lastCreatedFrom === '' &&
+        lastCreatedTo === '' &&
+        lastCreatedBy === 'all' &&
+        lastTotalSalesMin === '' &&
+        lastTotalSalesMax === '' &&
+        lastTotalDebtMin === '' &&
+        lastTotalDebtMax === ''
+      ? 'Đang hoạt động'
+      : 'Bộ lọc khách hàng'
+  const creatorOptions = Array.from(
+    new Map(
+      (state?.customers ?? [])
+        .map((customer) => customer.created_by)
+        .filter((creator): creator is { id: string; name: string } => creator !== null && creator !== undefined)
+        .map((creator) => [creator.id, creator]),
+    ).values(),
+  )
   const visibleDebtTotal = state?.customers.reduce((sum, customer) => {
     return sum + (customer.total_debt_amount ?? 0)
   }, 0) ?? 0
@@ -244,10 +395,118 @@ export function CustomersPage({
           >
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
-          <ManagementFilterGroup title="Trạng thái">
+          <ManagementFilterGroup title="Nhóm khách hàng">
             <label>
-              <input checked readOnly name="customer-status" type="radio" />
-              Đang hoạt động
+              <span className="sr-only">Nhóm khách hàng</span>
+              <select
+                aria-label="Nhóm khách hàng"
+                className="management-filter-select"
+                value={customerGroupId}
+                onChange={(event) => void applySidebarFilters({ customerGroupId: event.target.value })}
+              >
+                <option value="all">Tất cả</option>
+                {customerGroups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Ngày tạo">
+            <div className="management-filter-date-range">
+              <label>
+                <span>Từ</span>
+                <input
+                  aria-label="Ngày tạo từ"
+                  type="date"
+                  value={createdFrom}
+                  onChange={(event) => void applySidebarFilters({ createdFrom: event.target.value })}
+                />
+              </label>
+              <label>
+                <span>Tới</span>
+                <input
+                  aria-label="Ngày tạo tới"
+                  type="date"
+                  value={createdTo}
+                  onChange={(event) => void applySidebarFilters({ createdTo: event.target.value })}
+                />
+              </label>
+            </div>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Người tạo">
+            <label>
+              <span className="sr-only">Người tạo</span>
+              <select
+                aria-label="Người tạo"
+                className="management-filter-select"
+                value={createdBy}
+                onChange={(event) => void applySidebarFilters({ createdBy: event.target.value })}
+              >
+                <option value="all">Tất cả</option>
+                {creatorOptions.map((creator) => (
+                  <option key={creator.id} value={creator.id}>
+                    {creator.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Tổng bán">
+            <label>
+              <span className="sr-only">Tổng bán từ</span>
+              <input
+                aria-label="Tổng bán từ"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Từ"
+                type="number"
+                value={totalSalesMin}
+                onChange={(event) => void applySidebarFilters({ totalSalesMin: event.target.value })}
+              />
+            </label>
+            <label>
+              <span className="sr-only">Tổng bán tới</span>
+              <input
+                aria-label="Tổng bán tới"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Tới"
+                type="number"
+                value={totalSalesMax}
+                onChange={(event) => void applySidebarFilters({ totalSalesMax: event.target.value })}
+              />
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Nợ hiện tại">
+            <label>
+              <span className="sr-only">Nợ hiện tại từ</span>
+              <input
+                aria-label="Nợ hiện tại từ"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Từ"
+                type="number"
+                value={totalDebtMin}
+                onChange={(event) => void applySidebarFilters({ totalDebtMin: event.target.value })}
+              />
+            </label>
+            <label>
+              <span className="sr-only">Nợ hiện tại tới</span>
+              <input
+                aria-label="Nợ hiện tại tới"
+                className="management-filter-number-input"
+                inputMode="numeric"
+                min="0"
+                placeholder="Tới"
+                type="number"
+                value={totalDebtMax}
+                onChange={(event) => void applySidebarFilters({ totalDebtMax: event.target.value })}
+              />
             </label>
           </ManagementFilterGroup>
         </ManagementFilterSidebar>

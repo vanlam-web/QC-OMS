@@ -285,10 +285,30 @@ export async function listCustomers(
   url: URL,
 ): Promise<CustomerListResponse> {
   requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
-  const { search, page, pageSize } = parseCustomerList(url);
+  const {
+    search,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
+    page,
+    pageSize,
+  } = parseCustomerList(url);
   const result = await repository.listCustomers({
     organizationId: context.organizationId,
     search,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
     page,
     pageSize,
   });
@@ -519,15 +539,47 @@ function parseResolvePrices(body: unknown): { productIds: string[]; customerId?:
   return { productIds: productIds.map((id) => id.trim()), customerId };
 }
 
-function parseCustomerList(url: URL): { search?: string; page: number; pageSize: number } {
+function parseCustomerList(url: URL): {
+  search?: string;
+  customerGroupId?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  createdBy?: string;
+  totalSalesMin?: number;
+  totalSalesMax?: number;
+  totalDebtMin?: number;
+  totalDebtMax?: number;
+  page: number;
+  pageSize: number;
+} {
   const search = url.searchParams.get("search")?.trim();
+  const customerGroupId = parseOptionalQueryId(url.searchParams.get("customer_group_id"));
+  const createdFrom = parseOptionalDateFilter(url.searchParams.get("created_from"));
+  const createdTo = parseOptionalDateFilter(url.searchParams.get("created_to"));
+  const createdBy = parseOptionalQueryId(url.searchParams.get("created_by"));
+  const totalSalesMin = parseOptionalMoneyFilter(url.searchParams.get("total_sales_min"));
+  const totalSalesMax = parseOptionalMoneyFilter(url.searchParams.get("total_sales_max"));
+  const totalDebtMin = parseOptionalMoneyFilter(url.searchParams.get("total_debt_min"));
+  const totalDebtMax = parseOptionalMoneyFilter(url.searchParams.get("total_debt_max"));
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
     throw validationError();
   }
   if (search !== undefined && search.length > 100) throw validationError();
-  return { search: search || undefined, page, pageSize };
+  return {
+    search: search || undefined,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
+    page,
+    pageSize,
+  };
 }
 
 function parseCustomerCreate(body: unknown): {
@@ -653,6 +705,24 @@ function parseBoolean(value: unknown): boolean {
 function parseRequiredId(value: unknown): string {
   if (typeof value !== "string" || value.trim().length === 0) throw validationError();
   return value.trim();
+}
+
+function parseOptionalQueryId(value: string | null): string | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  return value.trim();
+}
+
+function parseOptionalDateFilter(value: string | null): string | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  if (Number.isNaN(Date.parse(value))) throw validationError();
+  return value.trim();
+}
+
+function parseOptionalMoneyFilter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) throw validationError();
+  return amount;
 }
 
 function parseOptionalId(value: unknown): string | null {
