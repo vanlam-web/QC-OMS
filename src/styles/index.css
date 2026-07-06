@@ -1291,6 +1291,7 @@ button {
 .finance-cashbook-detail {
   display: grid;
   gap: var(--space-3);
+  text-align: left;
 }
 
 .finance-cashbook-detail-tabs {
