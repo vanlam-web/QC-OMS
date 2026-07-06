@@ -819,6 +819,7 @@ export interface FoundationRepository {
     status: "draft" | "posted" | "cancelled" | "all";
     dateFrom?: string;
     dateTo?: string;
+    createdBy?: string;
     page: number;
     pageSize: number;
   }): Promise<{ items: PurchaseReceiptData[]; total: number }>;

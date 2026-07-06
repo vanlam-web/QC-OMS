@@ -26,6 +26,7 @@ export function createPurchaseReceiptService(api: PurchaseReceiptApiRequester) {
         status?: PurchaseReceiptStatus | 'all'
         date_from?: string
         date_to?: string
+        created_by?: string
         page?: number
         page_size?: number
       } = {},
@@ -35,6 +36,7 @@ export function createPurchaseReceiptService(api: PurchaseReceiptApiRequester) {
       if (input.status) params.set('status', input.status)
       if (input.date_from) params.set('date_from', input.date_from)
       if (input.date_to) params.set('date_to', input.date_to)
+      if (input.created_by) params.set('created_by', input.created_by)
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()

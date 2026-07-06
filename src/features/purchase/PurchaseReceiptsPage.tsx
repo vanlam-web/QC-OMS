@@ -61,7 +61,7 @@ function money(value: number) {
 
 function statusText(status: PurchaseReceiptStatus) {
   if (status === 'draft') return 'Phiếu tạm'
-  if (status === 'posted') return 'Đã nhập'
+  if (status === 'posted') return 'Đã nhập hàng'
   return 'Đã hủy'
 }
 
@@ -147,9 +147,10 @@ export function PurchaseReceiptsPage({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(purchaseReceiptPageSize)
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<PurchaseReceiptStatus | 'all'>('draft')
+  const [status, setStatus] = useState<PurchaseReceiptStatus | 'all'>('posted')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [createdBy, setCreatedBy] = useState('all')
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(true)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -211,6 +212,7 @@ export function PurchaseReceiptsPage({
       status?: PurchaseReceiptStatus | 'all'
       date_from?: string
       date_to?: string
+      created_by?: string
       page?: number
       page_size?: number
     } = {
@@ -218,6 +220,7 @@ export function PurchaseReceiptsPage({
       status,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      created_by: createdBy === 'all' ? undefined : createdBy,
       page,
       page_size: pageSize,
     },
@@ -246,7 +249,7 @@ export function PurchaseReceiptsPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const receiptResult = await service.listReceipts({ status: 'draft', page: 1, page_size: purchaseReceiptPageSize })
+        const receiptResult = await service.listReceipts({ status: 'posted', page: 1, page_size: purchaseReceiptPageSize })
         if (!active) return
         setReceipts(receiptResult.items)
         setTotal(receiptResult.total)
@@ -295,6 +298,7 @@ export function PurchaseReceiptsPage({
       setStatus('all')
       setDateFrom('')
       setDateTo('')
+      setCreatedBy('all')
       setActivePreset(null)
       await loadReceipts({ search: search.trim(), status: 'all', page: 1, page_size: pageSize })
       return
@@ -304,6 +308,7 @@ export function PurchaseReceiptsPage({
       status,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      created_by: createdBy === 'all' ? undefined : createdBy,
       page: 1,
       page_size: pageSize,
     })
@@ -314,16 +319,19 @@ export function PurchaseReceiptsPage({
     status?: PurchaseReceiptStatus | 'all'
     dateFrom?: string
     dateTo?: string
+    createdBy?: string
     preset?: string | null
   }) {
     const nextSearch = next.search ?? search
     const nextStatus = next.status ?? status
     const nextDateFrom = next.dateFrom ?? dateFrom
     const nextDateTo = next.dateTo ?? dateTo
+    const nextCreatedBy = next.createdBy ?? createdBy
     setSearch(nextSearch)
     setStatus(nextStatus)
     setDateFrom(nextDateFrom)
     setDateTo(nextDateTo)
+    setCreatedBy(nextCreatedBy)
     setActivePreset(next.preset ?? null)
     setPage(1)
     await loadReceipts({
@@ -331,13 +339,22 @@ export function PurchaseReceiptsPage({
       status: nextStatus,
       date_from: nextDateFrom || undefined,
       date_to: nextDateTo || undefined,
+      created_by: nextCreatedBy === 'all' ? undefined : nextCreatedBy,
       page: 1,
       page_size: pageSize,
     })
   }
 
   async function goToPage(nextPage: number) {
-    await loadReceipts({ page: nextPage, page_size: pageSize })
+    await loadReceipts({
+      search: search.trim() || undefined,
+      status,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+      created_by: createdBy === 'all' ? undefined : createdBy,
+      page: nextPage,
+      page_size: pageSize,
+    })
   }
 
   async function openReceipt(receipt: PurchaseReceipt) {
@@ -589,60 +606,31 @@ export function PurchaseReceiptsPage({
 
   const today = localDateString(new Date())
   const monthRange = currentMonthRange()
-  const receiptFilterPresets = [
+  const creatorOptions = useMemo(() => {
+    const creators = new Set((receipts ?? []).map((receipt) => receipt.created_by).filter(Boolean))
+    return Array.from(creators).sort((left, right) => left.localeCompare(right))
+  }, [receipts])
+  const receiptTimeQuickOptions = [
     {
-      id: 'draft',
-      label: 'Draft cần xử lý',
-      active: activePreset === 'Draft cần xử lý' || (search.trim() === '' && status === 'draft' && dateFrom === '' && dateTo === ''),
-      onSelect: () => void applyReceiptFilters({ search: '', status: 'draft', dateFrom: '', dateTo: '', preset: 'Draft cần xử lý' }),
+      id: 'all',
+      label: 'Toàn thời gian',
+      from: '',
+      to: '',
     },
     {
-      id: 'posted-today',
-      label: 'Đã nhập hôm nay',
-      active: activePreset === 'Đã nhập hôm nay',
-      onSelect: () =>
-        void applyReceiptFilters({
-          search: '',
-          status: 'posted',
-          dateFrom: today,
-          dateTo: today,
-          preset: 'Đã nhập hôm nay',
-        }),
+      id: 'today',
+      label: 'Hôm nay',
+      from: today,
+      to: today,
     },
     {
       id: 'this-month',
       label: 'Tháng này',
-      active: activePreset === 'Tháng này',
-      onSelect: () =>
-        void applyReceiptFilters({
-          search: '',
-          status: 'all',
-          dateFrom: monthRange.from,
-          dateTo: monthRange.to,
-          preset: 'Tháng này',
-        }),
-    },
-    {
-      id: 'all',
-      label: 'Tất cả',
-      active: activePreset === 'Tất cả',
-      onSelect: () => void applyReceiptFilters({ search: '', status: 'all', dateFrom: '', dateTo: '', preset: 'Tất cả' }),
-    },
-    {
-      id: 'outstanding',
-      label: 'Còn nợ NCC',
-      disabled: true,
-      title: 'API hiện chưa có filter còn nợ NCC riêng cho danh sách phiếu nhập.',
-      onSelect: () => undefined,
-    },
-    {
-      id: 'physical',
-      label: 'Cuộn/tấm',
-      disabled: true,
-      title: 'API hiện chưa có filter inventory_shape cho danh sách phiếu nhập.',
-      onSelect: () => undefined,
+      from: monthRange.from,
+      to: monthRange.to,
     },
   ]
+  const selectedTimeQuickOption = receiptTimeQuickOptions.find((option) => option.from === dateFrom && option.to === dateTo)?.id ?? 'custom'
 
   const receiptFilterChips = [
     ...(search.trim()
@@ -663,12 +651,21 @@ export function PurchaseReceiptsPage({
           },
         ]
       : []),
-    ...(!activePreset && status !== 'draft'
+    ...(!activePreset && status !== 'posted'
       ? [
           {
             id: 'status',
             label: `Trạng thái: ${status === 'all' ? 'Tất cả' : statusText(status)}`,
-            onClear: () => void applyReceiptFilters({ status: 'draft' }),
+            onClear: () => void applyReceiptFilters({ status: 'posted' }),
+          },
+        ]
+      : []),
+    ...(!activePreset && createdBy !== 'all'
+      ? [
+          {
+            id: 'created-by',
+            label: `Người tạo: ${createdBy}`,
+            onClear: () => void applyReceiptFilters({ createdBy: 'all' }),
           },
         ]
       : []),
@@ -1211,93 +1208,82 @@ export function PurchaseReceiptsPage({
             <ChevronLeft aria-hidden="true" size={16} />
           </button>
           <ManagementFilterGroup title="Trạng thái">
-            <label>
-              <input
-                checked={status === 'draft'}
-                name="purchase-receipt-status"
-                type="radio"
-                onChange={() => {
-                  setStatus('draft')
-                  setActivePreset(null)
-                }}
-              />
-              Phiếu tạm
-            </label>
-            <label>
-              <input
-                checked={status === 'posted'}
-                name="purchase-receipt-status"
-                type="radio"
-                onChange={() => {
-                  setStatus('posted')
-                  setActivePreset(null)
-                }}
-              />
-              Đã nhập
-            </label>
-            <label>
-              <input
-                checked={status === 'cancelled'}
-                name="purchase-receipt-status"
-                type="radio"
-                onChange={() => {
-                  setStatus('cancelled')
-                  setActivePreset(null)
-                }}
-              />
-              Đã hủy
-            </label>
-            <label>
-              <input
-                checked={status === 'all'}
-                name="purchase-receipt-status"
-                type="radio"
-                onChange={() => {
-                  setStatus('all')
-                  setActivePreset(null)
-                }}
-              />
-              Tất cả
-            </label>
+            <select
+              aria-label="Trạng thái"
+              className="management-filter-select"
+              value={status}
+              onChange={(event) =>
+                void applyReceiptFilters({ status: event.target.value as PurchaseReceiptStatus | 'all', preset: null })
+              }
+            >
+              <option value="posted">Đã nhập hàng</option>
+              <option value="draft">Phiếu tạm</option>
+              <option value="cancelled">Đã hủy</option>
+              <option value="all">Tất cả</option>
+            </select>
           </ManagementFilterGroup>
           <ManagementFilterGroup title="Thời gian">
-            <label>
-              Từ ngày
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(event) => {
-                  setDateFrom(event.target.value)
-                  setActivePreset(null)
-                }}
-              />
-            </label>
-            <label>
-              Đến ngày
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(event) => {
-                  setDateTo(event.target.value)
-                  setActivePreset(null)
-                }}
-              />
-            </label>
+            <select
+              aria-label="Thời gian nhanh"
+              className="management-filter-select"
+              value={selectedTimeQuickOption}
+              onChange={(event) => {
+                const option = receiptTimeQuickOptions.find((candidate) => candidate.id === event.target.value)
+                if (option) void applyReceiptFilters({ dateFrom: option.from, dateTo: option.to, preset: null })
+              }}
+            >
+              {receiptTimeQuickOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+              <option value="custom">Tùy chỉnh</option>
+            </select>
+            <div className="management-filter-date-range">
+              <label>
+                <span>Từ ngày</span>
+                <input
+                  aria-label="Thời gian từ"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => void applyReceiptFilters({ dateFrom: event.target.value, preset: null })}
+                />
+              </label>
+              <label>
+                <span>Đến ngày</span>
+                <input
+                  aria-label="Thời gian tới"
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => void applyReceiptFilters({ dateTo: event.target.value, preset: null })}
+                />
+              </label>
+            </div>
           </ManagementFilterGroup>
-          <ManagementFilterGroup title="Preset">
-            {receiptFilterPresets.map((preset) => (
-              <button
-                aria-pressed={preset.active}
-                className={`button ${preset.active ? 'button-primary' : 'button-secondary'}`}
-                disabled={preset.disabled}
-                key={preset.id}
-                title={preset.title}
-                type="button"
-                onClick={preset.onSelect}
-              >
-                {preset.label}
-              </button>
-            ))}
+          <ManagementFilterGroup title="Người tạo">
+            <select
+              aria-label="Người tạo"
+              className="management-filter-select"
+              value={createdBy}
+              onChange={(event) => void applyReceiptFilters({ createdBy: event.target.value, preset: null })}
+            >
+              <option value="all">Tất cả người tạo</option>
+              {creatorOptions.map((creator) => (
+                <option key={creator} value={creator}>
+                  {creator}
+                </option>
+              ))}
+            </select>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Số hóa đơn đầu vào">
+            <input
+              aria-label="Số hóa đơn đầu vào"
+              className="management-filter-select"
+              placeholder="Theo số hóa đơn đầu vào"
+              type="search"
+              value={search}
+              onChange={(event) => void applyReceiptFilters({ search: event.target.value, preset: null })}
+            />
           </ManagementFilterGroup>
         </ManagementFilterSidebar>
       }

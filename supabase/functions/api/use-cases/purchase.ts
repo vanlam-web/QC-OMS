@@ -144,13 +144,14 @@ export async function listPurchaseReceipts(
   url: URL,
 ): Promise<PurchaseReceiptListResponse> {
   requireAnyPermission(context, ["perm.manage_inventory"]);
-  const { search, status, dateFrom, dateTo, page, pageSize } = parsePurchaseReceiptList(url);
+  const { search, status, dateFrom, dateTo, createdBy, page, pageSize } = parsePurchaseReceiptList(url);
   const result = await repository.listPurchaseReceipts({
     organizationId: context.organizationId,
     search,
     status,
     dateFrom,
     dateTo,
+    createdBy,
     page,
     pageSize,
   });
@@ -268,6 +269,7 @@ function parsePurchaseReceiptList(url: URL): {
   status: "draft" | "posted" | "cancelled" | "all";
   dateFrom?: string;
   dateTo?: string;
+  createdBy?: string;
   page: number;
   pageSize: number;
 } {
@@ -275,15 +277,17 @@ function parsePurchaseReceiptList(url: URL): {
   const status = parsePurchaseReceiptListStatus(url.searchParams.get("status") ?? "draft");
   const dateFrom = url.searchParams.get("date_from")?.trim() || undefined;
   const dateTo = url.searchParams.get("date_to")?.trim() || undefined;
+  const createdBy = url.searchParams.get("created_by")?.trim() || undefined;
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
     throw validationError();
   }
   if (search !== undefined && search.length > 100) throw validationError();
+  if (createdBy !== undefined && createdBy.length > 100) throw validationError();
   if (dateFrom !== undefined && Number.isNaN(Date.parse(dateFrom))) throw validationError();
   if (dateTo !== undefined && Number.isNaN(Date.parse(dateTo))) throw validationError();
-  return { search: search || undefined, status, dateFrom, dateTo, page, pageSize };
+  return { search: search || undefined, status, dateFrom, dateTo, createdBy, page, pageSize };
 }
 
 function parseSupplierCreate(body: unknown): {

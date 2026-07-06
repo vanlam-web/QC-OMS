@@ -1146,6 +1146,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       }
       if (!exactCodeSearch && input.dateFrom !== undefined) query = query.gte("received_at", input.dateFrom);
       if (!exactCodeSearch && input.dateTo !== undefined) query = query.lte("received_at", input.dateTo);
+      if (!exactCodeSearch && input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
 
       const { data, error, count } = await query;
       if (error !== null) throw error;

@@ -205,9 +205,9 @@ it('filters purchase receipts by search status and dates', async () => {
   const filterSidebar = screen.getByRole('complementary', { name: 'Bộ lọc phiếu nhập' })
   const searchInput = within(filterForm).getByLabelText('Tìm phiếu/NCC')
   await userEvent.type(searchInput, 'Nguyễn Phong')
-  await userEvent.click(within(filterSidebar).getByLabelText('Tất cả'))
-  await userEvent.type(within(filterSidebar).getByLabelText('Từ ngày'), '2026-06-01')
-  await userEvent.type(within(filterSidebar).getByLabelText('Đến ngày'), '2026-07-31')
+  await userEvent.selectOptions(within(filterSidebar).getByRole('combobox', { name: 'Trạng thái' }), 'all')
+  await userEvent.type(within(filterSidebar).getByLabelText('Thời gian từ'), '2026-06-01')
+  await userEvent.type(within(filterSidebar).getByLabelText('Thời gian tới'), '2026-07-31')
   await userEvent.type(searchInput, '{Enter}')
 
   expect(service.listReceipts).toHaveBeenLastCalledWith({
@@ -220,7 +220,39 @@ it('filters purchase receipts by search status and dates', async () => {
   })
 })
 
-it('uses purchase receipt presets and exact PN search priority without a reset action', async () => {
+it('reactively filters purchase receipts by supplier invoice and creator fields that exist in the project', async () => {
+  const service = makeService()
+
+  render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('PN000673')
+  const filterSidebar = screen.getByRole('complementary', { name: 'Bộ lọc phiếu nhập' })
+
+  expect(within(filterSidebar).getByRole('region', { name: 'Trạng thái' })).toBeInTheDocument()
+  expect(within(filterSidebar).getByRole('region', { name: 'Thời gian' })).toBeInTheDocument()
+  expect(within(filterSidebar).getByRole('region', { name: 'Người tạo' })).toBeInTheDocument()
+  expect(within(filterSidebar).getByRole('region', { name: 'Số hóa đơn đầu vào' })).toBeInTheDocument()
+  expect(within(filterSidebar).queryByRole('region', { name: 'Người nhập' })).not.toBeInTheDocument()
+
+  await userEvent.type(within(filterSidebar).getByPlaceholderText('Theo số hóa đơn đầu vào'), 'HD-NCC-001')
+  expect(service.listReceipts).toHaveBeenLastCalledWith({
+    search: 'HD-NCC-001',
+    status: 'posted',
+    page: 1,
+    page_size: 15,
+  })
+
+  await userEvent.selectOptions(within(filterSidebar).getByRole('combobox', { name: 'Người tạo' }), 'user-1')
+  expect(service.listReceipts).toHaveBeenLastCalledWith({
+    search: 'HD-NCC-001',
+    status: 'posted',
+    created_by: 'user-1',
+    page: 1,
+    page_size: 15,
+  })
+})
+
+it('uses purchase receipt quick time filters and exact PN search priority without a reset action', async () => {
   const service = makeService()
 
   render(<PurchaseReceiptsPage service={service} onOpenDashboard={vi.fn()} />)
@@ -228,7 +260,7 @@ it('uses purchase receipt presets and exact PN search priority without a reset a
   await screen.findByText('PN000673')
   const filterForm = screen.getByRole('search', { name: 'Lọc phiếu nhập' })
   const filterSidebar = screen.getByRole('complementary', { name: 'Bộ lọc phiếu nhập' })
-  await userEvent.click(within(filterSidebar).getByRole('button', { name: 'Đã nhập hôm nay' }))
+  await userEvent.selectOptions(within(filterSidebar).getByRole('combobox', { name: 'Thời gian nhanh' }), 'today')
 
   expect(service.listReceipts).toHaveBeenLastCalledWith(
     expect.objectContaining({
@@ -237,7 +269,6 @@ it('uses purchase receipt presets and exact PN search priority without a reset a
       date_to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
     }),
   )
-  expect(within(filterSidebar).queryByText('Preset: Đã nhập hôm nay')).not.toBeInTheDocument()
 
   await userEvent.type(within(filterForm).getByLabelText('Tìm phiếu/NCC'), 'PN000673{Enter}')
 
