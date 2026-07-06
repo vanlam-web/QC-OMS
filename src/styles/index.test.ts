@@ -155,13 +155,29 @@ it('right aligns money values in shared tables', () => {
   expect(cssRule('.money-text')).toContain('font-variant-numeric: tabular-nums')
 })
 
-it('keeps the cashbook data table in a KV-like layout with project colors', () => {
-  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('text-transform: uppercase')
-  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('background: var(--color-surface-muted)')
-  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('font-size: 0.8125rem')
-  expect(cssRule('.finance-cashbook-data-table thead th')).toContain('font-weight: 700')
-  expect(cssRule('.finance-cashbook-data-table thead th')).not.toContain('#FEF3C7')
+it('keeps shared management data rows visually consistent', () => {
+  expect(cssRule('.management-table tbody td')).toContain('border-bottom: 1px solid var(--color-border-muted)')
+  expect(cssRule('.management-table tbody td')).toContain('color: var(--color-text)')
+  expect(cssRule('.management-table tbody td')).toContain('font-family: inherit')
+  expect(cssRule('.management-table tbody td')).toContain('font-size: 0.875rem')
+  expect(cssRule('.management-table tbody td')).toContain('font-weight: 400')
+  expect(cssRule('.management-table tbody td')).toContain('line-height: 1.35')
+  expect(cssRule('.management-table tbody td')).toContain('vertical-align: middle')
   expect(cssRule('.management-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+})
+
+it('keeps shared management table headers visually consistent', () => {
+  expect(cssRule('.management-list-surface thead th')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.management-list-surface thead th')).toContain('color: var(--color-text)')
+  expect(cssRule('.management-list-surface thead th')).toContain('font-size: 0.8125rem')
+  expect(cssRule('.management-list-surface thead th')).toContain('font-weight: 700')
+  expect(cssRule('.management-list-surface thead th')).toContain('text-transform: uppercase')
+})
+
+it('keeps the cashbook data table in a KV-like layout with project colors', () => {
+  expect(cssRule('.finance-cashbook-data-table thead th')).toBe('')
+  expect(cssRule('.management-table tbody tr:hover td')).toContain('background: var(--color-surface-muted)')
+  expect(cssRule('.finance-cashbook-data-table tbody td')).toBe('')
   expect(cssRule('.finance-cashbook-data-table tbody tr:hover td')).toBe('')
   expect(cssRule('.finance-cashbook-code-link')).toContain('color: var(--color-primary)')
   expect(cssRule('.finance-cashbook-money-column')).toContain('text-align: right')
@@ -205,10 +221,12 @@ it('keeps shared management table headers sticky and visually distinct', () => {
   expect(headerRule).toContain('position: sticky')
   expect(headerRule).toContain('top: 0')
   expect(headerRule).toContain('z-index: 2')
-  expect(headerRule).toContain('background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-primary))')
+  expect(headerRule).toContain('background: var(--color-surface-muted)')
+  expect(headerRule).toContain('color: var(--color-text)')
   expect(headerRule).toContain('box-shadow: inset 0 -1px 0 var(--color-border)')
   expect(headerRule).toContain('font-size: 0.8125rem')
   expect(headerRule).toContain('font-weight: 700')
+  expect(headerRule).toContain('text-transform: uppercase')
 })
 
 it('shares inline detail tab styling outside customer-only pages', () => {
