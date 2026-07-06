@@ -18,13 +18,20 @@ it('keeps shell account controls aligned with the management page header row', (
   expect(cssRule('.management-page-header')).toContain('padding-right: var(--shell-action-rail-reserved-width)')
 })
 
-it('places finance voucher actions beside the shell account controls', () => {
+it('places finance voucher actions at the right edge of the finance action row', () => {
   const rule = cssRule('.finance-voucher-actions')
+  const actionsRule = cssRule('.finance-page-actions')
+  const financeToolbarRule = cssRule('.finance-page-actions .management-compact-toolbar')
 
-  expect(rule).toContain('position: fixed')
-  expect(rule).toContain('top: var(--shell-action-rail-top)')
-  expect(rule).toContain('right: calc(var(--space-4) + var(--shell-action-rail-reserved-width) + var(--space-2))')
-  expect(rule).toContain('z-index: calc(var(--z-shell) - 1)')
+  expect(actionsRule).toContain('width: 100%')
+  expect(actionsRule).toContain('justify-content: space-between')
+  expect(financeToolbarRule).toContain('flex: 1 1 28rem')
+  expect(financeToolbarRule).toContain('width: auto')
+  expect(rule).toContain('margin-left: auto')
+  expect(rule).toContain('flex-wrap: nowrap')
+  expect(cssRule('.finance-voucher-actions .button')).toContain('white-space: nowrap')
+  expect(cssRule('.finance-voucher-actions .button')).toContain('flex: 0 0 auto')
+  expect(rule).not.toContain('position: fixed')
 })
 
 it('keeps login controls on theme colors so entered text remains visible', () => {
@@ -108,6 +115,12 @@ it('keeps the cashbook data table in a KV-like layout with project colors', () =
   expect(cssRule('.finance-cashbook-filter-summary .metric-grid')).toContain('margin-bottom: var(--space-2)')
   expect(cssRule('.finance-cashbook-filter-summary .metric-card')).toContain('display: flex')
   expect(cssRule('.finance-cashbook-filter-summary .metric-card')).toContain('background: var(--color-surface)')
+  expect(cssRule('.finance-cashbook-star-button')).toContain('background: transparent')
+  expect(cssRule('.finance-cashbook-star-button')).toContain('cursor: pointer')
+  expect(cssRule('.finance-cashbook-star-button')).toContain('display: inline-flex')
+  expect(cssRule('.finance-cashbook-star-button')).toContain('height: 1.5rem')
+  expect(cssRule('.finance-cashbook-star-column .finance-cashbook-star-button')).toContain('margin: 0 auto')
+  expect(cssRule('.finance-cashbook-star-button:hover,\n.finance-cashbook-star-button-active')).toContain('color: var(--color-primary)')
 })
 
 it('keeps cashbook detail panel aligned to the KV expanded row structure', () => {
@@ -120,12 +133,19 @@ it('keeps cashbook detail panel aligned to the KV expanded row structure', () =>
   expect(cssRule('.finance-cashbook-detail')).toContain('gap: var(--space-3)')
   expect(cssRule('.finance-cashbook-detail')).toContain('text-align: left')
   expect(cssRule('.finance-cashbook-linked-documents-inner')).toContain('padding: var(--space-2)')
-  expect(cssRule('.finance-cashbook-unallocated')).toContain('justify-content: flex-end')
+  expect(cssRule('.finance-cashbook-detail footer')).toContain('align-items: center')
+  expect(cssRule('.finance-cashbook-detail footer')).toContain('justify-content: space-between')
+  expect(cssRule('.finance-cashbook-detail-actions')).toContain('justify-content: flex-start')
+  expect(cssRule('.finance-cashbook-detail-actions-right')).toContain('justify-content: flex-end')
+  expect(cssRule('.finance-cashbook-detail-actions-right')).toContain('margin-left: auto')
+  expect(cssRule('.finance-cashbook-detail-action-cancel')).toContain('background: transparent')
+  expect(cssRule('.finance-cashbook-detail-action-print')).toContain('background: var(--color-surface)')
 })
 
 it('keeps shared management table headers sticky and visually distinct', () => {
   const headerRule = cssRule('.management-list-surface thead th')
 
+  expect(cssRule('.management-list-surface')).toContain('padding: var(--space-1)')
   expect(headerRule).toContain('position: sticky')
   expect(headerRule).toContain('top: 0')
   expect(headerRule).toContain('z-index: 2')

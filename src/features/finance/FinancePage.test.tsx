@@ -132,6 +132,28 @@ const unallocatedExpenseDetail: CashbookEntryDetail = {
   allocations: [],
 }
 
+const noteLinkedReceiptEntry: CashbookEntry = {
+  id: 'entry-note-linked',
+  code: 'PT000015',
+  status: 'posted',
+  direction: 'in',
+  amount_delta: 500000,
+  finance_account: { id: 'cash-1', code: 'CASH', name: 'Quỹ tiền mặt', account_type: 'cash' },
+  is_business_accounted: true,
+  source_type: 'payment_receipt_method',
+  created_at: '2026-07-06T03:22:00Z',
+  note: 'Checkout HD000015',
+}
+
+const noteLinkedReceiptDetail: CashbookEntryDetail = {
+  ...noteLinkedReceiptEntry,
+  created_by: { id: 'user-1', name: 'Văn Viết Phương Lâm' },
+  counterparty: { type: 'customer', name: 'Khách lẻ', phone: null },
+  payment_method: 'cash',
+  source: { type: 'payment_receipt', id: 'receipt-note-linked', code: 'PT000015', order_code: null },
+  allocations: [],
+}
+
 const voucher: CashbookVoucher = {
   id: 'voucher-1',
   code: 'PT0001',
@@ -434,11 +456,16 @@ describe('FinancePage', () => {
     expect(within(detail).getByRole('heading', { name: 'Phiếu thu PT0001' })).toBeInTheDocument()
     expect(within(detail).getAllByText('Đã thanh toán').length).toBeGreaterThan(0)
     expect(within(detail).getByText('Có hạch toán')).toBeInTheDocument()
-    expect(within(detail).getByText('Chi nhánh trung tâm')).toBeInTheDocument()
+    expect(within(detail).queryByText('Chi nhánh trung tâm')).not.toBeInTheDocument()
     expect(detail.querySelector('.finance-cashbook-detail-header')).not.toBeNull()
     expect(detail.querySelector('.finance-cashbook-detail-core-grid')).not.toBeNull()
     expect(detail.querySelector('.finance-cashbook-detail-extra-rows')).not.toBeNull()
     expect(detail.querySelector('.finance-cashbook-linked-documents-inner')).not.toBeNull()
+    expect(
+      detail.querySelector('.finance-cashbook-detail-note')?.compareDocumentPosition(
+        detail.querySelector('.finance-cashbook-linked-documents') as Node,
+      ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     const detailText = detail.textContent ?? ''
     expect(detailText).toContain('Người tạo: Văn Viết Phương Lâm')
     expect(detailText).not.toContain('Người thu')
@@ -503,8 +530,64 @@ describe('FinancePage', () => {
     const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ CTM001181' })
     expect(within(detail).getByRole('table', { name: 'Chứng từ liên kết' })).toBeInTheDocument()
     expect(within(detail).getByText('Không có chứng từ liên kết.')).toBeInTheDocument()
-    expect(within(detail).getByText('Tiền chưa phân bổ:')).toBeInTheDocument()
+    expect(within(detail).queryByText('Tiền chưa phân bổ:')).not.toBeInTheDocument()
     expect(within(detail).getByText('Ứng lần 2')).toBeInTheDocument()
+  })
+
+  it('shows a note-inferred linked invoice when a receipt references a checkout invoice', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => noteLinkedReceiptDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 500000, total_out: 0, ending_balance: 600000 },
+        items: [noteLinkedReceiptEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PT000015' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT000015' })
+    expect(within(detail).queryByText('Không có chứng từ liên kết.')).not.toBeInTheDocument()
+    expect(within(detail).queryByText('Không có kết quả phù hợp')).not.toBeInTheDocument()
+    expect(within(detail).getByText('Phiếu thu tự động được gắn với hóa đơn HD000015.')).toBeInTheDocument()
+    expect(within(detail).getAllByText('HD000015').length).toBeGreaterThan(0)
+    expect(within(detail).queryByText('Checkout HD000015')).not.toBeInTheDocument()
+    expect(within(detail).getByText('Chưa có ghi chú')).toBeInTheDocument()
+  })
+
+  it('persists cashbook favorite marks and filters the current page by favorites', async () => {
+    window.localStorage.clear()
+    const secondEntry: CashbookEntry = {
+      ...expenseEntry,
+      id: 'entry-favorite-2',
+      code: 'PT000016',
+      direction: 'in',
+      amount_delta: 360000,
+      source_type: 'payment_receipt_method',
+    }
+    const service = makeService({
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 860000, total_out: 0, ending_balance: 960000 },
+        items: [noteLinkedReceiptEntry, secondEntry],
+        page: 1,
+        page_size: 15,
+        total: 2,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await screen.findByRole('button', { name: 'Mở chi tiết PT000015' })
+    await userEvent.click(screen.getByRole('button', { name: 'Đánh dấu ưu tiên PT000015' }))
+
+    expect(screen.getByRole('button', { name: 'Bỏ ưu tiên PT000015' })).toHaveAttribute('aria-pressed', 'true')
+    expect(JSON.parse(window.localStorage.getItem('finance.cashbook.favoriteEntryIds') ?? '[]')).toEqual(['entry-note-linked'])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Chỉ hiện mục ưu tiên' }))
+    expect(screen.getByRole('button', { name: 'Mở chi tiết PT000015' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mở chi tiết PT000016' })).not.toBeInTheDocument()
   })
 
 })
