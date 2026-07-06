@@ -569,9 +569,9 @@ button {
   align-items: center;
   gap: var(--space-2);
   min-height: 2.25rem;
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
   padding: 0 var(--space-2);
   font-size: 0.875rem;
 }
@@ -603,9 +603,6 @@ button {
 }
 
 .management-filter-options .management-filter-choice {
-  min-height: 2.875rem;
-  border-color: var(--color-border);
-  border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
 }

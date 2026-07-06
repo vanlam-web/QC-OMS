@@ -91,6 +91,17 @@ it('keeps management filter selects styled as shared compact controls', () => {
   expect(rule).toContain('box-shadow: var(--shadow-sm)')
 })
 
+it('keeps shared filter choices compact with borders only on active state', () => {
+  const choiceRule = cssRule('.management-filter-options .management-filter-choice')
+  const activeRule = cssRule('.management-filter-options .management-filter-choice-active')
+
+  expect(choiceRule).toContain('min-height: 2.25rem')
+  expect(choiceRule).toContain('border: 1px solid transparent')
+  expect(choiceRule).toContain('border-radius: var(--radius-sm)')
+  expect(activeRule).toContain('border-color: var(--color-selected-border)')
+  expect(activeRule).toContain('box-shadow: inset 0 0 0 1px var(--color-selected-border)')
+})
+
 it('lets feature forms live inside the shared filter sidebar without custom layout CSS', () => {
   expect(cssRule('.management-filter-sidebar-form')).toContain('display: contents')
   expect(cssRule('.management-filter-actions')).toContain('position: sticky')
