@@ -41,6 +41,13 @@ PWA hiện chỉ là app-shell cache:
 - không cam kết lưu hóa đơn/báo giá offline;
 - mọi nghiệp vụ bán hàng vẫn phải theo API/server khi ghi dữ liệu.
 
+Frontend route pages được lazy-load theo route để giữ app shell nhỏ:
+
+- `src/app/router.tsx` không static import các page lớn như POS, Finance, Inventory, Sales Documents;
+- khi thêm page/module mới, dùng `lazy(() => import(...))` ở router thay vì import trực tiếp;
+- `src/app/router.test.ts` kiểm rule này để tránh kéo toàn bộ app vào initial bundle;
+- `npm run build` phải pass mà không phát sinh cảnh báo chunk lớn mới.
+
 ---
 
 ## 2. BIẾN MÔI TRƯỜNG

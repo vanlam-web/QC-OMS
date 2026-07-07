@@ -16,7 +16,7 @@
 | Function tests | Pass |
 | DB tests | Pass |
 | E2E | Pass |
-| Build | Pass, còn cảnh báo chunk size |
+| Build | Pass, route-level chunks dưới ngưỡng cảnh báo Vite |
 
 ---
 
