@@ -66,6 +66,11 @@ Frontend permission codes dùng chung qua `src/features/users/permissions.ts`:
 - `src/features/users/permissions.test.ts` giữ danh sách code ổn định để bắt typo khi đổi quyền;
 - test UI vẫn có thể dùng literal khi cần xác nhận text hoặc dữ liệu mock theo đúng hợp đồng API.
 
+Frontend/tooling unit tests:
+
+- `npm test` chạy unit/component tests trong `src`, đồng thời chạy helper unit tests trong `scripts/*.test.mjs` và `tests/e2e/*.test.ts`;
+- test Playwright thật vẫn chạy bằng `npm run test:e2e`, không đặt trong file `*.test.ts` để tránh nhầm scope.
+
 Frontend API error contract:
 
 - mọi request gửi `x-request-id` để đối chiếu log FE-BE;
