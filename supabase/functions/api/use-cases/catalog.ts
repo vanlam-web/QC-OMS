@@ -5,6 +5,7 @@ import type {
   PermissionCode,
   PriceListData,
   PriceFormulaPreviewData,
+  ProductBomData,
   ProductData,
   ProductStatus,
   ResolvedPriceData,
@@ -113,6 +114,37 @@ export async function updateProduct(
     return row;
   } catch (cause) {
     if (cause instanceof ApiError) throw cause;
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function getProductBom(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  productId: string,
+): Promise<ProductBomData | null> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  return await repository.getProductBom({ organizationId: context.organizationId, productId });
+}
+
+export async function saveProductBom(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  productId: string,
+  body: unknown,
+): Promise<ProductBomData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  if (context.actorUserId === undefined) throw validationError();
+  const input = parseProductBomBody(body);
+
+  try {
+    return await repository.saveProductBom({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      productId,
+      ...input,
+    });
+  } catch (cause) {
     throw mapRepositoryError(cause);
   }
 }
@@ -253,10 +285,30 @@ export async function listCustomers(
   url: URL,
 ): Promise<CustomerListResponse> {
   requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
-  const { search, page, pageSize } = parseCustomerList(url);
+  const {
+    search,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
+    page,
+    pageSize,
+  } = parseCustomerList(url);
   const result = await repository.listCustomers({
     organizationId: context.organizationId,
     search,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
     page,
     pageSize,
   });
@@ -269,9 +321,10 @@ export async function createCustomer(
   body: unknown,
 ): Promise<CustomerData> {
   requireAnyPermission(context, ["perm.create_order"]);
+  if (context.actorUserId === undefined) throw validationError();
   const input = parseCustomerCreate(body);
   try {
-    return await repository.createCustomer({ organizationId: context.organizationId, ...input });
+    return await repository.createCustomer({ organizationId: context.organizationId, actorUserId: context.actorUserId, ...input });
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -486,21 +539,55 @@ function parseResolvePrices(body: unknown): { productIds: string[]; customerId?:
   return { productIds: productIds.map((id) => id.trim()), customerId };
 }
 
-function parseCustomerList(url: URL): { search?: string; page: number; pageSize: number } {
+function parseCustomerList(url: URL): {
+  search?: string;
+  customerGroupId?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  createdBy?: string;
+  totalSalesMin?: number;
+  totalSalesMax?: number;
+  totalDebtMin?: number;
+  totalDebtMax?: number;
+  page: number;
+  pageSize: number;
+} {
   const search = url.searchParams.get("search")?.trim();
+  const customerGroupId = parseOptionalQueryId(url.searchParams.get("customer_group_id"));
+  const createdFrom = parseOptionalDateFilter(url.searchParams.get("created_from"));
+  const createdTo = parseOptionalDateFilter(url.searchParams.get("created_to"));
+  const createdBy = parseOptionalQueryId(url.searchParams.get("created_by"));
+  const totalSalesMin = parseOptionalMoneyFilter(url.searchParams.get("total_sales_min"));
+  const totalSalesMax = parseOptionalMoneyFilter(url.searchParams.get("total_sales_max"));
+  const totalDebtMin = parseOptionalMoneyFilter(url.searchParams.get("total_debt_min"));
+  const totalDebtMax = parseOptionalMoneyFilter(url.searchParams.get("total_debt_max"));
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
     throw validationError();
   }
   if (search !== undefined && search.length > 100) throw validationError();
-  return { search: search || undefined, page, pageSize };
+  return {
+    search: search || undefined,
+    customerGroupId,
+    createdFrom,
+    createdTo,
+    createdBy,
+    totalSalesMin,
+    totalSalesMax,
+    totalDebtMin,
+    totalDebtMax,
+    page,
+    pageSize,
+  };
 }
 
 function parseCustomerCreate(body: unknown): {
   code?: string;
   name: string;
   phone?: string;
+  taxCode?: string;
+  address?: string;
   customerGroupId?: string | null;
 } {
   if (!isRecord(body)) throw validationError();
@@ -508,6 +595,8 @@ function parseCustomerCreate(body: unknown): {
     code?: string;
     name: string;
     phone?: string;
+    taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   } = { name: normalizeText(body.name, 200) };
   if ("code" in body && body.code !== null && body.code !== undefined && String(body.code).trim() !== "") {
@@ -515,6 +604,12 @@ function parseCustomerCreate(body: unknown): {
   }
   if ("phone" in body && body.phone !== null && body.phone !== undefined && String(body.phone).trim() !== "") {
     input.phone = normalizeText(body.phone, 30);
+  }
+  if ("tax_code" in body && body.tax_code !== null && body.tax_code !== undefined && String(body.tax_code).trim() !== "") {
+    input.taxCode = normalizeText(body.tax_code, 50);
+  }
+  if ("address" in body && body.address !== null && body.address !== undefined && String(body.address).trim() !== "") {
+    input.address = normalizeText(body.address, 300);
   }
   if ("customer_group_id" in body) {
     input.customerGroupId = parseOptionalId(body.customer_group_id);
@@ -526,6 +621,8 @@ function parseCustomerUpdate(body: unknown): {
   code?: string;
   name?: string;
   phone?: string | null;
+  taxCode?: string | null;
+  address?: string | null;
   customerGroupId?: string | null;
 } {
   if (!isRecord(body)) throw validationError();
@@ -533,11 +630,15 @@ function parseCustomerUpdate(body: unknown): {
     code?: string;
     name?: string;
     phone?: string | null;
+    taxCode?: string | null;
+    address?: string | null;
     customerGroupId?: string | null;
   } = {};
   if ("code" in body) input.code = normalizeCustomerCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("phone" in body) input.phone = body.phone === null ? null : normalizeText(body.phone, 30);
+  if ("tax_code" in body) input.taxCode = body.tax_code === null ? null : normalizeText(body.tax_code, 50);
+  if ("address" in body) input.address = body.address === null ? null : normalizeText(body.address, 300);
   if ("customer_group_id" in body) input.customerGroupId = parseOptionalId(body.customer_group_id);
   if (Object.keys(input).length === 0) throw validationError();
   return input;
@@ -606,9 +707,49 @@ function parseRequiredId(value: unknown): string {
   return value.trim();
 }
 
+function parseOptionalQueryId(value: string | null): string | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  return value.trim();
+}
+
+function parseOptionalDateFilter(value: string | null): string | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  if (Number.isNaN(Date.parse(value))) throw validationError();
+  return value.trim();
+}
+
+function parseOptionalMoneyFilter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) throw validationError();
+  return amount;
+}
+
 function parseOptionalId(value: unknown): string | null {
   if (value === null) return null;
   return parseRequiredId(value);
+}
+
+function parseProductBomBody(body: unknown): {
+  notes?: string | null;
+  items: Array<{ componentProductId: string; quantity: number; notes?: string | null }>;
+} {
+  if (!isRecord(body) || !Array.isArray(body.items) || body.items.length === 0) throw validationError();
+  if (body.items.length > 50) throw validationError();
+  return {
+    notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
+    items: body.items.map((item) => {
+      if (!isRecord(item)) throw validationError();
+      const componentProductId = parseRequiredId(item.component_product_id);
+      const quantity = typeof item.quantity === "number" ? item.quantity : Number(item.quantity);
+      if (!Number.isFinite(quantity) || quantity <= 0) throw validationError();
+      return {
+        componentProductId,
+        quantity,
+        notes: typeof item.notes === "string" && item.notes.trim() ? item.notes.trim() : null,
+      };
+    }),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

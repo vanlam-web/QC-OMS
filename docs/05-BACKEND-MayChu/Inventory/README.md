@@ -1,6 +1,6 @@
 # INVENTORY — API kho vật tư
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> Index API kho vật tư. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ---
 
@@ -14,9 +14,9 @@
 
 ## Tham chiếu
 
-- **Business Inventory:** `../../03-BUSINESS-NghiepVu/Inventory/`
-- **Database Inventory:** `../../04-DATABASE/Inventory/`
-- **Backend POS Checkout:** `../POS/ORDER-API.md`
+- [Business Inventory](../../03-BUSINESS-NghiepVu/Inventory/)
+- [Database Inventory](../../04-DATABASE/Inventory/)
+- [Backend POS Checkout](../POS/ORDER-API.md)
 
 ---
 

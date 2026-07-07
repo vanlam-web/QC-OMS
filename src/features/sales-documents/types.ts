@@ -38,11 +38,21 @@ export interface SalesDocumentDetail extends SalesDocumentListItem {
   payment_receipts: Array<{
     id: string
     code: string
+    status: 'posted' | 'cancelled'
+    receipt_type: 'sale_payment' | 'debt_collection' | 'mixed_sale_and_debt'
     total_received_amount: number
+    created_at: string
+    created_by: { id: string; name: string }
     methods: Array<{
       method_type: 'cash' | 'bank_transfer'
       amount: number
       finance_account: { id: string; code: string; name: string }
+    }>
+    allocations: Array<{
+      order_id: string
+      order_code: string
+      allocated_amount: number
+      remaining_after: number
     }>
   }>
   debt_entries: Array<{

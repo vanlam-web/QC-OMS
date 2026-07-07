@@ -1,6 +1,6 @@
 # BACKUP-RESTORE — Sao lưu và khôi phục
 
-> **Trạng thái:** 🔨 Baseline trước production
+> **Vai trò:** Baseline trước production.
 > **Phạm vi:** Chính sách backup/restore cho dữ liệu QC-OMS.
 
 ---

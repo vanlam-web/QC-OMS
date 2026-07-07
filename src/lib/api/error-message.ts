@@ -20,8 +20,10 @@ export function formatApiError(cause: unknown, fallback: string): string {
       return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
     case 'WORKSTATION_INVALID':
       return 'Phiên làm việc không còn hợp lệ. Vui lòng đăng nhập lại.'
+    case 'CONFIGURATION_ERROR':
+      return cause.message
     case 'INTERNAL_ERROR':
-      return 'Máy chủ gặp lỗi. Vui lòng thử lại sau.'
+      return `Máy chủ gặp lỗi. Vui lòng thử lại sau. Mã lỗi: ${cause.traceId}`
     default:
       return fallback
   }

@@ -1,6 +1,5 @@
 # 01-K02-GIO-HANG.md — K02: TỔNG QUAN GIỎ HÀNG & ĐIỀU PHỐI MÁY TRẠM
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 

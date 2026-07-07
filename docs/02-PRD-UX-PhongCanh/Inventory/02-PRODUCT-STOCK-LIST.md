@@ -1,6 +1,5 @@
 # PRODUCT-STOCK-LIST — Danh sách hàng hóa & tồn kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo UI:** KiotViet trang Hàng hóa; điều chỉnh theo nghiệp vụ QC-OMS.
 
 ---

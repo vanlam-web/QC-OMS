@@ -1,6 +1,5 @@
 # INVENTORY-LAYOUT — Bố cục tổng thể Kho/Hàng hóa
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn tham khảo UI:** KiotViet trang Hàng hóa ở viewport desktop rộng.
 
 ---

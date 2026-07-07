@@ -1,6 +1,5 @@
 # PRODUCTION-RECONCILIATION — Đối soát OMS và máy sản xuất
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Cách QC-OMS dùng dữ liệu máy sản xuất trong MVP
 
 ---

@@ -91,11 +91,11 @@ it('renders a simple quote print preview from saved snapshot data', async () => 
 
   const lines = screen.getByRole('table', { name: 'Dòng hàng báo giá' })
   expect(within(lines).getByText('DECAL-PP')).toBeInTheDocument()
-  expect(within(lines).getByText('1,2 x 0,5 m')).toBeInTheDocument()
+  expect(within(lines).getByText('1.2 x 0.5 m')).toBeInTheDocument()
   expect(within(lines).getByText('FORMEX-5')).toBeInTheDocument()
   expect(within(lines).getByText('Cắt theo mẫu')).toBeInTheDocument()
   expect(screen.getByText('Tổng báo giá')).toBeInTheDocument()
-  expect(screen.getByText('600.000 ₫')).toBeInTheDocument()
+  expect(screen.getByText('600 000')).toBeInTheDocument()
 })
 
 it('calls browser print from the quote print action', async () => {

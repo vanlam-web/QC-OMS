@@ -1,6 +1,5 @@
 # 02-SALES-DOCUMENT-DETAIL — Chi tiết chứng từ bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phase hiện tại:** Readonly detail cho `HD...`/`BG...`; báo giá active mở lại được vào POS draft
 
 ---
@@ -34,18 +33,24 @@ Hiện tại đã đọc dữ liệu đã có:
 - thông tin tổng quan hóa đơn hoặc báo giá
 - snapshot dòng hàng
 - tổng tiền, khách đã trả, công nợ theo hóa đơn nếu có; báo giá không phát sinh tiền/kho/công nợ
+- lịch sử thanh toán đọc từ các phiếu thu đã liên kết với hóa đơn nếu API detail trả `payment_receipts`
 - stock movements liên quan nếu Backend trả về
 - thao tác mở lại báo giá active vào POS draft local
+- tab `Thông tin` và `Lịch sử thanh toán` hiển thị ngay trong inline detail; tab lịch sử thanh toán không gọi API riêng mà dùng dữ liệu đã có trong response detail
 
-Chưa triển khai:
+Ngoài phạm vi hiện tại:
 
 - nút sửa hóa đơn
 - nút hủy hóa đơn
-- in/xem báo giá mẫu mặc định, thuộc Phase 3B
 - in lại bill hóa đơn nếu Bill Preview/print flow chưa sẵn sàng
 - transaction đảo kho/tiền/công nợ
+- API lịch sử thanh toán riêng cho detail; hiện không cần nếu `payment_receipts` trong detail đã đủ
 
-Các phần bên dưới có nhãn **Future phase** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
+Đã có ở lát quote print:
+
+- in/xem báo giá mẫu mặc định cho `BG...`
+
+Các phần bên dưới có nhãn **Ngoài phạm vi hiện tại** là hướng thiết kế sau, không phải cam kết đã có trong implementation hiện tại.
 
 ---
 
@@ -70,7 +75,7 @@ Hiển thị:
 - Loại chứng từ: Báo giá hoặc Hóa đơn.
 - Trạng thái.
 - Khách hàng snapshot tại thời điểm lưu.
-- Người bán/người tạo.
+- Người bán: tài khoản tạo/chốt chứng từ. QC-OMS hiện tại không tách riêng `người tạo` và `người bán`.
 - Bảng giá đã áp dụng.
 - Chi nhánh không hiển thị trong MVP vì hiện chỉ có một chi nhánh ngầm; chỉ bổ sung nếu sau này thật sự vận hành nhiều chi nhánh/kho.
 - Ghi chú đơn.
@@ -124,6 +129,10 @@ Quy tắc:
 - Không sửa trực tiếp thanh toán trong chi tiết hóa đơn.
 - Thu thêm nợ thực hiện ở module Công nợ/Sổ quỹ theo quy tắc phân bổ hóa đơn cũ nhất trước.
 - Nếu hóa đơn bị sửa/hủy, tác động đảo tiền/công nợ phải được ghi thành lịch sử, không xóa dòng cũ.
+- Tab `Lịch sử thanh toán` đọc từ `payment_receipts` trong detail response. Nếu chưa có phiếu thu hoặc dữ liệu liên kết chưa đủ, UI giữ tab và hiển thị trạng thái trống/chưa có dữ liệu.
+- Dữ liệu phiếu thu từ hệ thống cũ/API cũ có thể thiếu ngày, người thu hoặc phương thức. UI phải hiển thị fallback thay vì làm sập detail.
+- Nếu phiếu thu thiếu thời gian, dùng thời gian bán của chứng từ bán hàng.
+- `created_by` của phiếu thu được xem là người thu tiền/thu ngân, tức user dùng phần mềm ở thời điểm ghi nhận phiếu. Nếu phiếu thu thiếu `created_by`, dùng người bán/user của chứng từ bán hàng làm người thu.
 
 ---
 
@@ -156,11 +165,11 @@ Ghi lại timeline:
 
 Mỗi dòng lịch sử có thời gian, nhân viên, hành động và ghi chú.
 
-Hiện tại chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Mở lại báo giá đã có ở mức draft local; in/sửa/hủy/đảo là future phase nếu chưa có transaction tương ứng.
+Hiện tại chỉ hiển thị phần lịch sử đã có dữ liệu readonly. Mở lại báo giá đã có ở mức draft local; in/sửa/hủy/đảo nằm ngoài phạm vi hiện tại nếu chưa có transaction tương ứng.
 
 ---
 
-## 8. Thao tác Future Phase
+## 8. Thao tác ngoài phạm vi hiện tại
 
 Các thao tác trong mục này chỉ bật sau khi có rule nghiệp vụ rõ, API transaction an toàn nếu có tác động liên bảng, và kiểm thử đủ.
 

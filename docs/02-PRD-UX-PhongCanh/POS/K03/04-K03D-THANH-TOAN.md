@@ -1,6 +1,5 @@
 # 04-K03D-THANH-TOAN.md — K03-D: BÁO GIÁ / THANH TOÁN / BILL PREVIEW
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 
@@ -40,10 +39,11 @@ Nhân viên bấm [BÁO GIÁ]
 ```
 
 - Báo giá vẫn lưu trong nhóm đơn hàng để dễ quản lý và tìm lại.
-- Có thể tạo báo giá khi chưa chọn khách; khi đó lưu là khách lẻ.
+- Có thể tạo báo giá khi chưa chọn khách; backend gán báo giá vào `KH000001 - Khách lẻ` để Customer Detail của khách lẻ có lịch sử báo giá.
 - Báo giá không làm mất hóa đơn nháp hiện tại trừ khi người dùng chủ động đóng/xóa nháp.
 - Khi mở lại báo giá để sửa, hệ thống đưa báo giá trở lại POS như một hóa đơn nháp bình thường.
 - Khi khách đồng ý, nhân viên mở báo giá thành nháp, sửa nếu cần rồi bấm `[THANH TOÁN]`.
+- Nháp mở từ báo giá có thể lưu thành báo giá mới hoặc thanh toán thành hóa đơn. Hóa đơn có thể giữ link về báo giá gốc nếu hệ thống còn truyền được nguồn báo giá; nếu không, hóa đơn vẫn được xem như hóa đơn bán thẳng.
 - Quy tắc vòng đời báo giá xem tại [POS-ORDER-LIFECYCLE.md](../../../03-BUSINESS-NghiepVu/Sales/POS-ORDER-LIFECYCLE.md#4-quy-tắc-báo-giá).
 
 ---
@@ -90,9 +90,9 @@ Nhân viên bấm [THANH TOÁN] (F9)
 - Có nút nhanh `[TRẢ ĐỦ]` để điền đủ tiền và `[NỢ TOÀN BỘ]` để đưa số tiền khách thanh toán về `0`.
 - Nếu khách thanh toán nhỏ hơn khách cần trả, phần thiếu được ghi nhận là còn nợ.
 - Nếu đã chọn khách, phần còn nợ gắn vào khách đó.
-- Nếu chưa chọn khách, vẫn cho phép ghi nợ dưới dạng **Khách lẻ nợ**, nhưng bắt buộc nhập ghi chú nợ để không quên.
+- Nếu chưa chọn khách, phần còn nợ gắn vào `KH000001 - Khách lẻ`.
 - Ghi chú nợ khách lẻ nên có tên/gợi nhớ khách, SĐT nếu biết, lý do nợ và hẹn ngày lấy/trả nếu có.
-- Sau này khi xác định được khách, hóa đơn/khoản nợ khách lẻ có thể được gán lại cho khách cụ thể; thao tác này sẽ được quy định ở trang Đơn hàng/Công nợ.
+- Sau này khi xác định được khách, việc chuyển hóa đơn/khoản nợ từ `KH000001` sang khách cụ thể cần spec riêng vì đây là thay đổi chủ công nợ/chứng từ.
 - Nếu đã chọn khách, dialog hiển thị **Tổng nợ hiện tại** của khách.
 - Bên dưới Tổng nợ có ô **Thanh toán nợ cũ**, mặc định `0`.
 - Tiền thanh toán hóa đơn hiện tại và tiền thanh toán nợ cũ là hai khoản riêng, không cộng lẫn để tính còn nợ của hóa đơn mới.
@@ -182,12 +182,16 @@ Nhân viên bấm [THANH TOÁN] (F9)
 - Hệ thống không lưu lịch sử gửi bill trong POS.
 - Nếu không mở được nơi gửi, hệ thống hiển thị lỗi rõ nguyên nhân nếu xác định được, ví dụ: link sai, không tìm thấy khách/nhóm, người nhận chặn, chưa đăng nhập ứng dụng gửi, hoặc trình duyệt/ứng dụng không cho mở link.
 - Kênh gửi bill lấy từ cấu hình gửi tin nhắn trong hồ sơ khách hàng: Zalo cá nhân, nhóm Zalo hoặc Facebook. Nếu chưa kích hoạt ở khách hàng thì không hiện popup gửi.
+- Mỗi khách chỉ có một kênh gửi bill mặc định tại một thời điểm. UI có thể dùng dropdown hoặc tick chọn một kênh.
+- Lựa chọn bill và máy in được lưu theo khách để lần sau tự gợi ý đúng mẫu bill/máy in khách thường dùng.
+
+> Quy tắc nghiệp vụ đầy đủ xem [POS-BILL-PRINT-MESSAGING.md](../../../03-BUSINESS-NghiepVu/Sales/POS-BILL-PRINT-MESSAGING.md).
 
 ### V.1. Ghi chú kỹ thuật cho gửi bill
 
 - Sinh ảnh bill từ mẫu bill HTML là khả thi cho giai đoạn đầu.
 - Giai đoạn đầu ưu tiên sinh ảnh ở Frontend để triển khai nhanh.
-- Nếu sau này ảnh bill sai font, sai layout hoặc hiệu năng kém, cân nhắc chuyển sang render ảnh bill ở Backend.
+- Nếu ảnh bill sai font, sai layout hoặc hiệu năng kém, cân nhắc chuyển sang render ảnh bill ở Backend trong slice riêng.
 - Giai đoạn đầu ưu tiên chạy trên Chrome.
 - Mỗi máy POS chỉ cấu hình một kiểu mở Zalo: **Zalo PC** hoặc **Zalo Web**.
 - Khi khách dùng kênh Zalo, hệ thống mở theo kiểu Zalo đã cấu hình cho máy POS đó; không tự đổi qua kiểu Zalo khác trong cùng máy.

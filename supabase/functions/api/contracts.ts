@@ -53,6 +53,25 @@ export interface ProductData {
   inventory_shape?: "normal" | "roll" | "sheet";
 }
 
+export interface ProductBomItemData {
+  id: string;
+  component_product_id: string;
+  component_product: { id: string; code: string; name: string; unit_name: string };
+  quantity: number;
+  sort_order: number;
+  notes: string | null;
+}
+
+export interface ProductBomData {
+  id: string;
+  product_id: string;
+  version: number;
+  status: "active" | "archived";
+  notes: string | null;
+  created_at: string;
+  items: ProductBomItemData[];
+}
+
 export interface PriceListData {
   id: string;
   code: string;
@@ -74,8 +93,14 @@ export interface CustomerData {
   code: string;
   name: string;
   phone: string | null;
+  tax_code: string | null;
+  address: string | null;
   customer_group_id: string | null;
   customer_group: { id: string; code: string; name: string } | null;
+  created_at: string;
+  created_by: { id: string; name: string } | null;
+  total_sales_amount: number;
+  total_debt_amount: number;
 }
 
 export interface SupplierData {
@@ -318,7 +343,11 @@ export interface SalesDocumentDetailData extends SalesDocumentListItemData {
   payment_receipts: Array<{
     id: string;
     code: string;
+    status: "posted" | "cancelled";
+    receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
     total_received_amount: number;
+    created_at: string;
+    created_by: { id: string; name: string };
     methods: Array<{
       method_type: "cash" | "bank_transfer";
       amount: number;
@@ -362,11 +391,23 @@ export interface CustomerDebtDetailData {
   invoices: Array<{
     order_id: string;
     order_code: string;
+    created_at: string;
     total_amount: number;
     paid_amount: number;
     debt_amount: number;
     remaining_debt: number;
   }>;
+}
+
+export interface RetailDebtInvoiceData {
+  order_id: string;
+  order_code: string;
+  created_at: string;
+  total_amount: number;
+  paid_amount: number;
+  debt_amount: number;
+  remaining_debt: number;
+  retail_debt_note: string | null;
 }
 
 export interface DebtCollectionResultData {
@@ -401,6 +442,7 @@ export interface CashbookEntryData {
   source_type: "payment_receipt_method" | "cashbook_voucher";
   created_at: string;
   note: string | null;
+  counterparty: { type: "customer" | "supplier" | "employee" | "other" | "none"; name: string | null; phone: string | null };
 }
 
 export interface CashbookListData {
@@ -427,7 +469,6 @@ export interface PaymentReceiptAllocationData {
 
 export interface CashbookEntryDetailData extends CashbookEntryData {
   created_by: { id: string; name: string };
-  counterparty: { type: "customer" | "supplier" | "employee" | "other" | "none"; name: string | null; phone: string | null };
   payment_method: "cash" | "bank_transfer" | "manual";
   source: { type: "payment_receipt" | "manual_voucher"; id: string; code: string; order_code: string | null };
   allocations: PaymentReceiptAllocationData[];
@@ -440,7 +481,8 @@ export interface PaymentReceiptDetailData {
   receipt_type: "sale_payment" | "debt_collection" | "mixed_sale_and_debt";
   total_received_amount: number;
   created_at: string;
-  customer: { id: string; code: string; name: string } | null;
+  created_by: { id: string; name: string };
+  customer: { id: string | null; code: string | null; name: string } | null;
   source_order: { id: string; code: string; total_amount: number } | null;
   methods: Array<{
     method_type: "cash" | "bank_transfer";
@@ -485,6 +527,58 @@ export interface StocktakeData {
   created_at: string;
   balanced_at: string | null;
   note: string | null;
+}
+
+export interface MaterialOpeningOptionsData {
+  product: {
+    id: string;
+    code: string;
+    name: string;
+    inventory_shape: "normal" | "roll" | "sheet";
+    stock_unit: { id: string; code: string; name: string };
+  };
+  conversions: Array<{
+    unit_id: string;
+    code: string;
+    name: string;
+    stock_qty_per_unit: number;
+  }>;
+  warnings: string[];
+}
+
+export interface MaterialOpeningResultData {
+  id: string;
+  product_id: string;
+  inventory_shape: "normal";
+  source_type: "manual_normal";
+  opened_unit_id: string;
+  opened_qty: number;
+  opened_stock_qty: number;
+  stock_movement_id: string | null;
+  warnings: string[];
+  created_at: string;
+}
+
+export interface PosMaterialShortageItemData {
+  product_id: string;
+  code: string;
+  name: string;
+  required_qty: number;
+  available_qty: number;
+  shortage_qty: number;
+  stock_unit: { id: string; code: string; name: string };
+  inventory_shape: "normal";
+  quick_material_opening_supported: boolean;
+  conversion_options: MaterialOpeningOptionsData["conversions"];
+}
+
+export interface PosMaterialShortagePreviewData {
+  product_id: string;
+  quantity: number;
+  source: "product" | "standard_bom";
+  bom_id?: string;
+  shortages: PosMaterialShortageItemData[];
+  warnings: string[];
 }
 
 export interface ProductionQueueItemData {
@@ -609,6 +703,14 @@ export interface FoundationRepository {
     latestPurchaseCost?: number | null;
     latestPurchaseCostUpdatedBy?: string;
   }): Promise<ProductData | null>;
+  getProductBom(input: { organizationId: string; productId: string }): Promise<ProductBomData | null>;
+  saveProductBom(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    notes?: string | null;
+    items: Array<{ componentProductId: string; quantity: number; notes?: string | null }>;
+  }): Promise<ProductBomData>;
   listPriceLists(input: { organizationId: string; activeOnly: boolean }): Promise<PriceListData[]>;
   createPriceList(input: {
     organizationId: string;
@@ -648,6 +750,14 @@ export interface FoundationRepository {
   listCustomers(input: {
     organizationId: string;
     search?: string;
+    customerGroupId?: string;
+    createdFrom?: string;
+    createdTo?: string;
+    createdBy?: string;
+    totalSalesMin?: number;
+    totalSalesMax?: number;
+    totalDebtMin?: number;
+    totalDebtMax?: number;
     page: number;
     pageSize: number;
   }): Promise<{ items: CustomerData[]; total: number }>;
@@ -655,6 +765,10 @@ export interface FoundationRepository {
     organizationId: string;
     search?: string;
     status: "active" | "inactive" | "all";
+    totalPurchaseMin?: number;
+    totalPurchaseMax?: number;
+    currentPayableMin?: number;
+    currentPayableMax?: number;
     page: number;
     pageSize: number;
   }): Promise<{ items: SupplierData[]; total: number }>;
@@ -707,6 +821,7 @@ export interface FoundationRepository {
     status: "draft" | "posted" | "cancelled" | "all";
     dateFrom?: string;
     dateTo?: string;
+    createdBy?: string;
     page: number;
     pageSize: number;
   }): Promise<{ items: PurchaseReceiptData[]; total: number }>;
@@ -764,9 +879,12 @@ export interface FoundationRepository {
   }): Promise<PurchaseReceiptPostResult>;
   createCustomer(input: {
     organizationId: string;
+    actorUserId: string;
     code?: string;
     name: string;
     phone?: string;
+    taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
   }): Promise<CustomerData>;
   updateCustomer(input: {
@@ -775,6 +893,8 @@ export interface FoundationRepository {
     code?: string;
     name?: string;
     phone?: string | null;
+    taxCode?: string | null;
+    address?: string | null;
     customerGroupId?: string | null;
   }): Promise<CustomerData | null>;
   listCustomerGroups(input: { organizationId: string; activeOnly: boolean }): Promise<CustomerGroupData[]>;
@@ -822,7 +942,11 @@ export interface FoundationRepository {
     search?: string;
     type?: "quote" | "invoice";
     status?: "active" | "converted" | "completed" | "cancelled";
+    customerId?: string;
     paymentStatus?: "not_applicable" | "unpaid" | "partial" | "paid";
+    paymentMethod?: "cash" | "bank_transfer";
+    createdBy?: string;
+    priceListId?: string;
     from?: string;
     to?: string;
     page: number;
@@ -843,18 +967,41 @@ export interface FoundationRepository {
     page: number;
     pageSize: number;
   }): Promise<{ items: CustomerDebtSummaryData[]; total: number }>;
+  listRetailDebts(input: {
+    organizationId: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: RetailDebtInvoiceData[]; total: number }>;
   getCustomerDebt(input: { organizationId: string; customerId: string }): Promise<CustomerDebtDetailData | null>;
   collectCustomerDebt(input: {
     organizationId: string;
     actorUserId: string;
     payload: Record<string, unknown>;
   }): Promise<DebtCollectionResultData>;
+  createCashbookVoucher(input: {
+    organizationId: string;
+    actorUserId: string;
+    payload: Record<string, unknown>;
+  }): Promise<CashbookVoucherData>;
+  reviseCashbookVoucher(input: {
+    organizationId: string;
+    actorUserId: string;
+    voucherId: string;
+    payload: Record<string, unknown>;
+  }): Promise<CashbookVoucherData>;
+  cancelCashbookVoucher(input: {
+    organizationId: string;
+    actorUserId: string;
+    voucherId: string;
+  }): Promise<CashbookVoucherData>;
   listCashbookEntries(input: {
     organizationId: string;
     financeAccountId?: string;
     search?: string;
+    searchScope?: "code" | "note" | "transfer_content";
     direction?: "in" | "out";
     sourceType?: "payment_receipt_method" | "cashbook_voucher";
+    status?: "posted" | "cancelled";
     isBusinessAccounted?: boolean;
     from?: string;
     to?: string;
@@ -904,6 +1051,25 @@ export interface FoundationRepository {
     actualQty: number;
     reason: string;
   }): Promise<StocktakeData>;
+  getMaterialOpeningOptions(input: {
+    organizationId: string;
+    productId: string;
+  }): Promise<MaterialOpeningOptionsData | null>;
+  previewPosMaterialShortage(input: {
+    organizationId: string;
+    productId: string;
+    quantity: number;
+  }): Promise<PosMaterialShortagePreviewData | null>;
+  createMaterialOpening(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    inventoryShape: "normal";
+    openedUnitId: string;
+    openedQty: number;
+    oldRemainingQty?: number;
+    note?: string;
+  }): Promise<MaterialOpeningResultData>;
   listProductionQueue(input: {
     organizationId: string;
     page: number;

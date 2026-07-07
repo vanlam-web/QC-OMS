@@ -1,6 +1,5 @@
 # 01-K01-TOPBAR.md — K01: THANH ĐỈNH & ĐA NHIỆM (TOP BAR)
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 
@@ -49,11 +48,11 @@ Top Bar được chia thành **4 khu vực**, mỗi khu vực có chức năng v
 - Cuộn ngang khi số tab vượt viewport
 - Chi tiết: → [01a-K01-SEARCH-TABS.md](./01a-K01-SEARCH-TABS.md)
 
-### Khu vực 3 — Nút Khui Vật Tư (Global Action)
+### Khu vực 3 — Nút Khui Vật Tư
 
 - **Vị trí:** Cố định trên Top Bar, giữa Khu vực 2 và Khu vực 4
 - **Tầm với:** Hiển thị trên mọi màn hình POS
-- **Mục đích:** Khai báo khui vật tư vật lý **độc lập với đơn hàng** — cuộn bạt bị chuột cắn, bao keo bị đổ, tấm alu bị cong vênh...
+- **Mục đích:** Khui vật tư phụ về `0`, khui một cuộn/tấm mới hoặc ghi nhận phần cuộn/tấm cũ còn lại để chuẩn hóa kho dần.
 - **Người dùng:** Thu ngân, thợ in, thợ CNC, quản lý kho
 - Chi tiết đầy đủ: → [01d-K01-KHUI.md](./01d-K01-KHUI.md)
 

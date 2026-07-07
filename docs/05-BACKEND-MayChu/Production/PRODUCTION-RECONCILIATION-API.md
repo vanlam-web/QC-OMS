@@ -1,6 +1,6 @@
 # PRODUCTION-RECONCILIATION-API — API đối soát máy sản xuất
 
-> **Trạng thái:** Source of Truth Backend cho lát cắt read-only đầu tiên
+> **Vai trò:** Source of Truth Backend cho lát cắt read-only đầu tiên.
 > **Business:** [PRODUCTION-RECONCILIATION.md](../../03-BUSINESS-NghiepVu/Inventory/PRODUCTION-RECONCILIATION.md)
 > **UI:** [06-PRODUCTION-RECONCILIATION.md](../../02-PRD-UX-PhongCanh/Inventory/06-PRODUCTION-RECONCILIATION.md)
 

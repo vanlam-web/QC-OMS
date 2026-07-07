@@ -1,6 +1,5 @@
 # STOCKTAKE — Nghiệp vụ kiểm kho
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phạm vi:** Phiếu kiểm kho, cân bằng kho, phiếu tự động khi sửa tồn trong Hàng hóa
 
 ---

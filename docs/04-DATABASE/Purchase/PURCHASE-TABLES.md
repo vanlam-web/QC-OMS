@@ -1,6 +1,6 @@
 # Purchase Tables — Phác thảo dữ liệu nhà cung cấp/nhập hàng
 
-> **Trạng thái:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement
+> **Vai trò:** Source of Truth mức thiết kế dữ liệu; tên bảng/cột có thể tinh chỉnh khi implement.
 > **Business:** [SUPPLIER-PURCHASE.md](../../03-BUSINESS-NghiepVu/Purchase/SUPPLIER-PURCHASE.md)
 
 ---
@@ -110,7 +110,7 @@ Thiết kế có thể dùng chung hạ tầng Finance hiện có:
 
 - phiếu nhập posted chưa trả đủ tạo payable entry cho NCC
 - trả tiền NCC tạo cashbook outflow/payment record
-- payment allocation mặc định vào phiếu nhập nợ cũ nhất trước
+- payment allocation gắn vào phiếu nhập cụ thể do người dùng chọn; UI có thể gợi ý phiếu nợ cũ nhất nhưng không tự phân bổ cứng
 
 Nếu sau này có bảng riêng, tên đề xuất:
 
@@ -128,7 +128,7 @@ Giá vốn nên lưu tại:
 - object/lô vật lý đối với roll/sheet
 - bảng tổng hợp cost nếu cần tối ưu báo cáo
 
-Không dùng PriceBook làm nơi sửa giá vốn kế toán. PriceBook MVP chỉ đọc `giá nhập cuối` (`products.latest_purchase_cost`) để tính giá bán theo công thức. Trước khi Purchase receipt hoàn chỉnh, trường này có thể đến từ import/KiotViet hoặc thao tác admin có kiểm soát; sau này phiếu nhập `posted` là nguồn chính cập nhật.
+Không dùng PriceBook làm nơi sửa giá vốn kế toán. PriceBook MVP chỉ đọc `giá nhập cuối` (`products.latest_purchase_cost`) để tính giá bán theo công thức. Phiếu nhập `posted` là nguồn chính cập nhật; dữ liệu import/KiotViet hoặc thao tác admin có kiểm soát chỉ là nguồn nền/đối soát.
 
 Khi post phiếu nhập:
 

@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(38);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -177,6 +177,7 @@ values (
     '00000000-0000-4000-8000-000000000001',
     jsonb_build_object(
       'customer_id', '00000000-0000-4000-8000-000000000501',
+      'retail_debt_note', 'partial paid retail debt fixture',
       'items', jsonb_build_array(
         jsonb_build_object(
           'product_id', '00000000-0000-4000-8000-000000000303',
@@ -479,6 +480,7 @@ values (
     '00000000-0000-4000-8000-000000000001',
     jsonb_build_object(
       'customer_id', '00000000-0000-4000-8000-000000000501',
+      'retail_debt_note', 'standalone retail debt fixture',
       'items', jsonb_build_array(
         jsonb_build_object(
           'product_id', '00000000-0000-4000-8000-000000000303',
@@ -549,6 +551,78 @@ select throws_ok(
 
 select throws_ok(
   $$
+    select public.checkout_order_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      jsonb_build_object(
+        'customer_id', null,
+        'items', jsonb_build_array(
+          jsonb_build_object(
+            'product_id', '00000000-0000-4000-8000-000000000303',
+            'quantity', 1,
+            'unit_price', 50000,
+            'price_source', 'default_price_list'
+          )
+        ),
+        'payment', jsonb_build_object(
+          'cash_amount', 0,
+          'bank_amount', 0,
+          'old_debt_payment_amount', 0
+        )
+      )
+    )
+  $$,
+  '22023',
+  'retail_debt_note is required for KH000001 debt',
+  'retail customer debt requires an identifying note'
+);
+
+insert into checkout_results (name, result)
+values (
+  'no_selected_customer_debt',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', null,
+      'retail_debt_note', 'khach le no tai quay',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '00000000-0000-4000-8000-000000000303',
+          'quantity', 1,
+          'unit_price', 50000,
+          'price_source', 'default_price_list'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 0,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (select customer_id from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'no_selected_customer_debt')::uuid)),
+  '00000000-0000-4000-8000-000000000501'::uuid,
+  'checkout debt without selected customer is assigned to KH000001'
+);
+
+select is(
+  (select customer_snapshot->>'code' from public.orders where id = ((select result->>'order_id' from checkout_results where name = 'no_selected_customer_debt')::uuid)),
+  'KH000001',
+  'checkout debt without selected customer stores KH000001 snapshot'
+);
+
+select is(
+  (select customer_id from public.customer_debt_entries where order_id = ((select result->>'order_id' from checkout_results where name = 'no_selected_customer_debt')::uuid)),
+  '00000000-0000-4000-8000-000000000501'::uuid,
+  'retail debt without selected customer is tracked under KH000001'
+);
+
+select throws_ok(
+  $$
     select public.revise_invoice_tx(
       '20000000-0000-4000-8000-000000000701',
       '00000000-0000-4000-8000-000000000001',
@@ -561,10 +635,24 @@ select throws_ok(
   'invoice revision requires a reason'
 );
 
+select throws_ok(
+  $$
+    select public.revise_invoice_tx(
+      '20000000-0000-4000-8000-000000000701',
+      '00000000-0000-4000-8000-000000000001',
+      (select (result->>'order_id')::uuid from checkout_results where name = 'cash_full_paid'),
+      jsonb_build_object('revision_reason', 'Sai giá')
+    )
+  $$,
+  '0A000',
+  'invoice revision is not implemented yet',
+  'invoice revision returns explicit disabled error instead of fake success'
+);
+
 select is(
   (select count(*)::integer from public.orders where order_type = 'invoice' and status = 'completed'),
-  9,
-  'successful checkout attempts leave nine completed invoices'
+  10,
+  'successful checkout attempts leave ten completed invoices'
 );
 
 select * from finish();

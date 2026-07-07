@@ -86,12 +86,16 @@ export async function reviseInvoice(
   const payload = parseRevisionPayload(body);
 
   try {
-    return await repository.reviseInvoice({
+    const result = await repository.reviseInvoice({
       organizationId: context.organizationId,
       actorUserId: context.actorUserId,
       orderId,
       payload,
     });
+    if (result.status === "not_implemented") {
+      throw invoiceRevisionDisabled();
+    }
+    return result;
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -195,6 +199,9 @@ function validationError(): ApiError {
 
 function mapRepositoryError(cause: unknown): ApiError {
   if (cause instanceof ApiError) return cause;
+  if (isRecord(cause) && cause.code === "0A000") {
+    return invoiceRevisionDisabled();
+  }
   if (isRecord(cause) && cause.code === "22023") {
     return validationError();
   }
@@ -206,4 +213,12 @@ function mapRepositoryError(cause: unknown): ApiError {
     });
   }
   return new ApiError({ status: 500, code: "INTERNAL_ERROR", message: "An internal error occurred." });
+}
+
+function invoiceRevisionDisabled(): ApiError {
+  return new ApiError({
+    status: 409,
+    code: "RESOURCE_CONFLICT",
+    message: "Invoice revision is not implemented yet.",
+  });
 }

@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
+import { Image, Printer, Scissors } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import type { ProductionQueueService } from '../production-queue/production-queue-service'
 import type { ProductionQueueDraftPayload, ProductionQueueItem } from '../production-queue/types'
+
+const machineTabs = [
+  { key: 'banner', label: 'In bạt', icon: Image },
+  { key: 'decal', label: 'In decal', icon: Printer },
+  { key: 'cnc', label: 'Cắt CNC', icon: Scissors },
+] as const
 
 export function ProductionQueuePanel({
   service,
@@ -11,7 +18,6 @@ export function ProductionQueuePanel({
   onAddToDraft: (payload: ProductionQueueDraftPayload) => Promise<void> | void
 }) {
   const [items, setItems] = useState<ProductionQueueItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,15 +25,12 @@ export function ProductionQueuePanel({
     let active = true
 
     async function loadQueue() {
-      setLoading(true)
       setError(null)
       try {
         const response = await service.listQueue()
         if (active) setItems(response.items)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được hàng đợi máy sản xuất.'))
-      } finally {
-        if (active) setLoading(false)
       }
     }
 
@@ -52,16 +55,32 @@ export function ProductionQueuePanel({
     }
   }
 
+  const counts = Object.fromEntries(
+    machineTabs.map((machine) => [
+      machine.key,
+      items.filter((item) => machineKey(item) === machine.key).length,
+    ]),
+  )
+
   return (
     <section aria-label="K02-D hàng đợi máy sản xuất" className="production-queue-panel">
-      <header>
-        <h2>Hàng đợi máy sản xuất</h2>
-        <span>{items.length}</span>
-      </header>
+      <div className="production-machine-tabs" aria-label="Máy sản xuất">
+        {machineTabs.map((machine) => {
+          const Icon = machine.icon
+          const count = counts[machine.key] ?? 0
+          return (
+            <div key={machine.key} className="production-machine-tab">
+              <span className="production-machine-icon">
+                <Icon aria-hidden="true" size={18} />
+              </span>
+              <span>{machine.label}</span>
+              {count > 0 ? <strong>{count}</strong> : null}
+            </div>
+          )
+        })}
+      </div>
 
-      {loading ? <p>Đang tải hàng đợi...</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
-      {!loading && items.length === 0 ? <p>Chưa có file mới từ máy sản xuất.</p> : null}
+      {error ? <p role="alert" className="production-queue-alert">{error}</p> : null}
 
       {items.length > 0 ? (
         <ul>
@@ -87,4 +106,20 @@ export function ProductionQueuePanel({
       ) : null}
     </section>
   )
+}
+
+function machineKey(item: ProductionQueueItem) {
+  const value = normalizeMachine(`${item.production_machine.code} ${item.production_machine.name}`)
+  if (value.includes('decal')) return 'decal'
+  if (value.includes('cnc') || value.includes('cat')) return 'cnc'
+  if (value.includes('bat') || value.includes('bạt')) return 'banner'
+  return null
+}
+
+function normalizeMachine(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }

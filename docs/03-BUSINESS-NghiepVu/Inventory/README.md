@@ -1,7 +1,7 @@
 # INVENTORY — Nghiệp vụ kho vật tư
 
-> **Trạng thái:** 🔨 Đang xây dựng
-> **Nguồn gốc:** Chốt từ phân tích KiotViet export và trao đổi Owner ngày 2026-06-30
+> Index nghiệp vụ kho vật tư. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
+> Nguồn: phân tích KiotViet export và trao đổi Owner ngày 2026-06-30.
 
 ---
 
@@ -29,12 +29,12 @@
 
 ## Tham chiếu
 
-- **Sales Pricing:** `../Sales/POS-PRICING.md`
-- **Sales Checkout:** `../Sales/POS-CHECKOUT.md`
-- **PRD-UX Khui vật tư:** `../../02-PRD-UX-PhongCanh/POS/K02/02c-K02A-M2-KHUI.md`
-- **Draft phân tích KV:** `../../superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md`
-- **Database:** `../../04-DATABASE/`
-- **Backend:** `../../05-BACKEND-MayChu/`
+- [Sales Pricing](../Sales/POS-PRICING.md)
+- [Sales Checkout](../Sales/POS-CHECKOUT.md)
+- [PRD-UX Khui vật tư](../../02-PRD-UX-PhongCanh/POS/K01/01d-K01-KHUI.md)
+- [Draft phân tích KV](../../superpowers/specs/2026-06-30-kv-product-export-inventory-draft.md)
+- [Database](../../04-DATABASE/)
+- [Backend](../../05-BACKEND-MayChu/)
 
 ---
 

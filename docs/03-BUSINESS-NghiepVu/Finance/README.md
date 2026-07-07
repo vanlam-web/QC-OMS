@@ -1,6 +1,6 @@
 # FINANCE — Nghiệp vụ tài chính
 
-> **Trạng thái:** 🔨 Đang xây dựng
+> Index nghiệp vụ tài chính. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ---
 
@@ -14,10 +14,10 @@
 
 ## Tham chiếu
 
-- **Sales Checkout:** `../Sales/POS-CHECKOUT.md`
-- **Customer Debt:** `../Sales/POS-CUSTOMER-DEBT.md`
-- **Database:** `../../04-DATABASE/`
-- **Backend:** `../../05-BACKEND-MayChu/`
+- [Sales Checkout](../Sales/POS-CHECKOUT.md)
+- [Customer Debt](../Sales/POS-CUSTOMER-DEBT.md)
+- [Database](../../04-DATABASE/)
+- [Backend](../../05-BACKEND-MayChu/)
 
 ---
 

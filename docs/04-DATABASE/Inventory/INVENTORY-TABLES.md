@@ -1,6 +1,5 @@
 # INVENTORY-TABLES — Bảng kho vật tư
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Business Inventory `STOCK-RULES.md`, `UNIT-CONVERSION.md`, `STOCKTAKE.md`, `PRODUCTION-RECONCILIATION.md`
 
 ---
@@ -12,6 +11,8 @@ Tài liệu này là Source of Truth dữ liệu cho Inventory MVP:
 - đơn vị tồn và quy đổi
 - cấu hình tồn kho theo sản phẩm
 - stock movement chính thức
+- log thao tác khui vật tư
+- tồn tạm KiotViet để chuẩn hóa dần
 - cuộn vật lý
 - tấm nguyên/tấm dở/tấm lỡ
 - phiếu kiểm kho và cân bằng kho
@@ -45,6 +46,8 @@ Các bảng chỉnh tồn phải có cột truy vết:
 `stock_movements` là sổ kho chính thức trong MVP.
 
 Dữ liệu máy sản xuất không tự sinh `stock_movements` trong MVP.
+
+Khui vật tư là thao tác vận hành riêng. Bảng log khui lưu input/old-new snapshot; `stock_movements` chỉ ghi phần làm thay đổi tồn chính thức.
 
 ---
 
@@ -137,11 +140,11 @@ public.product_inventory_settings.stock_unit_id
 
 ---
 
-## 5. Bảng `public.product_unit_conversions` — Quy đổi đơn vị bán phụ
+## 5. Bảng `public.product_unit_conversions` — Quy đổi đơn vị bán/khui
 
 ### Mục đích
 
-Lưu hệ số quy đổi từ đơn vị bán phụ về đơn vị tồn chính theo từng sản phẩm.
+Lưu hệ số quy đổi từ đơn vị bán hoặc đơn vị khui về đơn vị tồn chính theo từng sản phẩm.
 
 ### Các cột
 
@@ -150,9 +153,9 @@ Lưu hệ số quy đổi từ đơn vị bán phụ về đơn vị tồn chín
 | `id` | `uuid` | ❌ | Khóa chính |
 | `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
 | `product_id` | `uuid` | ❌ | FK → `public.products.id` |
-| `sale_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị bán phụ |
+| `sale_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị bán/khui |
 | `stock_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị tồn chính |
-| `stock_qty_per_sale_unit` | `numeric(18,6)` | ❌ | 1 đơn vị bán phụ bằng bao nhiêu đơn vị tồn |
+| `stock_qty_per_sale_unit` | `numeric(18,6)` | ❌ | 1 đơn vị bán/khui bằng bao nhiêu đơn vị tồn |
 | `is_active` | `boolean` | ❌ | Quy đổi còn dùng |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
@@ -210,6 +213,7 @@ Lưu từng cuộn vật tư vật lý để quản lý tồn theo khổ rộng 
 
 - Thông thường `remaining_length_m <= initial_length_m`.
 - Nếu kiểm kho/điều chỉnh hợp lệ làm số còn lại lớn hơn số ban đầu, không sửa âm thầm; phải có `stock_movements` loại `stocktake_adjustment` hoặc `manual_adjustment` để truy vết lý do.
+- Nếu cuộn được tạo từ khui vật tư hoặc chuẩn hóa tồn tạm KiotViet, nguồn thay đổi phải truy được qua `inventory_material_openings` và `stock_movements.material_opening_id`.
 
 ### Index
 
@@ -261,7 +265,125 @@ Lưu từng đối tượng vật lý của hàng dạng tấm.
 
 ---
 
-## 8. Bảng `public.stock_movements` — Sổ kho chính thức
+## 8. Bảng `public.inventory_provisional_balances` — Tồn tạm KiotViet
+
+### Mục đích
+
+Lưu phần tồn import ban đầu từ KiotViet chưa chuẩn hóa thành cuộn/tấm vật lý.
+
+Bảng này dùng để:
+
+- hiển thị rõ `tồn tạm KiotViet`
+- cho phép khui cuộn/tấm từ tồn tạm nếu chưa có object chuẩn hóa
+- giảm dần tồn tạm khi đã chuẩn hóa được một phần
+- tránh bịa danh sách cuộn/tấm từ tổng m2
+
+### Các cột
+
+| Tên cột | Kiểu dữ liệu | Nullable | Mô tả |
+|---|---|---|---|
+| `id` | `uuid` | ❌ | Khóa chính |
+| `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
+| `product_id` | `uuid` | ❌ | FK → `public.products.id` |
+| `source_type` | `text` | ❌ | `kiotviet_import` |
+| `source_label` | `text` | ✅ | Ghi chú đợt import/file import nếu có |
+| `initial_qty` | `numeric(18,6)` | ❌ | Số tồn tạm ban đầu theo đơn vị tồn chính |
+| `remaining_qty` | `numeric(18,6)` | ❌ | Số tồn tạm còn chưa chuẩn hóa |
+| `stock_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id` |
+| `status` | `text` | ❌ | `open`, `fully_normalized`, `closed` |
+| `note` | `text` | ✅ | Ghi chú đối soát |
+| `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
+| `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
+| `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật |
+
+### Ràng buộc
+
+- `UNIQUE (organization_id, product_id, source_type)` cho `source_type = 'kiotviet_import'` trong MVP.
+- `product_id` và `stock_unit_id` phải cùng `organization_id`.
+- `source_type IN ('kiotviet_import')`.
+- `initial_qty >= 0`.
+- `remaining_qty >= 0`.
+- `remaining_qty <= initial_qty`.
+- `status IN ('open', 'fully_normalized', 'closed')`.
+
+### Quy tắc dữ liệu
+
+- Hàng `normal` có thể dùng tồn import như tồn chính sau khi kiểm tra; bảng này chủ yếu phục vụ `roll` và `sheet`.
+- Khi khui từ tồn tạm và biết được lượng chuẩn hóa, backend giảm `remaining_qty`.
+- Nếu chưa đủ cơ chế giảm tồn tạm chính xác, backend không được tự giảm ước đoán; chỉ ghi log khui để đối soát.
+
+### Index
+
+- `idx_inventory_provisional_balances_product` trên `(organization_id, product_id, status)`.
+
+---
+
+## 9. Bảng `public.inventory_material_openings` — Log khui vật tư
+
+### Mục đích
+
+Lưu một lần khui vật tư từ POS/topbar hoặc màn kho.
+
+Bảng này ghi log nghiệp vụ tối thiểu:
+
+- ai khui
+- vật tư nào
+- normal/roll/sheet
+- khổ/kích thước
+- giá trị cũ/mới nếu có
+- nguồn khui: object chuẩn hóa hay tồn tạm KiotViet
+- cảnh báo thiếu tồn/âm kho nếu có
+
+Không dùng bảng này để tính giá vốn, lô/ngày mua hoặc báo cáo hao hụt nâng cao.
+
+### Các cột
+
+| Tên cột | Kiểu dữ liệu | Nullable | Mô tả |
+|---|---|---|---|
+| `id` | `uuid` | ❌ | Khóa chính |
+| `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
+| `product_id` | `uuid` | ❌ | FK → `public.products.id` |
+| `inventory_shape` | `text` | ❌ | `normal`, `roll`, `sheet` |
+| `source_type` | `text` | ❌ | `manual_normal`, `standard_object`, `kiotviet_provisional` |
+| `provisional_balance_id` | `uuid` | ✅ | FK → `public.inventory_provisional_balances.id` nếu khui từ tồn tạm |
+| `old_inventory_roll_id` | `uuid` | ✅ | FK → `public.inventory_rolls.id` nếu có cuộn cũ |
+| `new_inventory_roll_id` | `uuid` | ✅ | FK → `public.inventory_rolls.id` nếu tạo/chọn cuộn mới |
+| `old_inventory_sheet_id` | `uuid` | ✅ | FK → `public.inventory_sheets.id` nếu có tấm cũ |
+| `new_inventory_sheet_id` | `uuid` | ✅ | FK → `public.inventory_sheets.id` nếu tạo/chọn tấm mới |
+| `old_snapshot` | `jsonb` | ❌ | Giá trị hệ thống trước khui; `{}` nếu không có |
+| `input_payload` | `jsonb` | ❌ | Input đã validate: `opened_unit_id`/`opened_qty` cho `normal`; khổ, dài, số lượng, phần cũ còn lại, giữ/bỏ rẻo cho roll/sheet |
+| `result_payload` | `jsonb` | ❌ | Kết quả: object tạo/cập nhật, phần bỏ, cảnh báo |
+| `warning_codes` | `text[]` | ❌ | Ví dụ `LOW_STOCK`, `NEGATIVE_STOCK`, `PROVISIONAL_SOURCE` |
+| `note` | `text` | ✅ | Ghi chú của người thao tác |
+| `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
+| `created_at` | `timestamptz` | ❌ | Thời điểm khui |
+
+### Ràng buộc
+
+- `inventory_shape IN ('normal', 'roll', 'sheet')`.
+- `source_type IN ('manual_normal', 'standard_object', 'kiotviet_provisional')`.
+- Nếu `source_type = 'kiotviet_provisional'`, `provisional_balance_id` bắt buộc.
+- Nếu `inventory_shape = 'normal'`, không được có `old_inventory_roll_id`, `new_inventory_roll_id`, `old_inventory_sheet_id`, `new_inventory_sheet_id`.
+- Nếu `inventory_shape = 'roll'`, chỉ được dùng cột roll.
+- Nếu `inventory_shape = 'sheet'`, chỉ được dùng cột sheet.
+- `old_snapshot`, `input_payload`, `result_payload` phải là JSON object.
+
+### Quy tắc dữ liệu
+
+- Khui hàng `normal` có quy đổi đơn vị không tạo cuộn/tấm; log nằm ở bảng này, stock movement chỉ tạo nếu có thay đổi tồn thực tế.
+- Khui roll/sheet từ tồn tạm phải ghi `source_type = 'kiotviet_provisional'`.
+- Tồn thiếu/âm chỉ là warning, không làm operation thất bại nếu actor có quyền.
+- Rẻo nhỏ hoặc phần m tới dưới `0.2m` chỉ được ghi là đề xuất bỏ trong `result_payload`; nếu người dùng giữ lại, phải tạo/cập nhật object tương ứng.
+
+### Index
+
+- `idx_inventory_material_openings_product_time` trên `(organization_id, product_id, created_at DESC)`.
+- `idx_inventory_material_openings_created_by` trên `(organization_id, created_by, created_at DESC)`.
+- `idx_inventory_material_openings_provisional` trên `(organization_id, provisional_balance_id)` với điều kiện `provisional_balance_id IS NOT NULL`.
+
+---
+
+## 10. Bảng `public.stock_movements` — Sổ kho chính thức
 
 ### Mục đích
 
@@ -286,6 +408,7 @@ Ghi mọi biến động tồn kho chính thức trong MVP.
 | `order_item_id` | `uuid` | ✅ | FK → `public.order_items.id` nếu phát sinh từ dòng đơn |
 | `stocktake_id` | `uuid` | ✅ | FK → `public.stocktakes.id` nếu phát sinh từ kiểm kho |
 | `stocktake_item_id` | `uuid` | ✅ | FK → `public.stocktake_items.id` |
+| `material_opening_id` | `uuid` | ✅ | FK → `public.inventory_material_openings.id` nếu phát sinh từ khui vật tư |
 | `reason` | `text` | ✅ | Lý do/ghi chú |
 | `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm phát sinh |
@@ -295,15 +418,19 @@ Ghi mọi biến động tồn kho chính thức trong MVP.
 | Giá trị | Ý nghĩa |
 |---|---|
 | `sale_deduction` | Trừ kho khi tạo/lưu đơn bán chính thức |
+| `invoice_reversal` | Đảo tồn kho phát sinh từ hóa đơn bị hủy hoặc bị thay thế bởi bản sửa |
+| `invoice_revision` | Ghi tồn kho theo hóa đơn bản sửa nếu cần phân biệt với checkout thường |
 | `stocktake_adjustment` | Điều chỉnh từ kiểm kho/cân bằng kho |
 | `manual_adjustment` | Điều chỉnh thủ công có lý do |
 | `remnant_created` | Tạo tấm lỡ từ phần thừa |
 | `remnant_discarded` | Bỏ/hủy tấm lỡ |
+| `purchase_receipt` | Tăng tồn từ phiếu nhập đã hoàn thành |
+| `material_opening` | Thay đổi tồn chính thức do thao tác khui vật tư |
 
 ### Ràng buộc
 
 - `quantity_delta <> 0`
-- `movement_type IN ('sale_deduction', 'stocktake_adjustment', 'manual_adjustment', 'remnant_created', 'remnant_discarded')`
+- `movement_type IN ('sale_deduction', 'invoice_reversal', 'invoice_revision', 'stocktake_adjustment', 'manual_adjustment', 'remnant_created', 'remnant_discarded', 'purchase_receipt', 'material_opening')`
 - `stock_unit_id` phải thuộc cùng `organization_id`.
 - `product_id` phải cùng `organization_id`.
 - Nếu `inventory_object_type = 'roll'`, `inventory_roll_id` bắt buộc và `inventory_sheet_id` null.
@@ -316,12 +443,13 @@ Ghi mọi biến động tồn kho chính thức trong MVP.
 - `idx_stock_movements_product_time` trên `(organization_id, product_id, created_at DESC)`
 - `idx_stock_movements_order_item` trên `(organization_id, order_item_id)` với điều kiện `order_item_id IS NOT NULL`
 - `idx_stock_movements_stocktake` trên `(organization_id, stocktake_id)` với điều kiện `stocktake_id IS NOT NULL`
+- `idx_stock_movements_material_opening` trên `(organization_id, material_opening_id)` với điều kiện `material_opening_id IS NOT NULL`
 - `idx_stock_movements_roll` trên `(organization_id, inventory_roll_id)` với điều kiện `inventory_roll_id IS NOT NULL`
 - `idx_stock_movements_sheet` trên `(organization_id, inventory_sheet_id)` với điều kiện `inventory_sheet_id IS NOT NULL`
 
 ---
 
-## 9. Bảng `public.stocktakes` — Phiếu kiểm kho
+## 11. Bảng `public.stocktakes` — Phiếu kiểm kho
 
 ### Mục đích
 
@@ -358,7 +486,7 @@ Lưu đầu phiếu kiểm kho thủ công hoặc phiếu tự động khi sửa
 
 ---
 
-## 10. Bảng `public.stocktake_items` — Dòng kiểm kho
+## 12. Bảng `public.stocktake_items` — Dòng kiểm kho
 
 ### Mục đích
 
@@ -400,7 +528,7 @@ Lưu từng dòng sản phẩm/vật tư được kiểm và số chênh lệch.
 
 ---
 
-## 11. Production reconciliation
+## 13. Production reconciliation
 
 Inventory MVP không định nghĩa bảng production events.
 
@@ -414,7 +542,7 @@ Các bảng production/workstation sẽ được thiết kế trong domain Integ
 
 ---
 
-## 12. ERD tóm tắt
+## 14. ERD tóm tắt
 
 ```mermaid
 erDiagram
@@ -426,7 +554,11 @@ erDiagram
     INVENTORY_UNITS ||--o{ PRODUCT_UNIT_CONVERSIONS : sale_or_stock_unit
     PRODUCTS ||--o{ INVENTORY_ROLLS : has
     PRODUCTS ||--o{ INVENTORY_SHEETS : has
+    PRODUCTS ||--o{ INVENTORY_PROVISIONAL_BALANCES : has_provisional
+    PRODUCTS ||--o{ INVENTORY_MATERIAL_OPENINGS : opens
     PRODUCTS ||--o{ STOCK_MOVEMENTS : moves
+    INVENTORY_PROVISIONAL_BALANCES ||--o{ INVENTORY_MATERIAL_OPENINGS : source
+    INVENTORY_MATERIAL_OPENINGS ||--o{ STOCK_MOVEMENTS : opening_movement
     INVENTORY_ROLLS ||--o{ STOCK_MOVEMENTS : roll_movement
     INVENTORY_SHEETS ||--o{ STOCK_MOVEMENTS : sheet_movement
     STOCKTAKES ||--o{ STOCKTAKE_ITEMS : contains

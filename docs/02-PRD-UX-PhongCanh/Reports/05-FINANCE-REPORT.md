@@ -1,6 +1,5 @@
 # 05-FINANCE-REPORT — Báo cáo tài chính quản trị
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Sổ quỹ, công nợ khách hàng, đối soát cuối ngày
 
 ---
@@ -92,7 +91,7 @@ Nếu lệch, nhân viên tạo phiếu thu/chi thủ công có lý do; báo cá
 
 - Báo cáo thuế/VAT/HĐĐT.
 - Báo cáo lợi nhuận kế toán đầy đủ.
-- Công nợ nhà cung cấp nếu Purchase chưa làm.
+- Báo cáo công nợ nhà cung cấp nâng cao.
 - Khách trả trước/số dư âm.
 - Tự động phân loại chi phí kế toán phức tạp.
 

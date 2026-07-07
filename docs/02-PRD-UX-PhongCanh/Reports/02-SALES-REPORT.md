@@ -1,6 +1,5 @@
 # 02-SALES-REPORT — Báo cáo bán hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Tham khảo:** KiotViet `Báo cáo > Bán hàng`, `Báo cáo > Nhân viên`, đã lược bỏ kênh bán/VAT/trả hàng/HR
 
 ---

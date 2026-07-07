@@ -1,6 +1,6 @@
 # AUTH — Phân quyền Permission-based Access Control
 
-> **Trạng thái:** ✅ Chốt mô hình nền tảng Giai đoạn 0; bổ sung permission theo từng module
+> **Mốc chốt:** mô hình nền tảng Giai đoạn 0; bổ sung permission theo từng module.
 > **Nguồn:** Di chuyển từ `02-PRD-UX-PhongCanh/POS/01-POS-LAYOUT.md` (Section VI)
 
 ---
@@ -27,7 +27,7 @@ Quy tắc:
   - quản lý user/quyền;
   - cấu hình hệ thống;
   - hủy/sửa chứng từ đã chốt hoặc thao tác phá hủy nếu cần kiểm soát riêng;
-  - tài chính nhạy cảm nếu Owner chốt sau.
+  - tài chính nhạy cảm nếu Owner chốt riêng.
 
 Nói cách khác: hệ thống vẫn kiểm tra permission, nhưng seed/preset tài khoản nội bộ phải cấp đủ quyền vận hành để người dùng không bị kẹt trong luồng POS/kho/tài chính thường ngày.
 

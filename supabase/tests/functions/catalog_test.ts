@@ -91,6 +91,26 @@ function repo(
         unit_name: "m",
         sell_method: "linear_m",
       }),
+    getProductBom: () => Promise.resolve(null),
+    saveProductBom: () =>
+      Promise.resolve({
+        id: "bom-1",
+        product_id: "p-1",
+        version: 1,
+        status: "active",
+        notes: null,
+        created_at: "2026-07-05T00:00:00Z",
+        items: [
+          {
+            id: "item-1",
+            component_product_id: "component-1",
+            component_product: { id: "component-1", code: "KEO", name: "Keo dán", unit_name: "chai" },
+            quantity: 2,
+            sort_order: 1,
+            notes: "Dán mica",
+          },
+        ],
+      }),
     listPriceLists: () =>
       Promise.resolve([
         {
@@ -218,19 +238,67 @@ Deno.test("price resolution uses default price list without discount model", asy
   assert(!("discount_items" in body.items[0]), "price response must not include discount_items");
 });
 
+Deno.test("product BOM routes require inventory permission and normalize items", async () => {
+  const forbidden = await call("/api/v1/products/p-1/bom", { method: "GET" }, repo(["perm.create_order"]));
+  assertEquals(forbidden.status, 403);
+
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.manage_inventory"], {
+    getProductBom: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve(null);
+    },
+    saveProductBom: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: "bom-1",
+        product_id: input.productId as string,
+        version: 1,
+        status: "active",
+        notes: null,
+        created_at: "2026-07-05T00:00:00Z",
+        items: [],
+      });
+    },
+  });
+
+  const getResponse = await call("/api/v1/products/p-1/bom", { method: "GET" }, repository);
+  const postResponse = await call(
+    "/api/v1/products/p-1/bom",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        items: [{ component_product_id: "component-1", quantity: "2", notes: " Dán mica " }],
+      }),
+    },
+    repository,
+  );
+
+  assertEquals(getResponse.status, 200);
+  assertEquals(postResponse.status, 201);
+  assertEquals(receivedInputs[0].productId, "p-1");
+  assertEquals(receivedInputs[1].items, [{ componentProductId: "component-1", quantity: 2, notes: "Dán mica" }]);
+});
+
 Deno.test("customer routes normalize optional phone and auto code", async () => {
   const receivedInputs: Array<{
     code?: string;
     name: string;
     phone?: string;
+    taxCode?: string;
+    address?: string;
     customerGroupId?: string | null;
+    actorUserId?: string;
   }> = [];
   const repository = repo(["perm.create_order"], {
     createCustomer: (input: {
       code?: string;
       name: string;
       phone?: string;
+      taxCode?: string;
+      address?: string;
       customerGroupId?: string | null;
+      actorUserId?: string;
     }) => {
       receivedInputs.push(input);
       return Promise.resolve({
@@ -238,8 +306,13 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
         code: input.code ?? "KH000002",
         name: input.name,
         phone: input.phone ?? null,
+        tax_code: input.taxCode ?? null,
+        address: input.address ?? null,
         customer_group_id: input.customerGroupId ?? null,
         customer_group: null,
+        created_at: "2026-07-03T03:00:00Z",
+        created_by: { id: input.actorUserId ?? "", name: "Admin" },
+        total_sales_amount: 0,
       });
     },
   });
@@ -248,7 +321,12 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
     "/api/v1/customers",
     {
       method: "POST",
-      body: JSON.stringify({ name: " Cong ty ABC ", phone: " 090 123 4567 " }),
+      body: JSON.stringify({
+        name: " Cong ty ABC ",
+        phone: " 090 123 4567 ",
+        tax_code: " 0312345678 ",
+        address: " 12 Nguyen Trai, Quan 1 ",
+      }),
     },
     repository,
   );
@@ -258,8 +336,81 @@ Deno.test("customer routes normalize optional phone and auto code", async () => 
   assertEquals(receivedInputs[0].code, undefined);
   assertEquals(receivedInputs[0].name, "Cong ty ABC");
   assertEquals(receivedInputs[0].phone, "090 123 4567");
+  assertEquals(receivedInputs[0].taxCode, "0312345678");
+  assertEquals(receivedInputs[0].address, "12 Nguyen Trai, Quan 1");
+  assertEquals(receivedInputs[0].actorUserId, actorId);
   assertEquals(body.code, "KH000002");
   assertEquals(body.name, "Cong ty ABC");
+  assertEquals(body.tax_code, "0312345678");
+  assertEquals(body.address, "12 Nguyen Trai, Quan 1");
+  assertEquals((body.created_by as Record<string, unknown>).name, "Admin");
+});
+
+Deno.test("customer list maps existing filter fields", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.create_order"], {
+    listCustomers: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/customers?search=phong&customer_group_id=cg-1&created_from=2026-07-01&created_to=2026-07-06&created_by=user-admin&total_sales_min=500000&total_sales_max=900000&total_debt_min=100000&total_debt_max=300000&page=2&page_size=15",
+    { method: "GET" },
+    repository,
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(captured, {
+    organizationId,
+    search: "phong",
+    customerGroupId: "cg-1",
+    createdFrom: "2026-07-01",
+    createdTo: "2026-07-06",
+    createdBy: "user-admin",
+    totalSalesMin: 500000,
+    totalSalesMax: 900000,
+    totalDebtMin: 100000,
+    totalDebtMax: 300000,
+    page: 2,
+    pageSize: 15,
+  });
+});
+
+Deno.test("customer routes map duplicate name or phone to resource conflict", async () => {
+  const duplicateError = { code: "23505", message: "duplicate key value violates unique constraint" };
+  const createResponse = await call(
+    "/api/v1/customers",
+    {
+      method: "POST",
+      body: JSON.stringify({ name: "Khach le" }),
+    },
+    repo(["perm.create_order"], {
+      createCustomer: () => {
+        throw duplicateError;
+      },
+    }),
+  );
+
+  assertEquals(createResponse.status, 409);
+  assertEquals(((await createResponse.json()).error as Record<string, unknown>).code, "RESOURCE_CONFLICT");
+
+  const updateResponse = await call(
+    "/api/v1/customers/customer-1",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ phone: "0901234567" }),
+    },
+    repo(["perm.create_order"], {
+      updateCustomer: () => {
+        throw duplicateError;
+      },
+    }),
+  );
+
+  assertEquals(updateResponse.status, 409);
+  assertEquals(((await updateResponse.json()).error as Record<string, unknown>).code, "RESOURCE_CONFLICT");
 });
 
 Deno.test("price resolution accepts a customer id", async () => {

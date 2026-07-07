@@ -1,11 +1,20 @@
 # CASHBOOK — Nghiệp vụ sổ quỹ, phiếu thu và phiếu chi
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Chốt từ trao đổi Owner 2026-06-30
 
 ---
 
 ## 0. Căn cứ KiotViet
+
+Quan sát bổ sung ngày `05/07/2026`:
+
+- KiotViet có 4 nhóm quỹ hiển thị: `Tiền mặt`, `Ngân hàng`, `Ví điện tử`, `Tổng quỹ`.
+- QC-OMS MVP vẫn chốt `cash` và `bank`; `Ví điện tử` là khả năng mở rộng, chưa làm nếu chưa có nghiệp vụ riêng.
+- Sổ quỹ cần lọc được theo `Công nợ đối tác`: tính vào công nợ, không tính vào công nợ, không có công nợ.
+- Phiếu thu/chi có cờ `Hạch toán kết quả kinh doanh`; dòng không hạch toán vẫn vào sổ quỹ nhưng không tính vào báo cáo kinh doanh.
+- Phiếu thu tự động từ hóa đơn có bảng gắn hóa đơn/phân bổ.
+- Phiếu chi thủ công có đối tượng nhận là khách hàng, nhà cung cấp, nhân viên hoặc khác.
+- File xuất tháng 06/2026 có các loại thực tế: tiền khách trả, lương nhân viên, vận chuyển, vật tư, tiền trả nhà cung cấp, chuyển/rút, chi phí khác, điện/nước/nhà/rác/thuế/hoa hồng/VAT cho khách.
 
 Quan sát ngày `01/07/2026`:
 
@@ -31,6 +40,14 @@ Tài liệu này là Source of Truth cho nghiệp vụ sổ quỹ của QC-OMS:
 - phiếu thu và phiếu chi
 - đối soát cuối ngày
 - quy tắc sửa phiếu bằng phiên bản mới
+
+Hiện trạng triển khai sau PR #83:
+
+- Màn `/finance` đã ưu tiên bảng sổ quỹ làm bề mặt chính.
+- Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` được lấy theo filter sổ quỹ; `Tồn quỹ` dùng số `ending_balance` của summary, không dùng tổng số dư tài khoản tĩnh.
+- Bộ lọc hiện có gồm thời gian, quỹ tiền, loại chứng từ, trạng thái và hạch toán KQKD; đổi filter là tự áp dụng.
+- Form phiếu thu/chi thủ công đã có công nợ đối tác mode, đối tượng nộp/nhận, số điện thoại, ghi chú và hạch toán KQKD.
+- Filter theo loại thu chi, người tạo, nhân viên, người nộp/nhận, công nợ đối tác và search sổ quỹ nâng cao vẫn là slice sau.
 
 ---
 
@@ -69,6 +86,8 @@ Nhóm phiếu thu gồm:
 - thu bán hàng
 - thu nợ khách
 - thu khác
+- chuyển/rút tiền
+- góp vốn nếu Owner dùng cho tăng tiền không phải doanh thu
 
 Nhóm phiếu chi gồm:
 
@@ -76,6 +95,30 @@ Nhóm phiếu chi gồm:
 - chi hoàn tiền
 - chi phí vận hành
 - chi khác
+- chi lương nhân viên
+- chi vận chuyển
+- chi trả nhà cung cấp
+- chuyển/rút tiền
+
+Danh mục loại thu/chi phải cho phép cấu hình thêm tên hiển thị, nhưng hệ thống vẫn cần phân nhóm nội bộ để báo cáo:
+
+| Nhóm nội bộ | Hướng | Ví dụ tên hiển thị |
+|---|---|---|
+| `sale_payment` | Thu | Tiền khách trả |
+| `debt_collection` | Thu | Khách trả nợ |
+| `other_income` | Thu | Thu nhập khác |
+| `capital_contribution` | Thu | Góp vốn |
+| `transfer` | Thu/Chi | Chuyển/Rút |
+| `material_purchase` | Chi | Vật tư |
+| `supplier_payment` | Chi | Tiền trả NCC |
+| `staff_salary` | Chi | Lương NV |
+| `shipping_expense` | Chi | Vận chuyển |
+| `operating_expense` | Chi | Điện, nước, nhà, rác, phần mềm, quảng cáo |
+| `tax_or_vat` | Chi | Nộp thuế, chuyển VAT cho khách |
+| `commission` | Chi | Hoa hồng khách |
+| `other_expense` | Chi | Chi phí khác |
+
+Thu bán hàng/thu nợ sinh từ hóa đơn hoặc công nợ không nhập thủ công ở `cashbook_vouchers`.
 
 ### BR-FIN-04: Không duyệt nhiều bước trong MVP
 
@@ -96,6 +139,9 @@ Phiếu phải lưu tối thiểu:
 - đối tượng nộp/nhận nếu có
 - ghi chú/lý do nếu có
 - chứng từ liên quan nếu có
+- đối tượng nộp/nhận loại gì: khách hàng, nhà cung cấp, nhân viên, khác hoặc không có
+- mã/tên/số điện thoại người nộp/nhận nếu có
+- cờ có tính vào công nợ đối tác hay không nếu dòng liên quan đối tác
 
 ---
 
@@ -143,6 +189,46 @@ Nếu muốn đổi số tiền thanh toán của hóa đơn hoặc thu nợ, ph
 Khi người dùng tìm đúng mã phiếu thu/chi, hệ thống phải tìm trên toàn bộ lịch sử hoặc tự mở rộng/bỏ bộ lọc thời gian hiện tại.
 
 Không được trả empty state chỉ vì filter mặc định đang là tháng hiện tại.
+
+### BR-FIN-07A: Hạch toán KQKD độc lập với ghi sổ quỹ
+
+Một phiếu thu/chi có thể:
+
+- có hạch toán kết quả kinh doanh
+- không hạch toán kết quả kinh doanh
+
+Cả hai loại đều làm thay đổi tồn quỹ nếu phiếu đang hiệu lực.
+
+Báo cáo kinh doanh chỉ lấy các dòng có hạch toán theo rule báo cáo.
+
+Ví dụ:
+
+- tiền khách trả hóa đơn: thường không hạch toán lại trong sổ quỹ nếu doanh thu đã nằm ở hóa đơn
+- chi vận chuyển/vật tư/lương: thường có hạch toán
+- chuyển/rút giữa quỹ/tài khoản: không hạch toán kết quả kinh doanh
+
+### BR-FIN-07B: Công nợ đối tác là filter riêng
+
+Phiếu thu/chi có thể thuộc một trong ba nhóm công nợ:
+
+- `affects_partner_debt`: tính vào công nợ đối tác
+- `not_affect_partner_debt`: có đối tác nhưng không tính công nợ
+- `no_partner_debt`: không có công nợ đối tác
+
+MVP phải hiển thị/lọc được nhóm này trước khi làm báo cáo tài chính sâu.
+
+### BR-FIN-07C: Chuyển/Rút không được làm lệch tổng tiền
+
+`Chuyển/Rút` là nghiệp vụ điều chuyển giữa quỹ/tài khoản.
+
+Khi làm đủ:
+
+1. Dòng ra khỏi quỹ nguồn là phiếu chi.
+2. Dòng vào quỹ đích là phiếu thu.
+3. Hai dòng liên kết cùng một mã giao dịch điều chuyển.
+4. Tổng quỹ toàn hệ thống không đổi, chỉ đổi vị trí tiền.
+
+MVP có thể ghi thủ công hai phiếu nếu chưa có luồng điều chuyển riêng, nhưng plan hoàn chỉnh nên có transaction tạo cặp thu/chi để tránh lệch.
 
 ---
 
@@ -208,6 +294,10 @@ Phiếu thu sinh từ checkout hoặc thu nợ phải hiển thị được:
 8. Một lần thanh toán POS chỉ được chọn tối đa một tài khoản ngân hàng cho phần chuyển khoản.
 9. Tìm phiếu theo mã không bị filter thời gian mặc định che mất.
 10. Phiếu thu tự động hiển thị được hóa đơn và phân bổ công nợ liên quan.
+11. Có thể lọc theo có/không hạch toán KQKD.
+12. Có thể lọc theo công nợ đối tác.
+13. Phiếu thu/chi thủ công lưu được đối tượng nộp/nhận và số điện thoại nếu có.
+14. Chuyển/rút giữa quỹ không làm thay đổi tổng quỹ toàn hệ thống khi làm theo luồng điều chuyển.
 
 ---
 

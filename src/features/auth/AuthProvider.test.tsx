@@ -5,6 +5,7 @@ import { useAuth } from './auth-context'
 import type { AuthService } from './auth-service'
 import type { CurrentUserData } from '../../lib/api/types'
 import type { RealtimeChannel } from '../../lib/realtime/access-channel'
+import type { ApiRequester } from '../users/foundation-service'
 
 const currentUser: CurrentUserData = {
   user: { id: 'u-1', email: 'cashier@example.test', display_name: 'Cashier' },
@@ -12,6 +13,10 @@ const currentUser: CurrentUserData = {
   workstation: null,
   permissions: ['perm.create_order'],
 }
+
+beforeEach(() => {
+  window.sessionStorage.clear()
+})
 
 function makeAuthService(token: string | null): AuthService {
   return {
@@ -116,6 +121,35 @@ it('returns to ready state when sign in fails', async () => {
   expect(await screen.findByRole('button', { name: 'ready' })).toBeInTheDocument()
 })
 
+it('keeps auth initialized while sign in is pending', async () => {
+  function SignInProbe() {
+    const auth = useAuth()
+    return (
+      <button type="button" onClick={() => void auth.signIn('admin@qc.local', '123456').catch(() => undefined)}>
+        {auth.initialized ? 'ready' : 'booting'}
+      </button>
+    )
+  }
+
+  render(
+    <AuthProvider
+      service={{
+        signIn: vi.fn(() => new Promise<void>(() => undefined)),
+        signOut: vi.fn(),
+        getAccessToken: vi.fn().mockResolvedValue(null),
+      }}
+      api={{ request: vi.fn() }}
+      realtimeClient={{ channel: vi.fn(), removeChannel: vi.fn() }}
+    >
+      <SignInProbe />
+    </AuthProvider>,
+  )
+
+  await screen.findByRole('button', { name: 'ready' })
+  await userEvent.click(screen.getByRole('button'))
+  expect(screen.getByRole('button', { name: 'ready' })).toBeInTheDocument()
+})
+
 it('restores /me and refreshes when the access channel changes', async () => {
   let signal: () => void = () => undefined
   const channel: RealtimeChannel = {
@@ -146,4 +180,79 @@ it('restores /me and refreshes when the access channel changes', async () => {
 
   signal()
   await waitFor(() => expect(api.request).toHaveBeenCalledTimes(2))
+})
+
+it('uses cached /me data immediately while refreshing the session', async () => {
+  let resolveMe: (value: CurrentUserData) => void = () => undefined
+  const request = vi.fn(<T,>() => new Promise<T>((resolve) => {
+    resolveMe = (value) => resolve(value as T)
+  }) as Promise<T>) as ApiRequester['request']
+  const api: ApiRequester = {
+    request,
+  }
+  window.sessionStorage.setItem(
+    'qc-oms.auth.current-user.v1',
+    JSON.stringify({ cached_at: Date.now() - 301_000, data: currentUser }),
+  )
+
+  render(
+    <AuthProvider
+      service={makeAuthService('token')}
+      api={api}
+      realtimeClient={{
+        channel: vi.fn(() => ({
+          on: vi.fn().mockReturnThis(),
+          subscribe: vi.fn().mockReturnThis(),
+          unsubscribe: vi.fn(),
+        })),
+        removeChannel: vi.fn(),
+      }}
+    >
+      <StatusProbe />
+    </AuthProvider>,
+  )
+
+  expect(await screen.findByText('ready')).toBeInTheDocument()
+  expect(screen.getByText('u-1')).toBeInTheDocument()
+  expect(api.request).toHaveBeenCalledTimes(1)
+
+  resolveMe({
+    ...currentUser,
+    user: { ...currentUser.user, display_name: 'Cashier refreshed' },
+  })
+
+  await waitFor(() => {
+    expect(JSON.parse(window.sessionStorage.getItem('qc-oms.auth.current-user.v1') ?? '{}')).toMatchObject({
+      data: { user: { display_name: 'Cashier refreshed' } },
+    })
+  })
+})
+
+it('uses fresh cached /me data without a network refresh during bootstrap', async () => {
+  const api = { request: vi.fn().mockResolvedValue(currentUser) }
+  window.sessionStorage.setItem(
+    'qc-oms.auth.current-user.v1',
+    JSON.stringify({ cached_at: Date.now(), data: currentUser }),
+  )
+
+  render(
+    <AuthProvider
+      service={makeAuthService('token')}
+      api={api}
+      realtimeClient={{
+        channel: vi.fn(() => ({
+          on: vi.fn().mockReturnThis(),
+          subscribe: vi.fn().mockReturnThis(),
+          unsubscribe: vi.fn(),
+        })),
+        removeChannel: vi.fn(),
+      }}
+    >
+      <StatusProbe />
+    </AuthProvider>,
+  )
+
+  expect(await screen.findByText('ready')).toBeInTheDocument()
+  expect(screen.getByText('u-1')).toBeInTheDocument()
+  expect(api.request).not.toHaveBeenCalled()
 })

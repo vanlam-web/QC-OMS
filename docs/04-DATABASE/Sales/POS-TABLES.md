@@ -1,6 +1,5 @@
 # POS-TABLES — Bảng phục vụ màn hình POS
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Cập nhật theo Business Sales `POS-CUSTOMER.md`, `POS-PRICING.md`, `POS-ORDER-LIFECYCLE.md`, `POS-ORDER-CALC.md`, `POS-CHECKOUT.md`
 
 ---
@@ -290,8 +289,8 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `revision_no` | `integer` | ❌ | Số lần sửa; bản gốc là `0`, bản sửa đầu là `1` |
 | `revised_from_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ cũ gần nhất nếu đây là bản sửa |
 | `replaced_by_order_id` | `uuid` | ✅ | FK → `public.orders.id`; chứng từ mới thay thế nếu bản này bị hủy do sửa |
-| `customer_id` | `uuid` | ✅ | FK → `public.customers.id`; null nếu khách lẻ |
-| `customer_snapshot` | `jsonb` | ❌ | Snapshot khách hàng hoặc khách lẻ tại thời điểm lưu |
+| `customer_id` | `uuid` | ✅ | FK → `public.customers.id`; POS/báo giá/hóa đơn không chọn khách phải resolve về `KH000001 - Khách lẻ` trước khi lưu |
+| `customer_snapshot` | `jsonb` | ❌ | Snapshot khách hàng tại thời điểm lưu; với khách lẻ dùng snapshot của `KH000001` |
 | `price_list_id` | `uuid` | ✅ | FK → `public.price_lists.id`; bảng giá áp dụng nếu có |
 | `subtotal_amount` | `numeric(12,0)` | ❌ | Tổng tiền hàng trước chiết khấu |
 | `discount_amount` | `numeric(12,0)` | ❌ | Tổng chiết khấu trên chứng từ |
@@ -302,6 +301,8 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 | `payment_status` | `text` | ❌ | `not_applicable`, `unpaid`, `partial`, `paid` |
 | `note` | `text` | ✅ | Ghi chú đơn |
 | `cancel_reason_type` | `text` | ✅ | `user_cancelled` hoặc `revised`; null nếu chưa hủy |
+| `cancel_reason_code` | `text` | ✅ | Lý do nhanh khi sửa/hủy: `wrong_price`, `wrong_dimension`, `wrong_customer`, `customer_changed_mind`, `other` |
+| `cancel_reason_note` | `text` | ✅ | Ghi chú thêm khi sửa/hủy; bắt buộc nếu `cancel_reason_code = 'other'` |
 | `cancelled_at` | `timestamptz` | ✅ | Thời điểm hủy nếu có |
 | `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
@@ -314,6 +315,7 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Với `order_type = 'quote'`, `code` dùng prefix `BG`.
 - Với `order_type = 'invoice'`, `code` dùng prefix `HD`.
 - `status` hợp lệ theo `order_type`.
+- Runtime POS không tạo bucket `customer_id = null` cho khách lẻ. Nếu Frontend bỏ trống khách hàng, Backend dùng `public.resolve_sales_customer_id(...)` để gán `KH000001`.
 - `subtotal_amount >= 0`
 - `discount_amount >= 0`
 - `total_amount >= 0`
@@ -332,6 +334,9 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Với `order_type = 'invoice'`, nếu `debt_amount > 0` và `paid_amount = 0` thì `payment_status = 'unpaid'`.
 - Nếu `status = 'cancelled'`, `cancel_reason_type` bắt buộc.
 - `cancel_reason_type IN ('user_cancelled', 'revised')` khi không null.
+- Nếu `status = 'cancelled'`, `cancel_reason_code` bắt buộc.
+- `cancel_reason_code IN ('wrong_price', 'wrong_dimension', 'wrong_customer', 'customer_changed_mind', 'other')` khi không null.
+- Nếu `cancel_reason_code = 'other'`, `cancel_reason_note` bắt buộc.
 - `revision_no >= 0`
 - `base_code` không được rỗng sau khi trim.
 - Với bản gốc, `revision_no = 0`, `code = base_code`, `revised_from_order_id` null.
@@ -355,7 +360,10 @@ Hóa đơn nháp POS Phase 2 vẫn lưu local theo máy POS, không tạo bản 
 - Ví dụ: bản gốc `HD000123`; sửa lần 1 tạo `HD000123.01`; sửa lần 2 tạo `HD000123.02`.
 - Bản cũ chuyển `status = 'cancelled'`, `cancel_reason_type = 'revised'`, và trỏ `replaced_by_order_id` tới bản mới.
 - Bản mới trỏ `revised_from_order_id` tới bản cũ gần nhất.
+- Hủy hóa đơn không tạo bản sửa dùng `cancel_reason_type = 'user_cancelled'`.
 - Các tác động đảo kho, đảo tiền và đảo công nợ không được sửa trực tiếp vào dòng lịch sử cũ; domain Inventory/Finance phải tạo giao dịch đảo hoặc giao dịch bổ sung để truy vết.
+- Đảo kho do sửa/hủy hóa đơn dùng `stock_movements.movement_type = 'invoice_reversal'`; nếu bản sửa ghi lại tồn theo hóa đơn mới thì dùng movement bán hàng chính thức tương ứng, hoặc `invoice_revision` nếu cần phân biệt rõ với checkout thường.
+- Nhân viên nội bộ được sửa/hủy trong 10 ngày; sau 10 ngày chỉ quản lý/admin hoặc quyền mạnh tương ứng.
 
 ### Index
 
@@ -450,34 +458,20 @@ Ghi lịch sử đổi trạng thái của báo giá và hóa đơn để truy v
 
 ---
 
-## 11. Production queue placeholder
+## 11. Ranh giới Production queue
 
 ### Mục đích
 
-K02-D dùng hàng đợi máy sản xuất để đưa thông báo/file vào POS và tạo hóa đơn nháp. Chi tiết bảng production queue, event history, claim và restore chưa nằm trong Sales tables; sẽ được thiết kế ở phase Production queue.
+K02-D dùng hàng đợi máy sản xuất để đưa thông báo/file vào POS và thêm dòng vào nháp local. Schema production queue đã có ở migration [202607010001_production_queue.sql](../../../supabase/migrations/202607010001_production_queue.sql), gồm `production_queue_items`, `production_queue_events`, claim và restore transaction.
 
-Sales chỉ lưu kết quả khi nhân viên chốt/lưu báo giá hoặc hóa đơn. Thông báo máy sản xuất không tự tạo `orders`, không tự trừ kho và không tự ghi doanh thu.
+Sales chỉ lưu kết quả khi nhân viên lưu báo giá hoặc checkout hóa đơn. Thông báo máy sản xuất không tự tạo `orders`, không tự trừ kho và không tự ghi doanh thu.
 
-### Realtime channel dự kiến
+### Ranh giới với Sales
 
-| Thành phần | Giá trị |
-|---|---|
-| Channel name | `production_queue` |
-| Type | Broadcast |
-| Visibility | Private |
-
-### Payload tối thiểu dự kiến
-
-```json
-{
-  "production_machine_id": "string",
-  "queue_item_id": "string",
-  "event_type": "queued | claimed | dismissed | restored",
-  "timestamp": "ISO8601"
-}
-```
-
-Payload chính thức xem draft `docs/superpowers/specs/2026-07-01-production-queue-contract-draft.md` trước khi chuyển thành Database/Backend Source of Truth.
+- `production_queue_items` không phải chứng từ bán hàng.
+- `add-to-draft` chỉ trả payload để POS thêm vào nháp local.
+- Khi checkout, dữ liệu đi vào `orders` / `order_items` theo flow POS bình thường.
+- Không FK trực tiếp từ `orders` về queue item trong phạm vi hiện tại; nếu cần trace sâu hơn, mở spec riêng.
 
 ---
 

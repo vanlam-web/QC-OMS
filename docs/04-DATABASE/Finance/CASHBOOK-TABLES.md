@@ -1,6 +1,5 @@
 # CASHBOOK-TABLES — Sổ quỹ, phiếu thu/chi và đối soát
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** `CASHBOOK.md`, `PAYMENT-DEBT-TABLES.md`
 
 ---
@@ -59,6 +58,13 @@ Phiếu sinh từ POS/thu nợ dùng `payment_receipts` làm chứng từ gốc,
 | `status` | `text` | ❌ | `posted` hoặc `cancelled` |
 | `finance_account_id` | `uuid` | ❌ | FK → `public.finance_accounts.id` |
 | `amount` | `numeric(12,0)` | ❌ | Số tiền phiếu |
+| `is_business_accounted` | `boolean` | ❌ | Có tính vào báo cáo kết quả kinh doanh không |
+| `counterparty_type` | `text` | ❌ | `customer`, `supplier`, `employee`, `other`, `none` |
+| `counterparty_name` | `text` | ✅ | Tên người nộp/nhận tự do hoặc cache tên đối tác |
+| `counterparty_phone` | `text` | ✅ | Số điện thoại người nộp/nhận nếu có |
+| `partner_debt_mode` | `text` | ❌ | `affects_partner_debt`, `not_affect_partner_debt`, `no_partner_debt` |
+| `transfer_group_id` | `uuid` | ✅ | Nhóm liên kết cặp chuyển/rút nếu có |
+| `transfer_counterpart_voucher_id` | `uuid` | ✅ | Phiếu đối ứng của chuyển/rút nếu có |
 | `related_order_id` | `uuid` | ✅ | FK → `public.orders.id` nếu có liên quan |
 | `related_customer_id` | `uuid` | ✅ | FK → `public.customers.id` nếu có liên quan |
 | `revised_from_voucher_id` | `uuid` | ✅ | FK → `public.cashbook_vouchers.id`; phiếu cũ gần nhất nếu là bản sửa |
@@ -73,9 +79,16 @@ Phiếu sinh từ POS/thu nợ dùng `payment_receipts` làm chứng từ gốc,
 | Giá trị | Hướng | Ý nghĩa |
 |---|---|---|
 | `other_income` | `in` | Thu khác |
+| `capital_contribution` | `in` | Góp vốn |
+| `transfer` | `in/out` | Chuyển/Rút giữa quỹ/tài khoản |
 | `material_purchase` | `out` | Chi mua vật tư |
+| `supplier_payment` | `out` | Chi trả nhà cung cấp |
+| `staff_salary` | `out` | Chi lương nhân viên |
+| `shipping_expense` | `out` | Chi vận chuyển |
 | `customer_refund` | `out` | Chi hoàn tiền cho khách |
 | `operating_expense` | `out` | Chi phí vận hành |
+| `tax_or_vat` | `out` | Nộp thuế/chuyển VAT cho khách |
+| `commission` | `out` | Hoa hồng |
 | `other_expense` | `out` | Chi khác |
 
 Thu bán hàng và thu nợ khách không dùng `cashbook_vouchers`; nguồn chuẩn là `payment_receipts`.
@@ -84,14 +97,18 @@ Thu bán hàng và thu nợ khách không dùng `cashbook_vouchers`; nguồn chu
 
 - `UNIQUE (organization_id, code)`
 - `voucher_direction IN ('in', 'out')`
-- `voucher_type IN ('other_income', 'material_purchase', 'customer_refund', 'operating_expense', 'other_expense')`
+- `voucher_type IN ('other_income', 'capital_contribution', 'transfer', 'material_purchase', 'supplier_payment', 'staff_salary', 'shipping_expense', 'customer_refund', 'operating_expense', 'tax_or_vat', 'commission', 'other_expense')`
+- `counterparty_type IN ('customer', 'supplier', 'employee', 'other', 'none')`
+- `partner_debt_mode IN ('affects_partner_debt', 'not_affect_partner_debt', 'no_partner_debt')`
 - `status IN ('posted', 'cancelled')`
 - `amount > 0`
 - `finance_account_id` phải cùng `organization_id`.
 - Nếu `voucher_direction = 'in'`, `code` dùng prefix `PT`.
 - Nếu `voucher_direction = 'out'`, `code` dùng prefix `PC`.
-- `voucher_type = 'other_income'` phải có `voucher_direction = 'in'`.
+- Các loại thu phải có `voucher_direction = 'in'`.
 - Các loại chi phải có `voucher_direction = 'out'`.
+- `transfer` được phép `in` hoặc `out`, nhưng khi làm luồng điều chuyển đủ phải có cặp phiếu liên kết trong cùng transaction nghiệp vụ.
+- Nếu `voucher_type = 'transfer'` và tạo bằng luồng điều chuyển đủ, `transfer_group_id` và `transfer_counterpart_voucher_id` bắt buộc sau khi transaction hoàn tất.
 - Với bản gốc, `revision_no = 0`, `code = base_code`, `revised_from_voucher_id` null.
 - Với bản sửa, `revision_no > 0`, `code = base_code || '.' || LPAD(revision_no, 2, '0')`, `revised_from_voucher_id` bắt buộc.
 - Phiếu `cancelled` không được tính vào số dư hiệu lực.
@@ -126,6 +143,7 @@ Ghi từng dòng tăng/giảm tiền theo từng quỹ/tài khoản.
 | `status` | `text` | ❌ | `posted` hoặc `cancelled` |
 | `direction` | `text` | ❌ | `in` hoặc `out` |
 | `amount_delta` | `numeric(12,0)` | ❌ | Số tiền tăng dương, giảm âm |
+| `is_business_accounted` | `boolean` | ❌ | Có tính vào báo cáo kết quả kinh doanh không |
 | `running_balance` | `numeric(12,0)` | ✅ | Số dư sau dòng; có thể tính lại nếu cần |
 | `description` | `text` | ✅ | Mô tả hiển thị trên sổ quỹ |
 | `created_by` | `uuid` | ❌ | FK → `public.profiles.id` |

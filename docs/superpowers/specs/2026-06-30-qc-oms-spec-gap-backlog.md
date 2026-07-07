@@ -16,7 +16,7 @@
 - `docs/README.md`
 - `docs/DEVELOPMENT-PLAN.md`
 - `docs/PHASE-CHECKLIST.md`
-- `docs/AUDIT-V2.md`
+- audit consistency lịch sử đã hoàn tất và được gỡ khỏi root docs để tránh nhầm với trạng thái sống
 - nhóm PRD-UX POS, Business Sales, Database, Backend, Integration và Deployment hiện có
 
 Nguyên tắc áp dụng:
@@ -44,7 +44,7 @@ Nguyên tắc áp dụng:
   - checkout/thanh toán
   - công nợ khách hàng
 - Database/System và Backend/Foundation đã chốt cho Giai đoạn 0.
-- Audit consistency cũ trong `AUDIT-V2.md` đã đánh dấu hoàn tất các patch lớn.
+- Audit consistency cũ đã hoàn tất các patch lớn; trạng thái sống hiện nằm ở `docs/PHASE-CHECKLIST.md`.
 
 ### Còn lệch giữa roadmap và spec chi tiết
 

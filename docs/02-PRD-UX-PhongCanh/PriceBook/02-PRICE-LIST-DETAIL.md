@@ -1,6 +1,5 @@
 # 02-PRICE-LIST-DETAIL — Chi tiết bảng giá
 
-> **Trạng thái:** 🔨 Đang xây dựng
 
 ---
 

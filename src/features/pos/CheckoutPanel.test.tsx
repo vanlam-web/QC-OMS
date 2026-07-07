@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CheckoutPanel } from './CheckoutPanel'
 import type { CheckoutCartLine, OrderService } from '../orders/order-service'
@@ -9,6 +9,8 @@ const customer: Customer = {
   code: 'KH000001',
   name: 'Cong ty ABC',
   phone: null,
+  tax_code: null,
+  address: null,
   customer_group_id: null,
   customer_group: null,
 }
@@ -85,7 +87,7 @@ it('calculates cart total and submits cash checkout', async () => {
   const service = makeOrderService()
   render(<CheckoutPanel cartLines={[line]} selectedCustomer={customer} orderService={service} />)
 
-  expect(screen.getAllByText('240.000').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('240 000').length).toBeGreaterThan(0)
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '240000')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo hóa đơn' }))
@@ -99,7 +101,7 @@ it('calculates cart total and submits cash checkout', async () => {
   const receipt = await screen.findByLabelText('Kết quả checkout')
   expect(within(receipt).getByText('HD000001')).toBeInTheDocument()
   expect(within(receipt).getByText('PT000001')).toBeInTheDocument()
-  expect(within(receipt).getByText('Đã trả 240.000')).toBeInTheDocument()
+  expect(within(receipt).getByText('Đã trả 240 000')).toBeInTheDocument()
   expect(within(receipt).getByText('Còn nợ 0')).toBeInTheDocument()
 })
 
@@ -217,7 +219,7 @@ it('subtracts line discounts from payable total and checkout payload', async () 
   expect(screen.getByText('Tiền hàng')).toBeInTheDocument()
   expect(screen.getByText('Chiết khấu')).toBeInTheDocument()
   expect(screen.getByText('Khách cần trả')).toBeInTheDocument()
-  expect(screen.getByText('200.000')).toBeInTheDocument()
+  expect(screen.getByText('200 000')).toBeInTheDocument()
 
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '200000')
@@ -256,7 +258,7 @@ it('offers recent prices for the selected customer and product', async () => {
 
   expect(service.listRecentCustomerProductPrices).toHaveBeenCalledWith('customer-1', 'p-1')
   expect(await screen.findByText('HD000099')).toBeInTheDocument()
-  expect(screen.getByText('110.000')).toBeInTheDocument()
+  expect(screen.getByText('110 000')).toBeInTheDocument()
 })
 
 it('shows checkout inventory warnings without blocking success', async () => {
@@ -305,7 +307,7 @@ it('asks whether customer surplus is returned or applied to old debt', async () 
   await userEvent.clear(screen.getByLabelText('Tiền mặt trả hóa đơn'))
   await userEvent.type(screen.getByLabelText('Tiền mặt trả hóa đơn'), '300000')
 
-  expect(await screen.findByText('Khách trả dư 60.000')).toBeInTheDocument()
+  expect(await screen.findByText('Khách trả dư 60 000')).toBeInTheDocument()
   expect(screen.getByRole('radio', { name: 'Trả lại khách' })).toBeChecked()
   expect(screen.getByRole('radio', { name: 'Cấn vào nợ cũ' })).toBeInTheDocument()
 })
@@ -319,6 +321,7 @@ it('loads and displays customer debt for selected customers', async () => {
         {
           order_id: 'order-old-1',
           order_code: 'HD000099',
+          created_at: '2026-06-30T03:00:00Z',
           total_amount: 200000,
           paid_amount: 50000,
           debt_amount: 150000,
@@ -333,7 +336,7 @@ it('loads and displays customer debt for selected customers', async () => {
   expect(service.getCustomerDebt).toHaveBeenCalledWith('customer-1')
   expect(await screen.findByText('Tổng nợ hiện tại')).toBeInTheDocument()
   const debtList = screen.getByLabelText('Hóa đơn còn nợ')
-  expect(within(debtList).getByText('150.000')).toBeInTheDocument()
+  expect(within(debtList).getByText('150 000')).toBeInTheDocument()
   expect(screen.getByText('HD000099')).toBeInTheDocument()
 })
 
@@ -358,9 +361,11 @@ it('submits old debt collection separately from the current invoice payment', as
   )
 })
 
-it('hides old debt collection when no customer is selected', () => {
-  render(<CheckoutPanel cartLines={[line]} selectedCustomer={null} orderService={makeOrderService()} />)
+it('hides old debt collection when no customer is selected', async () => {
+  const service = makeOrderService()
+  render(<CheckoutPanel cartLines={[line]} selectedCustomer={null} orderService={service} />)
 
   expect(screen.queryByLabelText('Thu nợ cũ')).not.toBeInTheDocument()
   expect(screen.queryByText('Tổng nợ hiện tại')).not.toBeInTheDocument()
+  await waitFor(() => expect(service.listFinanceAccounts).toHaveBeenCalled())
 })

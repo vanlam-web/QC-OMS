@@ -10,6 +10,26 @@ export interface Product {
   sell_method: SellMethod
   latest_purchase_cost?: number | null
   latest_purchase_cost_at?: string | null
+  inventory_shape?: 'normal' | 'roll' | 'sheet'
+}
+
+export interface ProductBomItem {
+  id: string
+  component_product_id: string
+  component_product: { id: string; code: string; name: string; unit_name: string }
+  quantity: number
+  sort_order: number
+  notes: string | null
+}
+
+export interface ProductBom {
+  id: string
+  product_id: string
+  version: number
+  status: 'active' | 'archived'
+  notes: string | null
+  created_at: string
+  items: ProductBomItem[]
 }
 
 export interface ProductListResponse {
@@ -32,8 +52,14 @@ export interface Customer {
   code: string
   name: string
   phone: string | null
+  tax_code: string | null
+  address: string | null
   customer_group_id: string | null
   customer_group: { id: string; code: string; name: string } | null
+  created_by?: { id: string; name: string } | null
+  created_at?: string
+  total_sales_amount?: number
+  total_debt_amount?: number
 }
 
 export interface CustomerListResponse {

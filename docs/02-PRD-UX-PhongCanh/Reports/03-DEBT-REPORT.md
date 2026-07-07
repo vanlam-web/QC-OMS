@@ -1,6 +1,5 @@
 # 03-DEBT-REPORT — Báo cáo công nợ khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Quy tắc công nợ theo hóa đơn trong `POS-CUSTOMER-DEBT.md`
 
 ---

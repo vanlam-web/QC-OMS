@@ -1,6 +1,5 @@
 # FOUNDATION TECHNICAL DESIGN — Nền tảng QC-OMS
 
-> **Trạng thái:** ✅ Chốt cho Giai đoạn 0
 > **Ngày chốt:** 2026-06-28
 > **Phạm vi:** Kiến trúc ứng dụng, ranh giới FE–BE và cấu trúc source code nền tảng.
 
@@ -197,7 +196,7 @@ Ràng buộc:
 - Giai đoạn 0 dùng transaction khi tạo user kèm profile và permissions.
 - Nếu tạo Auth user thành công nhưng ghi profile thất bại, Backend phải thực hiện cleanup hoặc đánh dấu lỗi để retry an toàn.
 - Endpoint thay permission ghi trạng thái mới và audit log trong cùng transaction Database.
-- Checkout và các use case tài chính tương lai bắt buộc có idempotency key; contract cụ thể sẽ được chốt trước Giai đoạn 4.
+- Checkout và các use case tài chính ghi nhiều bảng bắt buộc có idempotency key; contract cụ thể chốt trong slice liên quan.
 
 ---
 
@@ -227,4 +226,3 @@ Các quyết định sau được chốt just-in-time tại giai đoạn tương
 - render và gửi bill.
 
 Không được suy ra thiết kế của các domain trên chỉ từ tài liệu nền tảng này.
-

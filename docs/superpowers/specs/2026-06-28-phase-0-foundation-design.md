@@ -1,6 +1,6 @@
 # Thiết kế triển khai Giai đoạn 0 — Nền tảng và đăng nhập
 
-> **Trạng thái:** Đã được Owner duyệt ngày 2026-06-28
+> **Mốc duyệt:** Owner duyệt ngày 2026-06-28.
 > **Roadmap:** [DEVELOPMENT-PLAN.md](../../DEVELOPMENT-PLAN.md)
 > **Thiết kế kỹ thuật nguồn:** [FOUNDATION-TECHNICAL-DESIGN.md](../../05-BACKEND-MayChu/FOUNDATION-TECHNICAL-DESIGN.md)
 

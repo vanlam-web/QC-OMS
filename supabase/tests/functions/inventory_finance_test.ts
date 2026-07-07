@@ -57,6 +57,7 @@ const receiptDetail: PaymentReceiptDetailData = {
   receipt_type: "sale_payment",
   total_received_amount: 120000,
   created_at: "2026-06-30T10:00:00Z",
+  created_by: { id: actorId, name: "Admin" },
   customer: { id: "customer-1", code: "KH000001", name: "Cong ty ABC" },
   source_order: { id: "order-1", code: "HD010973", total_amount: 240000 },
   methods: [{ method_type: "cash", amount: 120000, finance_account: { id: "cash-1", code: "CASH", name: "Tiền mặt" } }],
@@ -263,14 +264,215 @@ Deno.test("debt collection rejects overpayment", async () => {
   assertEquals(response.status, 400);
 });
 
-Deno.test("source-linked cashbook vouchers cannot be edited independently", async () => {
+Deno.test("manual cashbook voucher creation requires finance permission", async () => {
   const response = await call(
-    "/api/v1/finance/cashbook-vouchers/source-linked-1/revise",
+    "/api/v1/finance/cashbook-vouchers",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 45000,
+        reason: "Mua văn phòng phẩm",
+      }),
+    },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher creation validates payload and calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "staff_salary",
+        finance_account_id: "cash-1",
+        amount: 45000,
+        partner_debt_mode: "not_affect_partner_debt",
+        is_business_accounted: false,
+        counterparty_type: "employee",
+        counterparty_name: "Nguyen Van A",
+        counterparty_phone: "0900000000",
+        reason: "Mua văn phòng phẩm",
+      }),
+    },
+    repo(["perm.manage_finance"], {
+      createCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-1",
+          code: "PC000001",
+          source_type: "manual_voucher",
+          status: "posted",
+          amount: 45000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    payload: {
+      voucher_direction: "out",
+      voucher_type: "staff_salary",
+      finance_account_id: "cash-1",
+      amount: 45000,
+      partner_debt_mode: "not_affect_partner_debt",
+      is_business_accounted: false,
+      counterparty_type: "employee",
+      counterparty_name: "Nguyen Van A",
+      counterparty_phone: "0900000000",
+      reason: "Mua văn phòng phẩm",
+    },
+  });
+  assertEquals(await data(response), {
+    id: "voucher-1",
+    code: "PC000001",
+    source_type: "manual_voucher",
+    status: "posted",
+    amount: 45000,
+  });
+});
+
+Deno.test("manual cashbook voucher cancel requires finance permission", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/cancel",
+    { method: "POST" },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher cancel calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/cancel",
+    { method: "POST" },
+    repo(["perm.manage_finance"], {
+      cancelCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-1",
+          code: "PC000001",
+          source_type: "manual_voucher",
+          status: "cancelled",
+          amount: 45000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    voucherId: "voucher-1",
+  });
+  assertEquals(await data(response), {
+    id: "voucher-1",
+    code: "PC000001",
+    source_type: "manual_voucher",
+    status: "cancelled",
+    amount: 45000,
+  });
+});
+
+Deno.test("manual cashbook voucher revise requires finance permission", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "operating_expense",
+        finance_account_id: "cash-1",
+        amount: 50000,
+        reason: "Sửa phiếu chi",
+      }),
+    },
+    repo(["perm.view_shift_report"]),
+  );
+
+  assertEquals(response.status, 403);
+});
+
+Deno.test("manual cashbook voucher revise validates payload and calls repository", async () => {
+  let observed: Record<string, unknown> | null = null;
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        voucher_direction: "out",
+        voucher_type: "supplier_payment",
+        finance_account_id: "cash-1",
+        amount: 50000,
+        partner_debt_mode: "affects_partner_debt",
+        is_business_accounted: false,
+        counterparty_type: "employee",
+        counterparty_name: "Nguyen Van A",
+        counterparty_phone: "0900000000",
+        reason: "Sửa phiếu chi",
+      }),
+    },
+    repo(["perm.manage_finance"], {
+      reviseCashbookVoucher: (input: Record<string, unknown>) => {
+        observed = input;
+        return Promise.resolve({
+          id: "voucher-2",
+          code: "PC000001.01",
+          source_type: "manual_voucher",
+          status: "posted",
+          amount: 50000,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observed, {
+    organizationId,
+    actorUserId: actorId,
+    voucherId: "voucher-1",
+    payload: {
+      voucher_direction: "out",
+      voucher_type: "supplier_payment",
+      finance_account_id: "cash-1",
+      amount: 50000,
+      partner_debt_mode: "affects_partner_debt",
+      is_business_accounted: false,
+      counterparty_type: "employee",
+      counterparty_name: "Nguyen Van A",
+      counterparty_phone: "0900000000",
+      reason: "Sửa phiếu chi",
+    },
+  });
+  assertEquals(await data(response), {
+    id: "voucher-2",
+    code: "PC000001.01",
+    source_type: "manual_voucher",
+    status: "posted",
+    amount: 50000,
+  });
+});
+
+Deno.test("manual cashbook voucher revise requires a complete payload", async () => {
+  const response = await call(
+    "/api/v1/finance/cashbook-vouchers/voucher-1/revise",
     { method: "POST", body: JSON.stringify({ reason: "test" }) },
     repo(["perm.manage_finance"]),
   );
 
-  assertEquals(response.status, 404);
+  assertEquals(response.status, 400);
 });
 
 Deno.test("cashbook exact voucher search ignores default date filters", async () => {
@@ -296,6 +498,36 @@ Deno.test("cashbook exact voucher search ignores default date filters", async ()
   );
 
   assertEquals(response.status, 200);
+  assertEquals(observedFrom, undefined);
+  assertEquals(observedTo, undefined);
+});
+
+Deno.test("cashbook scoped code search passes search scope and ignores default date filters", async () => {
+  let observedSearchScope: string | undefined = "";
+  let observedFrom: string | undefined = "";
+  let observedTo: string | undefined = "";
+  const response = await call(
+    "/api/v1/finance/cashbook?search=CTM001180&search_scope=code&from=2026-07-01&to=2026-07-31&page=1&page_size=15",
+    { method: "GET" },
+    repo(["perm.manage_finance"], {
+      listCashbookEntries: (input: { search?: string; searchScope?: string; from?: string; to?: string }) => {
+        observedSearchScope = input.searchScope;
+        observedFrom = input.from;
+        observedTo = input.to;
+        assertEquals(input.search, "CTM001180");
+        return Promise.resolve({
+          summary: { opening_balance: 0, total_in: 0, total_out: -30000, ending_balance: -30000 },
+          items: [],
+          page: 1,
+          page_size: 15,
+          total: 0,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(observedSearchScope, "code");
   assertEquals(observedFrom, undefined);
   assertEquals(observedTo, undefined);
 });
@@ -328,6 +560,41 @@ Deno.test("payment receipt detail includes methods and invoice allocations", asy
   assertEquals(result.allocations[0].remaining_after, 120000);
 });
 
+Deno.test("retail debts endpoint lists KH000001 open invoices", async () => {
+  let observedOrganizationId = "";
+  const response = await call(
+    "/api/v1/finance/retail-debts",
+    { method: "GET" },
+    repo(["perm.manage_finance"], {
+      listRetailDebts: (input: { organizationId: string }) => {
+        observedOrganizationId = input.organizationId;
+        return Promise.resolve({
+          items: [
+            {
+              order_id: "order-retail-1",
+              order_code: "HD000123",
+              created_at: "2026-07-05T09:00:00Z",
+              total_amount: 120000,
+              paid_amount: 20000,
+              debt_amount: 100000,
+              remaining_debt: 100000,
+              retail_debt_note: "Anh Nam 090...",
+            },
+          ],
+          total: 1,
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { items: Array<{ order_code: string; retail_debt_note: string }>; total: number };
+  assertEquals(response.status, 200);
+  assertEquals(observedOrganizationId, organizationId);
+  assertEquals(result.total, 1);
+  assertEquals(result.items[0].order_code, "HD000123");
+  assertEquals(result.items[0].retail_debt_note, "Anh Nam 090...");
+});
+
 Deno.test("inventory products hide inactive rows for create_order-only actor", async () => {
   let requestedStatus = "";
   const response = await call(
@@ -343,6 +610,225 @@ Deno.test("inventory products hide inactive rows for create_order-only actor", a
 
   assertEquals(response.status, 200);
   assertEquals(requestedStatus, "active");
+});
+
+Deno.test("material opening options require order or inventory permission", async () => {
+  assertEquals(
+    (await call("/api/v1/inventory/material-openings/options?product_id=p-1", { method: "GET" }, repo([]))).status,
+    403,
+  );
+  assertEquals(
+    (await call(
+      "/api/v1/inventory/material-openings/options?product_id=p-1",
+      { method: "GET" },
+      repo(["perm.create_order"], {
+        getMaterialOpeningOptions: () =>
+          Promise.resolve({
+            product: {
+              id: "p-1",
+              code: "STANDEE",
+              name: "Standee chữ X",
+              inventory_shape: "normal",
+              stock_unit: { id: "unit-stock", code: "CAI", name: "Cái" },
+            },
+            conversions: [{ unit_id: "unit-pack", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+            warnings: [],
+          }),
+      }),
+    )).status,
+    200,
+  );
+});
+
+Deno.test("material opening options require product id and return conversions", async () => {
+  let observedProductId = "";
+  const missingProduct = await call(
+    "/api/v1/inventory/material-openings/options",
+    { method: "GET" },
+    repo(["perm.create_order"]),
+  );
+  assertEquals(missingProduct.status, 400);
+
+  const response = await call(
+    "/api/v1/inventory/material-openings/options?product_id=p-1",
+    { method: "GET" },
+    repo(["perm.create_order"], {
+      getMaterialOpeningOptions: (input: { productId: string }) => {
+        observedProductId = input.productId;
+        return Promise.resolve({
+          product: {
+            id: "p-1",
+            code: "STANDEE",
+            name: "Standee chữ X",
+            inventory_shape: "normal",
+            stock_unit: { id: "unit-stock", code: "CAI", name: "Cái" },
+          },
+          conversions: [{ unit_id: "unit-pack", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as {
+    product: { code: string };
+    conversions: Array<{ unit_id: string; stock_qty_per_unit: number }>;
+  };
+  assertEquals(response.status, 200);
+  assertEquals(observedProductId, "p-1");
+  assertEquals(result.product.code, "STANDEE");
+  assertEquals(result.conversions[0].stock_qty_per_unit, 500);
+});
+
+Deno.test("normal material opening validates request and calls repository", async () => {
+  let observedOpenedUnitId = "";
+  const invalid = await call(
+    "/api/v1/inventory/material-openings",
+    { method: "POST", body: JSON.stringify({ product_id: "p-1", inventory_shape: "normal", opened_qty: 0 }) },
+    repo(["perm.create_order"]),
+  );
+  assertEquals(invalid.status, 400);
+
+  const response = await call(
+    "/api/v1/inventory/material-openings",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: "p-1",
+        inventory_shape: "normal",
+        opened_unit_id: "unit-pack",
+        opened_qty: 1,
+        old_remaining_qty: 0,
+        note: " Khui ram giấy ",
+      }),
+    },
+    repo(["perm.create_order"], {
+      createMaterialOpening: (input: { openedUnitId: string; note?: string }) => {
+        observedOpenedUnitId = input.openedUnitId;
+        assertEquals(input.note, "Khui ram giấy");
+        return Promise.resolve({
+          id: "opening-1",
+          product_id: "p-1",
+          inventory_shape: "normal",
+          source_type: "manual_normal",
+          opened_unit_id: "unit-pack",
+          opened_qty: 1,
+          opened_stock_qty: 500,
+          stock_movement_id: null,
+          warnings: [],
+          created_at: "2026-07-05T09:00:00Z",
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { id: string; opened_stock_qty: number; stock_movement_id: string | null };
+  assertEquals(response.status, 201);
+  assertEquals(observedOpenedUnitId, "unit-pack");
+  assertEquals(result.opened_stock_qty, 500);
+  assertEquals(result.stock_movement_id, null);
+});
+
+Deno.test("POS shortage preview requires order permission and returns normal product shortage", async () => {
+  assertEquals(
+    (await call(
+      "/api/v1/inventory/pos-shortage-preview",
+      { method: "POST", body: JSON.stringify({ product_id: "material-1", quantity: 5 }) },
+      repo([]),
+    )).status,
+    403,
+  );
+
+  let observedProductId = "";
+  let observedQuantity = 0;
+  const response = await call(
+    "/api/v1/inventory/pos-shortage-preview",
+    { method: "POST", body: JSON.stringify({ product_id: "material-1", quantity: 5 }) },
+    repo(["perm.create_order"], {
+      previewPosMaterialShortage: (input: { productId: string; quantity: number }) => {
+        observedProductId = input.productId;
+        observedQuantity = input.quantity;
+        return Promise.resolve({
+          product_id: "material-1",
+          quantity: 5,
+          source: "product",
+          shortages: [
+            {
+              product_id: "material-1",
+              code: "GIAY-A4",
+              name: "Giấy A4",
+              required_qty: 5,
+              available_qty: 2,
+              shortage_qty: 3,
+              stock_unit: { id: "unit-sheet", code: "TO", name: "Tờ" },
+              inventory_shape: "normal",
+              quick_material_opening_supported: true,
+              conversion_options: [{ unit_id: "unit-ram", code: "RAM", name: "Ram", stock_qty_per_unit: 500 }],
+            },
+          ],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as {
+    source: string;
+    shortages: Array<{
+      product_id: string;
+      shortage_qty: number;
+      quick_material_opening_supported: boolean;
+      conversion_options: Array<{ unit_id: string; stock_qty_per_unit: number }>;
+    }>;
+  };
+  assertEquals(response.status, 200);
+  assertEquals(observedProductId, "material-1");
+  assertEquals(observedQuantity, 5);
+  assertEquals(result.source, "product");
+  assertEquals(result.shortages[0].shortage_qty, 3);
+  assertEquals(result.shortages[0].quick_material_opening_supported, true);
+  assertEquals(result.shortages[0].conversion_options[0].stock_qty_per_unit, 500);
+});
+
+Deno.test("POS shortage preview returns standard single-level BOM normal component shortages", async () => {
+  const response = await call(
+    "/api/v1/inventory/pos-shortage-preview",
+    { method: "POST", body: JSON.stringify({ product_id: "combo-1", quantity: 2 }) },
+    repo(["perm.create_order"], {
+      previewPosMaterialShortage: (input: { productId: string; quantity: number }) => {
+        assertEquals(input.productId, "combo-1");
+        assertEquals(input.quantity, 2);
+        return Promise.resolve({
+          product_id: "combo-1",
+          quantity: 2,
+          source: "standard_bom",
+          bom_id: "bom-1",
+          shortages: [
+            {
+              product_id: "material-1",
+              code: "LED",
+              name: "Bóng LED",
+              required_qty: 10,
+              available_qty: 4,
+              shortage_qty: 6,
+              stock_unit: { id: "unit-led", code: "CON", name: "Con" },
+              inventory_shape: "normal",
+              quick_material_opening_supported: false,
+              conversion_options: [],
+            },
+          ],
+          warnings: [],
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { source: string; bom_id: string; shortages: Array<{ code: string; required_qty: number }> };
+  assertEquals(response.status, 200);
+  assertEquals(result.source, "standard_bom");
+  assertEquals(result.bom_id, "bom-1");
+  assertEquals(result.shortages[0].code, "LED");
+  assertEquals(result.shortages[0].required_qty, 10);
 });
 
 Deno.test("normal product stock adjustment creates balanced stocktake", async () => {

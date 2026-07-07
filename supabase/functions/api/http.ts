@@ -36,7 +36,11 @@ export interface CorsOptions {
 }
 
 export function createTraceId(request: Request): string {
-  return request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const requestId = request.headers.get("x-request-id");
+  if (requestId !== null && /^[A-Za-z0-9._:-]{1,128}$/.test(requestId)) {
+    return requestId;
+  }
+  return crypto.randomUUID();
 }
 
 export function corsHeaders({ origin, allowedOrigins }: CorsOptions): HeadersInit {
@@ -78,6 +82,9 @@ export function successResponse<T>(
   traceId: string,
   init: ResponseInit = {},
 ): Response {
+  const headers = new Headers(init.headers);
+  headers.set("x-request-id", traceId);
+
   return jsonResponse(
     {
       success: true,
@@ -85,7 +92,7 @@ export function successResponse<T>(
       trace_id: traceId,
     },
     init.status ?? 200,
-    init.headers,
+    headers,
   );
 }
 
@@ -94,6 +101,9 @@ export function errorResponse(
   traceId: string,
   headers?: HeadersInit,
 ): Response {
+  const responseHeaders = new Headers(headers);
+  responseHeaders.set("x-request-id", traceId);
+
   return jsonResponse(
     {
       success: false,
@@ -104,7 +114,7 @@ export function errorResponse(
       trace_id: traceId,
     },
     error.status,
-    headers,
+    responseHeaders,
   );
 }
 

@@ -4,6 +4,8 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   collectCustomerDebt,
+  cancelCashbookVoucher,
+  createCashbookVoucher,
   getCashbookEntry,
   getCustomerDebt,
   getPaymentReceipt,
@@ -12,7 +14,9 @@ import {
   listCashbookVouchers,
   listCustomerDebts,
   listFinanceAccounts,
+  listRetailDebts,
   listReconciliations,
+  reviseCashbookVoucher,
 } from "../use-cases/finance.ts";
 
 export interface FinanceRouteDependencies {
@@ -53,6 +57,10 @@ export async function handleFinance(
     return successResponse(await listCustomerDebts(dependencies.repository, context, url), traceId);
   }
 
+  if (url.pathname === "/api/v1/finance/retail-debts" && request.method === "GET") {
+    return successResponse(await listRetailDebts(dependencies.repository, context, url), traceId);
+  }
+
   const customerDebtMatch = url.pathname.match(/^\/api\/v1\/finance\/customers\/([^/]+)\/debt$/);
   if (customerDebtMatch !== null && request.method === "GET") {
     return successResponse(await getCustomerDebt(dependencies.repository, context, customerDebtMatch[1]), traceId);
@@ -76,6 +84,30 @@ export async function handleFinance(
 
   if (url.pathname === "/api/v1/finance/cashbook/vouchers" && request.method === "GET") {
     return successResponse(await listCashbookVouchers(dependencies.repository, context), traceId);
+  }
+
+  if (url.pathname === "/api/v1/finance/cashbook-vouchers" && request.method === "POST") {
+    return successResponse(
+      await createCashbookVoucher(dependencies.repository, context, await request.json()),
+      traceId,
+      { status: 201 },
+    );
+  }
+
+  const cashbookVoucherCancelMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook-vouchers\/([^/]+)\/cancel$/);
+  if (cashbookVoucherCancelMatch !== null && request.method === "POST") {
+    return successResponse(
+      await cancelCashbookVoucher(dependencies.repository, context, cashbookVoucherCancelMatch[1]),
+      traceId,
+    );
+  }
+
+  const cashbookVoucherReviseMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook-vouchers\/([^/]+)\/revise$/);
+  if (cashbookVoucherReviseMatch !== null && request.method === "POST") {
+    return successResponse(
+      await reviseCashbookVoucher(dependencies.repository, context, cashbookVoucherReviseMatch[1], await request.json()),
+      traceId,
+    );
   }
 
   const cashbookEntryMatch = url.pathname.match(/^\/api\/v1\/finance\/cashbook\/([^/]+)$/);

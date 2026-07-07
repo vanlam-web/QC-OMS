@@ -2,8 +2,6 @@
 
 > **Thuộc khối:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) — Phần IV
 >
-> **Trạng thái:** 🔨 Đang xây dựng
->
 > **Trở về:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) | [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 
 ---
@@ -38,7 +36,7 @@ Khi một mã vật tư trong BOM Cấp 1 có Đơn vị tính là **m²** (Bạ
 
 **Diện tích tiêu hao:** Ô `= X.XX m²` trong BOM tự cập nhật realtime theo `R × D × SL`. Đây là ô chỉ đọc — hiển thị để thu ngân đối chiếu trước khi chốt đơn.
 
-> Công thức trừ kho chi tiết thuộc tầng Business/Backend — xem module Inventory (backlog).
+> Công thức trừ kho chi tiết thuộc tầng Business/Backend; file này chỉ mô tả UI tại POS.
 
 ---
 
@@ -79,7 +77,16 @@ Khi một mã vật tư trong BOM Cấp 1 có Đơn vị tính là **m²** (Bạ
 
 Combo Cấp 2 hiển thị phẳng tại POS — thu ngân thấy 1 dòng. Khi chốt đơn, UI chỉ hiển thị trạng thái xử lý / lỗi trả về từ Backend.
 
-> Chi tiết công thức trừ kho thuộc tầng Business/Backend — xem module Inventory (backlog).
+Quy ước lưu và trừ kho:
+
+- Chứng từ lưu combo con như một dòng thành phần và lưu BOM version/snapshot của combo con tại thời điểm bán.
+- Với chế độ `Không lưu - Chỉ trừ kho`, combo con dùng BOM chuẩn đang active tại thời điểm chốt đơn.
+- Với chế độ `Lưu Combo mới`, combo mới vẫn giữ combo con là thành phần tham chiếu; backend deep-scan combo con khi cần trừ kho.
+- Chứng từ cũ không đổi khi BOM của combo con bị sửa sau này.
+- Combo không tính tồn riêng. Nếu combo con thiếu vật tư, hệ thống xử lý như thiếu vật tư ở hàng thường: cảnh báo, hiện thiếu theo vật tư thành phần và có thể hiện nút `Khui vật tư` nếu vật tư đó hỗ trợ khui.
+- Nếu deep-scan gặp vòng lặp hoặc quá 5 cấp, hệ thống chặn phần trừ kho BOM và báo lỗi cấu hình để sửa, không tự đoán.
+
+> Chi tiết công thức trừ kho thuộc tầng Business/Backend; file này chỉ mô tả UI tại POS.
 
 ---
 

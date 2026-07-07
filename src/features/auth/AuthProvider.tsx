@@ -19,6 +19,8 @@ import { AuthContext, type AuthContextValue } from './auth-context'
 import { runtimeConfig } from '../../lib/config/runtime'
 
 const bootstrapTimeoutMs = 8000
+const currentUserCacheKey = 'qc-oms.auth.current-user.v1'
+const currentUserCacheTtlMs = 5 * 60_000
 
 export function AuthProvider({
   children,
@@ -49,12 +51,14 @@ export function AuthProvider({
     await authService.signOut()
     setAccessConnection('disconnected')
     setCurrentUser(null)
+    writeCachedCurrentUser(null)
   }, [authService])
 
   const refreshMe = useCallback(async () => {
     try {
       const me = await foundation.getMe()
       setCurrentUser(me)
+      writeCachedCurrentUser(me)
     } catch (cause) {
       if (
         cause instanceof ApiError &&
@@ -72,7 +76,6 @@ export function AuthProvider({
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      setInitialized(false)
       try {
         await authService.signIn(email, password)
         await refreshMe()
@@ -91,8 +94,16 @@ export function AuthProvider({
       .then(async (token) => {
         if (!active) return
         if (!token) {
+          writeCachedCurrentUser(null)
           setInitialized(true)
           return
+        }
+
+        const cachedCurrentUser = readCachedCurrentUser()
+        if (cachedCurrentUser !== null) {
+          setCurrentUser(cachedCurrentUser.data)
+          setInitialized(true)
+          if (cachedCurrentUser.fresh) return
         }
         await withTimeout(refreshMe(), bootstrapTimeoutMs)
       })
@@ -139,6 +150,46 @@ export function AuthProvider({
       />
       {children}
     </AuthContext>
+  )
+}
+
+function readCachedCurrentUser(): { data: CurrentUserData; fresh: boolean } | null {
+  try {
+    const raw = window.sessionStorage.getItem(currentUserCacheKey)
+    if (raw === null) return null
+    const parsed = JSON.parse(raw) as CurrentUserData | { data?: CurrentUserData; cached_at?: number }
+    if (isCachedCurrentUser(parsed)) {
+      return {
+        data: parsed.data,
+        fresh: Date.now() - parsed.cached_at < currentUserCacheTtlMs,
+      }
+    }
+    return { data: parsed as CurrentUserData, fresh: false }
+  } catch {
+    writeCachedCurrentUser(null)
+    return null
+  }
+}
+
+function writeCachedCurrentUser(value: CurrentUserData | null) {
+  if (value === null) {
+    window.sessionStorage.removeItem(currentUserCacheKey)
+    return
+  }
+  window.sessionStorage.setItem(currentUserCacheKey, JSON.stringify({ cached_at: Date.now(), data: value }))
+}
+
+function isCachedCurrentUser(value: CurrentUserData | { data?: CurrentUserData; cached_at?: number }): value is {
+  data: CurrentUserData
+  cached_at: number
+} {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'data' in value &&
+    'cached_at' in value &&
+    typeof value.cached_at === 'number' &&
+    value.data !== undefined
   )
 }
 

@@ -1,6 +1,5 @@
 # 03-K03C-LUOI-SP.md — K03-C: LƯỚI SẢN PHẨM NHANH
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 

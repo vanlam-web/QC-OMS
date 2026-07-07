@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { UserCircle } from 'lucide-react'
 import type { PermissionCode } from '../users/types'
+import { permissions as permissionCodes } from '../users/permissions'
 
 export function ProfileMenu({
   displayName,
@@ -7,12 +9,14 @@ export function ProfileMenu({
   onSignOut,
   onOpenAdmin,
   onOpenDashboard,
+  compact = false,
 }: {
   displayName: string
   permissions: PermissionCode[]
   onSignOut: () => void
   onOpenAdmin: () => void
   onOpenDashboard: () => void
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const id = useId()
@@ -35,17 +39,24 @@ export function ProfileMenu({
   }, [open])
 
   return (
-    <div ref={ref} className="profile-menu">
-      <button aria-controls={id} aria-expanded={open} onClick={() => setOpen((value) => !value)} type="button">
-        👤 {displayName}
+    <div ref={ref} className={compact ? 'profile-menu profile-menu-compact' : 'profile-menu'}>
+      <button
+        aria-controls={id}
+        aria-expanded={open}
+        aria-label={compact ? 'Tài khoản' : undefined}
+        onClick={() => setOpen((value) => !value)}
+        title={compact ? displayName : undefined}
+        type="button"
+      >
+        {compact ? <UserCircle aria-hidden="true" size={20} /> : `👤 ${displayName}`}
       </button>
       {open ? (
         <div id={id} role="menu">
           <button role="menuitem" onClick={onOpenDashboard} type="button">
             Trang chủ
           </button>
-          {permissions.includes('perm.view_shift_report') ? <button role="menuitem">Báo cáo ca</button> : null}
-          {permissions.includes('perm.access_admin_panel') ? (
+          {permissions.includes(permissionCodes.viewShiftReport) ? <button role="menuitem">Báo cáo ca</button> : null}
+          {permissions.includes(permissionCodes.accessAdminPanel) ? (
             <button role="menuitem" onClick={onOpenAdmin} type="button">
               Quản trị
             </button>

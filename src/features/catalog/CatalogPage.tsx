@@ -1,22 +1,32 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
+import {
+  ManagementCompactCreateAction,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
+  ManagementDetailRow,
+  ManagementFilterGroup,
+  ManagementFilterSidebar,
+  ManagementListSurface,
+  ManagementPage,
+  ManagementTableFooter,
+  ManagementTableViewport,
+} from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
-import type {
-  PriceFormulaInput,
-  PriceFormulaPreview,
-  PriceFormulaPreviewItem,
-  PriceFormulaPreviewPrice,
-  PriceList,
-  Product,
-  ProductStatus,
-  SellMethod,
-} from './types'
+import type { Product, ProductBom, ProductStatus, SellMethod } from './types'
 
 interface CatalogState {
   products: Product[]
-  priceLists: PriceList[]
+  page: number
+  pageSize: number
   total: number
 }
+
+const productPageSize = 15
+type ProductInventoryShapeFilter = NonNullable<Product['inventory_shape']> | 'all'
+type ProductSellMethodFilter = SellMethod | 'all'
 
 const sellMethodLabels: Record<SellMethod, string> = {
   quantity: 'Số lượng',
@@ -26,11 +36,8 @@ const sellMethodLabels: Record<SellMethod, string> = {
   combo: 'Combo',
 }
 
-type AdjustmentMode = 'none' | 'amount' | 'percent'
-
 export function CatalogPage({
   service,
-  onOpenDashboard,
 }: {
   service: CatalogService
   onOpenDashboard: () => void
@@ -38,27 +45,22 @@ export function CatalogPage({
   const [state, setState] = useState<CatalogState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [formulaOpen, setFormulaOpen] = useState(false)
-  const [previewingFormula, setPreviewingFormula] = useState(false)
-  const [applyingFormula, setApplyingFormula] = useState(false)
-  const [formulaPreview, setFormulaPreview] = useState<PriceFormulaPreview | null>(null)
-  const [formulaForm, setFormulaForm] = useState({
-    name: '',
-    codeContains: '',
-    nameContains: '',
-    sellMethod: '',
-    costMode: 'fixed' as 'fixed' | 'amount_plus_percent',
-    costAmount: '',
-    costPercent: '',
-    profitMode: 'fixed' as 'fixed' | 'tiers',
-    fixedProfit: '',
-    tierOperator: '>' as '<' | '<=' | '>' | '>=' | '=',
-    tierValue: '',
-    tierAmount: '',
-    adjustments: {} as Record<string, { mode: AdjustmentMode; value: string }>,
-  })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(true)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [componentProducts, setComponentProducts] = useState<Product[]>([])
+  const [bomByProductId, setBomByProductId] = useState<Record<string, ProductBom | null>>({})
+  const [bomForms, setBomForms] = useState<Record<string, Array<{ component_product_id: string; quantity: string; notes: string }>>>({})
   const [search, setSearch] = useState('')
+  const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
+  const [lastStatus, setLastStatus] = useState<ProductStatus | 'all'>('active')
+  const [sellMethodFilter, setSellMethodFilter] = useState<ProductSellMethodFilter>('all')
+  const [lastSellMethodFilter, setLastSellMethodFilter] = useState<ProductSellMethodFilter>('all')
+  const [inventoryShapeFilter, setInventoryShapeFilter] = useState<ProductInventoryShapeFilter>('all')
+  const [lastInventoryShapeFilter, setLastInventoryShapeFilter] = useState<ProductInventoryShapeFilter>('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(productPageSize)
   const [form, setForm] = useState<{
     code: string
     name: string
@@ -73,15 +75,38 @@ export function CatalogPage({
     status: 'active',
   })
 
-  async function load(filters = { search, status }) {
+  async function load(filters: {
+    search?: string
+    status?: ProductStatus | 'all'
+    sell_method?: ProductSellMethodFilter
+    inventory_shape?: ProductInventoryShapeFilter
+    page?: number
+    page_size?: number
+  } = {}) {
+    const nextSearch = filters.search ?? lastSearch
+    const nextStatus = filters.status ?? lastStatus
+    const nextSellMethod = filters.sell_method ?? lastSellMethodFilter
+    const nextInventoryShape = filters.inventory_shape ?? lastInventoryShapeFilter
+    const nextPage = filters.page ?? page
+    const nextPageSize = filters.page_size ?? pageSize
     setError(null)
     try {
-      const result = await service.listProducts({ search: filters.search, status: filters.status })
-      setState((current) => ({
-        products: result.items,
-        priceLists: current?.priceLists ?? [],
-        total: result.total,
-      }))
+      const result = await service.listProducts({
+        page: nextPage,
+        page_size: nextPageSize,
+        search: nextSearch || undefined,
+        status: nextStatus,
+        ...(nextSellMethod === 'all' ? {} : { sell_method: nextSellMethod }),
+        ...(nextInventoryShape === 'all' ? {} : { inventory_shape: nextInventoryShape }),
+      })
+      setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
+      setLastSearch(nextSearch)
+      setLastStatus(nextStatus)
+      setLastSellMethodFilter(nextSellMethod)
+      setLastInventoryShapeFilter(nextInventoryShape)
+      setPage(result.page)
+      setPageSize(result.page_size)
+      setSelectedProductId(null)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được hàng hóa.'))
     }
@@ -93,12 +118,11 @@ export function CatalogPage({
     async function loadInitialProducts() {
       setError(null)
       try {
-        const [result, priceListResult] = await Promise.all([
-          service.listProducts({ status: 'active' }),
-          service.listPriceLists(),
-        ])
+        const result = await service.listProducts({ page: 1, page_size: productPageSize, status: 'active' })
         if (!active) return
-        setState({ products: result.items, priceLists: priceListResult.items, total: result.total })
+        setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
+        setPage(result.page)
+        setPageSize(result.page_size)
       } catch (cause) {
         if (active) setError(formatApiError(cause, 'Không tải được hàng hóa.'))
       }
@@ -113,7 +137,33 @@ export function CatalogPage({
 
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await load({ search, status })
+    setPage(1)
+    await load({ search: search.trim(), status, sell_method: sellMethodFilter, inventory_shape: inventoryShapeFilter, page: 1 })
+  }
+
+  async function applySidebarFilters(nextFilters: Partial<{
+    status: ProductStatus | 'all'
+    sell_method: ProductSellMethodFilter
+    inventory_shape: ProductInventoryShapeFilter
+  }>) {
+    const nextStatus = nextFilters.status ?? status
+    const nextSellMethod = nextFilters.sell_method ?? sellMethodFilter
+    const nextInventoryShape = nextFilters.inventory_shape ?? inventoryShapeFilter
+    setStatus(nextStatus)
+    setSellMethodFilter(nextSellMethod)
+    setInventoryShapeFilter(nextInventoryShape)
+    setPage(1)
+    await load({
+      search: search.trim(),
+      status: nextStatus,
+      sell_method: nextSellMethod,
+      inventory_shape: nextInventoryShape,
+      page: 1,
+    })
+  }
+
+  async function goToPage(nextPage: number) {
+    await load({ page: nextPage })
   }
 
   async function createProduct(event: React.FormEvent<HTMLFormElement>) {
@@ -129,6 +179,7 @@ export function CatalogPage({
         sell_method: form.sellMethod,
       })
       setForm({ code: '', name: '', unitName: '', sellMethod: 'quantity', status: 'active' })
+      setCreateOpen(false)
       await load()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được hàng hóa.'))
@@ -152,217 +203,200 @@ export function CatalogPage({
     }
   }
 
-  function buildFormulaInput(): PriceFormulaInput {
-    const priceListAdjustments: PriceFormulaInput['price_list_adjustments'] = {}
-    for (const [priceListId, adjustment] of Object.entries(formulaForm.adjustments)) {
-      const value = Number(adjustment.value || 0)
-      if (adjustment.mode === 'amount') priceListAdjustments[priceListId] = { type: 'amount', amount: value }
-      if (adjustment.mode === 'percent') priceListAdjustments[priceListId] = { type: 'percent', percent: value }
+  async function toggleProductDetail(product: Product) {
+    if (selectedProductId === product.id) {
+      setSelectedProductId(null)
+      return
     }
-
-    return {
-      name: formulaForm.name,
-      product_filter: {
-        status: 'active',
-        ...(formulaForm.codeContains.trim() ? { code_contains: formulaForm.codeContains.trim() } : {}),
-        ...(formulaForm.nameContains.trim() ? { name_contains: formulaForm.nameContains.trim() } : {}),
-        ...(formulaForm.sellMethod ? { sell_method: formulaForm.sellMethod as SellMethod } : {}),
-      },
-      cost_formula:
-        formulaForm.costMode === 'fixed'
-          ? { type: 'fixed', amount: Number(formulaForm.costAmount || 0) }
-          : {
-              type: 'amount_plus_percent',
-              amount: Number(formulaForm.costAmount || 0),
-              percent_of_latest_purchase_cost: Number(formulaForm.costPercent || 0),
-            },
-      profit_formula:
-        formulaForm.profitMode === 'fixed'
-          ? { type: 'fixed', amount: Number(formulaForm.fixedProfit || 0) }
-          : {
-              type: 'tiers',
-              tiers: [
-                {
-                  operator: formulaForm.tierOperator,
-                  value: Number(formulaForm.tierValue || 0),
-                  amount: Number(formulaForm.tierAmount || 0),
-                },
-              ],
-            },
-      price_list_adjustments: priceListAdjustments,
-    }
-  }
-
-  async function previewFormula(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPreviewingFormula(true)
+    setSelectedProductId(product.id)
     setError(null)
     try {
-      setFormulaPreview(await service.previewPriceFormula(buildFormulaInput()))
+      const [bom, components] = await Promise.all([
+        service.getProductBom(product.id),
+        componentProducts.length === 0
+          ? service.listProducts({ status: 'active', page: 1, page_size: 100 })
+          : Promise.resolve({ items: componentProducts, page: 1, page_size: componentProducts.length, total: componentProducts.length }),
+      ])
+      const normalComponents = components.items.filter((item) => item.id !== product.id && item.inventory_shape !== 'roll' && item.inventory_shape !== 'sheet')
+      setComponentProducts(normalComponents)
+      setBomByProductId((current) => ({ ...current, [product.id]: bom }))
+      setBomForms((current) => ({
+        ...current,
+        [product.id]: bom?.items.map((item) => ({
+          component_product_id: item.component_product_id,
+          quantity: String(item.quantity),
+          notes: item.notes ?? '',
+        })) ?? [{ component_product_id: '', quantity: '1', notes: '' }],
+      }))
     } catch (cause) {
-      setError(formatApiError(cause, 'Không xem trước được công thức.'))
-    } finally {
-      setPreviewingFormula(false)
+      setError(formatApiError(cause, 'Không tải được BOM hàng hóa.'))
     }
   }
 
-  async function applyFormula() {
-    if (formulaPreview === null) return
-    setApplyingFormula(true)
+  async function saveBom(product: Product) {
+    const items = (bomForms[product.id] ?? [])
+      .filter((line) => line.component_product_id !== '')
+      .map((line) => ({
+        component_product_id: line.component_product_id,
+        quantity: Number(line.quantity),
+        ...(line.notes.trim() ? { notes: line.notes.trim() } : {}),
+      }))
+    if (items.length === 0 || items.some((item) => item.quantity <= 0 || !Number.isFinite(item.quantity))) {
+      setError('BOM cần ít nhất một vật tư và định mức lớn hơn 0.')
+      return
+    }
+    setSaving(true)
     setError(null)
     try {
-      await service.applyPriceFormula({
-        formula: buildFormulaInput(),
-        selected_items: formulaPreview.items.flatMap((item) =>
-          item.computed_prices.map((price) => ({
-            product_id: item.product_id,
-            price_list_id: price.price_list_id,
-          })),
-        ),
-      })
-      setFormulaPreview(null)
-      await load()
+      const bom = await service.saveProductBom(product.id, { items })
+      setBomByProductId((current) => ({ ...current, [product.id]: bom }))
+      setBomForms((current) => ({
+        ...current,
+        [product.id]: bom.items.map((item) => ({
+          component_product_id: item.component_product_id,
+          quantity: String(item.quantity),
+          notes: item.notes ?? '',
+        })),
+      }))
     } catch (cause) {
-      setError(formatApiError(cause, 'Không áp dụng được công thức.'))
+      setError(formatApiError(cause, 'Không lưu được BOM hàng hóa.'))
     } finally {
-      setApplyingFormula(false)
+      setSaving(false)
     }
   }
 
-  function findPreviewItem(productId: string): PriceFormulaPreviewItem | null {
-    return formulaPreview?.items.find((item) => item.product_id === productId) ?? null
-  }
-
-  function findPreviewPrice(item: PriceFormulaPreviewItem | null, priceListId: string): PriceFormulaPreviewPrice | null {
-    return item?.computed_prices.find((price) => price.price_list_id === priceListId) ?? null
-  }
-
-  function renderPriceListCell(product: Product, priceList: PriceList): string {
-    if (formulaPreview === null) return 'Chưa xem'
-
-    const previewItem = findPreviewItem(product.id)
-    const previewPrice = findPreviewPrice(previewItem, priceList.id)
-    if (previewPrice === null) return 'Không khớp'
-
-    const computed = formatMoney(previewPrice.computed_unit_price)
-    if (previewPrice.current_unit_price === null) return `Mới ${computed}`
-
-    const current = formatMoney(previewPrice.current_unit_price)
-    return `Hiện tại ${current} → ${computed}`
-  }
+  const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
+  const canGoPrevious = page > 1
+  const canGoNext = page < totalPages
+  const activeFilterSummary = lastSearch
+    ? `Tìm: ${lastSearch}`
+    : lastStatus === 'active' && lastSellMethodFilter === 'all' && lastInventoryShapeFilter === 'all'
+      ? 'Đang kinh doanh'
+      : 'Bộ lọc hàng hóa'
 
   return (
-    <main className="catalog-shell">
-      <header className="catalog-header">
-        <div>
-          <h1>Hàng hóa</h1>
-          <p>Sản phẩm, đơn vị bán và trạng thái bán POS</p>
-        </div>
-        <button type="button" onClick={onOpenDashboard}>
-          Trang chủ
-        </button>
-      </header>
-
-      {error ? <p role="alert">{error}</p> : null}
-      {state === null && error === null ? <p>Đang tải hàng hóa...</p> : null}
-
-      <section className="catalog-panel" aria-label="Quản lý hàng hóa">
-        <form aria-label="Lọc hàng hóa" className="admin-form" onSubmit={filterProducts}>
-          <label>
-            Tìm
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
-          </label>
-          <label>
-            Trạng thái
-            <select value={status} onChange={(event) => setStatus(event.target.value as ProductStatus | 'all')}>
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngưng bán</option>
-              <option value="all">Tất cả</option>
-            </select>
-          </label>
-          <button type="submit">Lọc</button>
-        </form>
-
-        <form aria-label="Tạo hàng hóa" className="catalog-form" onSubmit={createProduct}>
-          <label>
-            Mã hàng
-            <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
-          </label>
-          <label>
-            Tên hàng
-            <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
-          </label>
-          <label>
-            Đơn vị
-            <input
-              value={form.unitName}
-              onChange={(event) => setForm((current) => ({ ...current, unitName: event.target.value }))}
-            />
-          </label>
-          <label>
-            Cách bán
-            <select
-              value={form.sellMethod}
-              onChange={(event) => setForm((current) => ({ ...current, sellMethod: event.target.value as SellMethod }))}
-            >
-              {Object.entries(sellMethodLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Trạng thái
-            <select
-              value={form.status}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ProductStatus }))}
-            >
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngưng bán</option>
-            </select>
-          </label>
-          <button disabled={saving} type="submit">
-            Thêm hàng hóa
+    <ManagementPage
+      title="Hàng hóa"
+      actions={
+        <ManagementCompactToolbar ariaLabel="Lọc hàng hóa" onSubmit={filterProducts}>
+          <ManagementCompactSearch
+            label="Tìm hàng hóa"
+            leadingIcon={<Search aria-hidden="true" size={16} />}
+            placeholder="Tìm mã, tên hàng"
+            trailingAction={
+              <ManagementCompactCreateAction ariaLabel="Tạo hàng hóa" onClick={() => setCreateOpen(true)} />
+            }
+            value={search}
+            onChange={setSearch}
+          />
+        </ManagementCompactToolbar>
+      }
+      filter={
+        <ManagementFilterSidebar
+          activeSummary={activeFilterSummary}
+          ariaLabel="Bộ lọc hàng hóa"
+          title="Bộ lọc"
+        >
+          <button
+            aria-label="Ẩn bộ lọc hàng hóa"
+            className="management-filter-collapse-button"
+            title="Ẩn bộ lọc"
+            type="button"
+            onClick={() => setShowFilters(false)}
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
           </button>
-        </form>
-
-        <div className="catalog-toolbar">
-          <button type="button" onClick={() => setFormulaOpen((current) => !current)}>
-            Tạo công thức cho bộ lọc này
-          </button>
-        </div>
-
-        {formulaOpen ? (
-          <form aria-label="Công thức bảng giá" className="catalog-formula-panel" onSubmit={previewFormula}>
+          <ManagementFilterGroup title="Loại hàng">
             <label>
-              Tên công thức
-              <input
-                value={formulaForm.name}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, name: event.target.value }))}
-              />
-            </label>
-            <label>
-              Mã hàng chứa
-              <input
-                value={formulaForm.codeContains}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, codeContains: event.target.value }))}
-              />
-            </label>
-            <label>
-              Tên hàng chứa
-              <input
-                value={formulaForm.nameContains}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, nameContains: event.target.value }))}
-              />
-            </label>
-            <label>
-              Cách bán áp dụng
+              <span className="sr-only">Loại hàng</span>
               <select
-                value={formulaForm.sellMethod}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, sellMethod: event.target.value }))}
+                aria-label="Loại hàng"
+                className="management-filter-select"
+                value={inventoryShapeFilter}
+                onChange={(event) => void applySidebarFilters({ inventory_shape: event.target.value as ProductInventoryShapeFilter })}
               >
-                <option value="">Tất cả</option>
+                <option value="all">Tất cả</option>
+                <option value="normal">Hàng hóa thường</option>
+                <option value="roll">Cuộn</option>
+                <option value="sheet">Tấm</option>
+              </select>
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Cách bán">
+            <label>
+              <span className="sr-only">Cách bán</span>
+              <select
+                aria-label="Cách bán"
+                className="management-filter-select"
+                value={sellMethodFilter}
+                onChange={(event) => void applySidebarFilters({ sell_method: event.target.value as ProductSellMethodFilter })}
+              >
+                <option value="all">Tất cả</option>
+                {Object.entries(sellMethodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </ManagementFilterGroup>
+          <ManagementFilterGroup title="Trạng thái hàng hóa">
+            <label>
+              <span className="sr-only">Trạng thái hàng hóa</span>
+              <select
+                aria-label="Trạng thái hàng hóa"
+                className="management-filter-select"
+                value={status}
+                onChange={(event) => void applySidebarFilters({ status: event.target.value as ProductStatus | 'all' })}
+              >
+                <option value="active">Hàng đang kinh doanh</option>
+                <option value="inactive">Hàng ngừng kinh doanh</option>
+                <option value="all">Tất cả</option>
+              </select>
+            </label>
+          </ManagementFilterGroup>
+        </ManagementFilterSidebar>
+      }
+      filterVisible={showFilters}
+      filterCollapsedControl={
+        <button
+          aria-label="Mở bộ lọc hàng hóa"
+          className="management-filter-expand-button"
+          title="Mở bộ lọc"
+          type="button"
+          onClick={() => setShowFilters(true)}
+        >
+          <ChevronRight aria-hidden="true" size={16} />
+        </button>
+      }
+    >
+      <ManagementListSurface ariaLabel="Danh sách hàng hóa">
+        {error ? <p role="alert">{error}</p> : null}
+        {state === null && error === null ? <p>Đang tải hàng hóa...</p> : null}
+
+        {createOpen ? (
+          <form aria-label="Tạo hàng hóa" className="catalog-form" onSubmit={createProduct}>
+            <label>
+              Mã hàng
+              <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
+            </label>
+            <label>
+              Tên hàng
+              <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
+            </label>
+            <label>
+              Đơn vị
+              <input
+                value={form.unitName}
+                onChange={(event) => setForm((current) => ({ ...current, unitName: event.target.value }))}
+              />
+            </label>
+            <label>
+              Cách bán
+              <select
+                value={form.sellMethod}
+                onChange={(event) => setForm((current) => ({ ...current, sellMethod: event.target.value as SellMethod }))}
+              >
                 {Object.entries(sellMethodLabels).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -371,231 +405,206 @@ export function CatalogPage({
               </select>
             </label>
             <label>
-              Kiểu chi phí
+              Trạng thái
               <select
-                value={formulaForm.costMode}
-                onChange={(event) =>
-                  setFormulaForm((current) => ({
-                    ...current,
-                    costMode: event.target.value as 'fixed' | 'amount_plus_percent',
-                  }))
-                }
+                value={form.status}
+                onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ProductStatus }))}
               >
-                <option value="fixed">Cố định</option>
-                <option value="amount_plus_percent">Cộng tiền + % giá nhập</option>
+                <option value="active">Đang bán</option>
+                <option value="inactive">Ngưng bán</option>
               </select>
             </label>
-            <label>
-              Chi phí cộng thêm
-              <input
-                inputMode="numeric"
-                value={formulaForm.costAmount}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, costAmount: event.target.value }))}
-              />
-            </label>
-            <label>
-              % theo giá nhập cuối
-              <input
-                inputMode="decimal"
-                value={formulaForm.costPercent}
-                onChange={(event) => setFormulaForm((current) => ({ ...current, costPercent: event.target.value }))}
-                disabled={formulaForm.costMode === 'fixed'}
-              />
-            </label>
-            <label>
-              Kiểu lợi nhuận
-              <select
-                value={formulaForm.profitMode}
-                onChange={(event) =>
-                  setFormulaForm((current) => ({ ...current, profitMode: event.target.value as 'fixed' | 'tiers' }))
-                }
-              >
-                <option value="fixed">Cố định</option>
-                <option value="tiers">Theo điều kiện giá nhập</option>
-              </select>
-            </label>
-            {formulaForm.profitMode === 'fixed' ? (
-              <label>
-                Lợi nhuận cố định
-                <input
-                  inputMode="numeric"
-                  value={formulaForm.fixedProfit}
-                  onChange={(event) => setFormulaForm((current) => ({ ...current, fixedProfit: event.target.value }))}
-                />
-              </label>
-            ) : (
-              <>
-                <label>
-                  Điều kiện lợi nhuận
-                  <select
-                    value={formulaForm.tierOperator}
-                    onChange={(event) =>
-                      setFormulaForm((current) => ({
-                        ...current,
-                        tierOperator: event.target.value as '<' | '<=' | '>' | '>=' | '=',
-                      }))
-                    }
-                  >
-                    <option value=">">&gt;</option>
-                    <option value=">=">&gt;=</option>
-                    <option value="<">&lt;</option>
-                    <option value="<=">&lt;=</option>
-                    <option value="=">=</option>
-                  </select>
-                </label>
-                <label>
-                  Mốc giá nhập
-                  <input
-                    inputMode="numeric"
-                    value={formulaForm.tierValue}
-                    onChange={(event) => setFormulaForm((current) => ({ ...current, tierValue: event.target.value }))}
-                  />
-                </label>
-                <label>
-                  Lợi nhuận tier
-                  <input
-                    inputMode="numeric"
-                    value={formulaForm.tierAmount}
-                    onChange={(event) => setFormulaForm((current) => ({ ...current, tierAmount: event.target.value }))}
-                  />
-                </label>
-              </>
-            )}
-            {state?.priceLists.map((priceList) => (
-              <div className="catalog-adjustment" key={priceList.id}>
-                <label>
-                  Điều chỉnh {priceList.name}
-                  <select
-                    value={formulaForm.adjustments[priceList.id]?.mode ?? 'none'}
-                    onChange={(event) =>
-                      setFormulaForm((current) => ({
-                        ...current,
-                        adjustments: {
-                          ...current.adjustments,
-                          [priceList.id]: {
-                            mode: event.target.value as AdjustmentMode,
-                            value: current.adjustments[priceList.id]?.value ?? '',
-                          },
-                        },
-                      }))
-                    }
-                  >
-                    <option value="none">Không</option>
-                    <option value="amount">Cộng/trừ tiền</option>
-                    <option value="percent">Cộng/trừ %</option>
-                  </select>
-                </label>
-                <label>
-                  Giá trị điều chỉnh {priceList.name}
-                  <input
-                    inputMode="decimal"
-                    value={formulaForm.adjustments[priceList.id]?.value ?? ''}
-                    onChange={(event) =>
-                      setFormulaForm((current) => ({
-                        ...current,
-                        adjustments: {
-                          ...current.adjustments,
-                          [priceList.id]: {
-                            mode: current.adjustments[priceList.id]?.mode ?? 'none',
-                            value: event.target.value,
-                          },
-                        },
-                      }))
-                    }
-                    disabled={(formulaForm.adjustments[priceList.id]?.mode ?? 'none') === 'none'}
-                  />
-                </label>
-              </div>
-            ))}
-            <div className="catalog-formula-actions">
-              <button disabled={previewingFormula} type="submit">
-                Xem trước
-              </button>
-              <button disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
-                Áp dụng công thức
-              </button>
-            </div>
+            <button className="button button-primary" disabled={saving} type="submit">
+              Thêm hàng hóa
+            </button>
           </form>
-        ) : null}
-
-        {formulaPreview ? (
-          <section className="catalog-preview" aria-label="Xem trước công thức">
-            <p>{formulaPreview.affected_count} hàng hóa khớp bộ lọc</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Mã hàng</th>
-                  <th>Tên hàng</th>
-                  <th>Bảng giá</th>
-                  <th>Giá đề xuất</th>
-                  <th>Chênh lệch</th>
-                </tr>
-              </thead>
-              <tbody>
-                {formulaPreview.items.flatMap((item) =>
-                  item.computed_prices.map((price) => (
-                    <tr key={`${item.product_id}-${price.price_list_id}`}>
-                      <td>{item.product_code}</td>
-                      <td>{item.product_name}</td>
-                      <td>{price.price_list_name}</td>
-                      <td>{formatMoney(price.computed_unit_price)}</td>
-                      <td>{price.delta === null ? 'Mới' : formatMoney(price.delta)}</td>
-                    </tr>
-                  )),
-                )}
-              </tbody>
-            </table>
-          </section>
         ) : null}
 
         {state ? (
           <>
-            <p>{state.total} hàng hóa</p>
-            <table aria-label="Lưới bảng giá">
-              <thead>
-                <tr>
-                  <th>Mã hàng</th>
-                  <th>Tên hàng</th>
-                  <th>Giá nhập cuối</th>
-                  <th>Chi phí</th>
-                  <th>Lợi nhuận</th>
-                  {state.priceLists.map((priceList) => (
-                    <th key={priceList.id}>{priceList.name}</th>
-                  ))}
-                  <th>Cách bán</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.products.map((product) => (
-                  <tr key={product.id}>
-                    <td>{product.code}</td>
-                    <td>{product.name}</td>
-                    <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
-                    <td>Chưa cấu hình</td>
-                    <td>Chưa cấu hình</td>
-                    {state.priceLists.map((priceList) => (
-                      <td key={priceList.id}>{renderPriceListCell(product, priceList)}</td>
-                    ))}
-                    <td>{sellMethodLabels[product.sell_method]}</td>
-                    <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
-                    <td>
-                      <button disabled={saving} type="button" onClick={() => void toggleProductStatus(product)}>
-                        {product.status === 'active' ? 'Ngưng bán' : 'Mở bán'}
-                      </button>
-                    </td>
+            <ManagementTableViewport>
+              <table aria-label="Danh sách hàng hóa">
+                <thead>
+                  <tr>
+                    <th>Mã hàng</th>
+                    <th>Tên hàng</th>
+                    <th>Giá nhập cuối</th>
+                    <th>Đơn vị</th>
+                    <th>Cách bán</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.products.map((product) => (
+                    <Fragment key={product.id}>
+                      <tr
+                        aria-expanded={selectedProductId === product.id}
+                        className={`management-data-row${selectedProductId === product.id ? ' management-data-row-selected' : ''}`}
+                        tabIndex={0}
+                        onClick={() => void toggleProductDetail(product)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            void toggleProductDetail(product)
+                          }
+                        }}
+                      >
+                        <td>
+                          <button
+                            className="management-link-button"
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void toggleProductDetail(product)
+                            }}
+                          >
+                            <strong>{product.code}</strong>
+                          </button>
+                        </td>
+                        <td>{product.name}</td>
+                        <td>{formatMoney(product.latest_purchase_cost ?? 0)}</td>
+                        <td>{product.unit_name}</td>
+                        <td>{sellMethodLabels[product.sell_method]}</td>
+                        <td>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</td>
+                        <td>
+                          <button
+                            disabled={saving}
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void toggleProductStatus(product)
+                            }}
+                          >
+                            {product.status === 'active' ? 'Ngưng bán' : 'Mở bán'}
+                          </button>
+                        </td>
+                      </tr>
+                      {selectedProductId === product.id ? (
+                        <ManagementDetailRow colSpan={7} label={`Chi tiết hàng hóa ${product.code}`}>
+                          <dl>
+                            <div>
+                              <dt>Mã hàng</dt>
+                              <dd>{product.code}</dd>
+                            </div>
+                            <div>
+                              <dt>Tên hàng</dt>
+                              <dd>{product.name}</dd>
+                            </div>
+                            <div>
+                              <dt>Đơn vị</dt>
+                              <dd>{product.unit_name}</dd>
+                            </div>
+                            <div>
+                              <dt>Cách bán</dt>
+                              <dd>{sellMethodLabels[product.sell_method]}</dd>
+                            </div>
+                            <div>
+                              <dt>Giá nhập cuối</dt>
+                              <dd>{formatMoney(product.latest_purchase_cost ?? 0)}</dd>
+                            </div>
+                            <div>
+                              <dt>Trạng thái</dt>
+                              <dd>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</dd>
+                            </div>
+                          </dl>
+                          <section aria-label={`BOM ${product.code}`} className="catalog-bom-panel">
+                            <header>
+                              <h3>BOM vật tư</h3>
+                              {bomByProductId[product.id] ? <span>Version {bomByProductId[product.id]?.version}</span> : <span>Chưa có BOM</span>}
+                            </header>
+                            {(bomForms[product.id] ?? [{ component_product_id: '', quantity: '1', notes: '' }]).map((line, index) => (
+                              <div className="catalog-bom-line" key={`${product.id}-${index}`}>
+                                <label>
+                                  Vật tư
+                                  <select
+                                    value={line.component_product_id}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, component_product_id: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  >
+                                    <option value="">Chọn vật tư</option>
+                                    {componentProducts.map((component) => (
+                                      <option key={component.id} value={component.id}>
+                                        {component.code} · {component.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label>
+                                  Định mức
+                                  <input
+                                    min="0.001"
+                                    step="0.001"
+                                    type="number"
+                                    value={line.quantity}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, quantity: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  />
+                                </label>
+                                <label>
+                                  Ghi chú
+                                  <input
+                                    value={line.notes}
+                                    onChange={(event) => {
+                                      const next = [...(bomForms[product.id] ?? [])]
+                                      next[index] = { ...line, notes: event.target.value }
+                                      setBomForms((current) => ({ ...current, [product.id]: next }))
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            ))}
+                            <div className="catalog-bom-actions">
+                              <button
+                                className="button button-secondary"
+                                type="button"
+                                onClick={() => {
+                                  setBomForms((current) => ({
+                                    ...current,
+                                    [product.id]: [
+                                      ...(current[product.id] ?? []),
+                                      { component_product_id: '', quantity: '1', notes: '' },
+                                    ],
+                                  }))
+                                }}
+                              >
+                                Thêm vật tư
+                              </button>
+                              <button className="button button-primary" disabled={saving} type="button" onClick={() => void saveBom(product)}>
+                                Lưu BOM
+                              </button>
+                            </div>
+                          </section>
+                        </ManagementDetailRow>
+                      ) : null}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </ManagementTableViewport>
+            <ManagementTableFooter
+              ariaLabel="Phân trang hàng hóa"
+              canGoNext={canGoNext}
+              canGoPrevious={canGoPrevious}
+              entityLabel="hàng hóa"
+              page={page}
+              pageSize={pageSize}
+              total={state.total}
+              onFirst={() => void goToPage(1)}
+              onLast={() => void goToPage(totalPages)}
+              onNext={() => void goToPage(page + 1)}
+              onPageSizeChange={(nextPageSize) => void load({ page: 1, page_size: nextPageSize })}
+              onPrevious={() => void goToPage(page - 1)}
+            />
           </>
         ) : null}
-      </section>
-    </main>
+      </ManagementListSurface>
+    </ManagementPage>
   )
-}
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat('vi-VN').format(value)
 }

@@ -1,6 +1,6 @@
 # BOM-RULES — Định mức vật tư, combo và trừ kho nhiều cấp
 
-> **Trạng thái:** Source of Truth nghiệp vụ
+> **Vai trò:** Source of Truth nghiệp vụ.
 > **Tham khảo:** PRD POS K02-A, export KiotViet `Hàng thành phần`
 > **Quyết định Owner:** Có BOM nhiều cấp; có thể sửa BOM; POS có thể dùng BOM phát sinh để trừ kho hoặc lưu thành combo mới
 
@@ -75,6 +75,14 @@ Một dòng BOM có thể tham chiếu:
 
 Khi checkout, hệ thống deep-scan để quy đổi về vật tư lá cuối cùng trước khi tạo stock movement.
 
+Khi một combo cha chứa combo con:
+
+- dòng BOM của combo cha lưu combo con như một thành phần tham chiếu
+- chứng từ lưu lại combo con và BOM version/snapshot của combo con tại thời điểm bán
+- với chế độ `Không lưu - Chỉ trừ kho`, combo con dùng BOM chuẩn đang active tại thời điểm chốt đơn
+- với chế độ `Lưu Combo mới`, combo mới vẫn giữ combo con là thành phần tham chiếu, không tự bung phẳng thành vật tư lá
+- chứng từ cũ không đổi khi BOM của combo con bị sửa sau này
+
 ### BR-BOM-06: Chống vòng lặp và giới hạn độ sâu
 
 Hệ thống phải chặn vòng lặp BOM, ví dụ:
@@ -84,6 +92,8 @@ A -> B -> A
 ```
 
 Độ sâu mặc định tối đa: 5 cấp. Nếu vượt quá, backend báo lỗi cấu hình BOM để người dùng sửa.
+
+Nếu checkout/deep-scan gặp vòng lặp hoặc vượt quá 5 cấp, hệ thống chặn phần trừ kho BOM và báo lỗi cấu hình. Hệ thống không được tự đoán, không được âm thầm bỏ nhánh lỗi.
 
 ### BR-BOM-07: POS chỉ chỉnh cấp đang mở
 
@@ -113,6 +123,8 @@ Dòng combo/sản phẩm có BOM
 
 Vật tư `normal`, `roll`, `sheet` vẫn trừ theo rule Inventory tương ứng. BOM không được trừ tổng `m2` gộp nếu vật tư là cuộn/tấm vật lý.
 
+Combo không tính tồn kho riêng trong MVP. Nếu combo con thiếu vật tư, hệ thống xử lý như thiếu vật tư của một hàng thường: cảnh báo theo vật tư thành phần, cho đi tiếp theo rule tồn âm/cảnh báo, và hiện gợi ý `Khui vật tư` nếu vật tư thiếu có thể khui.
+
 ### BR-BOM-09: Thiếu BOM không chặn bán trong MVP
 
 Nếu sản phẩm được bán như combo nhưng chưa có BOM, hệ thống cho checkout và flag/cảnh báo để quản lý bổ sung sau.
@@ -126,6 +138,10 @@ Sản phẩm này chưa có BOM để trừ vật tư con. Hóa đơn vẫn đư
 ### BR-BOM-10: Tồn âm vật tư vẫn theo rule Inventory
 
 Nếu BOM làm vật tư thành phần âm tồn, hệ thống cảnh báo nhưng vẫn cho tiếp tục theo nguyên tắc tồn âm MVP đã chốt.
+
+Cảnh báo nên chỉ rõ vật tư nào thiếu để nhân viên biết cần kiểm tra hoặc khui vật tư.
+
+Nếu thiếu vật tư phát sinh khi đang thao tác trong POS, hệ thống có thể hiện nút `Khui vật tư` ngay trên dòng hàng. Nút này chỉ mở luồng Inventory để khui vật tư thiếu; không tự sửa BOM, không tự lưu combo mới và không bắt buộc dùng. Nếu một dòng thiếu nhiều vật tư, nhân viên được chọn một hoặc nhiều vật tư cần khui. Nếu bỏ qua, chứng từ vẫn đi tiếp theo rule cảnh báo/tồn âm.
 
 ---
 

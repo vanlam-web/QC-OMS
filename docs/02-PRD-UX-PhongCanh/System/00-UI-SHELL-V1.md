@@ -1,6 +1,6 @@
 # UI Shell v1 — Quy tắc giao diện nền QC-OMS
 
-> **Trạng thái:** Source of Truth cho UI Shell v1
+> **Vai trò:** Source of Truth cho UI Shell v1.
 > **Mục tiêu:** Làm giao diện nhanh nhưng không lệch quỹ đạo; sau này đổi theme/layout không ảnh hưởng nghiệp vụ.
 > **Tham khảo:** KiotViet cho logic vận hành; Material Design, IBM Carbon, Shopify Polaris cho design token/component discipline; WCAG 2.2 cho accessibility.
 
@@ -59,7 +59,13 @@ UI chỉ gọi service/API đã có contract. Nếu sau này đổi từ desktop
 
 Mục tiêu: quản lý nhiều dữ liệu và thao tác sâu.
 
-- sidebar có icon + chữ
+- không dùng sidebar trái rộng làm mặc định vì các màn quản lý cần chiều ngang
+- top navigation là module bar ngang: brand/logo nhỏ bên trái link về `/dashboard`, module ở giữa, cụm thao tác nhanh bên phải
+- không hiển thị mục chữ `Tổng quan` trong module bar; dashboard đi qua brand/logo để tiết kiệm chiều ngang
+- module bar chính chỉ chứa các khu vực quản lý như `Hóa đơn`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Phiếu nhập`, `Quản trị`; route nội bộ vẫn là `/sales-documents`
+- POS là thao tác bán hàng nhanh nên đứng ở cụm thao tác nhanh bên phải, không chen vào module bar quản lý; quy tắc này supersede quy tắc PR #52 sau feedback preview của Owner trong PR #53
+- trạng thái chọn trong module bar dùng chung treatment với menu phụ của Dashboard: item thường là chữ muted trên nền trong suốt; item đang chọn dùng nền `surface`, chữ `primary` và line primary dưới chân. Không tạo style active riêng theo từng trang.
+- theme toggle và tài khoản/đăng xuất dùng control compact/icon trong một action rail ngoài topbar, không hiển thị block mô tả lớn kiểu `Xưởng Văn Lâm / Cloud Admin`
 - danh sách dạng table hoặc dense list
 - filter bar luôn nhìn thấy
 - detail panel/drawer bên phải
@@ -343,7 +349,7 @@ Không làm toàn bộ app trong một PR lớn.
 - token màu/spacing/radius/shadow
 - light/dark toggle
 - app shell responsive
-- sidebar/bottom nav
+- top module bar/bottom nav theo breakpoint, không dùng wide left sidebar mặc định
 - button/chip/status component nền
 
 ### UI-2: Filter system

@@ -16,12 +16,16 @@ import type {
   FoundationRepository,
   GetCurrentUserInput,
   InventoryProductData,
+  MaterialOpeningOptionsData,
+  MaterialOpeningResultData,
   PermissionCode,
   PermissionData,
   PaymentReceiptAllocationData,
   PaymentReceiptDetailData,
+  PosMaterialShortagePreviewData,
   PriceFormulaPreviewData,
   PriceListData,
+  ProductBomData,
   ProductData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
@@ -30,6 +34,7 @@ import type {
   QuoteReopenPayloadData,
   QuoteSummaryData,
   ReconciliationData,
+  RetailDebtInvoiceData,
   ResolvedPriceData,
   SalesDocumentDetailData,
   SalesDocumentListItemData,
@@ -41,6 +46,24 @@ import type {
 } from "../contracts.ts";
 
 type DatabaseClient = SupabaseClient;
+const currentUserCacheTtlMs = 2000;
+const currentUserCache = new Map<string, { expiresAt: number; promise: Promise<CurrentUserRecord | null> }>();
+
+const customerBaseSelect = "id, code, name, phone, customer_group_id, customer_groups(id, code, name)";
+const customerExtendedSelect = "id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)";
+
+type CustomerRepositoryRow = {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  tax_code?: string | null;
+  address?: string | null;
+  customer_group_id: string | null;
+  created_by?: string | null;
+  created_at?: string;
+  customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
+};
 
 interface PriceRow {
   product_id: string;
@@ -326,80 +349,98 @@ function resolveFormulaPrice(
   };
 }
 
+async function loadCurrentUser(
+  client: DatabaseClient,
+  input: GetCurrentUserInput,
+): Promise<CurrentUserRecord | null> {
+  const { data: profile, error: profileError } = await client
+    .from("profiles")
+    .select("user_id, display_name, organization_id, organizations(id, code, name)")
+    .eq("user_id", input.userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (profileError !== null) {
+    throw profileError;
+  }
+
+  if (profile === null) {
+    return null;
+  }
+
+  const organization = Array.isArray(profile.organizations)
+    ? profile.organizations[0]
+    : profile.organizations;
+
+  const { data: permissionRows, error: permissionError } = await client
+    .from("user_permissions")
+    .select("permission_code, permissions!inner(status)")
+    .eq("user_id", input.userId)
+    .eq("permissions.status", "active")
+    .order("permission_code", { ascending: true });
+
+  if (permissionError !== null) {
+    throw permissionError;
+  }
+
+  let workstation = null;
+  let workstationInvalid = false;
+
+  if (input.workstationId !== null) {
+    const { data: workstationRow, error: workstationError } = await client
+      .from("workstations")
+      .select("id, code, name, organization_id")
+      .eq("id", input.workstationId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (workstationError !== null) {
+      throw workstationError;
+    }
+
+    if (workstationRow === null || workstationRow.organization_id !== profile.organization_id) {
+      workstationInvalid = true;
+    } else {
+      workstation = {
+        id: workstationRow.id,
+        code: workstationRow.code,
+        name: workstationRow.name,
+      };
+    }
+  }
+
+  return {
+    user: {
+      id: input.userId,
+      email: input.email,
+      displayName: profile.display_name,
+    },
+    organization: {
+      id: organization.id,
+      code: organization.code,
+      name: organization.name,
+    },
+    workstation,
+    permissions: (permissionRows ?? []).map((row) => row.permission_code),
+    workstationInvalid,
+  };
+}
+
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
   return {
     async getCurrentUser(input: GetCurrentUserInput): Promise<CurrentUserRecord | null> {
-      const { data: profile, error: profileError } = await client
-        .from("profiles")
-        .select("user_id, display_name, organization_id, organizations(id, code, name)")
-        .eq("user_id", input.userId)
-        .eq("status", "active")
-        .maybeSingle();
+      const cacheKey = JSON.stringify([input.userId, input.email, input.workstationId]);
+      const cached = currentUserCache.get(cacheKey);
+      if (cached !== undefined && cached.expiresAt > Date.now()) return await cached.promise;
 
-      if (profileError !== null) {
-        throw profileError;
+      const promise = loadCurrentUser(client, input);
+      currentUserCache.set(cacheKey, { expiresAt: Date.now() + currentUserCacheTtlMs, promise });
+      try {
+        return await promise;
+      } catch (cause) {
+        currentUserCache.delete(cacheKey);
+        throw cause;
       }
-
-      if (profile === null) {
-        return null;
-      }
-
-      const organization = Array.isArray(profile.organizations)
-        ? profile.organizations[0]
-        : profile.organizations;
-
-      const { data: permissionRows, error: permissionError } = await client
-        .from("user_permissions")
-        .select("permission_code, permissions!inner(status)")
-        .eq("user_id", input.userId)
-        .eq("permissions.status", "active")
-        .order("permission_code", { ascending: true });
-
-      if (permissionError !== null) {
-        throw permissionError;
-      }
-
-      let workstation = null;
-      let workstationInvalid = false;
-
-      if (input.workstationId !== null) {
-        const { data: workstationRow, error: workstationError } = await client
-          .from("workstations")
-          .select("id, code, name, organization_id")
-          .eq("id", input.workstationId)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (workstationError !== null) {
-          throw workstationError;
-        }
-
-        if (workstationRow === null || workstationRow.organization_id !== profile.organization_id) {
-          workstationInvalid = true;
-        } else {
-          workstation = {
-            id: workstationRow.id,
-            code: workstationRow.code,
-            name: workstationRow.name,
-          };
-        }
-      }
-
-      return {
-        user: {
-          id: input.userId,
-          email: input.email,
-          displayName: profile.display_name,
-        },
-        organization: {
-          id: organization.id,
-          code: organization.code,
-          name: organization.name,
-        },
-        workstation,
-        permissions: (permissionRows ?? []).map((row) => row.permission_code),
-        workstationInvalid,
-      };
     },
     async listWorkstations(organizationId: string): Promise<WorkstationData[]> {
       const { data, error } = await client
@@ -628,6 +669,27 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
       return data as ProductData | null;
     },
+    async getProductBom(input): Promise<ProductBomData | null> {
+      return await loadProductBom(client, input.organizationId, input.productId);
+    },
+    async saveProductBom(input): Promise<ProductBomData> {
+      const { data, error } = await client.rpc("save_product_bom_v1_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_product_id: input.productId,
+        p_items: input.items.map((item) => ({
+          component_product_id: item.componentProductId,
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+        })),
+        p_notes: input.notes ?? null,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data) || typeof data.id !== "string") throw new Error("BOM_SAVE_FAILED");
+      const bom = await loadProductBom(client, input.organizationId, input.productId);
+      if (bom === null) throw new Error("BOM_SAVE_FAILED");
+      return bom;
+    },
     async listPriceLists(input): Promise<PriceListData[]> {
       let query = client
         .from("price_lists")
@@ -774,21 +836,72 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return data as { formula_rule_id: string; affected_count: number };
     },
     async listCustomers(input): Promise<{ items: CustomerData[]; total: number }> {
+      const hasAmountFilters =
+        input.totalSalesMin !== undefined ||
+        input.totalSalesMax !== undefined ||
+        input.totalDebtMin !== undefined ||
+        input.totalDebtMax !== undefined;
       let query = client
         .from("customers")
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)", { count: "exact" })
+        .select(customerExtendedSelect, { count: "exact" })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
 
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
       }
+      if (input.customerGroupId !== undefined) query = query.eq("customer_group_id", input.customerGroupId);
+      if (input.createdFrom !== undefined) query = query.gte("created_at", input.createdFrom);
+      if (input.createdTo !== undefined) query = query.lte("created_at", input.createdTo);
+      if (input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
+      if (!hasAmountFilters) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      }
 
-      const { data, error, count } = await query;
+      const result = await query;
+      let data = result.data as CustomerRepositoryRow[] | null;
+      let error = result.error;
+      let count = result.count;
+      if (isMissingCustomerExtendedColumnError(error)) {
+        let fallbackQuery = client
+          .from("customers")
+          .select(customerBaseSelect, { count: "exact" })
+          .eq("organization_id", input.organizationId)
+          .order("code", { ascending: true });
+
+        if (input.search !== undefined) {
+          const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
+          fallbackQuery = fallbackQuery.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
+        }
+        if (input.customerGroupId !== undefined) fallbackQuery = fallbackQuery.eq("customer_group_id", input.customerGroupId);
+        if (!hasAmountFilters) {
+          fallbackQuery = fallbackQuery.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        }
+
+        const fallback = await fallbackQuery;
+        data = fallback.data as CustomerRepositoryRow[] | null;
+        error = fallback.error;
+        count = fallback.count;
+      }
       if (error !== null) throw error;
-      return { items: (data ?? []).map(toCustomerData), total: count ?? 0 };
+      const creatorMap = await loadSellerMap(client, (data ?? []).map((row) => row.created_by ?? ""));
+      const customerIds = (data ?? []).map((row) => row.id);
+      const [salesTotalMap, debtTotalMap] = await Promise.all([
+        loadCustomerSalesTotals(client, input.organizationId, customerIds),
+        loadCustomerDebtTotals(client, input.organizationId, customerIds),
+      ]);
+      const items = (data ?? []).map((row) => toCustomerData(row, creatorMap, salesTotalMap, debtTotalMap));
+      if (!hasAmountFilters) return { items, total: count ?? 0 };
+
+      const filteredItems = items.filter((customer) =>
+        (input.totalSalesMin === undefined || customer.total_sales_amount >= input.totalSalesMin) &&
+        (input.totalSalesMax === undefined || customer.total_sales_amount <= input.totalSalesMax) &&
+        (input.totalDebtMin === undefined || customer.total_debt_amount >= input.totalDebtMin) &&
+        (input.totalDebtMax === undefined || customer.total_debt_amount <= input.totalDebtMax)
+      );
+      const start = (input.page - 1) * input.pageSize;
+      return { items: filteredItems.slice(start, start + input.pageSize), total: filteredItems.length };
     },
     async createCustomer(input): Promise<CustomerData> {
       const code = input.code ?? await nextCustomerCode(client, input.organizationId);
@@ -799,18 +912,31 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           code,
           name: input.name,
           phone: input.phone ?? null,
+          tax_code: input.taxCode ?? null,
+          address: input.address ?? null,
           customer_group_id: input.customerGroupId ?? null,
+          created_by: input.actorUserId,
         })
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)")
         .single();
       if (error !== null) throw error;
-      return toCustomerData(data);
+      const creatorMap = await loadSellerMap(client, [data.created_by ?? ""]);
+      return toCustomerData(data, creatorMap, new Map([[data.id, 0]]));
     },
     async updateCustomer(input): Promise<CustomerData | null> {
-      const patch: { code?: string; name?: string; phone?: string | null; customer_group_id?: string | null } = {};
+      const patch: {
+        code?: string;
+        name?: string;
+        phone?: string | null;
+        tax_code?: string | null;
+        address?: string | null;
+        customer_group_id?: string | null;
+      } = {};
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.phone !== undefined) patch.phone = input.phone;
+      if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
+      if (input.address !== undefined) patch.address = input.address;
       if (input.customerGroupId !== undefined) patch.customer_group_id = input.customerGroupId;
 
       const { data, error } = await client
@@ -818,31 +944,50 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, phone, customer_group_id, customer_groups(id, code, name)")
+        .select("id, code, name, phone, tax_code, address, customer_group_id, created_by, created_at, customer_groups(id, code, name)")
         .maybeSingle();
       if (error !== null) throw error;
-      return data === null ? null : toCustomerData(data);
+      if (data === null) return null;
+      const creatorMap = await loadSellerMap(client, [data.created_by ?? ""]);
+      const salesTotalMap = await loadCustomerSalesTotals(client, input.organizationId, [data.id]);
+      return toCustomerData(data, creatorMap, salesTotalMap);
     },
     async listSuppliers(input): Promise<{ items: SupplierData[]; total: number }> {
+      const hasAmountFilters =
+        input.totalPurchaseMin !== undefined ||
+        input.totalPurchaseMax !== undefined ||
+        input.currentPayableMin !== undefined ||
+        input.currentPayableMax !== undefined;
       let query = client
         .from("suppliers")
         .select("id, code, name, phone, email, address, tax_code, linked_customer_id, notes, status, customers(id, code, name)", {
           count: "exact",
         })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
 
       if (input.status !== "all") query = query.eq("status", input.status);
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%,phone.ilike.%${search}%`);
       }
+      if (!hasAmountFilters) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      }
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
       const items = await attachSupplierPurchaseTotals(client, input.organizationId, (data ?? []).map(toSupplierData));
-      return { items, total: count ?? 0 };
+      if (!hasAmountFilters) return { items, total: count ?? 0 };
+
+      const filteredItems = items.filter((supplier) =>
+        (input.totalPurchaseMin === undefined || supplier.total_purchase_amount >= input.totalPurchaseMin) &&
+        (input.totalPurchaseMax === undefined || supplier.total_purchase_amount <= input.totalPurchaseMax) &&
+        (input.currentPayableMin === undefined || supplier.current_payable_amount >= input.currentPayableMin) &&
+        (input.currentPayableMax === undefined || supplier.current_payable_amount <= input.currentPayableMax)
+      );
+      const start = (input.page - 1) * input.pageSize;
+      return { items: filteredItems.slice(start, start + input.pageSize), total: filteredItems.length };
     },
     async getSupplier(input): Promise<SupplierData | null> {
       const { data, error } = await client
@@ -1001,6 +1146,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       }
       if (!exactCodeSearch && input.dateFrom !== undefined) query = query.gte("received_at", input.dateFrom);
       if (!exactCodeSearch && input.dateTo !== undefined) query = query.lte("received_at", input.dateTo);
+      if (!exactCodeSearch && input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
@@ -1257,11 +1403,22 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       if (input.type !== undefined) query = query.eq("order_type", input.type);
       if (input.status !== undefined) query = query.eq("status", input.status);
+      if (input.customerId !== undefined) query = query.eq("customer_id", input.customerId);
       if (input.paymentStatus !== undefined) query = query.eq("payment_status", input.paymentStatus);
+      if (input.createdBy !== undefined) query = query.eq("created_by", input.createdBy);
+      if (input.priceListId !== undefined) query = query.eq("price_list_id", input.priceListId);
+      if (input.paymentMethod !== undefined) {
+        const orderIds = await loadSalesDocumentOrderIdsByPaymentMethod(client, input.organizationId, input.paymentMethod);
+        if (orderIds.length === 0) return { items: [], total: 0 };
+        query = query.in("id", orderIds);
+      }
       if (input.from !== undefined) query = query.gte("created_at", input.from);
       if (input.to !== undefined) query = query.lte("created_at", input.to);
+      if (input.search === undefined) {
+        query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error !== null) throw error;
 
       let rows = data ?? [];
@@ -1277,11 +1434,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         });
       }
 
-      const page = paginate(rows, input.page, input.pageSize);
+      const page = input.search === undefined
+        ? { items: rows, total: count ?? 0 }
+        : paginate(rows, input.page, input.pageSize);
       const sellers = await loadSellerMap(client, page.items.map((row) => row.created_by));
       return {
         items: page.items.map((row) => toSalesDocumentListItem(row, sellers)),
-        total: input.search === undefined ? data?.length ?? 0 : page.total,
+        total: page.total,
       };
     },
     async getSalesDocument(input): Promise<SalesDocumentDetailData | null> {
@@ -1298,13 +1457,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const sellers = await loadSellerMap(client, [order.created_by]);
       const base = toSalesDocumentListItem(order, sellers);
-      const [items, paymentReceipts, debtEntries, stockMovements, history, priceList] = await Promise.all([
+      const [items, priceList, paymentReceipts, debtEntries, stockMovements, history] = await Promise.all([
         loadSalesDocumentItems(client, input.organizationId, input.orderId),
+        loadSalesDocumentPriceList(client, input.organizationId, order.price_list_id),
         loadSalesDocumentPaymentReceipts(client, input.organizationId, input.orderId),
         loadSalesDocumentDebtEntries(client, input.organizationId, input.orderId),
         loadSalesDocumentStockMovements(client, input.organizationId, input.orderId),
         loadSalesDocumentHistory(client, input.organizationId, input.orderId),
-        loadSalesDocumentPriceList(client, input.organizationId, order.price_list_id),
       ]);
 
       return {
@@ -1344,6 +1503,14 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         );
       return paginate(filtered, input.page, input.pageSize);
     },
+    async listRetailDebts(input): Promise<{ items: RetailDebtInvoiceData[]; total: number }> {
+      const retailCustomer = await loadCustomerByCode(client, input.organizationId, "KH000001");
+      if (retailCustomer === null) {
+        throw { code: "22023", message: "default retail customer KH000001 is not configured" };
+      }
+      const invoices = await loadRetailDebtInvoices(client, input.organizationId, retailCustomer.id);
+      return paginate(invoices, input.page, input.pageSize);
+    },
     async getCustomerDebt(input): Promise<CustomerDebtDetailData | null> {
       const { data: customer, error: customerError } = await client
         .from("customers")
@@ -1374,6 +1541,55 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         allocated_amount: Number(data.paid_amount ?? data.allocated_amount ?? 0),
       };
     },
+    async createCashbookVoucher(input): Promise<CashbookVoucherData> {
+      const { data, error } = await client.rpc("create_cashbook_voucher_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("CASHBOOK_VOUCHER_RESULT_INVALID");
+      return {
+        id: String(data.id ?? ""),
+        code: String(data.code ?? ""),
+        source_type: "manual_voucher",
+        status: String(data.status ?? "posted") as "posted" | "cancelled",
+        amount: Number(data.amount ?? 0),
+      };
+    },
+    async cancelCashbookVoucher(input): Promise<CashbookVoucherData> {
+      const { data, error } = await client.rpc("cancel_cashbook_voucher_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_voucher_id: input.voucherId,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("CASHBOOK_VOUCHER_CANCEL_RESULT_INVALID");
+      return {
+        id: String(data.id ?? ""),
+        code: String(data.code ?? ""),
+        source_type: "manual_voucher",
+        status: String(data.status ?? "cancelled") as "posted" | "cancelled",
+        amount: Number(data.amount ?? 0),
+      };
+    },
+    async reviseCashbookVoucher(input): Promise<CashbookVoucherData> {
+      const { data, error } = await client.rpc("revise_cashbook_voucher_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_voucher_id: input.voucherId,
+        p_payload: input.payload,
+      });
+      if (error !== null) throw error;
+      if (!isRecord(data)) throw new Error("CASHBOOK_VOUCHER_REVISE_RESULT_INVALID");
+      return {
+        id: String(data.id ?? ""),
+        code: String(data.code ?? ""),
+        source_type: "manual_voucher",
+        status: String(data.status ?? "posted") as "posted" | "cancelled",
+        amount: Number(data.amount ?? 0),
+      };
+    },
     async listCashbookEntries(input): Promise<CashbookListData> {
       let query = client
         .from("cashbook_entries")
@@ -1387,6 +1603,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.financeAccountId !== undefined) query = query.eq("finance_account_id", input.financeAccountId);
       if (input.direction !== undefined) query = query.eq("direction", input.direction);
       if (input.sourceType !== undefined) query = query.eq("source_type", input.sourceType);
+      if (input.status !== undefined) query = query.eq("status", input.status);
       if (input.isBusinessAccounted !== undefined) {
         query = query.eq("is_business_accounted", input.isBusinessAccounted);
       }
@@ -1399,10 +1616,14 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       let items = await Promise.all((data ?? []).map((row) => hydrateCashbookEntry(client, input.organizationId, row)));
       if (input.search !== undefined) {
         const search = input.search.toLocaleLowerCase("vi");
-        items = items.filter((item) =>
-          item.code.toLocaleLowerCase("vi").includes(search) ||
-          item.note?.toLocaleLowerCase("vi").includes(search) === true
-        );
+        items = items.filter((item) => {
+          const codeMatch = item.code.toLocaleLowerCase("vi").includes(search);
+          const noteMatch = item.note?.toLocaleLowerCase("vi").includes(search) === true;
+          if (input.searchScope === "code") return codeMatch;
+          if (input.searchScope === "note") return noteMatch;
+          if (input.searchScope === "transfer_content") return false;
+          return codeMatch || noteMatch;
+        });
       }
 
       const summaryItems = items.filter((item) => item.status === "posted");
@@ -1588,6 +1809,28 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         balanced_at: String(data.balanced_at),
         note: data.note === null ? null : String(data.note),
       };
+    },
+    async getMaterialOpeningOptions(input): Promise<MaterialOpeningOptionsData | null> {
+      return await loadMaterialOpeningOptions(client, input.organizationId, input.productId);
+    },
+    async previewPosMaterialShortage(input): Promise<PosMaterialShortagePreviewData | null> {
+      return await loadPosMaterialShortagePreview(client, input.organizationId, input.productId, input.quantity);
+    },
+    async createMaterialOpening(input): Promise<MaterialOpeningResultData> {
+      const { data, error } = await client.rpc("open_normal_material_tx", {
+        p_actor_user_id: input.actorUserId,
+        p_organization_id: input.organizationId,
+        p_payload: {
+          product_id: input.productId,
+          inventory_shape: input.inventoryShape,
+          opened_unit_id: input.openedUnitId,
+          opened_qty: input.openedQty,
+          old_remaining_qty: input.oldRemainingQty ?? 0,
+          note: input.note ?? null,
+        },
+      });
+      if (error !== null) throw error;
+      return toMaterialOpeningResult(data);
     },
     async listProductionQueue(input): Promise<{ items: ProductionQueueItemData[]; total: number }> {
       const { data, error, count } = await client
@@ -1782,23 +2025,86 @@ async function nextSupplierCode(client: DatabaseClient, organizationId: string):
   return data;
 }
 
-function toCustomerData(row: {
-  id: string;
-  code: string;
-  name: string;
-  phone: string | null;
-  customer_group_id: string | null;
-  customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
-}): CustomerData {
+function toCustomerData(
+  row: CustomerRepositoryRow,
+  creatorMap: Map<string, string> = new Map(),
+  salesTotalMap: Map<string, number> = new Map(),
+  debtTotalMap: Map<string, number> = new Map(),
+): CustomerData {
   const group = Array.isArray(row.customer_groups) ? row.customer_groups[0] : row.customer_groups;
+  const createdBy = row.created_by ?? null;
+  const creatorName = createdBy === null ? undefined : creatorMap.get(createdBy);
   return {
     id: row.id,
     code: row.code,
     name: row.name,
     phone: row.phone,
+    tax_code: row.tax_code ?? null,
+    address: row.address ?? null,
     customer_group_id: row.customer_group_id,
     customer_group: group ?? null,
+    created_at: row.created_at ?? "",
+    created_by: createdBy === null ? null : { id: createdBy, name: creatorName ?? "" },
+    total_sales_amount: salesTotalMap.get(row.id) ?? 0,
+    total_debt_amount: debtTotalMap.get(row.id) ?? 0,
   };
+}
+
+function isMissingCustomerExtendedColumnError(error: { code?: string; message?: string } | null) {
+  return error?.code === "42703" &&
+    (
+      error.message?.includes("customers.tax_code") === true ||
+      error.message?.includes("customers.address") === true ||
+      error.message?.includes("customers.created_by") === true ||
+      error.message?.includes("customers.created_at") === true
+    );
+}
+
+async function loadCustomerSalesTotals(
+  client: DatabaseClient,
+  organizationId: string,
+  customerIds: string[],
+): Promise<Map<string, number>> {
+  const uniqueIds = [...new Set(customerIds.filter((id) => id.length > 0))];
+  const totals = new Map(uniqueIds.map((id) => [id, 0]));
+  if (uniqueIds.length === 0) return totals;
+
+  const { data, error } = await client
+    .from("orders")
+    .select("customer_id, total_amount")
+    .eq("organization_id", organizationId)
+    .eq("order_type", "invoice")
+    .eq("status", "completed")
+    .in("customer_id", uniqueIds);
+
+  if (error !== null) throw error;
+
+  for (const row of data ?? []) {
+    const customerId = String(row.customer_id ?? "");
+    if (customerId.length === 0) continue;
+    totals.set(customerId, (totals.get(customerId) ?? 0) + Number(row.total_amount ?? 0));
+  }
+
+  return totals;
+}
+
+async function loadCustomerDebtTotals(
+  client: DatabaseClient,
+  organizationId: string,
+  customerIds: string[],
+): Promise<Map<string, number>> {
+  const uniqueIds = [...new Set(customerIds.filter((id) => id.length > 0))];
+  const totals = new Map(uniqueIds.map((id) => [id, 0]));
+  if (uniqueIds.length === 0) return totals;
+
+  const invoices = await loadOpenDebtInvoices(client, organizationId, undefined, uniqueIds);
+  for (const invoice of invoices) {
+    const customerId = invoice.customer_id ?? "";
+    if (!totals.has(customerId)) continue;
+    totals.set(customerId, (totals.get(customerId) ?? 0) + invoice.remaining_debt);
+  }
+
+  return totals;
 }
 
 function toSupplierData(row: {
@@ -2110,6 +2416,22 @@ function toQuoteSummaryData(value: unknown): QuoteSummaryData {
   };
 }
 
+function toMaterialOpeningResult(value: unknown): MaterialOpeningResultData {
+  if (!isRecord(value)) throw new Error("MATERIAL_OPENING_RESULT_INVALID");
+  return {
+    id: String(value.id),
+    product_id: String(value.product_id),
+    inventory_shape: "normal",
+    source_type: "manual_normal",
+    opened_unit_id: String(value.opened_unit_id),
+    opened_qty: Number(value.opened_qty),
+    opened_stock_qty: Number(value.opened_stock_qty),
+    stock_movement_id: typeof value.stock_movement_id === "string" ? value.stock_movement_id : null,
+    warnings: Array.isArray(value.warnings) ? value.warnings.map(String) : [],
+    created_at: String(value.created_at),
+  };
+}
+
 function customerSnapshot(value: unknown): { id: string | null; code: string | null; name: string; phone: string | null } {
   const snapshot = isRecord(value) ? value : {};
   if (snapshot.type === "retail") return { id: null, code: null, name: "Khách lẻ", phone: null };
@@ -2345,6 +2667,23 @@ function toSalesDocumentListItem(
   };
 }
 
+async function loadSalesDocumentOrderIdsByPaymentMethod(
+  client: DatabaseClient,
+  organizationId: string,
+  paymentMethod: "cash" | "bank_transfer",
+): Promise<string[]> {
+  const { data, error } = await client
+    .from("payment_receipts")
+    .select("order_id, payment_receipt_methods!inner(method_type)")
+    .eq("organization_id", organizationId)
+    .eq("status", "posted")
+    .not("order_id", "is", null)
+    .eq("payment_receipt_methods.method_type", paymentMethod);
+  if (error !== null) throw error;
+
+  return Array.from(new Set((data ?? []).map((row) => String(row.order_id)).filter((orderId) => orderId.length > 0)));
+}
+
 async function loadSalesDocumentItems(
   client: DatabaseClient,
   organizationId: string,
@@ -2399,7 +2738,11 @@ async function loadSalesDocumentPaymentReceipts(
   return receipts.filter((receipt): receipt is PaymentReceiptDetailData => receipt !== null).map((receipt) => ({
     id: receipt.id,
     code: receipt.code,
+    status: receipt.status,
+    receipt_type: receipt.receipt_type,
     total_received_amount: receipt.total_received_amount,
+    created_at: receipt.created_at,
+    created_by: receipt.created_by,
     methods: receipt.methods,
     allocations: receipt.allocations,
   }));
@@ -2492,19 +2835,26 @@ async function hydrateCashbookEntry(
   const account = Array.isArray(row.finance_accounts) ? row.finance_accounts[0] : row.finance_accounts;
   let code = String(row.id);
   let note = row.description === null ? null : String(row.description ?? "");
+  let counterparty: CashbookEntryData["counterparty"] = { type: "none", name: null, phone: null };
 
   if (row.source_type === "payment_receipt_method" && typeof row.payment_receipt_method_id === "string") {
     const receipt = await loadReceiptForPaymentMethod(client, organizationId, row.payment_receipt_method_id);
     if (receipt !== null) {
       code = receipt.code;
       note = note || `Thu ${receipt.code}`;
+      const receiptDetail = await loadPaymentReceiptDetail(client, organizationId, receipt.id);
+      counterparty = {
+        type: receiptDetail?.customer == null ? "none" : "customer",
+        name: receiptDetail?.customer?.name ?? null,
+        phone: null,
+      };
     }
   }
 
   if (row.source_type === "cashbook_voucher" && typeof row.cashbook_voucher_id === "string") {
     const { data: voucher, error } = await client
       .from("cashbook_vouchers")
-      .select("code, reason")
+      .select("code, reason, counterparty_type, counterparty_name, counterparty_phone")
       .eq("id", row.cashbook_voucher_id)
       .eq("organization_id", organizationId)
       .maybeSingle();
@@ -2512,6 +2862,11 @@ async function hydrateCashbookEntry(
     if (voucher !== null) {
       code = voucher.code;
       note = voucher.reason;
+      counterparty = {
+        type: voucher.counterparty_type,
+        name: voucher.counterparty_name,
+        phone: voucher.counterparty_phone,
+      };
     }
   }
 
@@ -2526,6 +2881,7 @@ async function hydrateCashbookEntry(
     source_type: String(row.source_type) as "payment_receipt_method" | "cashbook_voucher",
     created_at: String(row.entry_time ?? row.created_at),
     note,
+    counterparty,
   };
 }
 
@@ -2539,7 +2895,6 @@ async function hydrateCashbookEntryDetail(
   const detail: CashbookEntryDetailData = {
     ...base,
     created_by: { id: String(row.created_by), name: createdBy },
-    counterparty: { type: "none", name: null, phone: null },
     payment_method: "manual",
     source: { type: "manual_voucher", id: String(row.cashbook_voucher_id ?? ""), code: base.code, order_code: null },
     allocations: [],
@@ -2617,7 +2972,7 @@ async function loadPaymentReceiptDetail(
 ): Promise<PaymentReceiptDetailData | null> {
   const { data: receipt, error } = await client
     .from("payment_receipts")
-    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_at")
+    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_by, created_at")
     .eq("id", receiptId)
     .eq("organization_id", organizationId)
     .maybeSingle();
@@ -2632,12 +2987,16 @@ async function loadPaymentReceiptDetail(
     .order("line_no", { ascending: true });
   if (methodsError !== null) throw methodsError;
 
-  const customer = typeof receipt.customer_id === "string"
+  const receiptCustomer = typeof receipt.customer_id === "string"
     ? await loadCustomerRef(client, organizationId, receipt.customer_id)
     : null;
   const sourceOrder = typeof receipt.order_id === "string"
     ? await loadOrderRef(client, organizationId, receipt.order_id)
     : null;
+  const orderCustomer = receiptCustomer === null && typeof receipt.order_id === "string"
+    ? await loadOrderCustomerRef(client, organizationId, receipt.order_id)
+    : null;
+  const customer = receiptCustomer ?? orderCustomer;
 
   return {
     id: receipt.id,
@@ -2646,6 +3005,7 @@ async function loadPaymentReceiptDetail(
     receipt_type: receipt.receipt_type,
     total_received_amount: Number(receipt.total_received_amount),
     created_at: receipt.created_at,
+    created_by: { id: String(receipt.created_by ?? ""), name: await loadProfileName(client, String(receipt.created_by ?? "")) },
     customer,
     source_order: sourceOrder,
     methods: (methods ?? []).map((method) => {
@@ -2720,6 +3080,23 @@ async function loadOrderRef(
   return data === null ? null : { id: data.id, code: data.code, total_amount: Number(data.total_amount) };
 }
 
+async function loadOrderCustomerRef(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+): Promise<{ id: string | null; code: string | null; name: string } | null> {
+  const { data, error } = await client
+    .from("orders")
+    .select("customer_snapshot")
+    .eq("id", orderId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  if (data === null) return null;
+  const customer = customerSnapshot(data.customer_snapshot);
+  return { id: customer.id, code: customer.code, name: customer.name };
+}
+
 async function loadProfileName(client: DatabaseClient, userId: string): Promise<string> {
   const { data, error } = await client
     .from("profiles")
@@ -2748,7 +3125,8 @@ async function loadCustomerDebtSummaries(
   const byCustomer = new Map<string, CustomerDebtSummaryData>();
 
   for (const invoice of invoices) {
-    const key = invoice.customer_id ?? `retail:${invoice.order_id}`;
+    if (invoice.customer_id === null) continue;
+    const key = invoice.customer_id;
     const current = byCustomer.get(key) ?? {
       customer_id: invoice.customer_id,
       customer_code: invoice.customer_code,
@@ -2768,13 +3146,52 @@ async function loadCustomerDebtSummaries(
     .sort((left, right) => left.customer_name.localeCompare(right.customer_name, "vi"));
 }
 
+async function loadRetailDebtInvoices(
+  client: DatabaseClient,
+  organizationId: string,
+  retailCustomerId: string,
+): Promise<RetailDebtInvoiceData[]> {
+  const invoices = await loadOpenDebtInvoices(client, organizationId, retailCustomerId);
+  if (invoices.length === 0) return [];
+
+  const { data, error } = await client
+    .from("customer_debt_entries")
+    .select("order_id, retail_debt_note, created_at")
+    .eq("organization_id", organizationId)
+    .eq("customer_id", retailCustomerId)
+    .eq("entry_type", "invoice_debt")
+    .in("order_id", invoices.map((invoice) => invoice.order_id))
+    .order("created_at", { ascending: false });
+  if (error !== null) throw error;
+
+  const noteByOrder = new Map<string, string | null>();
+  for (const entry of data ?? []) {
+    if (!noteByOrder.has(entry.order_id)) {
+      noteByOrder.set(entry.order_id, entry.retail_debt_note ?? null);
+    }
+  }
+
+  return invoices.map((invoice) => ({
+    order_id: invoice.order_id,
+    order_code: invoice.order_code,
+    created_at: invoice.created_at,
+    total_amount: invoice.total_amount,
+    paid_amount: invoice.paid_amount,
+    debt_amount: invoice.debt_amount,
+    remaining_debt: invoice.remaining_debt,
+    retail_debt_note: noteByOrder.get(invoice.order_id) ?? null,
+  }));
+}
+
 async function loadOpenDebtInvoices(
   client: DatabaseClient,
   organizationId: string,
   customerId?: string,
+  customerIds?: string[],
 ): Promise<Array<{
   order_id: string;
   order_code: string;
+  created_at: string;
   customer_id: string | null;
   customer_code: string | null;
   customer_name: string;
@@ -2794,6 +3211,7 @@ async function loadOpenDebtInvoices(
     .limit(1000);
 
   if (customerId !== undefined) orderQuery = orderQuery.eq("customer_id", customerId);
+  if (customerIds !== undefined && customerIds.length > 0) orderQuery = orderQuery.in("customer_id", customerIds);
 
   const { data: orders, error: ordersError } = await orderQuery;
   if (ordersError !== null) throw ordersError;
@@ -2823,6 +3241,7 @@ async function loadOpenDebtInvoices(
       return {
         order_id: order.id,
         order_code: order.code,
+        created_at: String(order.created_at),
         customer_id: order.customer_id,
         customer_code: typeof snapshot.code === "string" ? snapshot.code : null,
         customer_name: typeof snapshot.name === "string" ? snapshot.name : "Khách lẻ",
@@ -3044,6 +3463,324 @@ async function hydrateInventoryProducts(
       is_negative: availableQty < 0,
     };
   });
+}
+
+async function loadPosMaterialShortagePreview(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+  quantity: number,
+): Promise<PosMaterialShortagePreviewData | null> {
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError !== null) throw productError;
+  if (product === null) return null;
+
+  const requiredByProduct = new Map<string, number>();
+  const bom = await loadProductBom(client, organizationId, productId);
+  const source = bom !== null && bom.items.length > 0 ? "standard_bom" : "product";
+
+  if (source === "standard_bom" && bom !== null) {
+    for (const item of bom.items) {
+      requiredByProduct.set(
+        item.component_product_id,
+        (requiredByProduct.get(item.component_product_id) ?? 0) + item.quantity * quantity,
+      );
+    }
+  } else {
+    requiredByProduct.set(productId, quantity);
+  }
+
+  const productIds = [...requiredByProduct.keys()];
+  const { data: settingsRows, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("product_id, inventory_shape, stock_unit_id")
+    .eq("organization_id", organizationId)
+    .in("product_id", productIds);
+  if (settingsError !== null) throw settingsError;
+
+  const settingsByProduct = new Map((settingsRows ?? []).map((row) => [row.product_id, row]));
+  const normalProductIds = productIds.filter((id) => settingsByProduct.get(id)?.inventory_shape === "normal");
+  const warnings = normalProductIds.length < productIds.length ? ["UNSUPPORTED_INVENTORY_SHAPE"] : [];
+  if (normalProductIds.length === 0) {
+    return {
+      product_id: productId,
+      quantity,
+      source,
+      ...(source === "standard_bom" && bom !== null ? { bom_id: bom.id } : {}),
+      shortages: [],
+      warnings,
+    };
+  }
+
+  const { data: products, error: productsError } = await client
+    .from("products")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .in("id", normalProductIds);
+  if (productsError !== null) throw productsError;
+
+  const stockUnitIds = [...new Set(
+    normalProductIds.map((id) => settingsByProduct.get(id)?.stock_unit_id).filter(isString),
+  )];
+  const { data: units, error: unitsError } = stockUnitIds.length === 0
+    ? { data: [], error: null }
+    : await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .in("id", stockUnitIds);
+  if (unitsError !== null) throw unitsError;
+
+  const { data: movements, error: movementsError } = await client
+    .from("stock_movements")
+    .select("product_id, quantity_delta")
+    .eq("organization_id", organizationId)
+    .in("product_id", normalProductIds);
+  if (movementsError !== null) throw movementsError;
+
+  const availableByProduct = new Map<string, number>();
+  for (const movement of movements ?? []) {
+    availableByProduct.set(
+      movement.product_id,
+      (availableByProduct.get(movement.product_id) ?? 0) + Number(movement.quantity_delta),
+    );
+  }
+
+  const shortagesProductIds = normalProductIds.filter((id) => {
+    const requiredQty = requiredByProduct.get(id) ?? 0;
+    const availableQty = availableByProduct.get(id) ?? 0;
+    return requiredQty > availableQty;
+  });
+  const conversionsByProduct = await loadNormalMaterialOpeningConversions(
+    client,
+    organizationId,
+    shortagesProductIds,
+    settingsByProduct,
+  );
+  const productsById = new Map((products ?? []).map((row) => [row.id, row]));
+  const unitsById = new Map((units ?? []).map((row) => [row.id, row]));
+
+  return {
+    product_id: productId,
+    quantity,
+    source,
+    ...(source === "standard_bom" && bom !== null ? { bom_id: bom.id } : {}),
+    shortages: shortagesProductIds.flatMap((id) => {
+      const productRow = productsById.get(id);
+      const settings = settingsByProduct.get(id);
+      const stockUnit = unitsById.get(settings?.stock_unit_id ?? "");
+      if (productRow === undefined || settings === undefined || stockUnit === undefined) return [];
+      const requiredQty = requiredByProduct.get(id) ?? 0;
+      const availableQty = availableByProduct.get(id) ?? 0;
+      const conversionOptions = conversionsByProduct.get(id) ?? [];
+      return [{
+        product_id: id,
+        code: productRow.code,
+        name: productRow.name,
+        required_qty: requiredQty,
+        available_qty: availableQty,
+        shortage_qty: requiredQty - availableQty,
+        stock_unit: { id: stockUnit.id, code: stockUnit.code, name: stockUnit.name },
+        inventory_shape: "normal" as const,
+        quick_material_opening_supported: conversionOptions.length > 0,
+        conversion_options: conversionOptions,
+      }];
+    }),
+    warnings,
+  };
+}
+
+async function loadNormalMaterialOpeningConversions(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+  settingsByProduct: Map<string, { product_id: string; inventory_shape: string; stock_unit_id: string }>,
+): Promise<Map<string, MaterialOpeningOptionsData["conversions"]>> {
+  if (productIds.length === 0) return new Map();
+  const { data: conversions, error: conversionError } = await client
+    .from("product_unit_conversions")
+    .select("product_id, sale_unit_id, stock_unit_id, stock_qty_per_sale_unit")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .in("product_id", productIds);
+  if (conversionError !== null) throw conversionError;
+
+  const filteredConversions = (conversions ?? []).filter((row) => {
+    const settings = settingsByProduct.get(row.product_id);
+    return settings !== undefined && row.stock_unit_id === settings.stock_unit_id;
+  });
+  const unitIds = [...new Set(filteredConversions.map((row) => row.sale_unit_id).filter(isString))];
+  const unitsById = new Map<string, { code: string; name: string }>();
+  if (unitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("id", unitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, { code: unit.code, name: unit.name });
+  }
+
+  const result = new Map<string, MaterialOpeningOptionsData["conversions"]>();
+  for (const conversion of filteredConversions) {
+    const unit = unitsById.get(conversion.sale_unit_id);
+    if (unit === undefined) continue;
+    const items = result.get(conversion.product_id) ?? [];
+    items.push({
+      unit_id: conversion.sale_unit_id,
+      code: unit.code,
+      name: unit.name,
+      stock_qty_per_unit: Number(conversion.stock_qty_per_sale_unit),
+    });
+    result.set(conversion.product_id, items);
+  }
+  return result;
+}
+
+async function loadMaterialOpeningOptions(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+): Promise<MaterialOpeningOptionsData | null> {
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id, code, name, status")
+    .eq("organization_id", organizationId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError !== null) throw productError;
+  if (product === null) return null;
+
+  const { data: settings, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("inventory_shape, stock_unit_id")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .maybeSingle();
+  if (settingsError !== null) throw settingsError;
+  if (settings === null || !isString(settings.stock_unit_id)) return null;
+
+  const { data: stockUnit, error: stockUnitError } = await client
+    .from("inventory_units")
+    .select("id, code, name")
+    .eq("organization_id", organizationId)
+    .eq("id", settings.stock_unit_id)
+    .maybeSingle();
+  if (stockUnitError !== null) throw stockUnitError;
+  if (stockUnit === null) return null;
+
+  const { data: conversions, error: conversionError } = await client
+    .from("product_unit_conversions")
+    .select("sale_unit_id, stock_qty_per_sale_unit")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .eq("stock_unit_id", settings.stock_unit_id)
+    .eq("is_active", true);
+  if (conversionError !== null) throw conversionError;
+
+  const conversionUnitIds = [...new Set((conversions ?? []).map((row) => row.sale_unit_id).filter(isString))];
+  const unitsById = new Map<string, { code: string; name: string }>();
+  if (conversionUnitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, code, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("id", conversionUnitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, { code: unit.code, name: unit.name });
+  }
+
+  return {
+    product: {
+      id: product.id,
+      code: product.code,
+      name: product.name,
+      inventory_shape: settings.inventory_shape as "normal" | "roll" | "sheet",
+      stock_unit: { id: stockUnit.id, code: stockUnit.code, name: stockUnit.name },
+    },
+    conversions: (conversions ?? [])
+      .filter((row) => unitsById.has(row.sale_unit_id))
+      .map((row) => {
+        const unit = unitsById.get(row.sale_unit_id)!;
+        return {
+          unit_id: row.sale_unit_id,
+          code: unit.code,
+          name: unit.name,
+          stock_qty_per_unit: Number(row.stock_qty_per_sale_unit),
+        };
+      }),
+    warnings: settings.inventory_shape === "normal" && (conversions ?? []).length === 0 ? ["NO_ACTIVE_CONVERSION"] : [],
+  };
+}
+
+async function loadProductBom(
+  client: DatabaseClient,
+  organizationId: string,
+  productId: string,
+): Promise<ProductBomData | null> {
+  const { data: bom, error: bomError } = await client
+    .from("product_boms")
+    .select("id, product_id, version, status, notes, created_at")
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .eq("status", "active")
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (bomError !== null) throw bomError;
+  if (bom === null) return null;
+
+  const { data: rows, error: itemError } = await client
+    .from("product_bom_items")
+    .select("id, component_product_id, quantity, sort_order, notes")
+    .eq("organization_id", organizationId)
+    .eq("bom_id", bom.id)
+    .order("sort_order", { ascending: true });
+  if (itemError !== null) throw itemError;
+
+  const componentIds = [...new Set((rows ?? []).map((row) => row.component_product_id).filter(isString))];
+  const productsById = new Map<string, { id: string; code: string; name: string; unit_name: string }>();
+  if (componentIds.length > 0) {
+    const { data: products, error: productError } = await client
+      .from("products")
+      .select("id, code, name, unit_name")
+      .eq("organization_id", organizationId)
+      .in("id", componentIds);
+    if (productError !== null) throw productError;
+    for (const product of products ?? []) productsById.set(product.id, product);
+  }
+
+  return {
+    id: bom.id,
+    product_id: bom.product_id,
+    version: Number(bom.version),
+    status: bom.status as "active" | "archived",
+    notes: bom.notes,
+    created_at: bom.created_at,
+    items: (rows ?? []).map((row) => {
+      const product = productsById.get(row.component_product_id);
+      return {
+        id: row.id,
+        component_product_id: row.component_product_id,
+        component_product: {
+          id: product?.id ?? row.component_product_id,
+          code: product?.code ?? "",
+          name: product?.name ?? "",
+          unit_name: product?.unit_name ?? "",
+        },
+        quantity: Number(row.quantity),
+        sort_order: Number(row.sort_order),
+        notes: row.notes,
+      };
+    }),
+  };
 }
 
 function isString(value: unknown): value is string {

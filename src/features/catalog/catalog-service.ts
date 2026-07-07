@@ -2,7 +2,9 @@ import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
 import type {
   Customer,
+  CustomerGroup,
   CustomerListResponse,
+  ProductBom,
   PriceFormulaApplyResult,
   PriceFormulaInput,
   PriceFormulaPreview,
@@ -18,12 +20,37 @@ export interface CatalogApiRequester {
   request<T>(path: string, init?: RequestInit): Promise<T>
 }
 
+export interface CustomerListFilters {
+  search?: string
+  customer_group_id?: string
+  created_from?: string
+  created_to?: string
+  created_by?: string
+  total_sales_min?: number
+  total_sales_max?: number
+  total_debt_min?: number
+  total_debt_max?: number
+  page?: number
+  page_size?: number
+}
+
 export function createCatalogService(api: CatalogApiRequester) {
   return {
-    listProducts: (input: { search?: string; status?: ProductStatus | 'all' } = {}) => {
+    listProducts: (input: {
+      search?: string
+      status?: ProductStatus | 'all'
+      sell_method?: SellMethod
+      inventory_shape?: Product['inventory_shape']
+      page?: number
+      page_size?: number
+    } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
       if (input.status) params.set('status', input.status)
+      if (input.sell_method) params.set('sell_method', input.sell_method)
+      if (input.inventory_shape) params.set('inventory_shape', input.inventory_shape)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<ProductListResponse>(`/api/v1/products${query ? `?${query}` : ''}`)
     },
@@ -53,16 +80,38 @@ export function createCatalogService(api: CatalogApiRequester) {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
-    listCustomers: (input: { search?: string } = {}) => {
+    getProductBom: (productId: string) => api.request<ProductBom | null>(`/api/v1/products/${productId}/bom`),
+    saveProductBom: (
+      productId: string,
+      input: { notes?: string | null; items: Array<{ component_product_id: string; quantity: number; notes?: string | null }> },
+    ) =>
+      api.request<ProductBom>(`/api/v1/products/${productId}/bom`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    listCustomers: (input: CustomerListFilters = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
+      if (input.customer_group_id) params.set('customer_group_id', input.customer_group_id)
+      if (input.created_from) params.set('created_from', input.created_from)
+      if (input.created_to) params.set('created_to', input.created_to)
+      if (input.created_by) params.set('created_by', input.created_by)
+      if (input.total_sales_min !== undefined) params.set('total_sales_min', String(input.total_sales_min))
+      if (input.total_sales_max !== undefined) params.set('total_sales_max', String(input.total_sales_max))
+      if (input.total_debt_min !== undefined) params.set('total_debt_min', String(input.total_debt_min))
+      if (input.total_debt_max !== undefined) params.set('total_debt_max', String(input.total_debt_max))
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<CustomerListResponse>(`/api/v1/customers${query ? `?${query}` : ''}`)
     },
+    listCustomerGroups: () => api.request<{ items: CustomerGroup[] }>('/api/v1/customer-groups'),
     createCustomer: (input: {
       code?: string
       name: string
       phone?: string
+      tax_code?: string
+      address?: string
       customer_group_id?: string | null
     }) =>
       api.request<Customer>('/api/v1/customers', {

@@ -1,6 +1,5 @@
 # 01-USERS-PERMISSIONS — Quản lý tài khoản và quyền
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn kỹ thuật:** `05-BACKEND-MayChu/POS/AUTH.md`, `05-BACKEND-MayChu/FOUNDATION-API.md`
 
 ---
@@ -21,7 +20,7 @@ Quyết định MVP 2026-07-01:
 - Vận hành xưởng nhỏ/nội bộ không chia nhỏ quyền quá mức.
 - Nhân viên nội bộ mặc định nên được cấp preset đủ quyền thao tác chính của MVP.
 - UI không nên làm trải nghiệm bị chia cắt bởi thiếu các quyền nhỏ như `perm.apply_discount`, trừ khi Owner đã chốt kiểm soát riêng.
-- Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống, hủy/sửa chứng từ đã chốt nếu cần, và có thể là tài chính nhạy cảm nếu Owner chốt sau.
+- Chỉ tách quyền mạnh cho quản lý user/quyền, cấu hình hệ thống, hủy/sửa chứng từ đã chốt nếu cần, và có thể là tài chính nhạy cảm nếu Owner chốt riêng.
 - Trạng thái "không có quyền" không phải luồng bình thường của nhân viên nội bộ MVP; chủ yếu dành cho tài khoản hạn chế đặc biệt hoặc truy cập nhầm vùng quản trị.
 
 Ghi chú từ KiotViet audit ngày `2026-07-01`:

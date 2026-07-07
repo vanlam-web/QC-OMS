@@ -1,7 +1,7 @@
 # Bill, Printer and Messaging Draft
 
 > Ngay lap: 2026-07-01
-> Trang thai: Draft tham khao, chua phai Source of Truth Integration
+> Trang thai: Draft tham khao da duoc chuyen phan nghiep vu chinh sang Source of Truth Sales tai `docs/03-BUSINESS-NghiepVu/Sales/POS-BILL-PRINT-MESSAGING.md`
 > Ly do de draft: 06-INTEGRATION chi nen chot khi Business va Backend/API lien quan da ro.
 
 ---

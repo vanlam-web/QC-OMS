@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
+import { appRoutes } from './routes'
 
 export function RequireSession({
   authenticated,
@@ -11,6 +12,6 @@ export function RequireSession({
   children: ReactNode
 }) {
   if (pending) return null
-  if (!authenticated) return <Navigate to="/login" replace />
+  if (!authenticated) return <Navigate to={appRoutes.login} replace />
   return children
 }

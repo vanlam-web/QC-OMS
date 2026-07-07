@@ -1,6 +1,5 @@
 # 02-K03B-TOAST.md — K03-B: NHẮC BỔ SUNG SĐT KHÁCH HÀNG
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-POS-LAYOUT.md](../01-POS-LAYOUT.md)
 

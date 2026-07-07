@@ -9,12 +9,14 @@ import {
   createProduct,
   deletePriceListItem,
   applyPriceFormula,
+  getProductBom,
   listCustomerGroups,
   listCustomers,
   listPriceLists,
   listProducts,
   previewPriceFormula,
   resolvePrices,
+  saveProductBom,
   updateCustomer,
   updateCustomerGroup,
   updatePriceList,
@@ -105,6 +107,20 @@ export async function handleCatalog(
   }
 
   const productMatch = url.pathname.match(/^\/api\/v1\/products\/([^/]+)$/);
+  const productBomMatch = url.pathname.match(/^\/api\/v1\/products\/([^/]+)\/bom$/);
+  if (productBomMatch !== null) {
+    if (request.method === "GET") {
+      return successResponse(await getProductBom(dependencies.repository, context, productBomMatch[1]), traceId);
+    }
+    if (request.method === "POST") {
+      return successResponse(
+        await saveProductBom(dependencies.repository, context, productBomMatch[1], await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+  }
+
   if (productMatch !== null && request.method === "PATCH") {
     return successResponse(
       await updateProduct(dependencies.repository, context, productMatch[1], await request.json()),

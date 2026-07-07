@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import type { PermissionCode } from '../features/users/types'
+import { appRoutes } from './routes'
 
 export function RequirePermission({
   authenticated,
@@ -16,7 +17,7 @@ export function RequirePermission({
   children: ReactNode
 }) {
   if (pending) return null
-  if (!authenticated) return <Navigate to="/login" replace />
-  if (!permissions.includes(permission)) return <Navigate to="/forbidden" replace />
+  if (!authenticated) return <Navigate to={appRoutes.login} replace />
+  if (!permissions.includes(permission)) return <Navigate to={appRoutes.forbidden} replace />
   return children
 }

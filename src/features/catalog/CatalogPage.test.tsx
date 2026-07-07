@@ -5,7 +5,7 @@ import type { CatalogService } from './catalog-service'
 
 function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
   return {
-    listProducts: vi.fn(async () => ({
+    listProducts: vi.fn(async (input = {}) => ({
       items: [
         {
           id: 'p-1',
@@ -15,11 +15,22 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
           unit_name: 'm',
           sell_method: 'linear_m' as const,
           latest_purchase_cost: 100000,
+          inventory_shape: 'normal' as const,
+        },
+        {
+          id: 'p-2',
+          code: 'KEO',
+          name: 'Keo dán',
+          status: 'active' as const,
+          unit_name: 'chai',
+          sell_method: 'quantity' as const,
+          latest_purchase_cost: 20000,
+          inventory_shape: 'normal' as const,
         },
       ],
-      page: 1,
-      page_size: 20,
-      total: 1,
+      page: input.page ?? 1,
+      page_size: input.page_size ?? 15,
+      total: 2,
     })),
     createProduct: vi.fn(async () => ({
       id: 'p-2',
@@ -37,7 +48,27 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       unit_name: 'm',
       sell_method: 'linear_m' as const,
     })),
+    getProductBom: vi.fn(async () => null),
+    saveProductBom: vi.fn(async () => ({
+      id: 'bom-1',
+      product_id: 'p-1',
+      version: 1,
+      status: 'active' as const,
+      notes: null,
+      created_at: '2026-07-05T00:00:00Z',
+      items: [
+        {
+          id: 'bom-item-1',
+          component_product_id: 'p-2',
+          component_product: { id: 'p-2', code: 'KEO', name: 'Keo dán', unit_name: 'chai' },
+          quantity: 2,
+          sort_order: 1,
+          notes: 'Dán mica',
+        },
+      ],
+    })),
     listCustomers: vi.fn(async () => ({ items: [], page: 1, page_size: 20, total: 0 })),
+    listCustomerGroups: vi.fn(async () => ({ items: [] })),
     createCustomer: vi.fn(),
     resolvePrices: vi.fn(async () => ({ items: [] })),
     listPriceLists: vi.fn(async () => ({
@@ -84,11 +115,25 @@ it('lists products and creates a product', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
-  expect(screen.getByText('Đang tải hàng hóa...')).toBeInTheDocument()
+  expect(screen.getByText('Đang tải hàng hóa...').closest('.management-list-surface')).not.toBeNull()
   expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
-  expect(screen.getByText('Mica 3mm')).toBeInTheDocument()
+  expect(screen.getAllByText('Mica 3mm').length).toBeGreaterThan(0)
+  expect(screen.getByRole('main')).toHaveClass('management-page')
+  expect(screen.getByRole('heading', { name: 'Hàng hóa' }).closest('.management-page-header')).not.toBeNull()
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+  expect(sidebar).toHaveClass('management-filter-sidebar')
+  expect(within(sidebar).queryByRole('heading', { name: 'Bộ lọc' })).not.toBeInTheDocument()
+  expect(sidebar.querySelector('.management-filter-summary')).toBeNull()
+  expect(within(sidebar).queryByRole('button', { name: 'Đặt lại bộ lọc' })).not.toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Danh sách hàng hóa' })).toHaveClass('management-list-surface')
+  expect(screen.queryByRole('button', { name: 'Tạo công thức cho bộ lọc này' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
 
+  expect(screen.queryByRole('form', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
+  await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
   const createForm = screen.getByRole('form', { name: 'Tạo hàng hóa' })
+  expect(createForm.closest('.management-list-surface')).not.toBeNull()
   await userEvent.type(within(createForm).getByLabelText('Mã hàng'), 'DECAL')
   await userEvent.type(within(createForm).getByLabelText('Tên hàng'), 'Decal')
   await userEvent.type(within(createForm).getByLabelText('Đơn vị'), 'm²')
@@ -109,63 +154,144 @@ it('filters by status and toggles product active state', async () => {
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('MICA-3MM')
-  const filterForm = screen.getByRole('form', { name: 'Lọc hàng hóa' })
-  await userEvent.selectOptions(within(filterForm).getByLabelText('Trạng thái'), 'all')
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
-  expect(service.listProducts).toHaveBeenLastCalledWith({ search: '', status: 'all' })
+  const filterForm = screen.getByRole('search', { name: 'Lọc hàng hóa' })
+  expect(filterForm.closest('.management-page-header')).not.toBeNull()
+  expect(within(filterForm).getByLabelText('Tìm hàng hóa').closest('.management-compact-search')).not.toBeNull()
+  const createAction = within(filterForm).getByRole('button', { name: 'Tạo hàng hóa' })
+  expect(createAction.closest('.management-compact-search')).not.toBeNull()
+  expect(createAction).toHaveClass('management-compact-create-action')
+  const searchInput = within(filterForm).getByLabelText('Tìm hàng hóa')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+  expect(within(sidebar).getByRole('combobox', { name: 'Loại hàng' })).toHaveValue('all')
+  expect(within(sidebar).getByRole('combobox', { name: 'Cách bán' })).toHaveValue('all')
+  expect(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' })).toHaveValue('active')
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' }), 'all')
+  expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
+  await userEvent.type(searchInput, '{Enter}')
+  expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
+  expect(screen.queryByText('Trạng thái: Tất cả')).not.toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Ngưng bán' }))
+  await userEvent.click(screen.getAllByRole('button', { name: 'Ngưng bán' })[0])
   expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
 })
 
-it('renders pricebook as a grid-first pricing workspace', async () => {
+it('reactively filters products by existing product fields in the shared sidebar', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
-  const grid = await screen.findByRole('table', { name: 'Lưới bảng giá' })
-  const header = within(grid).getByRole('row', {
-    name: 'Mã hàng Tên hàng Giá nhập cuối Chi phí Lợi nhuận Bảng giá chung 25 Cách bán Trạng thái Thao tác',
+  await screen.findByText('MICA-3MM')
+  const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
+
+  expect(within(sidebar).getByRole('region', { name: 'Loại hàng' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Cách bán' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Trạng thái hàng hóa' })).toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Nhà cung cấp' })).not.toBeInTheDocument()
+  expect(within(sidebar).queryByRole('region', { name: 'Thương hiệu' })).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Loại hàng' }), 'roll')
+  expect(service.listProducts).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    inventory_shape: 'roll',
   })
-  expect(header).toBeInTheDocument()
-  expect(within(grid).getAllByRole('cell', { name: 'Chưa cấu hình' })).toHaveLength(2)
-  expect(within(grid).getAllByRole('cell', { name: 'Chưa xem' })).toHaveLength(2)
-  expect(screen.queryByText('Theo preview: giá từng bảng được xem và áp dụng qua phần công thức ở trên.')).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Cách bán' }), 'combo')
+  expect(service.listProducts).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 15,
+    search: undefined,
+    status: 'active',
+    inventory_shape: 'roll',
+    sell_method: 'combo',
+  })
 })
 
-it('previews formula results in the pricebook grid instead of placeholder cells', async () => {
+it('renders products as a goods and inventory-oriented list, not a pricebook workspace', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
-  expect(await screen.findByText('Bảng giá chung')).toBeInTheDocument()
-  expect(screen.getByText('25')).toBeInTheDocument()
-
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo công thức cho bộ lọc này' }))
-  await userEvent.type(screen.getByLabelText('Tên công thức'), 'Fomex')
-  await userEvent.type(screen.getByLabelText('Mã hàng chứa'), 'MICA')
-  await userEvent.type(screen.getByLabelText('Tên hàng chứa'), 'Mica')
-  await userEvent.selectOptions(screen.getByLabelText('Cách bán áp dụng'), 'linear_m')
-  await userEvent.selectOptions(screen.getByLabelText('Kiểu chi phí'), 'amount_plus_percent')
-  await userEvent.type(screen.getByLabelText('Chi phí cộng thêm'), '5000')
-  await userEvent.type(screen.getByLabelText('% theo giá nhập cuối'), '8')
-  await userEvent.selectOptions(screen.getByLabelText('Kiểu lợi nhuận'), 'tiers')
-  await userEvent.selectOptions(screen.getByLabelText('Điều kiện lợi nhuận'), '>')
-  await userEvent.type(screen.getByLabelText('Mốc giá nhập'), '100000')
-  await userEvent.type(screen.getByLabelText('Lợi nhuận tier'), '25000')
-  await userEvent.selectOptions(screen.getByLabelText('Điều chỉnh Bảng giá chung'), 'amount')
-  await userEvent.type(screen.getByLabelText('Giá trị điều chỉnh Bảng giá chung'), '20000')
-  await userEvent.click(screen.getByRole('button', { name: 'Xem trước' }))
-
-  expect(await screen.findAllByText('150.000')).toHaveLength(2)
-  const grid = screen.getByRole('table', { name: 'Lưới bảng giá' })
-  expect(within(grid).getByText('Hiện tại 120.000 → 150.000')).toBeInTheDocument()
-  expect(within(grid).queryByText('Giá tay 120.000 → 150.000')).not.toBeInTheDocument()
-  expect(within(grid).queryByText('Theo công thức 120.000 → 150.000')).not.toBeInTheDocument()
-  expect(within(grid).getByText('Mới 150.000')).toBeInTheDocument()
-  expect(service.previewPriceFormula).toHaveBeenCalledWith({
-    name: 'Fomex',
-    product_filter: { status: 'active', code_contains: 'MICA', name_contains: 'Mica', sell_method: 'linear_m' },
-    cost_formula: { type: 'amount_plus_percent', amount: 5000, percent_of_latest_purchase_cost: 8 },
-    profit_formula: { type: 'tiers', tiers: [{ operator: '>', value: 100000, amount: 25000 }] },
-    price_list_adjustments: { 'pl-default': { type: 'amount', amount: 20000 } },
+  const grid = await screen.findByRole('table', { name: 'Danh sách hàng hóa' })
+  expect(grid.closest('.management-table-viewport')).not.toBeNull()
+  const header = within(grid).getByRole('row', {
+    name: 'Mã hàng Tên hàng Giá nhập cuối Đơn vị Cách bán Trạng thái Thao tác',
   })
+  expect(header).toBeInTheDocument()
+  const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
+  expect(footer).toHaveClass('management-table-footer')
+  expect(footer).toContainElement(screen.getByText('1 - 2 trong 2 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
+  expect(screen.queryByRole('table', { name: 'Lưới bảng giá' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('form', { name: 'Công thức bảng giá' })).not.toBeInTheDocument()
+})
+
+it('opens product BOM and saves single-level normal components', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByText('MICA-3MM'))
+  const bomRegion = await screen.findByRole('region', { name: 'BOM MICA-3MM' })
+  await userEvent.selectOptions(within(bomRegion).getByLabelText('Vật tư'), 'p-2')
+  await userEvent.clear(within(bomRegion).getByLabelText('Định mức'))
+  await userEvent.type(within(bomRegion).getByLabelText('Định mức'), '2')
+  await userEvent.type(within(bomRegion).getByLabelText('Ghi chú'), 'Dán mica')
+  await userEvent.click(within(bomRegion).getByRole('button', { name: 'Lưu BOM' }))
+
+  expect(service.getProductBom).toHaveBeenCalledWith('p-1')
+  expect(service.saveProductBom).toHaveBeenCalledWith('p-1', {
+    items: [{ component_product_id: 'p-2', quantity: 2, notes: 'Dán mica' }],
+  })
+})
+
+it('uses the shared table footer to move between product pages', async () => {
+  const service = makeService({
+    listProducts: vi.fn(async (input = {}) => ({
+      items: [
+        {
+          id: `p-page-${input.page ?? 1}`,
+          code: input.page === 2 ? 'DECAL-2' : 'MICA-3MM',
+          name: input.page === 2 ? 'Decal trang 2' : 'Mica 3mm',
+          status: 'active' as const,
+          unit_name: 'm',
+          sell_method: 'linear_m' as const,
+          latest_purchase_cost: 100000,
+        },
+      ],
+      page: input.page ?? 1,
+      page_size: input.page_size ?? 15,
+      total: 45,
+    })),
+  })
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  expect(await screen.findByText('MICA-3MM')).toBeInTheDocument()
+  const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
+  expect(footer).toContainElement(screen.getByText('1 - 15 trong 45 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('1')
+
+  await userEvent.click(within(footer).getByRole('button', { name: 'Trang sau' }))
+
+  expect(await screen.findByText('DECAL-2')).toBeInTheDocument()
+  expect(footer).toContainElement(screen.getByText('16 - 30 trong 45 hàng hóa'))
+  expect(within(footer).getByRole('textbox', { name: 'Trang hiện tại' })).toHaveValue('2')
+  expect(service.listProducts).toHaveBeenLastCalledWith({ page: 2, page_size: 15, search: undefined, status: 'active' })
+})
+
+it('expands product details directly under the selected row and closes on second click', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByText('MICA-3MM'))
+  const detail = screen.getByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })
+  const productRow = detail.closest('tr')?.previousElementSibling
+  expect(productRow).toHaveTextContent('MICA-3MM')
+  expect(productRow).toHaveClass('management-data-row-selected')
+  expect(detail.closest('tr')).toHaveClass('management-detail-row')
+  expect(within(detail).getByText('Mica 3mm')).toBeInTheDocument()
+  expect(within(detail).getByText('m tới')).toBeInTheDocument()
+  expect(within(detail).getByText('100 000')).toBeInTheDocument()
+
+  await userEvent.click(productRow as HTMLElement)
+  expect(screen.queryByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })).not.toBeInTheDocument()
 })

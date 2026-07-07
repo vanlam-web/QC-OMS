@@ -1,14 +1,14 @@
-# 02c-K02A-M2-KHUI.md — K02-A: CẦU NỐI m² ↔ MÉT DÀI/TẤM & LOGIC KHUI ĐỘNG
+# 02c-K02A-M2-KHUI.md — K02-A: Cầu nối m2 ↔ mét dài/tấm
 
 > **Thuộc khối:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) — Phần V
->
-> **Trạng thái:** 🔨 Đang xây dựng
 >
 > **Trở về:** [02-K02A-DONG-SP.md](./02-K02A-DONG-SP.md) | [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 
 ---
 
-**Bài toán gốc:** Hệ thống xử lý sự bất đồng bộ giữa **Đơn vị tính thương mại** (`m²` — bán ra cho khách) và **Đơn vị tính lưu kho** (Mét dài cho Cuộn, Tấm cho Alu/Mica).
+**Bài toán gốc:** POS có thể bán theo `m2`, nhưng kho vật lý cần trừ theo mét dài của cuộn hoặc kích thước tấm/tấm lỡ.
+
+> **Source of Truth khui vật tư:** [K01/01d-K01-KHUI.md](../K01/01d-K01-KHUI.md). File này chỉ mô tả cách POS tính và gợi ý vật tư khi bán hàng.
 
 ---
 
@@ -17,7 +17,7 @@
 | Loại hàng | Nhập kho (Đầu vào) | Bán ra tại POS (Đầu ra) | Cơ chế trừ kho thực tế (Ngầm) |
 |---|---|---|---|
 | **Khổ dài** (Bạt, Decal, PP) | Theo Mét dài (`m`) của từng khổ rộng cụ thể. VD: Cuộn khổ 3.2m dài 80m; Cuộn khổ 1.52m dài 50m. | Theo `m²` = `Rộng × Dài × SL` | Trừ theo **mét dài di động** của cuộn đang khui có khổ tương ứng. Không trừ `m²` tổng. |
-| **Tấm** (Alu, Mica, Formex) | Theo Số lượng Tấm nguyên quy chuẩn cố định (`1.22m × 2.44m`). | Theo `m²` hoặc Cái/Tấm lẻ kích thước tùy chọn. | Ưu tiên trừ **Tấm lỡ khổ** trong kho mẩu thừa. Nếu không vừa → Trừ nguyên 1 Tấm chuẩn và sinh ra tấm lỡ mới. |
+| **Tấm** (Alu, Mica, Formex) | Theo tấm nguyên/tấm dở/tấm lỡ. Khổ thao tác MVP dùng dạng đơn giản như `1.2m x 2.4m`. | Theo `m2` hoặc kích thước tùy chọn. | Ưu tiên tấm lỡ/tấm dở phù hợp. Nếu không vừa, đề xuất dùng tấm nguyên và sinh phần thừa nếu còn dùng được. |
 
 ---
 
@@ -38,16 +38,16 @@ W_phôi = W_khách + 0.05 m   (Decal: +5cm)
 ```
 
 **Bước 2 — Quét khổ tối ưu:**
-Hệ thống quét toàn bộ các khổ cuộn hiện có trong kho của mã hàng đó (VD: kho đang có các cuộn khổ: 1.52m, 2.2m, 3.2m).
+Hệ thống quét các khổ cuộn đang có hoặc tồn tạm đã biết của mã hàng đó. Ví dụ: `1.52m`, `2.2m`, `3.2m`.
 
 **Bước 3 — Chọn mặc định:**
 Lọc ra các khổ cuộn có `Khổ rộng cuộn ≥ W_phôi` (hoặc `L_phôi` nếu xoay chiều file). Trong các khổ đủ điều kiện, khổ nào có **phần thừa chiều rộng nhỏ nhất** sẽ được hệ thống tự động chọn làm mặc định.
 
 **Bước 4 — Trừ kho mét dài:**
-Khi file được in thành công, hệ thống không trừ `m²` tổng mà tìm đúng **ID của cuộn đang khui** thuộc khổ đó và trừ thẳng vào chiều dài:
+Khi đơn/lệnh được xác nhận trừ kho, hệ thống ưu tiên trừ vào cuộn vật lý đã chuẩn hóa. Nếu mặt hàng còn ở trạng thái tồn tạm KiotViet, hệ thống cảnh báo nhẹ và ghi log theo rule tồn tạm.
 
 ```
-Chiều dài cuộn dở mới = Chiều dài cuộn dở cũ - L_phôi
+Chiều dài còn lại mới = chiều dài còn lại cũ - L_phôi
 ```
 
 ---
@@ -58,96 +58,41 @@ Chiều dài cuộn dở mới = Chiều dài cuộn dở cũ - L_phôi
 Hệ thống vào **Kho tấm lỡ khổ** để tìm các mẩu Alu/Mica thừa từ các lần cắt trước xem có tấm nào chứa vừa kích thước khách đặt không. Nếu có nhiều tấm vừa, chọn tấm có **diện tích nhỏ nhất** để tiêu thụ đồ thừa trước.
 
 **Bước 2 — Sử dụng Tấm nguyên:**
-Nếu kho tấm lỡ không có mẩu nào vừa, hệ thống tự động chọn **Tấm nguyên quy chuẩn `1.22m × 2.44m`** làm mặc định.
+Nếu kho tấm lỡ không có mẩu nào vừa, hệ thống đề xuất dùng tấm nguyên theo khổ thao tác đang cấu hình, ví dụ `1.2m x 2.4m`.
 
 **Bước 3 — Bóc tách sinh mẩu thừa:**
-Khi cắt, hệ thống chạy thuật toán chia tấm thẳng. Phần diện tích còn lại nếu **lớn hơn hạn mức giữ lại** (VD: `> 0.1m²`) sẽ được tự động lưu ngược lại vào kho tấm lỡ với kích thước cụ thể để dùng cho đơn sau.
+Khi cắt, hệ thống tính phần còn lại và hiển thị kích thước đề xuất. Nếu phần còn lại quá nhỏ, hệ thống chỉ đề xuất bỏ bằng checkbox; nhân viên được giữ lại nếu thực tế còn dùng được.
 
 ---
 
-## 3. Cơ chế "Cảnh báo khui động" (CHO CUỘN & TẤM)
+## 3. Cảnh báo thiếu vật tư và gợi ý khui
 
-Cơ chế Cảnh báo khui chỉ xuất hiện tại **Hàng đợi máy sản xuất (K02-D)** hoặc màn hình điều phối file khi hệ thống phát hiện vật tư dùng dở hiện tại **không đủ** để đáp ứng lệnh sản xuất.
+Cảnh báo xuất hiện khi vật tư đang chọn không đủ hoặc tồn vật lý chưa chuẩn hóa.
+
+POS không tự khui vật tư. Khi hệ thống tính toán thấy thiếu vật tư, UI chỉ hiện cảnh báo và nút `Khui vật tư` trên dòng hàng đang thao tác. Nhân viên có thể bấm để xử lý ngay hoặc bỏ qua, đặc biệt khi chỉ đang lập báo giá.
 
 ---
 
-### 3a. Luồng khui cuộn bạt/decal động (Loại hàng: Khổ dài)
-
-| Trạng thái | Xử lý |
+| Tình huống | Xử lý |
 |---|---|
-| **Điều kiện kích hoạt** | Thợ bấm chuẩn bị xuất file in. Hệ thống lấy `L_phôi` của đơn hàng so sánh với Chiều dài còn lại của cuộn đang khui trong máy in đó. |
-| **Nếu `L_phôi > Chiều dài cuộn dở hiện tại`** | Hệ thống khóa lệnh in, dòng file nhấp nháy **cảnh báo đỏ**. Hiển thị Icon động `[⚠️ 🍾 Khui cuộn mới]` ngay tại dòng file đó. |
-| **Hành động thợ** | Thợ tiến hành thay cuộn mới vật lý ngoài xưởng, sau đó click `[⚠️ 🍾 Khui cuộn mới]`. |
-| **Xử lý ngầm** | Ép mét dài cuộn dở cũ về 0 → Trừ 1 cuộn nguyên ở kho lớn → Nạp đầy số mét nguyên (80m hoặc 50m...) vào máy → **Mở khóa lệnh IN**. |
+| Vật tư phụ cần khui mới | Hiện nút `Khui vật tư`; nếu bấm thì mở popup khui, phần dở/cũ về `0`, không tạo cuộn/tấm |
+| Cuộn/tấm đang dùng không đủ | Hiển thị cảnh báo đỏ nhẹ trên dòng hàng hoặc lệnh sản xuất; hiện nút `Khui vật tư` nếu có vật tư phù hợp để khui |
+| Có cuộn/tấm khác phù hợp | Đề xuất phương án tốt nhất, nhân viên được đổi |
+| Không có object vật lý phù hợp nhưng còn tồn tạm | Cho tiếp tục theo rule tồn âm/tồn tạm, đồng thời gợi ý mở `Khui vật tư` |
+| Cần ghi nhận cuộn/tấm mới | Mở luồng khui tại [K01/01d-K01-KHUI.md](../K01/01d-K01-KHUI.md) |
+| Một dòng thiếu nhiều vật tư | Nút `Khui vật tư` mở danh sách vật tư thiếu; nhân viên chọn một hoặc nhiều vật tư để khui |
 
 ---
 
-### 3b. Luồng khui tấm Alu/Mica động (Loại hàng: Tấm)
+## 4. Vị trí nút Khui vật tư
 
-| Trạng thái | Xử lý |
-|---|---|
-| **Điều kiện kích hoạt** | Lệnh gia công CNC/Laser được chuyển xuống máy sản xuất. Hệ thống kiểm tra "Bể tấm lỡ khổ phù hợp" và "Tấm dở đang cắt tại máy" đều bằng 0 hoặc không có tấm nào đủ kích thước để chứa phôi cắt của đơn hàng. |
-| **Cảnh báo** | Hệ thống hiển thị: `"Không có tấm lỡ phù hợp. Cần bẻ tấm nguyên!"` kèm Icon động `[⚠️ 🍾 Khui tấm mới]`. |
-| **Hành động thợ** | Thợ lấy tấm Alu/Mica nguyên khổ `1.22m × 2.44m` đặt lên bàn máy, click `[⚠️ 🍾 Khui tấm mới]`. |
-| **Xử lý ngầm** | (1) Trừ -1 Tấm nguyên trong Kho tổng lớn. (2) Tạo phiên làm việc tấm dở hiện tại. (3) Phần thừa còn lại (nếu đạt chuẩn giữ lại) được treo "Chờ thu hồi" hoặc nạp thẳng vào danh sách Tấm lỡ khổ ngay khi máy chạy xong. |
+**Vị trí thủ công:** Thanh công cụ đỉnh (Top Bar) — cố định, hiển thị cho mọi người dùng xưởng.
 
----
+**Vị trí gợi ý nhanh:** Ngay trên dòng hàng POS đang thiếu vật tư, gần cảnh báo tồn. Nút chỉ xuất hiện khi hệ thống đã tính ra vật tư thiếu và có thể gợi ý khui.
 
-## 4. Cụm nút Khui tự do ngoài giao diện Main POS
+Sau khi nhân viên xác nhận khui, POS quay lại đúng dòng hàng trước đó, cập nhật tồn/cảnh báo và giữ nguyên dữ liệu đang nhập.
 
-Để giữ khu vực giỏ hàng đơn (BOM) luôn sạch, các nút khui vật lý thủ công được gom ra **Thanh công cụ hệ thống bên ngoài** (không nằm trong khoang BOM của đơn hàng).
-
-**Vị trí:** Thanh công cụ đỉnh (Top Bar) — cố định, hiển thị cho mọi người dùng xưởng.
-
-**Wireframe Top Bar (minh họa rút gọn — xem wireframe chuẩn tại [K01/01-K01-TOPBAR.md](../K01/01-K01-TOPBAR.md)):**
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ [🔍 Tìm hàng hóa F3...]  [📊 Báo cáo kho]  [🍾 KHUI VẬT TƯ]  [⚙️ Thiết lập]                    User: Thợ Cắt │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-> ⚠️ **Lưu ý:** Wireframe trên là dạng rút gọn 1 dòng để minh họa vị trí các nút trong ngữ cảnh của K02. **Wireframe chính thức 4 khu vực** (Search / Tab Đa HĐ / Khui VT / Tiện ích) nằm ở `K01/01-K01-TOPBAR.md` §I. Khi triển khai UI phải dùng wireframe K01, không dùng wireframe rút gọn này.
-
----
-
-### 4a. Nút Khai báo Khui tự do (Global Action)
-
-**Nhiệm vụ:** Phục vụ riêng cho các trường hợp thợ bóc đồ mới **độc lập với đơn hàng**:
-
-- Phát hiện cuộn bạt cũ bị chuột cắn hỏng.
-- Bao vít bị đổ vỡ.
-- Hộp keo bị khô...
-
-**Popup Khui tự do:**
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ 🍾 KHAI BÁO KHUI VẬT TƯ TỰ DO                   [✕] │
-├─────────────────────────────────────────────────────────┤
-│ Loại vật tư:  [ Vật tư phụ (Keo/Vít/Nguồn...)  ▾]  │
-│                  [ Khổ dài (Bạt/Decal/PP)          ▾]  │
-│                  [ Tấm (Alu/Mica/Formex)             ▾]  │
-│                                                         │
-│ Chọn mã vật tư: [ Tìm kiếm...                      ]│
-│ Khổ rộng:     [  2.2 m  ]   (nếu chọn Khổ dài)     │
-│ Số mét/cuộn:  [  80    m  ]   (chiều dài cuộn mới)  │
-│                                                         │
-│ Ghi chú:       [ Lý do khui: cuộn bị chuột cắn...  ]│
-│                                                         │
-│                      [ XÁC NHẬN KHUI ]                 │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Quy trình xử lý khi Click [XÁC NHẬN KHUI]:**
-
-| Loại vật tư | Xử lý ngầm |
-|---|---|
-| **Vật tư phụ** (Keo/Vít/LED...) | Hủy số lượng dở ảo cũ về 0 → Trừ 1 thùng/bao nguyên từ kho lớn → Tính toán **giá vốn bình quân gia quyền di động** cho mã đó. |
-| **Khổ dài** (Bạt/Decal/PP) | Thợ chọn đúng Khổ rộng cần khui (VD: bạt khổ 2.2m). Hệ thống ép cuộn dở cũ của khổ đó về 0 → Trừ 1 cuộn nguyên khổ 2.2m ở kho lớn để bù vào. |
-| **Tấm** (Alu/Mica) | Thợ chọn đúng khổ tấm. Hệ thống ép tấm dở cũ về 0 → Trừ 1 tấm nguyên khổ `1.22 × 2.44` ở kho lớn. |
-
-> **Tóm tắt luồng tổng:** Ngoài POS cứ bán `m²` tính tiền bình thường cho khách. Còn máy sản xuất của thợ in, thợ CNC tự động theo dõi số **mét dài** và **số tấm** thực tế để ép khui kho chính xác.
+Wireframe chuẩn nằm tại [K01/01-K01-TOPBAR.md](../K01/01-K01-TOPBAR.md). Popup khui chuẩn nằm tại [K01/01d-K01-KHUI.md](../K01/01d-K01-KHUI.md).
 
 ---
 

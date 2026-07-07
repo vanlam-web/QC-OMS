@@ -1,6 +1,5 @@
 # 04-K02D-HANG-DOI.md — K02-D: HÀNG ĐỢI MÁY SẢN XUẤT
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Phần:** 2.1
 > **Trở về:** [01-K02-GIO-HANG.md](./01-K02-GIO-HANG.md)
 
@@ -171,7 +170,7 @@ Nếu thiếu `daixrong` hoặc sai định dạng kích thước (ví dụ `120
 - Chỉ khi kích thước đã hợp lệ mới cho bấm `[+]`.
 - `[🗑]` vẫn dùng được nếu nhân viên không muốn xử lý thông báo đó.
 - Không sửa ngược tên file gốc từ máy sản xuất; tên file gốc được giữ để đối chiếu.
-- Nếu sau này có tầng lưu trữ/DB cho hàng đợi, có thể lưu cả tên file gốc và giá trị đã sửa. Cơ chế lưu này chưa đặc tả trong phạm vi POS hiện tại.
+- Nếu mở tầng lưu trữ/DB cho hàng đợi, có thể lưu cả tên file gốc và giá trị đã sửa. Cơ chế lưu này nằm ngoài phạm vi POS hiện tại.
 
 Tạm thời chưa đặc tả Database cho luồng này: không tạo bảng mới, không chốt schema hàng đợi, không chốt schema cấu hình khách hàng/hàng hóa được phép.
 
@@ -261,7 +260,7 @@ Quy tắc khôi phục:
 
 > **Lưu ý về cảnh báo khui động (`[⚠️ 🍾 Khui cuộn mới]` / `[⚠️ 🍾 Khui tấm mới]`):**
 > Icon động này hiển thị tại dòng file trong K02-D khi cuộn dở / tấm lỡ không đủ cho lệnh in/CNC.
-> Chi tiết trigger và xử lý ngầm xem [01d-K01-KHUI.md §IX](../K01/01d-K01-KHUI.md#ix-phân-biệt-với-cảnh-báo-khui-động-k02-d) và [02c-K02A-M2-KHUI.md §3](./02c-K02A-M2-KHUI.md#3-cơ-chế-cảnh-báo-khui-động-cho-cuộn--tấm).
+> Chi tiết trigger và xử lý xem [01d-K01-KHUI.md](../K01/01d-K01-KHUI.md) và [02c-K02A-M2-KHUI.md §3](./02c-K02A-M2-KHUI.md#3-canh-bao-thieu-vat-tu-va-goi-y-khui).
 
 ---
 

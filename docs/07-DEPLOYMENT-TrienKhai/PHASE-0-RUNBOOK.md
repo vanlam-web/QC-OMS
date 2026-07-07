@@ -1,6 +1,6 @@
 # Phase 0 Runbook
 
-> **Trạng thái hiện tại:** backend chính cho dev/staging là Supabase Cloud. Docker/Supabase local chỉ dùng khi cần isolated local database/test.
+> **Hiện tại:** backend chính cho dev/staging là Supabase Cloud. Docker/Supabase local chỉ dùng khi cần isolated local database/test.
 
 ## Dev/staging verification with Supabase Cloud
 
@@ -48,8 +48,11 @@ Run E2E with externally supplied credentials:
 ```bash
 export E2E_ADMIN_EMAIL="admin@example.test"
 # Provide E2E_ADMIN_PASSWORD from your local shell/session secret.
+# Optional: export E2E_API_BASE_URL only when E2E API base differs from <SUPABASE_URL>/functions/v1.
 npm run test:e2e
 ```
+
+Playwright derives `VITE_API_BASE_URL` from the selected Supabase URL during E2E, so stale local `VITE_API_BASE_URL` values do not mix cloud API with local Auth/DB.
 
 Never commit Auth passwords, refresh tokens, access tokens, anon/service keys, or `.env.local` files.
 

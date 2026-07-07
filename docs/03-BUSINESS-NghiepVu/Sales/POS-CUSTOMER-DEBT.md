@@ -1,6 +1,5 @@
 # POS-CUSTOMER-DEBT — Nghiệp vụ công nợ khách hàng
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Nguồn:** Tách khỏi `02-PRD-UX-PhongCanh/POS/K03/01-K03A-DOI-TAC.md`
 
 ---
@@ -25,7 +24,7 @@ Giao dịch **Bán hàng** chỉ làm tăng công nợ theo số tiền khách c
 
 Nếu khách đã thanh toán một phần, công nợ chỉ tăng phần còn thiếu, không tăng theo toàn bộ tổng hóa đơn.
 
-Nếu hóa đơn còn nợ nhưng chưa chọn khách cụ thể, phần còn nợ được ghi nhận là **Khách lẻ nợ** và phải có ghi chú nhận diện.
+Nếu hóa đơn còn nợ nhưng chưa chọn khách cụ thể, phần còn nợ được ghi nhận vào `KH000001 - Khách lẻ` dưới dạng **Khách lẻ nợ** và phải có ghi chú nhận diện. Không tạo công nợ với `customer_id = null`.
 
 ### BR-DEBT-02: Hóa đơn thanh toán đủ
 

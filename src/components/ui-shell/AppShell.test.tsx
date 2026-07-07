@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AppShell } from './AppShell'
 import { ThemeProvider } from './ThemeProvider'
@@ -12,11 +12,32 @@ const inventoryUser: CurrentUserData = {
   permissions: ['perm.manage_inventory'],
 }
 
-function renderShell(initialPath = '/purchase/receipts') {
+const fullNavigationUser: CurrentUserData = {
+  ...inventoryUser,
+  permissions: [
+    'perm.create_order',
+    'perm.manage_finance',
+    'perm.manage_inventory',
+    'perm.edit_price_book',
+    'perm.access_admin_panel',
+  ],
+}
+
+const priceBookUser: CurrentUserData = {
+  ...inventoryUser,
+  permissions: ['perm.edit_price_book'],
+}
+
+beforeEach(() => {
+  localStorage.clear()
+  document.documentElement.removeAttribute('data-theme')
+})
+
+function renderShell(initialPath = '/purchase/receipts', currentUser = inventoryUser) {
   return render(
     <ThemeProvider>
       <MemoryRouter initialEntries={[initialPath]}>
-        <AppShell currentUser={inventoryUser} onSignOut={vi.fn()}>
+        <AppShell currentUser={currentUser} onSignOut={vi.fn()}>
           <main>
             <h1>Phiếu nhập</h1>
           </main>
@@ -31,9 +52,41 @@ it('renders adaptive navigation with purchase supplier entries and active route'
 
   expect(screen.getByRole('banner')).toBeInTheDocument()
   expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
+  expect(screen.getByRole('link', { name: /Kho/i })).toHaveAttribute('href', '/inventory')
   expect(screen.getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
-  expect(screen.getByRole('link', { name: /Phiếu nhập/i })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('aria-current', 'page')
+  expect(screen.queryByRole('link', { name: /Phiếu nhập/i })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Phiếu nhập' })).toBeInTheDocument()
+})
+
+it('renders POS as a quick action and keeps module navigation for management pages', () => {
+  renderShell('/pos', fullNavigationUser)
+
+  const banner = screen.getByRole('banner')
+  const navigation = screen.getByRole('navigation', { name: 'Điều hướng chính' })
+  const quickActions = screen.getByLabelText('Thao tác nhanh')
+
+  expect(banner).toContainElement(navigation)
+  expect(screen.getByRole('link', { name: 'Mở tổng quan' })).toHaveAttribute('href', '/dashboard')
+  expect(within(navigation).queryByRole('link', { name: /Tổng quan/i })).not.toBeInTheDocument()
+  expect(quickActions.closest('.app-topbar')).not.toBeNull()
+
+  expect(within(navigation).queryByRole('link', { name: /POS/i })).not.toBeInTheDocument()
+  expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('href', '/pos')
+  expect(within(quickActions).getByRole('link', { name: 'Mở POS' })).toHaveAttribute('aria-current', 'page')
+  expect(within(navigation).getByRole('link', { name: /Hóa đơn/i })).toHaveAttribute('href', '/sales-documents')
+  expect(within(navigation).queryByRole('link', { name: /Chứng từ/i })).not.toBeInTheDocument()
+  expect(within(navigation).getByRole('link', { name: /Sổ quỹ/i })).toHaveAttribute('href', '/finance')
+  expect(within(navigation).getByRole('link', { name: /Báo cáo/i })).toHaveAttribute('href', '/reports')
+  expect(within(navigation).getByRole('link', { name: /Khách hàng/i })).toHaveAttribute('href', '/customers')
+  expect(within(navigation).getByRole('link', { name: /Hàng hóa/i })).toHaveAttribute('href', '/products')
+  expect(within(navigation).getByRole('link', { name: /Kho/i })).toHaveAttribute('href', '/inventory')
+  expect(within(navigation).getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
+  expect(within(navigation).getByRole('link', { name: /Nhà cung cấp/i })).toHaveAttribute('href', '/suppliers')
+  expect(within(navigation).getByRole('link', { name: /Nhập hàng/i })).toHaveAttribute('href', '/purchase/receipts')
+  expect(within(navigation).getByRole('link', { name: /Quản trị/i })).toHaveAttribute('href', '/admin')
+  expect(within(navigation).queryByRole('button', { name: /Đổi sang giao diện/i })).not.toBeInTheDocument()
 })
 
 it('keeps theme toggle visible inside shell', async () => {
@@ -42,4 +95,58 @@ it('keeps theme toggle visible inside shell', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Đổi sang giao diện tối' }))
 
   expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+})
+
+it('keeps theme and account controls in the outer shell action rail', async () => {
+  const onSignOut = vi.fn()
+  render(
+    <ThemeProvider>
+      <MemoryRouter initialEntries={['/customers']}>
+        <AppShell currentUser={fullNavigationUser} onSignOut={onSignOut}>
+          <main>
+            <h1>Khách hàng</h1>
+          </main>
+        </AppShell>
+      </MemoryRouter>
+    </ThemeProvider>,
+  )
+
+  const userActions = screen.getByLabelText('Tài khoản và giao diện')
+  expect(userActions).toHaveClass('shell-user-actions')
+  expect(userActions.closest('.app-topbar')).toBeNull()
+  const actionRail = userActions.closest('.shell-action-rail')
+  expect(actionRail).not.toBeNull()
+  expect(actionRail?.nextElementSibling).toHaveClass('app-content')
+  expect(within(userActions).getByRole('button', { name: 'Đổi sang giao diện tối' })).toBeInTheDocument()
+
+  await userEvent.click(within(userActions).getByRole('button', { name: 'Tài khoản' }))
+  await userEvent.click(within(userActions).getByRole('menuitem', { name: 'Đăng xuất' }))
+
+  expect(onSignOut).toHaveBeenCalled()
+})
+
+it('routes the price book nav item to the dedicated price book page', () => {
+  render(
+    <ThemeProvider>
+      <MemoryRouter initialEntries={['/price-book']}>
+        <AppShell currentUser={priceBookUser} onSignOut={vi.fn()}>
+          <main>
+            <h1>Bảng giá</h1>
+          </main>
+        </AppShell>
+      </MemoryRouter>
+    </ThemeProvider>,
+  )
+
+  expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('href', '/price-book')
+  expect(screen.getByRole('link', { name: /Bảng giá/i })).toHaveAttribute('aria-current', 'page')
+})
+
+it('shows reports only when user has both finance and inventory permissions', () => {
+  const financeOnly = renderShell('/finance', { ...inventoryUser, permissions: ['perm.manage_finance'] })
+  expect(screen.queryByRole('link', { name: /Báo cáo/i })).not.toBeInTheDocument()
+  financeOnly.unmount()
+
+  renderShell('/inventory', { ...inventoryUser, permissions: ['perm.manage_finance', 'perm.manage_inventory'] })
+  expect(screen.getByRole('link', { name: /Báo cáo/i })).toHaveAttribute('href', '/reports')
 })

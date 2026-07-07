@@ -10,12 +10,14 @@ import type {
   RecentPriceList,
 } from '../orders/order-service'
 import { formatApiError } from '../../lib/api/error-message'
+import { formatMoney } from '../../lib/number-format'
 
 export function CheckoutPanel({
   cartLines,
   selectedCustomer,
   orderService,
   sourceQuote,
+  orderNote = '',
   quoteBlockedReason = null,
   onCheckoutSuccess,
 }: {
@@ -23,6 +25,7 @@ export function CheckoutPanel({
   selectedCustomer: Customer | null
   orderService: OrderService
   sourceQuote?: { id: string; code: string }
+  orderNote?: string
   quoteBlockedReason?: string | null
   onCheckoutSuccess?: () => void
 }) {
@@ -132,6 +135,7 @@ export function CheckoutPanel({
     try {
       const checkout = await orderService.checkout({
         customer_id: selectedCustomer?.id,
+        note: orderNote.trim() || undefined,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
         items: cartLines.map(lineToCheckoutItem),
         payment: {
@@ -168,6 +172,7 @@ export function CheckoutPanel({
     try {
       const payload = {
         customer_id: selectedCustomer?.id,
+        note: orderNote.trim() || undefined,
         retail_debt_note: selectedCustomer === null ? retailDebtNote.trim() || undefined : undefined,
         items: cartLines.map(lineToCheckoutItem),
         payment: {
@@ -392,8 +397,4 @@ function lineToCheckoutItem(line: CheckoutCartLine) {
     price_source: line.priceSource,
     note: line.note,
   }
-}
-
-function formatMoney(value: number): string {
-  return value.toLocaleString('vi-VN')
 }

@@ -1,12 +1,12 @@
 # SYSTEM — Dữ liệu nền tảng
 
-> **Trạng thái:** 🔨 Đang xây dựng theo từng giai đoạn
+> Index dữ liệu nền tảng. Việc đang làm / queue hiện tại nằm ở [../../PHASE-CHECKLIST.md](../../PHASE-CHECKLIST.md).
 
 ## Nội dung
 
-| File | Mô tả | Trạng thái |
-|---|---|---|
-| [AUTH-PERMISSIONS.md](./AUTH-PERMISSIONS.md) | Schema Organization, Profile, Workstation và Permission | ✅ Chốt Giai đoạn 0 |
+| File | Mô tả |
+|---|---|
+| [AUTH-PERMISSIONS.md](./AUTH-PERMISSIONS.md) | Schema Organization, Profile, Workstation và Permission |
 
 ## Tham chiếu
 
@@ -14,3 +14,6 @@
 - [RLS](../03-RLS.md)
 - [Backend Auth](../../05-BACKEND-MayChu/POS/AUTH.md)
 
+---
+
+← [Quay về Database README](../README.md)

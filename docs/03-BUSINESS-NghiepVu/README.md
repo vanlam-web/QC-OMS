@@ -1,71 +1,43 @@
 # PHẦN 3: NGHIỆP VỤ (BUSINESS)
 
-> **Source of Truth** cho toàn bộ nghiệp vụ của QC-OMS.
+> Source of Truth cho quy tắc nghiệp vụ, workflow, điều kiện áp dụng, công thức và acceptance criteria.
+>
+> File này chỉ là index. Việc đang làm / queue hiện tại nằm ở [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md).
 
----
+## Đọc Trước Khi Sửa Business
 
-## Mục đích
+| Cần biết | File |
+|---|---|
+| Quy tắc tầng Business | [_RULES.md](./_RULES.md) |
+| Việc đang làm / queue hiện tại | [../PHASE-CHECKLIST.md](../PHASE-CHECKLIST.md) |
+| Vision và MVP scope | [../01-VISION-TamNhin/README.md](../01-VISION-TamNhin/README.md) |
+| PRD/UX liên quan | [../02-PRD-UX-PhongCanh/README.md](../02-PRD-UX-PhongCanh/README.md) |
 
-Folder này trả lời các câu hỏi:
+## Phạm Vi Tầng
 
-- Nghiệp vụ hoạt động như thế nào?
-- Điều kiện áp dụng là gì?
-- Quy trình xử lý ra sao?
-- Công thức tính như thế nào?
-- Khi nào được phép hoặc không được phép thực hiện?
+| Loại | Ghi ở Business |
+|---|---|
+| Chỉ ghi | Business rule, business workflow, state machine, điều kiện, công thức, domain event, acceptance criteria nghiệp vụ |
+| Chỉ tham chiếu | UI, database, API, integration |
+| Không ghi | Wireframe, schema, SQL, API spec, backend workflow, code, hạ tầng |
 
----
+## Domain Chính
 
-## Phạm vi tầng
+| Domain | Điểm vào | Nội dung |
+|---|---|---|
+| Sales | [Sales/README.md](./Sales/README.md) | Khách hàng POS, giá bán, tính tiền, lifecycle, checkout, công nợ |
+| Inventory | [Inventory/README.md](./Inventory/README.md) | Tồn kho, đơn vị, kiểm kho, cuộn/tấm, đối soát sản xuất |
+| Finance | [Finance/README.md](./Finance/README.md) | Sổ quỹ, phiếu thu/chi, đối soát, công nợ liên quan tiền |
+| Purchase | [Purchase/README.md](./Purchase/README.md) | Nhà cung cấp, phiếu nhập, thanh toán NCC |
+| BOM | [BOM/README.md](./BOM/README.md) | Combo vật tư, định mức, rule BOM |
 
-| Phân loại | Nội dung |
-|-----------|----------|
-| **CHỈ GHI** | Business Rule · Business Workflow · Quy trình nghiệp vụ · State Machine · Điều kiện và điều kiện biên · Công thức tính toán · Domain Event (ngữ nghĩa) · Chính sách nghiệp vụ · Acceptance Criteria nghiệp vụ |
-| **THAM CHIẾU** | Feature · UI · Database · API · Workflow kỹ thuật · Integration — chỉ để giải thích nghiệp vụ |
-| **KHÔNG GHI** | UI/Wireframe · Database Schema · SQL · API Specification · Backend Workflow · Code · Hạ tầng triển khai |
+## Quy Ước
 
----
+- Khi nghiệp vụ thay đổi, cập nhật tầng Business trước, rồi mới cập nhật PRD/UX, Database và Backend.
+- Business không copy schema/API; chỉ link sang tầng 04/05 khi cần.
+- Không dùng README này làm bảng trạng thái từng file.
 
-## Thứ tự phát triển
-
-Theo nguyên tắc top-down, **03-BUSINESS chỉ được thiết kế khi**:
-
-1. ✅ 01-VISION đã có Vision & Scope
-2. ✅ 02-PRD-UX đã có Feature Specification
-
-> Khi Business thay đổi → cập nhật 03-BUSINESS trước → rồi 02-PRD-UX → rồi 04-DATABASE → rồi 05-BACKEND.
-
----
-
-## Nội dung đã có
-
-| Domain | File | Mô tả | Trạng thái |
-|--------|------|--------|------------|
-| **Sales** | `Sales/POS-CUSTOMER.md` | Quy tắc khách hàng POS: SĐT, mã khách, tên khách và nhóm khách | 🔨 Đang xây dựng |
-| **Sales** | `Sales/POS-PRICING.md` | Quy tắc giá bán POS: bảng giá, giá sửa tay, lịch sử giá và đơn vị bán | 🔨 Đang xây dựng |
-| **Sales** | `Sales/POS-ORDER-CALC.md` | Quy tắc tính giỏ hàng (ĐVT m² / Cái / Combo) | ✅ Hoàn tất |
-| **Sales** | `Sales/POS-ORDER-LIFECYCLE.md` | Vòng đời đơn hàng POS: nháp, báo giá, hóa đơn bán hàng | 🔨 Đang xây dựng |
-| **Sales** | `Sales/POS-CHECKOUT.md` | Nghiệp vụ thanh toán (trừ kho, sổ quỹ, tiền thừa/nợ) | ✅ Hoàn tất |
-| **Sales** | `Sales/POS-CUSTOMER-DEBT.md` | Nghiệp vụ công nợ khách hàng | 🔨 Đang xây dựng |
-| **Finance** | `Finance/CASHBOOK.md` | Nghiệp vụ sổ quỹ, phiếu thu, phiếu chi và đối soát | 🔨 Đang xây dựng |
-| **Inventory** | `Inventory/STOCK-RULES.md` | Chính sách tồn kho, trừ kho, tồn âm, cuộn/tấm/tấm lỡ | 🔨 Đang xây dựng |
-| **Inventory** | `Inventory/UNIT-CONVERSION.md` | Đơn vị tồn chính, đơn vị bán phụ và quy đổi | 🔨 Đang xây dựng |
-| **Inventory** | `Inventory/STOCKTAKE.md` | Phiếu kiểm kho, cân bằng kho và phiếu tự động khi sửa tồn | 🔨 Đang xây dựng |
-| **Inventory** | `Inventory/PRODUCTION-RECONCILIATION.md` | Đối soát OMS/bill với dữ liệu máy sản xuất | 🔨 Đang xây dựng |
-
----
-
-## Nội dung dự kiến
-
-| Domain | Mô tả | Trạng thái |
-|--------|--------|------------|
-| **Workstation** | Máy trạm, queue xưởng, điều phối | ⬜ Chưa có |
-
----
-
-## Cấu trúc chuẩn một Business Rule
-
-Mỗi Business Rule nên có:
+## Cấu Trúc Gợi Ý Cho Business Rule
 
 1. ID
 2. Mục đích
@@ -75,6 +47,4 @@ Mỗi Business Rule nên có:
 6. Ngoại lệ
 7. Acceptance Criteria
 
----
-
-← [ Quay về README chính](../README.md)
+← [Quay về README chính](../README.md)

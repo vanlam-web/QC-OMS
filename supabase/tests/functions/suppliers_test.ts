@@ -115,6 +115,34 @@ Deno.test("supplier list maps search status and default paging", async () => {
   assertEquals(body.items[0].total_purchase_amount, 0);
 });
 
+Deno.test("supplier list maps payable and purchase total ranges", async () => {
+  let captured: Record<string, unknown> | null = null;
+  const repository = repo(["perm.manage_inventory"], {
+    listSuppliers: (input: Record<string, unknown>) => {
+      captured = input;
+      return Promise.resolve({ items: [supplier], total: 1 });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/suppliers?total_purchase_min=100000&total_purchase_max=900000&current_payable_min=50000&current_payable_max=300000",
+    { method: "GET" },
+    repository,
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(captured, {
+    organizationId,
+    status: "active",
+    totalPurchaseMin: 100000,
+    totalPurchaseMax: 900000,
+    currentPayableMin: 50000,
+    currentPayableMax: 300000,
+    page: 1,
+    pageSize: 20,
+  });
+});
+
 Deno.test("supplier create normalizes optional fields and allows blank phone", async () => {
   let captured: Record<string, unknown> | null = null;
   const repository = repo(["perm.manage_inventory"], {

@@ -120,7 +120,7 @@ Deno.test("purchase receipt list maps filters and exact PN search", async () => 
   });
 
   const response = await call(
-    "/api/v1/purchase/receipts?q=PN000673&status=all&date_from=2026-06-01&date_to=2026-07-31",
+    "/api/v1/purchase/receipts?q=PN000673&status=all&date_from=2026-06-01&date_to=2026-07-31&created_by=user-1",
     { method: "GET" },
     repository,
   );
@@ -132,6 +132,7 @@ Deno.test("purchase receipt list maps filters and exact PN search", async () => 
     status: "all",
     dateFrom: "2026-06-01",
     dateTo: "2026-07-31",
+    createdBy: "user-1",
     page: 1,
     pageSize: 20,
   });

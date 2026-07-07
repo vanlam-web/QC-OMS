@@ -1,6 +1,5 @@
 # FINANCE-API — API công nợ, sổ quỹ và đối soát
 
-> **Trạng thái:** 🔨 Đang xây dựng
 > **Base path:** `/api/v1`
 > **Business:** [CASHBOOK.md](../../03-BUSINESS-NghiepVu/Finance/CASHBOOK.md), [POS-CUSTOMER-DEBT.md](../../03-BUSINESS-NghiepVu/Sales/POS-CUSTOMER-DEBT.md)
 > **Database:** [PAYMENT-DEBT-TABLES.md](../../04-DATABASE/Finance/PAYMENT-DEBT-TABLES.md), [CASHBOOK-TABLES.md](../../04-DATABASE/Finance/CASHBOOK-TABLES.md)
@@ -151,11 +150,11 @@ Response phải gồm:
 
 ### `GET /finance/retail-debts`
 
-Danh sách khách lẻ nợ chưa gán hồ sơ khách.
+Danh sách hóa đơn còn nợ của khách mặc định `KH000001 - Khách lẻ`.
 
 **Permission:** `perm.manage_finance`
 
-Mỗi dòng phải có `retail_debt_note` để nhận diện lại giao dịch.
+Mỗi dòng phát sinh từ POS chưa chọn khách phải có `retail_debt_note` để nhận diện lại người nợ. API này không dùng bucket `customer_id = null`.
 
 ---
 
@@ -238,6 +237,8 @@ Phiếu sinh từ hóa đơn/thu nợ không được sửa rời qua API này. 
 
 ## 7. Cashbook
 
+> Hiện trạng frontend sau PR #83: `/finance` đang gọi `GET /finance/cashbook` với `finance_account_id`, `direction`, `status`, `is_business_accounted`, `from`, `to`, `page`, `page_size`. Các tham số `search`, `search_scope`, `voucher_type`, `counterparty_*`, `partner_debt_filter` vẫn thuộc slice UI/filter tiếp theo dù backend contract đã định hướng trước.
+
 ### `GET /finance/cashbook`
 
 Xem sổ quỹ theo từng quỹ/tài khoản.
@@ -252,13 +253,20 @@ Xem sổ quỹ theo từng quỹ/tài khoản.
 | `search` | `string` | Không | Tìm theo mã phiếu, người nộp/nhận hoặc ghi chú |
 | `direction` | `string` | Không | `in` hoặc `out` |
 | `source_type` | `string` | Không | `payment_receipt_method` hoặc `cashbook_voucher` |
+| `status` | `string` | Không | `posted` hoặc `cancelled` |
+| `voucher_type` | `string` | Không | Nhóm loại thu/chi nội bộ |
 | `is_business_accounted` | `boolean` | Không | Có/không hạch toán kết quả kinh doanh |
+| `counterparty_type` | `string` | Không | `customer`, `supplier`, `employee`, `other`, `none` |
+| `counterparty_search` | `string` | Không | Tìm tên/mã/số điện thoại người nộp/nhận |
+| `partner_debt_filter` | `string` | Không | `affects_partner_debt`, `not_affect_partner_debt`, `no_partner_debt` |
 | `from` / `to` | `datetime` | Không | Khoảng thời gian |
 | `page` / `page_size` | `number` | Không | Phân trang |
 
 Chỉ tính số dư hiệu lực từ `cashbook_entries.status = posted`.
 
 Khi `search` khớp chính xác mã phiếu, backend phải tìm trên toàn bộ lịch sử hoặc bỏ qua `from/to` nếu client đang dùng filter thời gian mặc định. Không trả rỗng chỉ vì mã phiếu nằm ngoài tháng hiện tại.
+
+`counterparty` trên list và detail phải dùng cùng nguồn dữ liệu. Dòng sinh từ `payment_receipt_method` lấy khách từ `payment_receipts.customer_id`; nếu phiếu thu không có `customer_id` nhưng có `order_id`, dùng `orders.customer_snapshot` để hiển thị `Khách lẻ` hoặc tên khách đã lưu lúc bán hàng.
 
 Response list phải có summary theo filter:
 
@@ -273,6 +281,12 @@ Response list phải có summary theo filter:
   "items": []
 }
 ```
+
+Ghi chú search:
+
+- `search` có thể tìm mã phiếu, ghi chú hoặc nội dung chuyển khoản.
+- Nếu client cần tách rõ như KiotViet, dùng thêm `search_scope = code | note | transfer_content`.
+- Khi `search_scope = code` và mã phiếu khớp mẫu mã chứng từ, backend phải bỏ qua `from/to` nếu filter thời gian làm che kết quả.
 
 ### `GET /finance/cashbook/{entry_id}`
 
@@ -322,6 +336,7 @@ Tạo phiếu thu/chi thủ công.
   "counterparty_type": "other",
   "counterparty_name": "Tý",
   "counterparty_phone": "0964917315",
+  "partner_debt_mode": "no_partner_debt",
   "related_order_id": null,
   "related_customer_id": null,
   "reason": "Chi phí vật tư phụ"
@@ -336,6 +351,7 @@ Tạo phiếu thu/chi thủ công.
 - `finance_account_id` active và cùng organization.
 - `is_business_accounted` mặc định theo `voucher_type` nhưng cho phép client gửi rõ.
 - `counterparty_type IN ('customer', 'supplier', 'employee', 'other', 'none')`.
+- `partner_debt_mode IN ('affects_partner_debt', 'not_affect_partner_debt', 'no_partner_debt')`.
 - Thu bán hàng và thu nợ khách không được tạo qua endpoint này; phải dùng POS checkout hoặc `/finance/debt-collections`.
 
 **Workflow:**
@@ -372,6 +388,34 @@ Hủy phiếu thu/chi thủ công.
 **Permission:** `perm.manage_finance`
 
 Chỉ cho hủy phiếu thủ công đang `posted`. Khi hủy, dòng `cashbook_entries` tương ứng chuyển `cancelled`, không xóa vật lý.
+
+### `POST /finance/cashbook-transfers`
+
+Tạo cặp phiếu chuyển/rút giữa hai quỹ/tài khoản.
+
+**Permission:** `perm.manage_finance`
+
+**Input:**
+
+```json
+{
+  "from_finance_account_id": "uuid",
+  "to_finance_account_id": "uuid",
+  "amount": 1000000,
+  "transfer_time": "2026-07-05T19:00:00+07:00",
+  "reason": "Rút tiền ngân hàng về quỹ tiền mặt"
+}
+```
+
+**Workflow:**
+
+1. Tạo phiếu chi `transfer` ở quỹ nguồn.
+2. Tạo phiếu thu `transfer` ở quỹ đích.
+3. Tạo hai dòng `cashbook_entries`.
+4. Gắn cùng mã/nhóm liên kết điều chuyển để xem lại đủ cặp.
+5. Tổng quỹ toàn hệ thống không đổi.
+
+Endpoint này là slice hoàn chỉnh sau manual voucher MVP. Khi chưa có endpoint này, nếu vận hành cần chuyển/rút thì phải nhập cặp phiếu thủ công và đối soát kỹ.
 
 ---
 

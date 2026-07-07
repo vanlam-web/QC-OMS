@@ -9,17 +9,19 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run src",
+    "test": "vitest run src scripts/*.test.mjs tests/e2e/*.test.ts",
     "test:watch": "vitest",
     "test:db": "supabase test db",
-    "test:functions": "npx deno test supabase/tests/functions --allow-env --allow-net",
+    "test:functions": "node scripts/deno-function-tests.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:list": "playwright test --list",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
     "supabase:functions": "supabase functions serve api --env-file supabase/.env.local"
   },
   "dependencies": {
+    "@sentry/react": "^10.63.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/react-query": "^5.101.2",
     "lucide-react": "^1.23.0",
@@ -49,6 +51,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.1.0",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.9"
   }
 }
