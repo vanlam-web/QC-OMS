@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { LogOut, ShoppingCart, UserCircle } from 'lucide-react'
 import type { CurrentUserData } from '../../lib/api/types'
 import { ThemeToggle } from './ThemeProvider'
+import { appRoutes } from '../../app/routes'
 
 interface ShellNavItem {
   label: string
@@ -14,30 +15,36 @@ interface ShellNavItem {
 }
 
 const shellNavItems: ShellNavItem[] = [
-  { label: 'POS', shortLabel: 'POS', path: '/pos', marker: 'POS', permissions: ['perm.create_order'] },
+  { label: 'POS', shortLabel: 'POS', path: appRoutes.pos, marker: 'POS', permissions: ['perm.create_order'] },
   {
     label: 'Hóa đơn',
     shortLabel: 'HĐ',
-    path: '/sales-documents',
+    path: appRoutes.salesDocuments,
     marker: 'HĐ',
     permissions: ['perm.create_order', 'perm.manage_finance'],
   },
-  { label: 'Sổ quỹ', shortLabel: 'SQ', path: '/finance', marker: 'SQ', permissions: ['perm.manage_finance'] },
+  { label: 'Sổ quỹ', shortLabel: 'SQ', path: appRoutes.finance, marker: 'SQ', permissions: ['perm.manage_finance'] },
   {
     label: 'Báo cáo',
     shortLabel: 'BC',
-    path: '/reports',
+    path: appRoutes.reports,
     marker: 'BC',
     permissions: ['perm.manage_finance', 'perm.manage_inventory'],
     requireAllPermissions: true,
   },
-  { label: 'Khách hàng', shortLabel: 'KH', path: '/customers', marker: 'KH', permissions: ['perm.create_order'] },
-  { label: 'Hàng hóa', shortLabel: 'HH', path: '/products', marker: 'HH', permissions: ['perm.manage_inventory'] },
-  { label: 'Kho', shortLabel: 'Kho', path: '/inventory', marker: 'K', permissions: ['perm.manage_inventory'] },
-  { label: 'Bảng giá', shortLabel: 'Giá', path: '/price-book', marker: 'BG', permissions: ['perm.edit_price_book'] },
-  { label: 'Nhà cung cấp', shortLabel: 'NCC', path: '/suppliers', marker: 'NC', permissions: ['perm.manage_inventory'] },
-  { label: 'Nhập hàng', shortLabel: 'NH', path: '/purchase/receipts', marker: 'NH', permissions: ['perm.manage_inventory'] },
-  { label: 'Quản trị', shortLabel: 'QT', path: '/admin', marker: 'QT', permissions: ['perm.access_admin_panel'] },
+  { label: 'Khách hàng', shortLabel: 'KH', path: appRoutes.customers, marker: 'KH', permissions: ['perm.create_order'] },
+  { label: 'Hàng hóa', shortLabel: 'HH', path: appRoutes.products, marker: 'HH', permissions: ['perm.manage_inventory'] },
+  { label: 'Kho', shortLabel: 'Kho', path: appRoutes.inventory, marker: 'K', permissions: ['perm.manage_inventory'] },
+  { label: 'Bảng giá', shortLabel: 'Giá', path: appRoutes.priceBook, marker: 'BG', permissions: ['perm.edit_price_book'] },
+  { label: 'Nhà cung cấp', shortLabel: 'NCC', path: appRoutes.suppliers, marker: 'NC', permissions: ['perm.manage_inventory'] },
+  {
+    label: 'Nhập hàng',
+    shortLabel: 'NH',
+    path: appRoutes.purchaseReceipts,
+    marker: 'NH',
+    permissions: ['perm.manage_inventory'],
+  },
+  { label: 'Quản trị', shortLabel: 'QT', path: appRoutes.admin, marker: 'QT', permissions: ['perm.access_admin_panel'] },
 ]
 
 function canSeeNavItem(currentUser: CurrentUserData, item: ShellNavItem) {
@@ -58,14 +65,14 @@ export function AppShell({
   onSignOut: () => void
 }) {
   const visibleItems = shellNavItems.filter((item) => canSeeNavItem(currentUser, item))
-  const visibleNavItems = visibleItems.filter((item) => item.path !== '/pos')
-  const canOpenPos = visibleItems.some((item) => item.path === '/pos')
+  const visibleNavItems = visibleItems.filter((item) => item.path !== appRoutes.pos)
+  const canOpenPos = visibleItems.some((item) => item.path === appRoutes.pos)
   const [accountOpen, setAccountOpen] = useState(false)
 
   return (
     <div className="app-shell">
       <header className="app-topbar">
-        <NavLink aria-label="Mở tổng quan" className="app-brand" title="Logo" to="/dashboard">
+        <NavLink aria-label="Mở tổng quan" className="app-brand" title="Logo" to={appRoutes.dashboard}>
           <span aria-hidden="true">QC</span>
         </NavLink>
 
@@ -83,7 +90,7 @@ export function AppShell({
 
         <div aria-label="Thao tác nhanh" className="shell-quick-actions">
           {canOpenPos ? (
-            <NavLink aria-label="Mở POS" className="shell-pos-action" to="/pos" title="Mở POS">
+            <NavLink aria-label="Mở POS" className="shell-pos-action" to={appRoutes.pos} title="Mở POS">
               <ShoppingCart aria-hidden="true" size={18} />
               <span>POS</span>
             </NavLink>

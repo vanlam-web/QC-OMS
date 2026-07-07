@@ -48,6 +48,12 @@ Frontend route pages được lazy-load theo route để giữ app shell nhỏ:
 - `src/app/router.test.ts` kiểm rule này để tránh kéo toàn bộ app vào initial bundle;
 - `npm run build` phải pass mà không phát sinh cảnh báo chunk lớn mới.
 
+Frontend URL route dùng chung qua `src/app/routes.ts`:
+
+- router, navigation shell, module boundary và route guard dùng `appRoutes`;
+- URL động như in báo giá dùng helper riêng, ví dụ `quotePrintPath(documentId)`;
+- khi đổi path/module mới, cập nhật constants + `src/app/routes.test.ts` trước để tránh lệch URL giữa menu và router.
+
 ---
 
 ## 2. BIẾN MÔI TRƯỜNG
