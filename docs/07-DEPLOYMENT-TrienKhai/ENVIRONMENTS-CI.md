@@ -35,6 +35,8 @@ Frontend được phép có:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_API_BASE_URL`
 - `VITE_APP_ENV`
+- `VITE_SENTRY_DSN` (tùy chọn)
+- `VITE_SENTRY_TRACES_SAMPLE_RATE` (tùy chọn, `0` đến `1`)
 
 Ví dụ `.env.local` cho Supabase Cloud dev/staging:
 
@@ -43,9 +45,13 @@ VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<cloud-anon-key>
 VITE_API_BASE_URL=https://<project-ref>.supabase.co/functions/v1/api
 VITE_APP_ENV=staging
+VITE_SENTRY_DSN=
+VITE_SENTRY_TRACES_SAMPLE_RATE=0
 ```
 
 `VITE_APP_ENV` nên dùng một trong các giá trị dễ đọc như `development`, `staging`, `production`, hoặc `local-isolated` tùy môi trường đang trỏ tới.
+
+Sentry chỉ bật khi `VITE_SENTRY_DSN` có giá trị. Khi chưa cấu hình DSN, app không gửi event ra Sentry. `VITE_SENTRY_TRACES_SAMPLE_RATE` mặc định là `0` để không bật performance tracing ngoài ý muốn.
 
 Backend secret gồm:
 

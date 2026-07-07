@@ -21,3 +21,12 @@ it('shows configuration errors from the client instead of a generic fallback', (
     ),
   ).toBe('Thiếu cấu hình Supabase anon key. Vui lòng nhập VITE_SUPABASE_ANON_KEY.')
 })
+
+it('includes the trace id for server errors so support can find the failing request', () => {
+  expect(
+    formatApiError(
+      new ApiError(500, 'INTERNAL_ERROR', 'Server failed', 'trace-support-1'),
+      'Fallback',
+    ),
+  ).toBe('Máy chủ gặp lỗi. Vui lòng thử lại sau. Mã lỗi: trace-support-1')
+})

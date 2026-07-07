@@ -78,6 +78,9 @@ export function successResponse<T>(
   traceId: string,
   init: ResponseInit = {},
 ): Response {
+  const headers = new Headers(init.headers);
+  headers.set("x-request-id", traceId);
+
   return jsonResponse(
     {
       success: true,
@@ -85,7 +88,7 @@ export function successResponse<T>(
       trace_id: traceId,
     },
     init.status ?? 200,
-    init.headers,
+    headers,
   );
 }
 
@@ -94,6 +97,9 @@ export function errorResponse(
   traceId: string,
   headers?: HeadersInit,
 ): Response {
+  const responseHeaders = new Headers(headers);
+  responseHeaders.set("x-request-id", traceId);
+
   return jsonResponse(
     {
       success: false,
@@ -104,7 +110,7 @@ export function errorResponse(
       trace_id: traceId,
     },
     error.status,
-    headers,
+    responseHeaders,
   );
 }
 

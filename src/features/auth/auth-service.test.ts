@@ -15,6 +15,8 @@ it('fails fast with a clear message when Supabase anon key is missing', async ()
     supabaseAnonKey: 'missing-supabase-anon-key',
     apiBaseUrl: 'https://example.supabase.co/functions/v1',
     appEnv: 'test',
+    sentryDsn: undefined,
+    sentryTracesSampleRate: 0,
   })
 
   await expect(service.signIn('admin@qc.local', '123456')).rejects.toThrow(

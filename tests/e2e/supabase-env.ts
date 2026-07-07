@@ -8,28 +8,20 @@ export interface E2eSupabaseEnv {
   SUPABASE_SERVICE_ROLE_KEY?: string;
 }
 
+interface E2eSupabaseEnvSources {
+  processEnv: Record<string, string | undefined>;
+  fileEnv: Record<string, string | undefined>;
+  cliEnv: Record<string, string | undefined>;
+}
+
 export function loadE2eSupabaseEnv(): E2eSupabaseEnv {
-  const fileEnv = readEnvFiles();
-  const cliEnv = readSupabaseStatusEnv();
-  const SUPABASE_URL =
-    process.env.SUPABASE_URL ??
-    process.env.VITE_SUPABASE_URL ??
-    fileEnv.SUPABASE_URL ??
-    fileEnv.VITE_SUPABASE_URL ??
-    cliEnv.SUPABASE_URL ??
-    cliEnv.API_URL;
-  const SUPABASE_ANON_KEY =
-    process.env.SUPABASE_ANON_KEY ??
-    process.env.VITE_SUPABASE_ANON_KEY ??
-    fileEnv.SUPABASE_ANON_KEY ??
-    fileEnv.VITE_SUPABASE_ANON_KEY ??
-    cliEnv.SUPABASE_ANON_KEY ??
-    cliEnv.ANON_KEY;
-  const SUPABASE_SERVICE_ROLE_KEY =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    fileEnv.SUPABASE_SERVICE_ROLE_KEY ??
-    cliEnv.SUPABASE_SERVICE_ROLE_KEY ??
-    cliEnv.SERVICE_ROLE_KEY;
+  const env = resolveE2eSupabaseEnv({
+    processEnv: process.env,
+    fileEnv: readEnvFiles(),
+    cliEnv: readSupabaseStatusEnv(),
+  });
+
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = env;
 
   const missing = Object.entries({ SUPABASE_URL, SUPABASE_ANON_KEY })
     .filter(([, value]) => value === undefined || value.length === 0)
@@ -41,7 +33,43 @@ export function loadE2eSupabaseEnv(): E2eSupabaseEnv {
     );
   }
 
-  return { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY };
+  return env;
+}
+
+export function resolveE2eSupabaseEnv(sources: E2eSupabaseEnvSources): E2eSupabaseEnv {
+  const processEnv = normalizeSource(sources.processEnv);
+  const fileEnv = normalizeSource(sources.fileEnv);
+  const cliEnv = normalizeSource(sources.cliEnv);
+
+  if (processEnv.SUPABASE_URL !== undefined && processEnv.SUPABASE_ANON_KEY !== undefined) {
+    return {
+      SUPABASE_URL: processEnv.SUPABASE_URL,
+      SUPABASE_ANON_KEY: processEnv.SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: processEnv.SUPABASE_SERVICE_ROLE_KEY,
+    };
+  }
+
+  if (isCompleteE2eSource(cliEnv)) {
+    return {
+      SUPABASE_URL: cliEnv.SUPABASE_URL,
+      SUPABASE_ANON_KEY: cliEnv.SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: cliEnv.SUPABASE_SERVICE_ROLE_KEY,
+    };
+  }
+
+  if (fileEnv.SUPABASE_URL !== undefined && fileEnv.SUPABASE_ANON_KEY !== undefined) {
+    return {
+      SUPABASE_URL: fileEnv.SUPABASE_URL,
+      SUPABASE_ANON_KEY: fileEnv.SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: fileEnv.SUPABASE_SERVICE_ROLE_KEY,
+    };
+  }
+
+  return {
+    SUPABASE_URL: cliEnv.SUPABASE_URL ?? "",
+    SUPABASE_ANON_KEY: cliEnv.SUPABASE_ANON_KEY ?? "",
+    SUPABASE_SERVICE_ROLE_KEY: cliEnv.SUPABASE_SERVICE_ROLE_KEY,
+  };
 }
 
 export function requireE2eServiceRoleKey(env: E2eSupabaseEnv): string {
@@ -76,6 +104,22 @@ function readSupabaseStatusEnv(): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+function normalizeSource(source: Record<string, string | undefined>) {
+  return {
+    SUPABASE_URL: source.SUPABASE_URL ?? source.VITE_SUPABASE_URL ?? source.API_URL,
+    SUPABASE_ANON_KEY: source.SUPABASE_ANON_KEY ?? source.VITE_SUPABASE_ANON_KEY ?? source.ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY ?? source.SERVICE_ROLE_KEY,
+  };
+}
+
+function isCompleteE2eSource(source: ReturnType<typeof normalizeSource>) {
+  return (
+    source.SUPABASE_URL !== undefined &&
+    source.SUPABASE_ANON_KEY !== undefined &&
+    source.SUPABASE_SERVICE_ROLE_KEY !== undefined
+  );
 }
 
 function parseEnv(output: string): Record<string, string> {
