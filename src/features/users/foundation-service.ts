@@ -40,6 +40,11 @@ export function createFoundationService(api: ApiRequester) {
       email: string
       username?: string | null
       phone?: string | null
+      birthday?: string | null
+      region?: string | null
+      ward?: string | null
+      address?: string | null
+      note?: string | null
       password: string
       display_name: string
       permissions: PermissionCode[]

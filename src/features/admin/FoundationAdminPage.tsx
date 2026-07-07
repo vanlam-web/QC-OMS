@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { KeyRound, Lock, Search, Settings, Unlock, X } from 'lucide-react'
+import { CalendarDays, KeyRound, Lock, Search, Settings, Unlock, X } from 'lucide-react'
 import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
@@ -88,6 +88,11 @@ export function FoundationAdminPage({
     password: '',
     passwordConfirmation: '',
     roleId: 'cashier',
+    birthday: '',
+    address: '',
+    region: '',
+    ward: '',
+    note: '',
   })
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [userDialogOpen, setUserDialogOpen] = useState(false)
@@ -154,6 +159,11 @@ export function FoundationAdminPage({
       password: '',
       passwordConfirmation: '',
       roleId: 'cashier',
+      birthday: '',
+      address: '',
+      region: '',
+      ward: '',
+      note: '',
     })
     setUserDialogOpen(true)
   }
@@ -181,6 +191,11 @@ export function FoundationAdminPage({
         email: userForm.email,
         username: userForm.username,
         phone: userForm.phone,
+        birthday: nullableFormValue(userForm.birthday),
+        address: nullableFormValue(userForm.address),
+        region: nullableFormValue(userForm.region),
+        ward: nullableFormValue(userForm.ward),
+        note: nullableFormValue(userForm.note),
         password: userForm.password,
         display_name: userForm.displayName,
         permissions: role ? role.permissions : [...internalStaffDefaultPermissions],
@@ -493,6 +508,71 @@ export function FoundationAdminPage({
                       </select>
                     </label>
                   </div>
+                  <section className="admin-user-form-section" aria-label="Thông tin khác">
+                    <h3>Thông tin khác</h3>
+                    <div className="admin-user-form-fields">
+                      <label>
+                        Sinh nhật
+                        <span className="admin-user-input-with-icon">
+                          <input
+                            placeholder="--/--/----"
+                            type="date"
+                            value={userForm.birthday}
+                            onChange={(event) =>
+                              setUserForm((current) => ({ ...current, birthday: event.target.value }))
+                            }
+                          />
+                          <CalendarDays aria-hidden="true" size={15} />
+                        </span>
+                      </label>
+                      <label>
+                        Địa chỉ
+                        <input
+                          placeholder="Nhập địa chỉ"
+                          value={userForm.address}
+                          onChange={(event) =>
+                            setUserForm((current) => ({ ...current, address: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Khu vực
+                        <span className="admin-user-input-with-icon admin-user-input-with-leading-icon">
+                          <Search aria-hidden="true" size={15} />
+                          <input
+                            placeholder="Chọn Tỉnh/Thành phố"
+                            value={userForm.region}
+                            onChange={(event) =>
+                              setUserForm((current) => ({ ...current, region: event.target.value }))
+                            }
+                          />
+                        </span>
+                      </label>
+                      <label>
+                        Phường/Xã
+                        <span className="admin-user-input-with-icon admin-user-input-with-leading-icon">
+                          <Search aria-hidden="true" size={15} />
+                          <input
+                            placeholder="Chọn Phường/Xã"
+                            value={userForm.ward}
+                            onChange={(event) => setUserForm((current) => ({ ...current, ward: event.target.value }))}
+                          />
+                        </span>
+                      </label>
+                    </div>
+                  </section>
+                  <section className="admin-user-form-section" aria-label="Ghi chú">
+                    <h3>Ghi chú</h3>
+                    <label className="admin-user-note-field">
+                      <span className="sr-only">Ghi chú</span>
+                      <textarea
+                        aria-label="Ghi chú"
+                        placeholder="Nhập ghi chú"
+                        value={userForm.note}
+                        onChange={(event) => setUserForm((current) => ({ ...current, note: event.target.value }))}
+                      />
+                    </label>
+                  </section>
                   <footer className="management-modal-footer">
                     <button className="button button-secondary" type="button" onClick={closeUserDialog}>Bỏ qua</button>
                     <button className="button button-primary" disabled={savingUser} type="submit">Lưu</button>
@@ -652,6 +732,11 @@ export function FoundationAdminPage({
       ) : null}
     </ManagementPage>
   )
+}
+
+function nullableFormValue(value: string): string | null {
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
 }
 
 function AdminSettingsMenu() {

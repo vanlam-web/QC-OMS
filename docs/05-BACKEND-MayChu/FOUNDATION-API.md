@@ -290,6 +290,13 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 ```json
 {
   "email": "cashier@example.com",
+  "username": "cashier-01",
+  "phone": "0947900909",
+  "birthday": "1990-01-31",
+  "region": "TP Hồ Chí Minh",
+  "ward": "Phường Bến Thành",
+  "address": "12 Nguyễn Trãi",
+  "note": "Ca tối",
   "password": "temporary-secret",
   "display_name": "Thu ngân 1",
   "permissions": ["perm.create_order"]
@@ -299,6 +306,10 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 **Validation:**
 
 - Email hợp lệ và chưa tồn tại.
+- `username` sau trim không rỗng, tối đa 100 ký tự; nếu không gửi thì dùng email.
+- `phone` cho phép trống hoặc số/ký tự điện thoại phổ biến, 8-20 ký tự.
+- `birthday` cho phép trống hoặc định dạng `YYYY-MM-DD`.
+- `region`, `ward`, `address`, `note` cho phép trống; lần lượt tối đa 100, 100, 255, 500 ký tự.
 - Password đáp ứng policy Auth của môi trường.
 - `display_name` sau trim không rỗng, tối đa 100 ký tự.
 - Mọi permission code tồn tại và đang active.

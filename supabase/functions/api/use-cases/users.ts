@@ -131,6 +131,11 @@ function parseCreateUser(body: unknown): {
   email: string;
   username: string;
   phone: string | null;
+  birthday: string | null;
+  region: string | null;
+  ward: string | null;
+  address: string | null;
+  note: string | null;
   password: string;
   displayName: string;
   permissions: PermissionCode[];
@@ -139,6 +144,11 @@ function parseCreateUser(body: unknown): {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const username = typeof body.username === "string" ? body.username.trim() : email;
   const phone = typeof body.phone === "string" ? nullIfBlank(body.phone) : null;
+  const birthday = parseBirthday(body.birthday);
+  const region = parseNullableText(body.region, 100);
+  const ward = parseNullableText(body.ward, 100);
+  const address = parseNullableText(body.address, 255);
+  const note = parseNullableText(body.note, 500);
   const password = typeof body.password === "string" ? body.password : "";
   const displayName = typeof body.display_name === "string" ? body.display_name.trim() : "";
   const permissions = "permissions" in body
@@ -156,7 +166,7 @@ function parseCreateUser(body: unknown): {
   ) {
     throw validationError();
   }
-  return { email, username, phone, password, displayName, permissions };
+  return { email, username, phone, birthday, region, ward, address, note, password, displayName, permissions };
 }
 
 function parseUpdateUser(body: unknown): { displayName?: string; status?: "active" | "inactive" } {
@@ -197,6 +207,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function nullIfBlank(value: string): string | null {
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
+}
+
+function parseNullableText(value: unknown, maxLength: number): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw validationError();
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > maxLength) throw validationError();
+  return trimmed;
+}
+
+function parseBirthday(value: unknown): string | null {
+  const birthday = parseNullableText(value, 10);
+  if (birthday !== null && !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) throw validationError();
+  return birthday;
 }
 
 function validationError(): ApiError {

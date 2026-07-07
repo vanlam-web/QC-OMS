@@ -158,6 +158,23 @@ it('maps API errors to operator-facing messages', async () => {
   expect(within(createUserForm).getByRole('textbox', { name: 'Email' })).toBeInTheDocument()
   expect(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' })).toBeInTheDocument()
   expect(within(createUserForm).getByRole('combobox', { name: 'Vai trò' })).toBeInTheDocument()
+  expect(within(createUserForm).getByLabelText('Sinh nhật')).toBeInTheDocument()
+  expect(within(createUserForm).getByRole('textbox', { name: 'Địa chỉ' })).toHaveAttribute(
+    'placeholder',
+    'Nhập địa chỉ',
+  )
+  expect(within(createUserForm).getByRole('textbox', { name: 'Khu vực' })).toHaveAttribute(
+    'placeholder',
+    'Chọn Tỉnh/Thành phố',
+  )
+  expect(within(createUserForm).getByRole('textbox', { name: 'Phường/Xã' })).toHaveAttribute(
+    'placeholder',
+    'Chọn Phường/Xã',
+  )
+  expect(within(createUserForm).getByRole('textbox', { name: 'Ghi chú' })).toHaveAttribute(
+    'placeholder',
+    'Nhập ghi chú',
+  )
   await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'admin@example.test')
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Admin')
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'admin-login')
@@ -186,6 +203,11 @@ it('creates, disables, and updates permissions for users', async () => {
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Điện thoại' }), '0912345678')
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Email' }), 'cashier@example.test')
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'cashier-login')
+  await userEvent.type(within(createUserForm).getByLabelText('Sinh nhật'), '2026-07-07')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Địa chỉ' }), '12 Nguyen Trai')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Khu vực' }), 'TP Hồ Chí Minh')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Phường/Xã' }), 'Phường Bến Thành')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Ghi chú' }), 'Ca tối')
   await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
   await userEvent.type(within(createUserForm).getByLabelText('Nhập lại mật khẩu'), 'Password123!')
   await userEvent.selectOptions(within(createUserForm).getByRole('combobox', { name: 'Vai trò' }), 'cashier')
@@ -194,6 +216,11 @@ it('creates, disables, and updates permissions for users', async () => {
     email: 'cashier@example.test',
     username: 'cashier-login',
     phone: '0912345678',
+    birthday: '2026-07-07',
+    address: '12 Nguyen Trai',
+    region: 'TP Hồ Chí Minh',
+    ward: 'Phường Bến Thành',
+    note: 'Ca tối',
     password: 'Password123!',
     display_name: 'Cashier',
     permissions: ['perm.create_order', 'perm.apply_discount', 'perm.view_shift_report'],

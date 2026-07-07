@@ -716,7 +716,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listUsers(input): Promise<{ items: UserListItem[]; total: number }> {
       let query = client
         .from("profiles")
-        .select("user_id, display_name, username, phone, email, status", { count: "exact" })
+        .select("user_id, display_name, username, phone, email, birthday, region, ward, address, note, status", { count: "exact" })
         .eq("organization_id", input.organizationId)
         .order("display_name", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -734,7 +734,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async getUser(input): Promise<UserListItem | null> {
       const { data, error } = await client
         .from("profiles")
-        .select("user_id, display_name, username, phone, email, status")
+        .select("user_id, display_name, username, phone, email, birthday, region, ward, address, note, status")
         .eq("organization_id", input.organizationId)
         .eq("user_id", input.userId)
         .maybeSingle();
@@ -764,6 +764,11 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
             username: input.username ?? input.email,
             phone: input.phone ?? null,
             email: input.email,
+            birthday: input.birthday ?? null,
+            region: input.region ?? null,
+            ward: input.ward ?? null,
+            address: input.address ?? null,
+            note: input.note ?? null,
           })
           .eq("user_id", createdId);
         if (profileError !== null) throw profileError;
@@ -776,6 +781,11 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         email: input.email,
         username: input.username ?? input.email,
         phone: input.phone ?? null,
+        birthday: input.birthday ?? null,
+        region: input.region ?? null,
+        ward: input.ward ?? null,
+        address: input.address ?? null,
+        note: input.note ?? null,
         display_name: input.displayName,
         status: "active",
         permissions: [...input.permissions].sort(),
@@ -4136,6 +4146,11 @@ async function hydrateUser(
     username?: string | null;
     phone?: string | null;
     email?: string | null;
+    birthday?: string | null;
+    region?: string | null;
+    ward?: string | null;
+    address?: string | null;
+    note?: string | null;
     status: "active" | "inactive";
   },
   email: string,
@@ -4151,6 +4166,11 @@ async function hydrateUser(
     email: row.email ?? email,
     username: row.username ?? null,
     phone: row.phone ?? null,
+    birthday: row.birthday ?? null,
+    region: row.region ?? null,
+    ward: row.ward ?? null,
+    address: row.address ?? null,
+    note: row.note ?? null,
     display_name: row.display_name,
     status: row.status,
     permissions: (permissionRows ?? []).map((permission) => permission.permission_code as PermissionCode),

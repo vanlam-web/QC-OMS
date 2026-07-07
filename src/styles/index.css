@@ -4182,7 +4182,7 @@ td:has(.money-text) {
 }
 
 .admin-user-dialog {
-  width: min(44rem, calc(100vw - var(--space-4)));
+  width: min(52rem, calc(100vw - var(--space-4)));
 }
 
 .admin-user-form {
@@ -4194,6 +4194,18 @@ td:has(.money-text) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+.admin-user-form-section {
+  display: grid;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: var(--space-3);
+}
+
+.admin-user-form-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .admin-role-form {
@@ -4217,6 +4229,7 @@ td:has(.money-text) {
 
 .admin-user-form-fields input,
 .admin-user-form-fields select,
+.admin-user-note-field textarea,
 .admin-role-form-fields input {
   min-height: 2.25rem;
   border: 1px solid var(--color-border);
@@ -4225,6 +4238,44 @@ td:has(.money-text) {
   color: var(--color-text);
   padding: 0 var(--space-2);
   font: inherit;
+}
+
+.admin-user-note-field {
+  display: grid;
+}
+
+.admin-user-note-field textarea {
+  min-height: 5rem;
+  resize: vertical;
+  padding: var(--space-2);
+}
+
+.admin-user-input-with-icon {
+  position: relative;
+  display: grid;
+}
+
+.admin-user-input-with-icon svg {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.admin-user-input-with-icon input {
+  padding-right: var(--space-7);
+}
+
+.admin-user-input-with-leading-icon svg {
+  right: auto;
+  left: var(--space-2);
+}
+
+.admin-user-input-with-leading-icon input {
+  padding-right: var(--space-2);
+  padding-left: var(--space-7);
 }
 
 .admin-role-permissions-shell {

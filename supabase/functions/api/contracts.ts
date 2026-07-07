@@ -32,6 +32,11 @@ export interface UserListItem {
   email: string;
   username: string | null;
   phone: string | null;
+  birthday?: string | null;
+  region?: string | null;
+  ward?: string | null;
+  address?: string | null;
+  note?: string | null;
   display_name: string;
   status: "active" | "inactive";
   permissions: PermissionCode[];
@@ -708,6 +713,11 @@ export interface FoundationRepository {
     email: string;
     username?: string | null;
     phone?: string | null;
+    birthday?: string | null;
+    region?: string | null;
+    ward?: string | null;
+    address?: string | null;
+    note?: string | null;
     password: string;
     displayName: string;
     permissions: PermissionCode[];
