@@ -20,6 +20,7 @@
     "supabase:functions": "supabase functions serve api --env-file supabase/.env.local"
   },
   "dependencies": {
+    "@sentry/react": "^10.63.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/react-query": "^5.101.2",
     "lucide-react": "^1.23.0",
