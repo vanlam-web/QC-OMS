@@ -14,6 +14,7 @@
     "test:db": "supabase test db",
     "test:functions": "node scripts/deno-function-tests.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:list": "playwright test --list",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",

@@ -1,10 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
-import { loadE2eSupabaseEnv, resolveE2eApiBaseUrl } from "./tests/e2e/supabase-env";
+import { loadPlaywrightConfigSupabaseEnv, resolveE2eApiBaseUrl } from "./tests/e2e/supabase-env";
 
 process.env.E2E_ADMIN_EMAIL ??= "admin@qc.local";
 process.env.E2E_ADMIN_PASSWORD ??= "123456";
 
-const supabase = loadE2eSupabaseEnv();
+const supabase = loadPlaywrightConfigSupabaseEnv();
 const apiBaseUrl = resolveE2eApiBaseUrl(supabase);
 const webServerEnv = {
   ...process.env,
