@@ -34,6 +34,13 @@ CI bắt buộc chạy lại migration local trước khi chạy function tests:
 
 Thứ tự này chặn lỗi deploy function trước schema, ví dụ function đã select cột mới nhưng DB cloud/chạy thử chưa có migration tương ứng.
 
+PWA hiện chỉ là app-shell cache:
+
+- cache file build tĩnh để POS/app mở lại nhanh hơn;
+- tự cập nhật service worker khi có bản mới;
+- không cam kết lưu hóa đơn/báo giá offline;
+- mọi nghiệp vụ bán hàng vẫn phải theo API/server khi ghi dữ liệu.
+
 ---
 
 ## 2. BIẾN MÔI TRƯỜNG
