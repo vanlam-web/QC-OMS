@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CheckoutPanel } from './CheckoutPanel'
 import type { CheckoutCartLine, OrderService } from '../orders/order-service'
@@ -361,9 +361,11 @@ it('submits old debt collection separately from the current invoice payment', as
   )
 })
 
-it('hides old debt collection when no customer is selected', () => {
-  render(<CheckoutPanel cartLines={[line]} selectedCustomer={null} orderService={makeOrderService()} />)
+it('hides old debt collection when no customer is selected', async () => {
+  const service = makeOrderService()
+  render(<CheckoutPanel cartLines={[line]} selectedCustomer={null} orderService={service} />)
 
   expect(screen.queryByLabelText('Thu nợ cũ')).not.toBeInTheDocument()
   expect(screen.queryByText('Tổng nợ hiện tại')).not.toBeInTheDocument()
+  await waitFor(() => expect(service.listFinanceAccounts).toHaveBeenCalled())
 })
