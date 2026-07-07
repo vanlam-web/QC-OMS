@@ -34,6 +34,12 @@ CI bắt buộc chạy lại migration local trước khi chạy function tests:
 
 Thứ tự này chặn lỗi deploy function trước schema, ví dụ function đã select cột mới nhưng DB cloud/chạy thử chưa có migration tương ứng.
 
+Function test runner:
+
+- `npm run test:functions` chạy toàn bộ `supabase/tests/functions`;
+- `npm run test:functions -- supabase/tests/functions/health_test.ts` chỉ chạy đúng file được truyền sau `--`;
+- khi review một slice nhỏ, ưu tiên chạy targeted path trước rồi chạy lại toàn bộ `npm run test:functions` trước khi merge.
+
 PWA hiện chỉ là app-shell cache:
 
 - cache file build tĩnh để POS/app mở lại nhanh hơn;
