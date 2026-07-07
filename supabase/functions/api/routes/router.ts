@@ -112,6 +112,8 @@ export function routeRequest(
     url.pathname.startsWith("/api/v1/customers/") ||
     url.pathname === "/api/v1/customer-groups" ||
     url.pathname.startsWith("/api/v1/customer-groups/") ||
+    url.pathname === "/api/v1/product-groups" ||
+    url.pathname.startsWith("/api/v1/product-groups/") ||
     url.pathname === "/api/v1/price-lists" ||
     url.pathname.startsWith("/api/v1/price-lists/") ||
     url.pathname === "/api/v1/pricing/resolve"

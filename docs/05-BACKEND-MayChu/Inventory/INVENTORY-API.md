@@ -188,6 +188,31 @@ Tìm cuộn vật lý.
 
 Nếu gọi từ POS/checkout, Backend chỉ trả cuộn `available` hoặc `in_use`.
 
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "product_id": "uuid",
+      "code": "ROLL-001",
+      "width_m": 3.2,
+      "initial_length_m": 50,
+      "remaining_length_m": 18,
+      "initial_area_m2": 160,
+      "remaining_area_m2": 57.6,
+      "status": "in_use",
+      "note": "Cuộn đang dùng",
+      "created_at": "2026-07-07T08:00:00Z"
+    }
+  ],
+  "page": 1,
+  "page_size": 15,
+  "total": 1
+}
+```
+
 ### `POST /inventory/rolls`
 
 Tạo cuộn vật lý khi nhập hoặc khai báo tồn ban đầu.
@@ -227,6 +252,8 @@ Sửa thông tin/cuộn còn lại.
 **Permission:** `perm.manage_inventory`
 
 Backend không được sửa âm thầm tồn cuộn. Nếu `remaining_length_m` hoặc `remaining_area_m2` thay đổi, phải tạo `stock_movements` loại `manual_adjustment` kèm `reason`.
+
+**Trạng thái triển khai hiện tại:** endpoint nhận `remaining_length_m`, `status`, `reason`. Backend tính lại `remaining_area_m2 = width_m * remaining_length_m`. Nếu diện tích thay đổi, ghi `stock_movements.manual_adjustment` theo object `roll`; nếu delta bằng `0`, không ghi movement vì DB không cho movement số lượng `0`.
 
 ### `POST /inventory/rolls/suggest`
 
@@ -268,6 +295,30 @@ Tìm tấm nguyên/tấm dở/tấm lỡ.
 **Permission:** `perm.create_order` hoặc `perm.manage_inventory`
 
 **Query:** `product_id`, `sheet_kind`, `status`, `min_width_m`, `min_length_m`, `page`, `page_size`.
+
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "product_id": "uuid",
+      "code": "SHEET-001",
+      "sheet_kind": "full",
+      "width_m": 1.22,
+      "length_m": 2.44,
+      "area_m2": 2.977,
+      "status": "available",
+      "note": "Tấm nguyên",
+      "created_at": "2026-07-07T08:00:00Z"
+    }
+  ],
+  "page": 1,
+  "page_size": 15,
+  "total": 1
+}
+```
 
 ### `POST /inventory/sheets`
 
@@ -313,6 +364,8 @@ Sửa hoặc đổi trạng thái tấm/tấm lỡ.
 - Cho phép sửa kích thước, trạng thái, ghi chú.
 - Nếu sửa kích thước/diện tích hoặc đổi `discarded`, Backend phải tạo `stock_movements` loại `manual_adjustment` hoặc `remnant_discarded`.
 - Mọi thao tác sửa/xóa tấm lỡ phải ghi log nghiệp vụ tối thiểu qua stock movement hoặc audit log hiện hành.
+
+**Trạng thái triển khai hiện tại:** endpoint nhận `width_m`, `length_m`, `status`, `reason`. Backend tính lại `area_m2 = width_m * length_m`. Nếu diện tích thay đổi, ghi `stock_movements.manual_adjustment` theo object `sheet`; nếu delta bằng `0`, không ghi movement.
 
 ### `POST /inventory/sheets/suggest`
 
@@ -361,7 +414,7 @@ Endpoint này chỉ đề xuất, không trừ kho.
 
 1. Xác thực actor, workstation và permission.
 2. Tải product + `product_inventory_settings`.
-3. Nếu `normal`, trả cấu hình đơn vị tồn và danh sách quy đổi đơn vị từ `product_unit_conversions`.
+3. Nếu `normal`, trả cấu hình đơn vị tồn và danh sách quy đổi đơn vị từ `product_unit_conversions`, gồm đơn vị, hệ số quy đổi về tồn chính, cờ mặc định khi mua và cờ mặc định khi bán.
 4. Nếu `roll`, trả danh sách khổ khả dụng từ `inventory_rolls` và tồn tạm KiotViet nếu có.
 5. Nếu `sheet`, trả khổ thao tác từ settings và tấm/tấm dở/tấm lỡ liên quan nếu có.
 6. Không tự tạo object, không trừ tồn.
@@ -434,62 +487,61 @@ Quy tắc:
 - Không tạo `inventory_rolls` hoặc `inventory_sheets`.
 - Tạo `inventory_material_openings`.
 - Tạo `stock_movements` loại `material_opening` chỉ khi có thay đổi tồn chính thức cần ghi nhận.
+- Không tạo `stocktakes`; khui vật tư không phải phiếu kiểm kho.
+- Nếu `old_remaining_qty = 0` và hệ thống đang có phần dở/cũ còn số lượng, backend ghi movement âm để đưa phần cũ về `0` trước khi cộng phần khui mới.
 - Nếu tồn thiếu/âm, trả warning nhẹ, không chặn nếu actor có quyền.
 
 #### Input cho `roll`
+
+**Trạng thái triển khai hiện tại:** payload roll đang xử lý phần cuộn cũ đã chuẩn hóa. Backend cập nhật `inventory_rolls.remaining_length_m`, đổi trạng thái `empty` nếu còn lại `0`, ghi `inventory_material_openings` và `stock_movements.material_opening` cho phần chênh lệch diện tích. Luồng tạo/khui cuộn mới từ tồn tạm KiotViet hoặc chọn cuộn `available` tự động vẫn là phase sau.
 
 ```json
 {
   "product_id": "uuid",
   "inventory_shape": "roll",
-  "width_m": 3.2,
-  "new_roll": {
-    "length_m": 50,
-    "source_type": "kiotviet_provisional",
-    "provisional_balance_id": "uuid"
-  },
-  "old_roll": {
-    "inventory_roll_id": "uuid",
-    "remaining_length_m": 3.5
-  },
-  "note": "Khui cuộn 3.2m mới"
+  "old_inventory_roll_id": "uuid",
+  "old_remaining_length_m": 0,
+  "note": "Khui cuộn mới"
 }
 ```
 
 Quy tắc:
 
 - Product phải có `inventory_shape = roll`.
-- `width_m > 0`.
-- `new_roll.length_m > 0`.
-- `new_roll.source_type` là `standard_object` hoặc `kiotviet_provisional`.
+- `old_inventory_roll_id` phải thuộc cùng product/organization.
+- `old_remaining_length_m >= 0`.
 - Không bắt chọn lô/ngày mua/nhà cung cấp.
-- Nếu `standard_object`, backend được chọn một cuộn `available` cùng product/khổ theo quy tắc đơn giản nếu client không gửi id cụ thể.
-- Nếu `kiotviet_provisional`, `provisional_balance_id` bắt buộc và phải còn `remaining_qty > 0`.
-- Nếu `old_roll.remaining_length_m = 0`, cuộn cũ chuyển `empty` hoặc `discarded` theo payload/result; không tạo object rác.
-- Nếu `old_roll.remaining_length_m > 0`, giữ/cập nhật cuộn cũ để dùng tiếp.
+- Nếu `old_remaining_length_m = 0`, cuộn cũ chuyển `empty`; không tạo object rác.
+- Nếu `old_remaining_length_m > 0`, giữ/cập nhật cuộn cũ thành `in_use`.
 - Chênh lệch cũ/mới ghi vào `inventory_material_openings.old_snapshot`, `input_payload`, `result_payload`.
 - Stock movement dùng `movement_type = material_opening` cho phần tồn chính thức thay đổi.
+- Không tạo `stocktakes`; nếu cần cân bằng lại nhiều cuộn sau khi kiểm thực tế thì dùng endpoint stocktake riêng.
+- Phase sau sẽ bổ sung payload khui cuộn mới từ object `available` hoặc tồn tạm KiotViet.
 
 #### Input cho `sheet`
+
+**Trạng thái triển khai hiện tại:** payload sheet đang xử lý phần tấm cũ đã chuẩn hóa. Backend cập nhật `inventory_sheets`: nếu bỏ thì chuyển `discarded`, nếu giữ thì cập nhật rộng/dài/diện tích còn lại. Backend ghi `inventory_material_openings` và `stock_movements.material_opening` cho phần chênh lệch diện tích. Luồng tạo tấm mới từ tồn tạm KiotViet vẫn là phase sau.
 
 ```json
 {
   "product_id": "uuid",
   "inventory_shape": "sheet",
-  "new_sheet": {
-    "width_m": 1.2,
-    "length_m": 2.4,
-    "quantity": 1,
-    "source_type": "kiotviet_provisional",
-    "provisional_balance_id": "uuid"
-  },
-  "old_sheet": {
-    "inventory_sheet_id": "uuid",
-    "keep_remaining": true,
-    "remaining_width_m": 1.2,
-    "remaining_length_m": 0.35
-  },
+  "old_inventory_sheet_id": "uuid",
+  "old_remaining_width_m": 1.2,
+  "old_remaining_length_m": 0.35,
   "note": "Khui tấm mới, giữ phần cũ"
+}
+```
+
+Hoặc bỏ phần tấm cũ:
+
+```json
+{
+  "product_id": "uuid",
+  "inventory_shape": "sheet",
+  "old_inventory_sheet_id": "uuid",
+  "discard_old_sheet": true,
+  "note": "Bỏ phần tấm cũ"
 }
 ```
 
@@ -497,11 +549,12 @@ Quy tắc:
 
 - Product phải có `inventory_shape = sheet`.
 - Khổ thao tác dùng giá trị đơn giản như `1.2m x 2.4m`.
-- `new_sheet.quantity` MVP mặc định `1`.
-- Nếu phần còn lại dạng mét tới dưới `0.2m`, backend trả warning/gợi ý bỏ, không tự bỏ nếu `keep_remaining = true`.
-- Nếu rẻo nhỏ dưới ngưỡng cấu hình, backend trả warning/gợi ý bỏ, không tự bỏ nếu client gửi giữ lại.
-- Nếu giữ lại phần cũ, tạo/cập nhật `inventory_sheets` dạng `in_use` hoặc `remnant`.
-- Nếu bỏ phần cũ, tạo stock movement liên quan nếu có thay đổi tồn chính thức; không tạo object rác.
+- `old_inventory_sheet_id` phải thuộc cùng product/organization.
+- Nếu `discard_old_sheet = true`, không cần gửi kích thước còn lại.
+- Nếu không bỏ, `old_remaining_width_m > 0` và `old_remaining_length_m > 0`.
+- Nếu giữ lại phần cũ, cập nhật tấm cũ với diện tích còn lại.
+- Nếu bỏ phần cũ, chuyển tấm cũ sang `discarded`; không tạo object rác.
+- Ngưỡng rẻo nhỏ hoặc phần mét tới dưới `0.2m` hiện mới là rule UX/spec, chưa enforce trong API.
 - Không tính giá vốn hoặc báo cáo hao hụt nâng cao trong endpoint này.
 
 #### Response data
@@ -617,6 +670,8 @@ Tạo phiếu kiểm kho thủ công.
 
 **Permission:** `perm.manage_inventory`
 
+**Trạng thái triển khai hiện tại:** endpoint đã mở route nhưng trả `VALIDATION_ERROR` với thông điệp `Manual stocktake mutations are not implemented yet.`. Không trả fake success. Luồng sửa tồn hàng thường đang dùng endpoint riêng `POST /inventory/products/{product_id}/adjust-stock` để tự sinh phiếu `balanced`.
+
 **Input:**
 
 ```json
@@ -661,6 +716,8 @@ Cập nhật phiếu kiểm kho `draft`.
 
 **Permission:** `perm.manage_inventory`
 
+**Trạng thái triển khai hiện tại:** route đã mở nhưng trả `VALIDATION_ERROR`; chưa sửa phiếu thủ công.
+
 Chỉ cho sửa phiếu `status = draft`. Khi cập nhật, Backend tính lại `system_qty` hoặc giữ snapshot cũ theo thời điểm tạo tùy implementation, nhưng phải nhất quán trong response.
 
 ### `POST /inventory/stocktakes/{id}/balance`
@@ -668,6 +725,8 @@ Chỉ cho sửa phiếu `status = draft`. Khi cập nhật, Backend tính lại 
 Cân bằng kho cho phiếu `draft`.
 
 **Permission:** `perm.manage_inventory`
+
+**Trạng thái triển khai hiện tại:** route đã mở nhưng trả `VALIDATION_ERROR`; chưa cân bằng phiếu thủ công.
 
 Workflow:
 
@@ -683,6 +742,8 @@ Hủy phiếu kiểm kho.
 
 **Permission:** `perm.manage_inventory`
 
+**Trạng thái triển khai hiện tại:** route đã mở nhưng trả `VALIDATION_ERROR`; chưa hủy phiếu thủ công.
+
 Chỉ cho hủy phiếu `draft`. Phiếu đã `balanced` không hủy bằng endpoint này; nếu cần đảo tồn sau này phải có spec riêng.
 
 ### `GET /inventory/stocktakes`
@@ -693,11 +754,41 @@ Danh sách phiếu kiểm kho.
 
 Query: `search`, `status`, `created_by`, `from`, `to`, `page`, `page_size`.
 
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "code": "KK000333",
+      "status": "balanced",
+      "source_type": "product_edit",
+      "created_at": "2026-07-07T08:00:00Z",
+      "balanced_at": "2026-07-07T08:00:00Z",
+      "total_actual_qty": 10,
+      "total_actual_value": 100000,
+      "total_difference_value": -5000,
+      "increased_qty": 2,
+      "decreased_qty": 3,
+      "note": "Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa..."
+    }
+  ],
+  "page": 1,
+  "page_size": 15,
+  "total": 1
+}
+```
+
+Các trường giá trị tổng hợp được hydrate từ `stocktake_items` và `products.latest_purchase_cost`. Nếu thiếu giá vốn để tính tiền, Backend trả `null` cho `total_actual_value` hoặc `total_difference_value`; UI hiển thị `Chưa có`.
+
 ### `GET /inventory/stocktakes/{id}`
 
 Chi tiết phiếu kiểm kho và các dòng.
 
 **Permission:** `perm.manage_inventory`
+
+**Trạng thái triển khai hiện tại:** trả đầu phiếu + các trường tổng hợp giống list. Dòng chi tiết `stocktake_items` sẽ bổ sung khi làm form tạo/sửa phiếu thủ công.
 
 ---
 
@@ -733,6 +824,14 @@ Sửa tồn trực tiếp cho hàng `normal` trong trang Hàng hóa và tự sin
 3. Tạo một `stocktake_item`.
 4. Tạo `stock_movements` loại `stocktake_adjustment` với chênh lệch.
 5. Trả phiếu kiểm kho tự động vừa tạo.
+
+Frontend dùng `id` và `code` trong response để hiển thị thông báo:
+
+```text
+Đã tạo phiếu kiểm kho KK000001. Xem phiếu KK000001
+```
+
+Link xem phiếu trỏ về danh sách/chi tiết phiếu kiểm kho, không mở modal giả trong Hàng hóa.
 
 ---
 

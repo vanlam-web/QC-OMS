@@ -1,5 +1,6 @@
 import { createApiClient } from '../../lib/api/client'
 import { runtimeConfig } from '../../lib/config/runtime'
+import type { InventoryRollListResponse, InventorySheetListResponse } from '../inventory/types'
 import type {
   Customer,
   CustomerGroup,
@@ -11,8 +12,10 @@ import type {
   PriceListResponse,
   Product,
   ProductKind,
+  ProductGroup,
   ProductListResponse,
   ProductStockMovementListResponse,
+  ProductStocktake,
   ProductStatus,
   ResolvePricesResponse,
   SellMethod,
@@ -44,6 +47,7 @@ export function createCatalogService(api: CatalogApiRequester) {
       sell_method?: SellMethod
       inventory_shape?: Product['inventory_shape']
       product_kind?: ProductKind
+      product_group_id?: string
       page?: number
       page_size?: number
     } = {}) => {
@@ -53,11 +57,13 @@ export function createCatalogService(api: CatalogApiRequester) {
       if (input.sell_method) params.set('sell_method', input.sell_method)
       if (input.inventory_shape) params.set('inventory_shape', input.inventory_shape)
       if (input.product_kind) params.set('product_kind', input.product_kind)
+      if (input.product_group_id) params.set('product_group_id', input.product_group_id)
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<ProductListResponse>(`/api/v1/products${query ? `?${query}` : ''}`)
     },
+    listProductGroups: () => api.request<{ items: ProductGroup[] }>('/api/v1/product-groups'),
     listStockMovements: (input: { product_id?: string; page?: number; page_size?: number } = {}) => {
       const params = new URLSearchParams()
       if (input.product_id) params.set('product_id', input.product_id)
@@ -66,6 +72,27 @@ export function createCatalogService(api: CatalogApiRequester) {
       const query = params.toString()
       return api.request<ProductStockMovementListResponse>(`/api/v1/inventory/stock-movements${query ? `?${query}` : ''}`)
     },
+    listInventoryRolls: (input: { product_id?: string; page?: number; page_size?: number } = {}) => {
+      const params = new URLSearchParams()
+      if (input.product_id) params.set('product_id', input.product_id)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
+      const query = params.toString()
+      return api.request<InventoryRollListResponse>(`/api/v1/inventory/rolls${query ? `?${query}` : ''}`)
+    },
+    listInventorySheets: (input: { product_id?: string; page?: number; page_size?: number } = {}) => {
+      const params = new URLSearchParams()
+      if (input.product_id) params.set('product_id', input.product_id)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
+      const query = params.toString()
+      return api.request<InventorySheetListResponse>(`/api/v1/inventory/sheets${query ? `?${query}` : ''}`)
+    },
+    adjustNormalProductStock: (productId: string, input: { actual_qty: number; reason: string }) =>
+      api.request<ProductStocktake>(`/api/v1/inventory/products/${productId}/adjust-stock`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
     createProduct: (input: {
       code: string
       name: string
@@ -75,7 +102,14 @@ export function createCatalogService(api: CatalogApiRequester) {
       sell_method: SellMethod
       inventory_shape?: Product['inventory_shape']
       track_inventory?: boolean
+      product_group_id?: string
       latest_purchase_cost?: number | null
+      unit_conversions?: Array<{
+        unit_name: string
+        stock_qty_per_unit: number
+        is_default_purchase_unit?: boolean
+        is_default_sale_unit?: boolean
+      }>
     }) =>
       api.request<Product>('/api/v1/products', {
         method: 'POST',

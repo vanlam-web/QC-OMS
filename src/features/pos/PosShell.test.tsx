@@ -29,7 +29,11 @@ function makeCatalogService(overrides: Partial<CatalogService> = {}): CatalogSer
     updateProduct: vi.fn(),
     getProductBom: vi.fn(async () => null),
     saveProductBom: vi.fn(),
+    listProductGroups: vi.fn(async () => ({ items: [] })),
     listStockMovements: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    listInventoryRolls: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    listInventorySheets: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    adjustNormalProductStock: vi.fn(),
     listCustomers: vi.fn(async () => ({
       items: [
         {
@@ -187,7 +191,7 @@ it('renders POS landmarks, profile identity, and active product grid', async () 
   expect(screen.getByLabelText('K01 tab hóa đơn')).toBeInTheDocument()
   expect(screen.getByLabelText('K01 khui vật tư')).toBeInTheDocument()
   expect(screen.getByLabelText('K01 tiện ích')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Khui vật tư' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Khui vật tư' })).toBeEnabled()
   const cartWorkspace = screen.getByLabelText('K02 giỏ hàng')
   const salesWorkspace = screen.getByLabelText('K03 sản phẩm')
   expect(within(cartWorkspace).queryByLabelText('Khách hàng')).not.toBeInTheDocument()
@@ -281,6 +285,59 @@ it('does not show quick material opening when preview has no supported shortage'
 
   await waitFor(() => expect(inventoryService.previewPosShortage).toHaveBeenCalledWith({ product_id: 'p-1', quantity: 1 }))
   expect(screen.queryByRole('button', { name: 'Khui vật tư Mica 3mm' })).not.toBeInTheDocument()
+})
+
+it('opens topbar manual material opening and submits normal material opening', async () => {
+  const inventoryService = makeInventoryService({
+    getMaterialOpeningOptions: vi.fn(async () => ({
+      product: {
+        id: 'p-1',
+        code: 'MICA-3MM',
+        name: 'Mica 3mm',
+        inventory_shape: 'normal' as const,
+        stock_unit: { id: 'unit-m', code: 'M', name: 'm' },
+      },
+      conversions: [{ unit_id: 'unit-roll', code: 'CUON', name: 'Cuộn', stock_qty_per_unit: 50 }],
+      warnings: [],
+    })),
+    createMaterialOpening: vi.fn(async () => ({
+      id: 'opening-manual',
+      product_id: 'p-1',
+      inventory_shape: 'normal' as const,
+      source_type: 'manual_normal' as const,
+      opened_unit_id: 'unit-roll',
+      opened_qty: 2,
+      opened_stock_qty: 100,
+      stock_movement_id: null,
+      warnings: [],
+      created_at: '2026-07-05T00:00:00Z',
+    })),
+  })
+  renderPosShell({ inventoryService })
+
+  await screen.findByRole('button', { name: /Mica 3mm/ })
+  await userEvent.click(screen.getByRole('button', { name: 'Khui vật tư' }))
+
+  const dialog = await screen.findByRole('dialog', { name: 'Khui vật tư thủ công' })
+  await userEvent.selectOptions(within(dialog).getByLabelText('Vật tư khui thủ công'), 'p-1')
+  expect(inventoryService.getMaterialOpeningOptions).toHaveBeenCalledWith('p-1')
+  await userEvent.clear(within(dialog).getByLabelText('Số lượng khui thủ công'))
+  await userEvent.type(within(dialog).getByLabelText('Số lượng khui thủ công'), '2')
+  await userEvent.clear(within(dialog).getByLabelText('Phần cũ còn lại thủ công'))
+  await userEvent.type(within(dialog).getByLabelText('Phần cũ còn lại thủ công'), '1')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận khui' }))
+
+  await waitFor(() =>
+    expect(inventoryService.createMaterialOpening).toHaveBeenCalledWith({
+      product_id: 'p-1',
+      inventory_shape: 'normal',
+      opened_unit_id: 'unit-roll',
+      opened_qty: 2,
+      old_remaining_qty: 1,
+      note: 'Khui thủ công từ POS',
+    }),
+  )
+  expect(screen.queryByRole('dialog', { name: 'Khui vật tư thủ công' })).not.toBeInTheDocument()
 })
 
 it('opens quick material opening prefilled for one supported shortage and rechecks preview after submit', async () => {

@@ -12,14 +12,40 @@ export interface Product {
   sell_method: SellMethod
   latest_purchase_cost?: number | null
   latest_purchase_cost_at?: string | null
+  product_group_id?: string | null
+  product_group?: { id: string; code: string; name: string } | null
   inventory_shape?: 'normal' | 'roll' | 'sheet'
   track_inventory?: boolean
+  unit_conversions?: ProductUnitConversion[]
+}
+
+export interface ProductUnitConversion {
+  unit_id: string
+  unit_name: string
+  stock_qty_per_unit: number
+  is_default_purchase_unit: boolean
+  is_default_sale_unit: boolean
+}
+
+export interface ProductGroup {
+  id: string
+  code: string
+  name: string
+  is_default: boolean
+  is_active: boolean
 }
 
 export interface ProductBomItem {
   id: string
   component_product_id: string
-  component_product: { id: string; code: string; name: string; unit_name: string }
+  component_product: {
+    id: string
+    code: string
+    name: string
+    unit_name: string
+    product_kind?: ProductKind
+    latest_purchase_cost?: number | null
+  }
   quantity: number
   sort_order: number
   notes: string | null
@@ -60,6 +86,21 @@ export interface ProductStockMovementListResponse {
   page: number
   page_size: number
   total: number
+}
+
+export interface ProductStocktake {
+  id: string
+  code: string
+  status: 'draft' | 'balanced' | 'cancelled'
+  source_type: 'manual' | 'product_edit'
+  created_at: string
+  balanced_at: string | null
+  total_actual_qty: number
+  total_actual_value: number | null
+  total_difference_value: number | null
+  increased_qty: number
+  decreased_qty: number
+  note: string | null
 }
 
 export interface CustomerGroup {

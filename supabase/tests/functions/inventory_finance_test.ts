@@ -2,6 +2,8 @@ import { createApp } from "../../functions/api/app.ts";
 import type {
   CurrentUserRecord,
   FoundationRepository,
+  InventoryRollData,
+  InventorySheetData,
   PermissionCode,
   PaymentReceiptDetailData,
   StocktakeData,
@@ -49,7 +51,39 @@ const stocktake: StocktakeData = {
   source_type: "product_edit",
   created_at: "2026-07-01T00:00:00Z",
   balanced_at: "2026-07-01T00:00:00Z",
+  total_actual_qty: 10,
+  total_actual_value: 100000,
+  total_difference_value: -5000,
+  increased_qty: 2,
+  decreased_qty: 3,
   note: "Phiếu kiểm kho được tạo tự động khi cập nhật Hàng hóa: Standee chữ X (STANDEE)",
+};
+
+const inventoryRoll: InventoryRollData = {
+  id: "roll-1",
+  product_id: "p-roll",
+  code: "ROLL-001",
+  width_m: 3.2,
+  initial_length_m: 50,
+  remaining_length_m: 18,
+  initial_area_m2: 160,
+  remaining_area_m2: 57.6,
+  status: "in_use",
+  note: "Cuộn đang dùng",
+  created_at: "2026-07-01T00:00:00Z",
+};
+
+const inventorySheet: InventorySheetData = {
+  id: "sheet-1",
+  product_id: "p-sheet",
+  code: "SHEET-001",
+  sheet_kind: "full",
+  width_m: 1.22,
+  length_m: 2.44,
+  area_m2: 2.977,
+  status: "available",
+  note: "Tấm nguyên",
+  created_at: "2026-07-01T00:00:00Z",
 };
 
 const receiptDetail: PaymentReceiptDetailData = {
@@ -205,6 +239,12 @@ function repo(
       }),
     listStockMovements: () => Promise.resolve({ items: [], total: 0 }),
     listStocktakes: () => Promise.resolve({ items: [stocktake], total: 1 }),
+    listInventoryRolls: () => Promise.resolve({ items: [inventoryRoll], total: 1 }),
+    createInventoryRoll: () => Promise.resolve(inventoryRoll),
+    updateInventoryRoll: () => Promise.resolve(inventoryRoll),
+    listInventorySheets: () => Promise.resolve({ items: [inventorySheet], total: 1 }),
+    createInventorySheet: () => Promise.resolve(inventorySheet),
+    updateInventorySheet: () => Promise.resolve(inventorySheet),
     adjustNormalProductStock: () => Promise.resolve(stocktake),
     ...overrides,
   };
@@ -731,6 +771,81 @@ Deno.test("normal material opening validates request and calls repository", asyn
   assertEquals(result.stock_movement_id, null);
 });
 
+Deno.test("roll and sheet material openings pass object-level old remaining payloads", async () => {
+  let observedRoll: Record<string, unknown> | null = null;
+  let observedSheet: Record<string, unknown> | null = null;
+  const rollResponse = await call(
+    "/api/v1/inventory/material-openings",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: "p-roll",
+        inventory_shape: "roll",
+        old_inventory_roll_id: "roll-1",
+        old_remaining_length_m: 0,
+        note: "Khui cuộn mới",
+      }),
+    },
+    repo(["perm.manage_inventory"], {
+      createMaterialOpening: (input: Record<string, unknown>) => {
+        observedRoll = input;
+        return Promise.resolve({
+          id: "opening-roll",
+          product_id: "p-roll",
+          inventory_shape: "roll",
+          source_type: "standard_object",
+          opened_unit_id: null,
+          opened_qty: null,
+          opened_stock_qty: 0,
+          stock_movement_id: "movement-roll",
+          warnings: [],
+          created_at: "2026-07-07T00:00:00Z",
+        });
+      },
+    }),
+  );
+  const sheetResponse = await call(
+    "/api/v1/inventory/material-openings",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: "p-sheet",
+        inventory_shape: "sheet",
+        old_inventory_sheet_id: "sheet-1",
+        discard_old_sheet: true,
+        note: "Bỏ tấm cũ",
+      }),
+    },
+    repo(["perm.manage_inventory"], {
+      createMaterialOpening: (input: Record<string, unknown>) => {
+        observedSheet = input;
+        return Promise.resolve({
+          id: "opening-sheet",
+          product_id: "p-sheet",
+          inventory_shape: "sheet",
+          source_type: "standard_object",
+          opened_unit_id: null,
+          opened_qty: null,
+          opened_stock_qty: 0,
+          stock_movement_id: "movement-sheet",
+          warnings: [],
+          created_at: "2026-07-07T00:00:00Z",
+        });
+      },
+    }),
+  );
+
+  if (observedRoll === null || observedSheet === null) throw new Error("material opening input was not observed");
+  const rollInput = observedRoll as Record<string, unknown>;
+  const sheetInput = observedSheet as Record<string, unknown>;
+  assertEquals(rollResponse.status, 201);
+  assertEquals(rollInput.oldInventoryRollId, "roll-1");
+  assertEquals(rollInput.oldRemainingLengthM, 0);
+  assertEquals(sheetResponse.status, 201);
+  assertEquals(sheetInput.oldInventorySheetId, "sheet-1");
+  assertEquals(sheetInput.discardOldSheet, true);
+});
+
 Deno.test("POS shortage preview requires order permission and returns normal product shortage", async () => {
   assertEquals(
     (await call(
@@ -866,6 +981,64 @@ Deno.test("stocktake list accepts long date ranges when default period is empty"
   assertEquals(createdTo, "2026-07-01");
 });
 
+Deno.test("stocktake list returns KiotViet-style aggregate fields", async () => {
+  const response = await call(
+    "/api/v1/inventory/stocktakes",
+    { method: "GET" },
+    repo(["perm.manage_inventory"], {
+      listStocktakes: () => Promise.resolve({ items: [stocktake], total: 1 }),
+    }),
+  );
+
+  const result = await data(response) as { items: StocktakeData[] };
+  assertEquals(response.status, 200);
+  assertEquals(result.items[0].total_actual_qty, 10);
+  assertEquals(result.items[0].total_actual_value, 100000);
+  assertEquals(result.items[0].total_difference_value, -5000);
+  assertEquals(result.items[0].increased_qty, 2);
+  assertEquals(result.items[0].decreased_qty, 3);
+});
+
+Deno.test("stocktake detail route returns one stocktake and unsupported mutations do not fake success", async () => {
+  const response = await call(
+    "/api/v1/inventory/stocktakes/stocktake-1",
+    { method: "GET" },
+    repo(["perm.manage_inventory"], {
+      getStocktake: (input: { stocktakeId: string }) => {
+        assertEquals(input.stocktakeId, "stocktake-1");
+        return Promise.resolve(stocktake);
+      },
+    }),
+  );
+  const createResponse = await call(
+    "/api/v1/inventory/stocktakes",
+    { method: "POST", body: JSON.stringify({ items: [] }) },
+    repo(["perm.manage_inventory"]),
+  );
+  const updateResponse = await call(
+    "/api/v1/inventory/stocktakes/stocktake-1",
+    { method: "PUT", body: JSON.stringify({ items: [] }) },
+    repo(["perm.manage_inventory"]),
+  );
+  const balanceResponse = await call(
+    "/api/v1/inventory/stocktakes/stocktake-1/balance",
+    { method: "POST" },
+    repo(["perm.manage_inventory"]),
+  );
+  const cancelResponse = await call(
+    "/api/v1/inventory/stocktakes/stocktake-1/cancel",
+    { method: "POST" },
+    repo(["perm.manage_inventory"]),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals((await data(response) as StocktakeData).code, "KK000001");
+  assertEquals(createResponse.status, 400);
+  assertEquals(updateResponse.status, 400);
+  assertEquals(balanceResponse.status, 400);
+  assertEquals(cancelResponse.status, 400);
+});
+
 Deno.test("stock movements expose document, prices and partner for product stock card", async () => {
   const response = await call(
     "/api/v1/inventory/stock-movements?product_id=p-1",
@@ -914,4 +1087,59 @@ Deno.test("roll and sheet products reject total stock adjustment", async () => {
   );
 
   assertEquals(response.status, 400);
+});
+
+Deno.test("roll and sheet object inventory routes list objects and require reason for edits", async () => {
+  let rollProductId = "";
+  let rollReason = "";
+  let sheetReason = "";
+  const repository = repo(["perm.manage_inventory"], {
+    listInventoryRolls: (input: { productId?: string }) => {
+      rollProductId = input.productId ?? "";
+      return Promise.resolve({ items: [inventoryRoll], total: 1 });
+    },
+    updateInventoryRoll: (input: { rollId: string; remainingLengthM?: number; reason: string }) => {
+      assertEquals(input.rollId, "roll-1");
+      assertEquals(input.remainingLengthM, 12);
+      rollReason = input.reason;
+      return Promise.resolve({ ...inventoryRoll, remaining_length_m: 12, remaining_area_m2: 38.4 });
+    },
+    updateInventorySheet: (input: { sheetId: string; widthM?: number; lengthM?: number; reason: string }) => {
+      assertEquals(input.sheetId, "sheet-1");
+      assertEquals(input.widthM, 1);
+      assertEquals(input.lengthM, 2);
+      sheetReason = input.reason;
+      return Promise.resolve({ ...inventorySheet, width_m: 1, length_m: 2, area_m2: 2 });
+    },
+  });
+
+  const rollList = await call("/api/v1/inventory/rolls?product_id=p-roll", { method: "GET" }, repository);
+  const rollPatch = await call(
+    "/api/v1/inventory/rolls/roll-1",
+    { method: "PATCH", body: JSON.stringify({ remaining_length_m: 12, reason: "Đo lại cuộn" }) },
+    repository,
+  );
+  const rollPatchMissingReason = await call(
+    "/api/v1/inventory/rolls/roll-1",
+    { method: "PATCH", body: JSON.stringify({ remaining_length_m: 10 }) },
+    repository,
+  );
+  const sheetPatch = await call(
+    "/api/v1/inventory/sheets/sheet-1",
+    { method: "PATCH", body: JSON.stringify({ width_m: 1, length_m: 2, reason: "Cắt lại tấm" }) },
+    repository,
+  );
+
+  const rollResult = await data(rollList) as { items: InventoryRollData[] };
+  const sheetResult = await data(sheetPatch) as InventorySheetData;
+  assertEquals(rollList.status, 200);
+  assertEquals(rollProductId, "p-roll");
+  assertEquals(rollResult.items[0].width_m, 3.2);
+  assertEquals(rollResult.items[0].remaining_length_m, 18);
+  assertEquals(rollPatch.status, 200);
+  assertEquals(rollPatchMissingReason.status, 400);
+  assertEquals(rollReason, "Đo lại cuộn");
+  assertEquals(sheetPatch.status, 200);
+  assertEquals(sheetResult.area_m2, 2);
+  assertEquals(sheetReason, "Cắt lại tấm");
 });

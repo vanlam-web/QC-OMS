@@ -59,14 +59,40 @@ export interface ProductData {
   sell_method: SellMethod;
   latest_purchase_cost: number | null;
   latest_purchase_cost_at: string | null;
+  product_group_id?: string | null;
+  product_group?: { id: string; code: string; name: string } | null;
   inventory_shape?: "normal" | "roll" | "sheet";
   track_inventory?: boolean;
+  unit_conversions?: ProductUnitConversionData[];
+}
+
+export interface ProductUnitConversionData {
+  unit_id: string;
+  unit_name: string;
+  stock_qty_per_unit: number;
+  is_default_purchase_unit: boolean;
+  is_default_sale_unit: boolean;
+}
+
+export interface ProductGroupData {
+  id: string;
+  code: string;
+  name: string;
+  is_default: boolean;
+  is_active: boolean;
 }
 
 export interface ProductBomItemData {
   id: string;
   component_product_id: string;
-  component_product: { id: string; code: string; name: string; unit_name: string };
+  component_product: {
+    id: string;
+    code: string;
+    name: string;
+    unit_name: string;
+    product_kind?: ProductKind;
+    latest_purchase_cost?: number | null;
+  };
   quantity: number;
   sort_order: number;
   notes: string | null;
@@ -541,7 +567,39 @@ export interface StocktakeData {
   source_type: "manual" | "product_edit";
   created_at: string;
   balanced_at: string | null;
+  total_actual_qty: number;
+  total_actual_value: number | null;
+  total_difference_value: number | null;
+  increased_qty: number;
+  decreased_qty: number;
   note: string | null;
+}
+
+export interface InventoryRollData {
+  id: string;
+  product_id: string;
+  code: string;
+  width_m: number;
+  initial_length_m: number;
+  remaining_length_m: number;
+  initial_area_m2: number;
+  remaining_area_m2: number;
+  status: "available" | "in_use" | "empty" | "discarded";
+  note: string | null;
+  created_at: string;
+}
+
+export interface InventorySheetData {
+  id: string;
+  product_id: string;
+  code: string;
+  sheet_kind: "full" | "in_use" | "remnant";
+  width_m: number;
+  length_m: number;
+  area_m2: number;
+  status: "available" | "used" | "discarded";
+  note: string | null;
+  created_at: string;
 }
 
 export interface MaterialOpeningOptionsData {
@@ -564,11 +622,11 @@ export interface MaterialOpeningOptionsData {
 export interface MaterialOpeningResultData {
   id: string;
   product_id: string;
-  inventory_shape: "normal";
-  source_type: "manual_normal";
-  opened_unit_id: string;
-  opened_qty: number;
-  opened_stock_qty: number;
+  inventory_shape: "normal" | "roll" | "sheet";
+  source_type: "manual_normal" | "standard_object" | "kiotviet_provisional";
+  opened_unit_id: string | null;
+  opened_qty: number | null;
+  opened_stock_qty: number | null;
   stock_movement_id: string | null;
   warnings: string[];
   created_at: string;
@@ -754,9 +812,16 @@ export interface FoundationRepository {
     sellMethod?: SellMethod;
     inventoryShape?: "normal" | "roll" | "sheet";
     productKind?: ProductKind;
+    productGroupId?: string;
     page: number;
     pageSize: number;
   }): Promise<{ items: ProductData[]; total: number }>;
+  listProductGroups(input: { organizationId: string; activeOnly: boolean }): Promise<{ items: ProductGroupData[] }>;
+  createProductGroup(input: {
+    organizationId: string;
+    name: string;
+    code?: string;
+  }): Promise<ProductGroupData>;
   createProduct(input: {
     organizationId: string;
     code: string;
@@ -767,8 +832,15 @@ export interface FoundationRepository {
     sellMethod: SellMethod;
     inventoryShape?: "normal" | "roll" | "sheet";
     trackInventory?: boolean;
+    productGroupId?: string | null;
     latestPurchaseCost?: number | null;
     latestPurchaseCostUpdatedBy?: string;
+    unitConversions?: Array<{
+      unitName: string;
+      stockQtyPerUnit: number;
+      isDefaultPurchaseUnit: boolean;
+      isDefaultSaleUnit: boolean;
+    }>;
   }): Promise<ProductData>;
   updateProduct(input: {
     organizationId: string;
@@ -1124,6 +1196,63 @@ export interface FoundationRepository {
     page: number;
     pageSize: number;
   }): Promise<{ items: StocktakeData[]; total: number }>;
+  getStocktake(input: {
+    organizationId: string;
+    stocktakeId: string;
+  }): Promise<StocktakeData | null>;
+  listInventoryRolls(input: {
+    organizationId: string;
+    productId?: string;
+    status?: InventoryRollData["status"];
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: InventoryRollData[]; total: number }>;
+  createInventoryRoll(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    code: string;
+    widthM: number;
+    initialLengthM: number;
+    remainingLengthM?: number;
+    status?: InventoryRollData["status"];
+    note?: string | null;
+  }): Promise<InventoryRollData>;
+  updateInventoryRoll(input: {
+    organizationId: string;
+    actorUserId: string;
+    rollId: string;
+    remainingLengthM?: number;
+    status?: InventoryRollData["status"];
+    reason: string;
+  }): Promise<InventoryRollData | null>;
+  listInventorySheets(input: {
+    organizationId: string;
+    productId?: string;
+    status?: InventorySheetData["status"];
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: InventorySheetData[]; total: number }>;
+  createInventorySheet(input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    code: string;
+    sheetKind: InventorySheetData["sheet_kind"];
+    widthM: number;
+    lengthM: number;
+    status?: InventorySheetData["status"];
+    note?: string | null;
+  }): Promise<InventorySheetData>;
+  updateInventorySheet(input: {
+    organizationId: string;
+    actorUserId: string;
+    sheetId: string;
+    widthM?: number;
+    lengthM?: number;
+    status?: InventorySheetData["status"];
+    reason: string;
+  }): Promise<InventorySheetData | null>;
   adjustNormalProductStock(input: {
     organizationId: string;
     actorUserId: string;
@@ -1144,10 +1273,16 @@ export interface FoundationRepository {
     organizationId: string;
     actorUserId: string;
     productId: string;
-    inventoryShape: "normal";
-    openedUnitId: string;
-    openedQty: number;
+    inventoryShape: "normal" | "roll" | "sheet";
+    openedUnitId?: string;
+    openedQty?: number;
     oldRemainingQty?: number;
+    oldInventoryRollId?: string;
+    oldRemainingLengthM?: number;
+    oldInventorySheetId?: string;
+    oldRemainingWidthM?: number;
+    oldRemainingLengthMForSheet?: number;
+    discardOldSheet?: boolean;
     note?: string;
   }): Promise<MaterialOpeningResultData>;
   listProductionQueue(input: {

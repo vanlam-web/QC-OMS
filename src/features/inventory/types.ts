@@ -42,11 +42,57 @@ export interface Stocktake {
   source_type: 'manual' | 'product_edit'
   created_at: string
   balanced_at: string | null
+  total_actual_qty: number
+  total_actual_value: number | null
+  total_difference_value: number | null
+  increased_qty: number
+  decreased_qty: number
   note: string | null
 }
 
 export interface StocktakeListResponse {
   items: Stocktake[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export interface InventoryRoll {
+  id: string
+  product_id: string
+  code: string
+  width_m: number
+  initial_length_m: number
+  remaining_length_m: number
+  initial_area_m2: number
+  remaining_area_m2: number
+  status: 'available' | 'in_use' | 'empty' | 'discarded'
+  note: string | null
+  created_at: string
+}
+
+export interface InventorySheet {
+  id: string
+  product_id: string
+  code: string
+  sheet_kind: 'full' | 'in_use' | 'remnant'
+  width_m: number
+  length_m: number
+  area_m2: number
+  status: 'available' | 'used' | 'discarded'
+  note: string | null
+  created_at: string
+}
+
+export interface InventoryRollListResponse {
+  items: InventoryRoll[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export interface InventorySheetListResponse {
+  items: InventorySheet[]
   page: number
   page_size: number
   total: number
@@ -71,23 +117,37 @@ export interface MaterialOpeningOptions {
   warnings: string[]
 }
 
-export interface MaterialOpeningInput {
+export type MaterialOpeningInput = {
   product_id: string
   inventory_shape: 'normal'
   opened_unit_id: string
   opened_qty: number
   old_remaining_qty?: number
   note?: string
+} | {
+  product_id: string
+  inventory_shape: 'roll'
+  old_inventory_roll_id: string
+  old_remaining_length_m: number
+  note?: string
+} | {
+  product_id: string
+  inventory_shape: 'sheet'
+  old_inventory_sheet_id: string
+  old_remaining_width_m?: number
+  old_remaining_length_m?: number
+  discard_old_sheet?: boolean
+  note?: string
 }
 
 export interface MaterialOpeningResult {
   id: string
   product_id: string
-  inventory_shape: 'normal'
-  source_type: 'manual_normal'
-  opened_unit_id: string
-  opened_qty: number
-  opened_stock_qty: number
+  inventory_shape: 'normal' | 'roll' | 'sheet'
+  source_type: 'manual_normal' | 'standard_object' | 'kiotviet_provisional'
+  opened_unit_id: string | null
+  opened_qty: number | null
+  opened_stock_qty: number | null
   stock_movement_id: string | null
   warnings: string[]
   created_at: string

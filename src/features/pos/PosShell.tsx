@@ -105,6 +105,11 @@ export function PosShell({
   const [materialOpeningOptions, setMaterialOpeningOptions] = useState<Record<string, MaterialOpeningOptions>>({})
   const [materialOpeningSaving, setMaterialOpeningSaving] = useState(false)
   const [materialOpeningError, setMaterialOpeningError] = useState<string | null>(null)
+  const [manualOpeningOpen, setManualOpeningOpen] = useState(false)
+  const [manualOpeningProductId, setManualOpeningProductId] = useState('')
+  const [manualOpeningUnitId, setManualOpeningUnitId] = useState('')
+  const [manualOpeningQty, setManualOpeningQty] = useState(1)
+  const [manualOpeningOldRemaining, setManualOpeningOldRemaining] = useState(0)
   const [pendingFocusLineId, setPendingFocusLineId] = useState<string | null>(null)
   const [lineInputDrafts, setLineInputDrafts] = useState<Record<string, string>>({})
   const productSearchRef = useRef<HTMLInputElement>(null)
@@ -687,6 +692,54 @@ export function PosShell({
     }
   }
 
+  function closeManualMaterialOpening() {
+    setManualOpeningOpen(false)
+    setManualOpeningProductId('')
+    setManualOpeningUnitId('')
+    setManualOpeningQty(1)
+    setManualOpeningOldRemaining(0)
+    setMaterialOpeningError(null)
+  }
+
+  async function selectManualMaterialOpeningProduct(productId: string) {
+    setManualOpeningProductId(productId)
+    setManualOpeningUnitId('')
+    setMaterialOpeningError(null)
+    if (!productId) return
+    try {
+      const options = await inventoryService.getMaterialOpeningOptions(productId)
+      setMaterialOpeningOptions((current) => ({ ...current, [productId]: options }))
+      setManualOpeningUnitId(options.conversions[0]?.unit_id ?? '')
+    } catch (cause) {
+      setMaterialOpeningError(formatApiError(cause, 'Không tải được đơn vị khui.'))
+    }
+  }
+
+  async function submitManualMaterialOpening(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!manualOpeningProductId || !manualOpeningUnitId || manualOpeningQty <= 0 || manualOpeningOldRemaining < 0) {
+      setMaterialOpeningError('Thông tin khui vật tư chưa hợp lệ.')
+      return
+    }
+    setMaterialOpeningSaving(true)
+    setMaterialOpeningError(null)
+    try {
+      await inventoryService.createMaterialOpening({
+        product_id: manualOpeningProductId,
+        inventory_shape: 'normal',
+        opened_unit_id: manualOpeningUnitId,
+        opened_qty: manualOpeningQty,
+        old_remaining_qty: manualOpeningOldRemaining,
+        note: 'Khui thủ công từ POS',
+      })
+      closeManualMaterialOpening()
+    } catch (cause) {
+      setMaterialOpeningError(formatApiError(cause, 'Không khui được vật tư.'))
+    } finally {
+      setMaterialOpeningSaving(false)
+    }
+  }
+
   async function handleProductionQueueDraft(payload: ProductionQueueDraftPayload) {
     const queueCustomer =
       payload.customer === null
@@ -842,7 +895,13 @@ export function PosShell({
           </button>
         </section>
         <section aria-label="K01 khui vật tư" className="pos-topbar-material">
-          <button aria-label="Khui vật tư" className="management-icon-button" disabled title="Khui vật tư" type="button">
+          <button
+            aria-label="Khui vật tư"
+            className="management-icon-button"
+            title="Khui vật tư"
+            type="button"
+            onClick={() => setManualOpeningOpen(true)}
+          >
             <PackageOpen aria-hidden="true" size={18} />
           </button>
         </section>
@@ -1449,6 +1508,79 @@ export function PosShell({
           </form>
         </aside>
       ) : null}
+      {manualOpeningOpen ? (
+        <aside aria-label="Khui vật tư thủ công" aria-modal="true" className="pos-material-opening-dialog" role="dialog">
+          <form onSubmit={(event) => void submitManualMaterialOpening(event)}>
+            <header>
+              <h2>Khui vật tư thủ công</h2>
+              <button
+                aria-label="Đóng khui vật tư thủ công"
+                className="management-icon-button"
+                type="button"
+                onClick={closeManualMaterialOpening}
+              >
+                ×
+              </button>
+            </header>
+            {materialOpeningError ? <p role="alert">{materialOpeningError}</p> : null}
+            <label>
+              Vật tư
+              <select
+                aria-label="Vật tư khui thủ công"
+                value={manualOpeningProductId}
+                onChange={(event) => void selectManualMaterialOpeningProduct(event.target.value)}
+              >
+                <option value="">Chọn vật tư</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.code} {product.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Số lượng khui
+              <input
+                aria-label="Số lượng khui thủ công"
+                min="0.001"
+                step="0.001"
+                type="number"
+                value={manualOpeningQty}
+                onChange={(event) => setManualOpeningQty(readPositiveNumber(event.target.value))}
+              />
+            </label>
+            <label>
+              Đơn vị khui
+              <select
+                aria-label="Đơn vị khui thủ công"
+                value={manualOpeningUnitId}
+                onChange={(event) => setManualOpeningUnitId(event.target.value)}
+              >
+                <option value="">Chọn đơn vị</option>
+                {(materialOpeningOptions[manualOpeningProductId]?.conversions ?? []).map((conversion) => (
+                  <option key={conversion.unit_id} value={conversion.unit_id}>
+                    {conversion.name} ({formatMeasure(conversion.stock_qty_per_unit)} {materialOpeningOptions[manualOpeningProductId]?.product.stock_unit.name})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Phần cũ còn lại
+              <input
+                aria-label="Phần cũ còn lại thủ công"
+                min="0"
+                step="0.001"
+                type="number"
+                value={manualOpeningOldRemaining}
+                onChange={(event) => setManualOpeningOldRemaining(readNonNegativeNumber(event.target.value))}
+              />
+            </label>
+            <button className="button button-primary" disabled={materialOpeningSaving} type="submit">
+              Xác nhận khui
+            </button>
+          </form>
+        </aside>
+      ) : null}
     </main>
   )
 }
@@ -1705,6 +1837,12 @@ function readPositiveNumber(value: string): number {
   const normalized = normalizeMeasureInputText(value)
   const parsed = Number(normalized)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+function readNonNegativeNumber(value: string): number {
+  const normalized = normalizeMeasureInputText(value)
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
 }
 
 function normalizeMeasureInputText(value: string) {

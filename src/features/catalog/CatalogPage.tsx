@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, type MouseEvent } from 'react'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { formatApiError } from '../../lib/api/error-message'
 import { formatMoney } from '../../lib/number-format'
+import type { InventoryRoll, InventorySheet } from '../inventory/types'
 import {
   ManagementCompactCreateAction,
   ManagementCompactSearch,
@@ -15,7 +16,7 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import type { CatalogService } from './catalog-service'
-import type { Product, ProductBom, ProductKind, ProductStatus, ProductStockMovement, SellMethod } from './types'
+import type { Product, ProductBom, ProductGroup, ProductKind, ProductStatus, ProductStockMovement, SellMethod } from './types'
 
 interface CatalogState {
   products: Product[]
@@ -28,9 +29,11 @@ const productPageSize = 15
 const stockMovementPageSize = 15
 const productFavoritesStorageKey = 'catalog.product.favoriteProductIds'
 type ProductKindFilter = ProductKind | 'all'
-type ProductSellMethodFilter = SellMethod | 'all'
+type ProductGroupFilter = string | 'all'
 type ProductCreateKind = ProductKind
 type BomFormLine = { component_product_id: string; quantity: string; notes: string }
+type StockAdjustForm = { actualQty: string; reason: string }
+type StocktakeNotice = { id: string; code: string }
 type ProductDetailTab = 'info' | 'unit-conversion' | 'bom' | 'inventory' | 'stock-card' | 'notes'
 
 interface StockMovementState {
@@ -38,6 +41,13 @@ interface StockMovementState {
   page: number
   pageSize: number
   total: number
+  loading: boolean
+  error: string | null
+}
+
+interface ProductInventoryObjectState {
+  rolls: InventoryRoll[]
+  sheets: InventorySheet[]
   loading: boolean
   error: string | null
 }
@@ -139,18 +149,22 @@ export function CatalogPage({
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(readProductFavoriteIds)
   const [showFavoriteProductsOnly, setShowFavoriteProductsOnly] = useState(false)
   const [componentProducts, setComponentProducts] = useState<Product[]>([])
+  const [productGroups, setProductGroups] = useState<ProductGroup[]>([])
   const [bomByProductId, setBomByProductId] = useState<Record<string, ProductBom | null>>({})
   const [bomForms, setBomForms] = useState<Record<string, BomFormLine[]>>({})
   const [stockMovementsByProductId, setStockMovementsByProductId] = useState<Record<string, StockMovementState>>({})
+  const [inventoryObjectsByProductId, setInventoryObjectsByProductId] = useState<Record<string, ProductInventoryObjectState>>({})
+  const [stockAdjustForms, setStockAdjustForms] = useState<Record<string, StockAdjustForm>>({})
+  const [stocktakeNotices, setStocktakeNotices] = useState<Record<string, StocktakeNotice>>({})
   const [createBomLines, setCreateBomLines] = useState<BomFormLine[]>([{ component_product_id: '', quantity: '1', notes: '' }])
   const [search, setSearch] = useState('')
   const [lastSearch, setLastSearch] = useState('')
   const [status, setStatus] = useState<ProductStatus | 'all'>('active')
   const [lastStatus, setLastStatus] = useState<ProductStatus | 'all'>('active')
-  const [sellMethodFilter, setSellMethodFilter] = useState<ProductSellMethodFilter>('all')
-  const [lastSellMethodFilter, setLastSellMethodFilter] = useState<ProductSellMethodFilter>('all')
   const [productKindFilter, setProductKindFilter] = useState<ProductKindFilter>('all')
   const [lastProductKindFilter, setLastProductKindFilter] = useState<ProductKindFilter>('all')
+  const [productGroupFilter, setProductGroupFilter] = useState<ProductGroupFilter>('all')
+  const [lastProductGroupFilter, setLastProductGroupFilter] = useState<ProductGroupFilter>('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(productPageSize)
   const [form, setForm] = useState<{
@@ -161,6 +175,7 @@ export function CatalogPage({
     status: ProductStatus
     kind: ProductCreateKind
     latestPurchaseCost: string
+    productGroupId: string
   }>({
     code: '',
     name: '',
@@ -169,20 +184,21 @@ export function CatalogPage({
     status: 'active',
     kind: 'goods',
     latestPurchaseCost: '0',
+    productGroupId: '',
   })
 
   async function load(filters: {
     search?: string
     status?: ProductStatus | 'all'
-    sell_method?: ProductSellMethodFilter
     product_kind?: ProductKindFilter
+    product_group_id?: ProductGroupFilter
     page?: number
     page_size?: number
   } = {}) {
     const nextSearch = filters.search ?? lastSearch
     const nextStatus = filters.status ?? lastStatus
-    const nextSellMethod = filters.sell_method ?? lastSellMethodFilter
     const nextProductKind = filters.product_kind ?? lastProductKindFilter
+    const nextProductGroup = filters.product_group_id ?? lastProductGroupFilter
     const nextPage = filters.page ?? page
     const nextPageSize = filters.page_size ?? pageSize
     setError(null)
@@ -192,14 +208,14 @@ export function CatalogPage({
         page_size: nextPageSize,
         search: nextSearch || undefined,
         status: nextStatus,
-        ...(nextSellMethod === 'all' ? {} : { sell_method: nextSellMethod }),
         ...(nextProductKind === 'all' ? {} : { product_kind: nextProductKind }),
+        ...(nextProductGroup === 'all' ? {} : { product_group_id: nextProductGroup }),
       })
       setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
       setLastSearch(nextSearch)
       setLastStatus(nextStatus)
-      setLastSellMethodFilter(nextSellMethod)
       setLastProductKindFilter(nextProductKind)
+      setLastProductGroupFilter(nextProductGroup)
       setPage(result.page)
       setPageSize(result.page_size)
       setSelectedProductId(null)
@@ -215,9 +231,13 @@ export function CatalogPage({
     async function loadInitialProducts() {
       setError(null)
       try {
-        const result = await service.listProducts({ page: 1, page_size: productPageSize, status: 'active' })
+        const [result, groupResult] = await Promise.all([
+          service.listProducts({ page: 1, page_size: productPageSize, status: 'active' }),
+          service.listProductGroups(),
+        ])
         if (!active) return
         setState({ products: result.items, page: result.page, pageSize: result.page_size, total: result.total })
+        setProductGroups(groupResult.items)
         setPage(result.page)
         setPageSize(result.page_size)
       } catch (cause) {
@@ -235,26 +255,26 @@ export function CatalogPage({
   async function filterProducts(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPage(1)
-    await load({ search: search.trim(), status, sell_method: sellMethodFilter, product_kind: productKindFilter, page: 1 })
+    await load({ search: search.trim(), status, product_kind: productKindFilter, product_group_id: productGroupFilter, page: 1 })
   }
 
   async function applySidebarFilters(nextFilters: Partial<{
     status: ProductStatus | 'all'
-    sell_method: ProductSellMethodFilter
     product_kind: ProductKindFilter
+    product_group_id: ProductGroupFilter
   }>) {
     const nextStatus = nextFilters.status ?? status
-    const nextSellMethod = nextFilters.sell_method ?? sellMethodFilter
     const nextProductKind = nextFilters.product_kind ?? productKindFilter
+    const nextProductGroup = nextFilters.product_group_id ?? productGroupFilter
     setStatus(nextStatus)
-    setSellMethodFilter(nextSellMethod)
     setProductKindFilter(nextProductKind)
+    setProductGroupFilter(nextProductGroup)
     setPage(1)
     await load({
       search: search.trim(),
       status: nextStatus,
-      sell_method: nextSellMethod,
       product_kind: nextProductKind,
+      product_group_id: nextProductGroup,
       page: 1,
     })
   }
@@ -303,6 +323,7 @@ export function CatalogPage({
         sell_method: form.sellMethod,
         inventory_shape: kindDefaults.inventoryShape,
         track_inventory: kindDefaults.trackInventory,
+        ...(form.productGroupId ? { product_group_id: form.productGroupId } : {}),
         latest_purchase_cost: latestPurchaseCost,
       })
       if (form.kind === 'combo') {
@@ -327,6 +348,7 @@ export function CatalogPage({
       status: 'active',
       kind: 'goods',
       latestPurchaseCost: '0',
+      productGroupId: '',
     })
     setCreateBomLines([{ component_product_id: '', quantity: '1', notes: '' }])
   }
@@ -363,6 +385,10 @@ export function CatalogPage({
     setSelectedProductId(product.id)
     setSelectedDetailTab('info')
     setError(null)
+    await loadBomForProduct(product)
+  }
+
+  async function loadBomForProduct(product: Product) {
     try {
       const components = componentProducts.length === 0
         ? await service.listProducts({ status: 'active', page: 1, page_size: 100 })
@@ -428,10 +454,53 @@ export function CatalogPage({
     }
   }
 
+  async function loadInventoryObjects(product: Product) {
+    setInventoryObjectsByProductId((current) => ({
+      ...current,
+      [product.id]: {
+        rolls: current[product.id]?.rolls ?? [],
+        sheets: current[product.id]?.sheets ?? [],
+        loading: true,
+        error: null,
+      },
+    }))
+    try {
+      const [rollResult, sheetResult] = await Promise.all([
+        service.listInventoryRolls({ product_id: product.id, page: 1, page_size: 15 }),
+        service.listInventorySheets({ product_id: product.id, page: 1, page_size: 15 }),
+      ])
+      setInventoryObjectsByProductId((current) => ({
+        ...current,
+        [product.id]: {
+          rolls: rollResult.items,
+          sheets: sheetResult.items,
+          loading: false,
+          error: null,
+        },
+      }))
+    } catch (cause) {
+      setInventoryObjectsByProductId((current) => ({
+        ...current,
+        [product.id]: {
+          rolls: current[product.id]?.rolls ?? [],
+          sheets: current[product.id]?.sheets ?? [],
+          loading: false,
+          error: formatApiError(cause, 'Không tải được tồn theo cuộn/tấm.'),
+        },
+      }))
+    }
+  }
+
   function selectProductDetailTab(product: Product, tab: ProductDetailTab) {
     setSelectedDetailTab(tab)
+    if (tab === 'bom' && bomForms[product.id] === undefined) {
+      void loadBomForProduct(product)
+    }
     if (tab === 'stock-card' && stockMovementsByProductId[product.id] === undefined) {
       void loadStockMovements(product)
+    }
+    if (tab === 'inventory' && (product.inventory_shape === 'roll' || product.inventory_shape === 'sheet') && inventoryObjectsByProductId[product.id] === undefined) {
+      void loadInventoryObjects(product)
     }
   }
 
@@ -467,12 +536,41 @@ export function CatalogPage({
     }
   }
 
+  async function adjustNormalProductStock(product: Product, event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formState = stockAdjustForms[product.id] ?? { actualQty: '', reason: '' }
+    const actualQty = Number(formState.actualQty)
+    if (!Number.isFinite(actualQty) || actualQty < 0) {
+      setError('Tồn thực tế phải lớn hơn hoặc bằng 0.')
+      return
+    }
+    if (formState.reason.trim().length === 0) {
+      setError('Lý do điều chỉnh tồn là bắt buộc.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const stocktake = await service.adjustNormalProductStock(product.id, {
+        actual_qty: actualQty,
+        reason: formState.reason.trim(),
+      })
+      setStocktakeNotices((current) => ({ ...current, [product.id]: { id: stocktake.id, code: stocktake.code } }))
+      setStockAdjustForms((current) => ({ ...current, [product.id]: { actualQty: '', reason: '' } }))
+      await loadStockMovements(product, 1)
+    } catch (cause) {
+      setError(formatApiError(cause, 'Không cập nhật được tồn kho.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil((state?.total ?? 0) / pageSize))
   const canGoPrevious = page > 1
   const canGoNext = page < totalPages
   const activeFilterSummary = lastSearch
     ? `Tìm: ${lastSearch}`
-    : lastStatus === 'active' && lastSellMethodFilter === 'all' && lastProductKindFilter === 'all'
+    : lastStatus === 'active' && lastProductKindFilter === 'all'
       ? 'Đang kinh doanh'
       : 'Bộ lọc hàng hóa'
   const visibleProducts = showFavoriteProductsOnly && state !== null
@@ -527,20 +625,18 @@ export function CatalogPage({
               </select>
             </label>
           </ManagementFilterGroup>
-          <ManagementFilterGroup title="Cách tính bán">
+          <ManagementFilterGroup title="Nhóm hàng">
             <label>
-              <span className="sr-only">Cách tính bán</span>
+              <span className="sr-only">Nhóm hàng</span>
               <select
-                aria-label="Cách tính bán"
+                aria-label="Nhóm hàng"
                 className="management-filter-select"
-                value={sellMethodFilter}
-                onChange={(event) => void applySidebarFilters({ sell_method: event.target.value as ProductSellMethodFilter })}
+                value={productGroupFilter}
+                onChange={(event) => void applySidebarFilters({ product_group_id: event.target.value as ProductGroupFilter })}
               >
                 <option value="all">Tất cả</option>
-                {Object.entries(sellMethodLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
+                {productGroups.map((group) => (
+                  <option key={group.id} value={group.id}>{group.name}</option>
                 ))}
               </select>
             </label>
@@ -607,7 +703,6 @@ export function CatalogPage({
                     <th>Giá bán</th>
                     <th>Tồn kho</th>
                     <th>Đơn vị</th>
-                    <th>Cách tính bán</th>
                     <th>Dự kiến hết hàng</th>
                   </tr>
                 </thead>
@@ -662,11 +757,10 @@ export function CatalogPage({
                         <td>Chưa có</td>
                         <td>Chưa có</td>
                         <td>{product.unit_name}</td>
-                        <td>{sellMethodLabels[product.sell_method]}</td>
                         <td>Chưa có</td>
                       </tr>
                       {selectedProductId === product.id ? (
-                        <ManagementDetailRow colSpan={10} label={`Chi tiết hàng hóa ${product.code}`}>
+                        <ManagementDetailRow colSpan={9} label={`Chi tiết hàng hóa ${product.code}`}>
                           <div className="management-detail-panel">
                             <div className="inline-detail-tabbar">
                               <div aria-label={`Chi tiết hàng hóa ${product.code}`} className="inline-detail-tabs" role="tablist">
@@ -728,6 +822,36 @@ export function CatalogPage({
                                     <dd>{product.status === 'active' ? 'Đang bán' : 'Ngưng bán'}</dd>
                                   </div>
                                 </dl>
+                                {(bomByProductId[product.id]?.items.length ?? 0) > 0 ? (
+                                  <section aria-label={`Tóm tắt vật tư cấu thành ${product.code}`} className="catalog-bom-panel">
+                                    <header>
+                                      <h3>Vật tư cấu thành</h3>
+                                      <span>{bomByProductId[product.id]?.items.length ?? 0} vật tư</span>
+                                    </header>
+                                    <ManagementTableViewport>
+                                      <table className="management-data-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Mã vật tư</th>
+                                            <th>Tên vật tư</th>
+                                            <th>Định mức</th>
+                                            <th>Đơn vị</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {(bomByProductId[product.id]?.items ?? []).map((item) => (
+                                            <tr key={item.id}>
+                                              <td>{item.component_product.code}</td>
+                                              <td>{item.component_product.name}</td>
+                                              <td>{formatQuantity(item.quantity)}</td>
+                                              <td>{item.component_product.unit_name}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </ManagementTableViewport>
+                                  </section>
+                                ) : null}
                               </>
                             ) : null}
                             {selectedDetailTab === 'bom' ? (
@@ -739,68 +863,80 @@ export function CatalogPage({
                                 <table aria-label={`Vật tư cấu thành ${product.code}`} className="catalog-bom-table">
                                   <thead>
                                     <tr>
-                                      <th>Vật tư</th>
+                                      <th>Mã vật tư</th>
+                                      <th>Tên vật tư</th>
                                       <th>Định mức</th>
+                                      <th>Đơn vị</th>
+                                      <th>Giá vốn tạm</th>
+                                      <th>Trạng thái dòng</th>
                                       <th>Ghi chú</th>
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {(bomForms[product.id] ?? [{ component_product_id: '', quantity: '1', notes: '' }]).map((line, index) => (
-                                      <tr key={`${product.id}-${index}`}>
-                                        <td>
-                                          <label>
-                                            <span className="sr-only">Vật tư</span>
-                                            <select
-                                              aria-label="Vật tư"
-                                              value={line.component_product_id}
-                                              onChange={(event) => {
-                                                const next = [...(bomForms[product.id] ?? [])]
-                                                next[index] = { ...line, component_product_id: event.target.value }
-                                                setBomForms((current) => ({ ...current, [product.id]: next }))
-                                              }}
-                                            >
-                                              <option value="">Chọn vật tư</option>
-                                              {componentProducts.map((component) => (
-                                                <option key={component.id} value={component.id}>
-                                                  {component.code} · {component.name}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </label>
-                                        </td>
-                                        <td>
-                                          <label>
-                                            <span className="sr-only">Định mức</span>
-                                            <input
-                                              aria-label="Định mức"
-                                              min="0.001"
-                                              step="0.001"
-                                              type="number"
-                                              value={line.quantity}
-                                              onChange={(event) => {
-                                                const next = [...(bomForms[product.id] ?? [])]
-                                                next[index] = { ...line, quantity: event.target.value }
-                                                setBomForms((current) => ({ ...current, [product.id]: next }))
-                                              }}
-                                            />
-                                          </label>
-                                        </td>
-                                        <td>
-                                          <label>
-                                            <span className="sr-only">Ghi chú</span>
-                                            <input
-                                              aria-label="Ghi chú"
-                                              value={line.notes}
-                                              onChange={(event) => {
-                                                const next = [...(bomForms[product.id] ?? [])]
-                                                next[index] = { ...line, notes: event.target.value }
-                                                setBomForms((current) => ({ ...current, [product.id]: next }))
-                                              }}
-                                            />
-                                          </label>
-                                        </td>
-                                      </tr>
-                                    ))}
+                                    {(bomForms[product.id] ?? [{ component_product_id: '', quantity: '1', notes: '' }]).map((line, index) => {
+                                      const savedLine = bomByProductId[product.id]?.items.find((item) => item.component_product_id === line.component_product_id)
+                                      const component = savedLine?.component_product ?? componentProducts.find((item) => item.id === line.component_product_id)
+                                      return (
+                                        <tr key={`${product.id}-${index}`}>
+                                          <td>
+                                            <label>
+                                              <span className="sr-only">Vật tư</span>
+                                              <select
+                                                aria-label="Vật tư"
+                                                value={line.component_product_id}
+                                                onChange={(event) => {
+                                                  const next = [...(bomForms[product.id] ?? [])]
+                                                  next[index] = { ...line, component_product_id: event.target.value }
+                                                  setBomForms((current) => ({ ...current, [product.id]: next }))
+                                                }}
+                                              >
+                                                <option value="">Chọn vật tư</option>
+                                                {componentProducts.map((componentOption) => (
+                                                  <option key={componentOption.id} value={componentOption.id}>
+                                                    {componentOption.code} · {componentOption.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </label>
+                                          </td>
+                                          <td>{component?.name ?? 'Chưa có'}</td>
+                                          <td>
+                                            <label>
+                                              <span className="sr-only">Định mức</span>
+                                              <input
+                                                aria-label="Định mức"
+                                                min="0.001"
+                                                step="0.001"
+                                                type="number"
+                                                value={line.quantity}
+                                                onChange={(event) => {
+                                                  const next = [...(bomForms[product.id] ?? [])]
+                                                  next[index] = { ...line, quantity: event.target.value }
+                                                  setBomForms((current) => ({ ...current, [product.id]: next }))
+                                                }}
+                                              />
+                                            </label>
+                                          </td>
+                                          <td>{component?.unit_name ?? 'Chưa có'}</td>
+                                          <td>{formatMoney(component?.latest_purchase_cost ?? 0)}</td>
+                                          <td>{component?.product_kind !== undefined ? productKindLabels[component.product_kind] : 'Chưa chọn'}</td>
+                                          <td>
+                                            <label>
+                                              <span className="sr-only">Ghi chú</span>
+                                              <input
+                                                aria-label="Ghi chú"
+                                                value={line.notes}
+                                                onChange={(event) => {
+                                                  const next = [...(bomForms[product.id] ?? [])]
+                                                  next[index] = { ...line, notes: event.target.value }
+                                                  setBomForms((current) => ({ ...current, [product.id]: next }))
+                                                }}
+                                              />
+                                            </label>
+                                          </td>
+                                        </tr>
+                                      )
+                                    })}
                                   </tbody>
                                 </table>
                                 <div className="catalog-bom-actions">
@@ -829,7 +965,7 @@ export function CatalogPage({
                               <section aria-label={`Đơn vị và quy đổi ${product.code}`} className="catalog-bom-panel">
                                 <header>
                                   <h3>Đơn vị & quy đổi</h3>
-                                  <span>Chưa có</span>
+                                  <span>{(product.unit_conversions ?? []).length > 0 ? `${product.unit_conversions?.length ?? 0} quy đổi` : 'Chưa có'}</span>
                                 </header>
                                 <dl className="management-detail-meta-grid management-detail-meta-grid-four">
                                   <div>
@@ -846,17 +982,145 @@ export function CatalogPage({
                                   </div>
                                   <div>
                                     <dt>Quy đổi</dt>
-                                    <dd>Chưa có</dd>
+                                    <dd>{(product.unit_conversions ?? []).length > 0 ? `${product.unit_conversions?.length ?? 0} đơn vị` : 'Chưa có'}</dd>
                                   </div>
                                 </dl>
+                                {(product.unit_conversions ?? []).length > 0 ? (
+                                  <ManagementTableViewport>
+                                    <table className="management-data-table">
+                                      <thead>
+                                        <tr>
+                                          <th>Đơn vị</th>
+                                          <th>Quy đổi tồn</th>
+                                          <th>Mặc định mua</th>
+                                          <th>Mặc định bán</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {(product.unit_conversions ?? []).map((conversion) => (
+                                          <tr key={conversion.unit_id}>
+                                            <td>{conversion.unit_name}</td>
+                                            <td>{`1 ${conversion.unit_name} = ${formatQuantity(conversion.stock_qty_per_unit)} ${product.unit_name}`}</td>
+                                            <td>{conversion.is_default_purchase_unit ? 'Có' : 'Không'}</td>
+                                            <td>{conversion.is_default_sale_unit ? 'Có' : 'Không'}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </ManagementTableViewport>
+                                ) : null}
                               </section>
                             ) : null}
                             {selectedDetailTab === 'inventory' ? (
                               <section aria-label={`Tồn kho ${product.code}`} className="catalog-bom-panel">
                                 <header>
                                   <h3>Tồn kho</h3>
-                                  <span>Chưa có</span>
+                                  <span>{inventoryShapeLabel(product.inventory_shape ?? 'normal')}</span>
                                 </header>
+                                {stocktakeNotices[product.id] ? (
+                                  <p role="status">
+                                    Đã tạo phiếu kiểm kho {stocktakeNotices[product.id].code}.{' '}
+                                    <a href={`/inventory?stocktake_id=${encodeURIComponent(stocktakeNotices[product.id].id)}`}>
+                                      Xem phiếu {stocktakeNotices[product.id].code}
+                                    </a>
+                                  </p>
+                                ) : null}
+                                {(product.inventory_shape ?? 'normal') === 'normal' && product.product_kind !== 'service' && product.product_kind !== 'combo' ? (
+                                  <form
+                                    aria-label={`Cập nhật tồn ${product.code}`}
+                                    className="management-detail-form"
+                                    onSubmit={(event) => void adjustNormalProductStock(product, event)}
+                                  >
+                                    <label>
+                                      Tồn thực tế
+                                      <input
+                                        aria-label="Tồn thực tế"
+                                        min="0"
+                                        step="0.001"
+                                        type="number"
+                                        value={stockAdjustForms[product.id]?.actualQty ?? ''}
+                                        onChange={(event) => {
+                                          const nextValue = event.target.value
+                                          setStockAdjustForms((current) => ({
+                                            ...current,
+                                            [product.id]: { actualQty: nextValue, reason: current[product.id]?.reason ?? '' },
+                                          }))
+                                        }}
+                                      />
+                                    </label>
+                                    <label>
+                                      Lý do điều chỉnh
+                                      <input
+                                        aria-label="Lý do điều chỉnh"
+                                        value={stockAdjustForms[product.id]?.reason ?? ''}
+                                        onChange={(event) => {
+                                          const nextValue = event.target.value
+                                          setStockAdjustForms((current) => ({
+                                            ...current,
+                                            [product.id]: { actualQty: current[product.id]?.actualQty ?? '', reason: nextValue },
+                                          }))
+                                        }}
+                                      />
+                                    </label>
+                                    <button className="button button-primary" disabled={saving} type="submit">
+                                      Cập nhật tồn
+                                    </button>
+                                  </form>
+                                ) : product.inventory_shape === 'roll' || product.inventory_shape === 'sheet' ? (() => {
+                                  const objectState = inventoryObjectsByProductId[product.id]
+                                  return (
+                                    <>
+                                      <p>Sửa tồn tổng không áp dụng cho loại hàng này.</p>
+                                      {objectState?.loading ? <p>Đang tải tồn theo cuộn/tấm...</p> : null}
+                                      {objectState?.error ? <p role="alert">{objectState.error}</p> : null}
+                                      {!objectState?.loading && !objectState?.error ? (
+                                        <ManagementTableViewport>
+                                          <table aria-label={`Tồn theo cuộn tấm ${product.code}`} className="management-data-table">
+                                            <thead>
+                                              <tr>
+                                                <th>Loại</th>
+                                                <th>Mã đối tượng</th>
+                                                <th>Khổ rộng</th>
+                                                <th>Chiều dài</th>
+                                                <th>Diện tích</th>
+                                                <th>Trạng thái</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {(objectState?.rolls ?? []).map((roll) => (
+                                                <tr key={`roll-${roll.id}`}>
+                                                  <td>Cuộn</td>
+                                                  <td>{roll.code}</td>
+                                                  <td>{formatQuantity(roll.width_m)} m</td>
+                                                  <td>{formatQuantity(roll.remaining_length_m)} m</td>
+                                                  <td>{formatQuantity(roll.remaining_area_m2)} m²</td>
+                                                  <td>{roll.status}</td>
+                                                </tr>
+                                              ))}
+                                              {(objectState?.sheets ?? []).map((sheet) => (
+                                                <tr key={`sheet-${sheet.id}`}>
+                                                  <td>Tấm</td>
+                                                  <td>{sheet.code}</td>
+                                                  <td>{formatQuantity(sheet.width_m)} m</td>
+                                                  <td>{formatQuantity(sheet.length_m)} m</td>
+                                                  <td>{formatQuantity(sheet.area_m2)} m²</td>
+                                                  <td>{sheet.status}</td>
+                                                </tr>
+                                              ))}
+                                              {(objectState?.rolls.length ?? 0) === 0 && (objectState?.sheets.length ?? 0) === 0 ? (
+                                                <tr>
+                                                  <td colSpan={6}>Chưa có</td>
+                                                </tr>
+                                              ) : null}
+                                            </tbody>
+                                          </table>
+                                        </ManagementTableViewport>
+                                      ) : null}
+                                    </>
+                                  )
+                                })() : (
+                                  <p>Sửa tồn tổng không áp dụng cho loại hàng này.</p>
+                                )}
                               </section>
                             ) : null}
                             {selectedDetailTab === 'stock-card' ? (() => {
@@ -1005,6 +1269,18 @@ export function CatalogPage({
                   <label>
                     Tên hàng
                     <input placeholder="Bắt buộc *" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
+                  </label>
+                  <label>
+                    Nhóm hàng
+                    <select
+                      value={form.productGroupId}
+                      onChange={(event) => setForm((current) => ({ ...current, productGroupId: event.target.value }))}
+                    >
+                      <option value="">Giá chung</option>
+                      {productGroups.filter((group) => !group.is_default).map((group) => (
+                        <option key={group.id} value={group.id}>{group.name}</option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     Đơn vị

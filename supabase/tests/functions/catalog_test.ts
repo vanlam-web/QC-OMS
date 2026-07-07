@@ -285,6 +285,139 @@ Deno.test("product list accepts product kind filter", async () => {
   assertEquals(listInputs[0].productKind, "auxiliary_material");
 });
 
+Deno.test("catalog product groups include default general group", async () => {
+  const response = await call("/api/v1/product-groups", { method: "GET" }, repo(["perm.edit_price_book"], {
+    listProductGroups: (input: Record<string, unknown>) => {
+      assertEquals(input.organizationId, organizationId);
+      return Promise.resolve({
+        items: [
+          { id: "pg-default", code: "GENERAL", name: "Giá chung", is_default: true, is_active: true },
+        ],
+      });
+    },
+  }));
+
+  assertEquals(response.status, 200);
+  const body = await data(response) as { items: Array<Record<string, unknown>> };
+  assertEquals(body.items[0].name, "Giá chung");
+  assertEquals(body.items[0].is_default, true);
+});
+
+Deno.test("catalog product create and list map product group", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.edit_price_book"], {
+    createProduct: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: "p-group",
+        code: "TEST-GROUP",
+        name: "Hàng test nhóm",
+        status: "active",
+        product_kind: "goods",
+        unit_name: "cái",
+        sell_method: "quantity",
+        latest_purchase_cost: null,
+        latest_purchase_cost_at: null,
+        product_group: { id: input.productGroupId as string, code: "VAT-TU", name: "Vật tư" },
+      });
+    },
+    listProducts: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  });
+
+  const createResponse = await call(
+    "/api/v1/products",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        code: "TEST-GROUP",
+        name: "Hàng test nhóm",
+        unit_name: "cái",
+        sell_method: "quantity",
+        product_group_id: "pg-vat-tu",
+      }),
+    },
+    repository,
+  );
+  const listResponse = await call("/api/v1/products?product_group_id=pg-vat-tu", { method: "GET" }, repository);
+
+  assertEquals(createResponse.status, 201);
+  assertEquals(listResponse.status, 200);
+  assertEquals(receivedInputs[0].productGroupId, "pg-vat-tu");
+  assertEquals(receivedInputs[1].productGroupId, "pg-vat-tu");
+});
+
+Deno.test("catalog product create accepts KV-style unit conversions", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const response = await call(
+    "/api/v1/products",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        code: "TEST-UNIT",
+        name: "Hàng nhiều đơn vị",
+        unit_name: "tờ",
+        sell_method: "quantity",
+        unit_conversions: [
+          { unit_name: "Ram", stock_qty_per_unit: 100, is_default_purchase_unit: true },
+          { unit_name: "m tới", stock_qty_per_unit: 0.5, is_default_sale_unit: true },
+          { unit_name: "Tấc", stock_qty_per_unit: 0.042 },
+        ],
+      }),
+    },
+    repo(["perm.edit_price_book"], {
+      createProduct: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve({
+          id: "p-unit",
+          code: "TEST-UNIT",
+          name: "Hàng nhiều đơn vị",
+          status: "active",
+          product_kind: "goods",
+          unit_name: "tờ",
+          sell_method: "quantity",
+          latest_purchase_cost: null,
+          latest_purchase_cost_at: null,
+          unit_conversions: input.unitConversions,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 201);
+  const conversions = receivedInputs[0].unitConversions as Array<Record<string, unknown>>;
+  assertEquals(conversions.map((item) => item.unitName), ["Ram", "m tới", "Tấc"]);
+  assertEquals(conversions.map((item) => item.stockQtyPerUnit), [100, 0.5, 0.042]);
+  assertEquals(conversions[0].isDefaultPurchaseUnit, true);
+  assertEquals(conversions[1].isDefaultSaleUnit, true);
+});
+
+Deno.test("catalog product group create normalizes input", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const response = await call(
+    "/api/v1/product-groups",
+    { method: "POST", body: JSON.stringify({ name: " Vật tư chính " }) },
+    repo(["perm.edit_price_book"], {
+      createProductGroup: (input: Record<string, unknown>) => {
+        receivedInputs.push(input);
+        return Promise.resolve({
+          id: "pg-vat-tu",
+          code: "VAT-TU-CHINH",
+          name: input.name,
+          is_default: false,
+          is_active: true,
+        });
+      },
+    }),
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(receivedInputs[0].organizationId, organizationId);
+  assertEquals(receivedInputs[0].name, "Vật tư chính");
+});
+
 Deno.test("price resolution uses default price list without discount model", async () => {
   const response = await call(
     "/api/v1/pricing/resolve",
@@ -319,7 +452,23 @@ Deno.test("product BOM routes require inventory permission and normalize items",
         status: "active",
         notes: null,
         created_at: "2026-07-05T00:00:00Z",
-        items: [],
+        items: [
+          {
+            id: "item-1",
+            component_product_id: "component-1",
+            component_product: {
+              id: "component-1",
+              code: "KEO",
+              name: "Keo dán",
+              unit_name: "chai",
+              product_kind: "auxiliary_material",
+              latest_purchase_cost: 20000,
+            },
+            quantity: 2,
+            sort_order: 1,
+            notes: null,
+          },
+        ],
       });
     },
   });
@@ -338,8 +487,50 @@ Deno.test("product BOM routes require inventory permission and normalize items",
 
   assertEquals(getResponse.status, 200);
   assertEquals(postResponse.status, 201);
+  const body = await data(postResponse) as { items: Array<{ component_product: Record<string, unknown> }> };
+  assertEquals(body.items[0].component_product.product_kind, "auxiliary_material");
+  assertEquals(body.items[0].component_product.latest_purchase_cost, 20000);
   assertEquals(receivedInputs[0].productId, "p-1");
   assertEquals(receivedInputs[1].items, [{ componentProductId: "component-1", quantity: 2, notes: "Dán mica" }]);
+});
+
+Deno.test("product BOM PUT route saves BOM and rejects manual main/sub flags", async () => {
+  const receivedInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.manage_inventory"], {
+    saveProductBom: (input: Record<string, unknown>) => {
+      receivedInputs.push(input);
+      return Promise.resolve({
+        id: "bom-1",
+        product_id: input.productId as string,
+        version: 1,
+        status: "active",
+        notes: null,
+        created_at: "2026-07-05T00:00:00Z",
+        items: [],
+      });
+    },
+  });
+
+  const putResponse = await call(
+    "/api/v1/products/p-1/bom",
+    {
+      method: "PUT",
+      body: JSON.stringify({ items: [{ component_product_id: "component-1", quantity: 2 }] }),
+    },
+    repository,
+  );
+  const invalidResponse = await call(
+    "/api/v1/products/p-1/bom",
+    {
+      method: "POST",
+      body: JSON.stringify({ items: [{ component_product_id: "component-1", quantity: 2, component_role: "main" }] }),
+    },
+    repository,
+  );
+
+  assertEquals(putResponse.status, 201);
+  assertEquals(invalidResponse.status, 400);
+  assertEquals(receivedInputs[0].items, [{ componentProductId: "component-1", quantity: 2, notes: null }]);
 });
 
 Deno.test("customer routes normalize optional phone and auto code", async () => {

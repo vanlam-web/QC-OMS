@@ -5,6 +5,7 @@ import type {
   PermissionCode,
   PriceListData,
   PriceFormulaPreviewData,
+  ProductGroupData,
   ProductBomData,
   ProductData,
   ProductKind,
@@ -29,6 +30,10 @@ export interface ProductListResponse {
 
 export interface PriceListResponse {
   items: PriceListData[];
+}
+
+export interface ProductGroupListResponse {
+  items: ProductGroupData[];
 }
 
 export interface CustomerListResponse {
@@ -70,7 +75,7 @@ export async function listProducts(
   url: URL,
 ): Promise<ProductListResponse> {
   requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
-  const { search, status, sellMethod, inventoryShape, productKind, page, pageSize } = parseListProducts(url, context.permissions);
+  const { search, status, sellMethod, inventoryShape, productKind, productGroupId, page, pageSize } = parseListProducts(url, context.permissions);
   const result = await repository.listProducts({
     organizationId: context.organizationId,
     search,
@@ -78,6 +83,7 @@ export async function listProducts(
     sellMethod,
     inventoryShape,
     productKind,
+    productGroupId,
     page,
     pageSize,
   });
@@ -98,6 +104,30 @@ export async function createProduct(
       ...input,
       latestPurchaseCostUpdatedBy: input.latestPurchaseCost === undefined ? undefined : context.actorUserId,
     });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function listProductGroups(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  url: URL,
+): Promise<ProductGroupListResponse> {
+  requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
+  const activeOnly = url.searchParams.get("active_only") !== "false";
+  return await repository.listProductGroups({ organizationId: context.organizationId, activeOnly });
+}
+
+export async function createProductGroup(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<ProductGroupData> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  const input = parseProductGroupCreate(body);
+  try {
+    return await repository.createProductGroup({ organizationId: context.organizationId, ...input });
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -408,6 +438,7 @@ function parseListProducts(
   sellMethod?: SellMethod;
   inventoryShape?: "normal" | "roll" | "sheet";
   productKind?: ProductKind;
+  productGroupId?: string;
   page: number;
   pageSize: number;
 } {
@@ -418,6 +449,7 @@ function parseListProducts(
   const requestedSellMethod = url.searchParams.get("sell_method") ?? undefined;
   const requestedInventoryShape = url.searchParams.get("inventory_shape") ?? undefined;
   const requestedProductKind = url.searchParams.get("product_kind") ?? undefined;
+  const requestedProductGroupId = parseOptionalQueryId(url.searchParams.get("product_group_id"));
   const canEditPriceBook = permissions.includes("perm.edit_price_book");
 
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
@@ -450,6 +482,7 @@ function parseListProducts(
     sellMethod: requestedSellMethod as SellMethod | undefined,
     inventoryShape: requestedInventoryShape as "normal" | "roll" | "sheet" | undefined,
     productKind: requestedProductKind as ProductKind | undefined,
+    productGroupId: requestedProductGroupId,
     page,
     pageSize,
   };
@@ -464,7 +497,14 @@ function parseProductCreate(body: unknown): {
   sellMethod: SellMethod;
   inventoryShape?: "normal" | "roll" | "sheet";
   trackInventory?: boolean;
+  productGroupId?: string | null;
   latestPurchaseCost?: number | null;
+  unitConversions?: Array<{
+    unitName: string;
+    stockQtyPerUnit: number;
+    isDefaultPurchaseUnit: boolean;
+    isDefaultSaleUnit: boolean;
+  }>;
 } {
   if (!isRecord(body)) throw validationError();
   const sellMethod = parseSellMethod(body.sell_method);
@@ -479,7 +519,36 @@ function parseProductCreate(body: unknown): {
     sellMethod,
     inventoryShape,
     trackInventory,
+    productGroupId: "product_group_id" in body ? parseOptionalId(body.product_group_id) : undefined,
     latestPurchaseCost: "latest_purchase_cost" in body ? parseOptionalMoney(body.latest_purchase_cost) : undefined,
+    unitConversions: "unit_conversions" in body ? parseUnitConversions(body.unit_conversions) : undefined,
+  };
+}
+
+function parseUnitConversions(value: unknown): Array<{
+  unitName: string;
+  stockQtyPerUnit: number;
+  isDefaultPurchaseUnit: boolean;
+  isDefaultSaleUnit: boolean;
+}> {
+  if (!Array.isArray(value)) throw validationError();
+  return value.map((item) => {
+    if (!isRecord(item)) throw validationError();
+    const stockQtyPerUnit = parsePositiveNumber(item.stock_qty_per_unit);
+    return {
+      unitName: normalizeText(item.unit_name, 60),
+      stockQtyPerUnit,
+      isDefaultPurchaseUnit: "is_default_purchase_unit" in item ? parseBoolean(item.is_default_purchase_unit) : false,
+      isDefaultSaleUnit: "is_default_sale_unit" in item ? parseBoolean(item.is_default_sale_unit) : false,
+    };
+  });
+}
+
+function parseProductGroupCreate(body: unknown): { name: string; code?: string } {
+  if (!isRecord(body)) throw validationError();
+  return {
+    name: normalizeText(body.name, 120),
+    ...("code" in body ? { code: normalizeCode(body.code) } : {}),
   };
 }
 
@@ -548,6 +617,11 @@ function parseUnitPrice(body: unknown): number {
 function parseOptionalMoney(value: unknown): number | null {
   if (value === null) return null;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
+  return value;
+}
+
+function parsePositiveNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) throw validationError();
   return value;
 }
 
@@ -819,6 +893,7 @@ function parseProductBomBody(body: unknown): {
     notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
     items: body.items.map((item) => {
       if (!isRecord(item)) throw validationError();
+      if ("component_role" in item || "role" in item || "is_main" in item || "is_auxiliary" in item) throw validationError();
       const componentProductId = parseRequiredId(item.component_product_id);
       const quantity = typeof item.quantity === "number" ? item.quantity : Number(item.quantity);
       if (!Number.isFinite(quantity) || quantity <= 0) throw validationError();

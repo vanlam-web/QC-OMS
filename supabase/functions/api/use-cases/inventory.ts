@@ -1,5 +1,7 @@
 import type {
   FoundationRepository,
+  InventoryRollData,
+  InventorySheetData,
   InventoryProductData,
   MaterialOpeningOptionsData,
   MaterialOpeningResultData,
@@ -88,6 +90,139 @@ export async function listStocktakes(
   return { items: result.items, page, page_size: pageSize, total: result.total };
 }
 
+export async function getStocktake(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  stocktakeId: string,
+): Promise<StocktakeData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const result = await repository.getStocktake({
+    organizationId: context.organizationId,
+    stocktakeId,
+  });
+  if (result === null) throw notFound();
+  return result;
+}
+
+export async function listInventoryRolls(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  url: URL,
+): Promise<{ items: InventoryRollData[]; page: number; page_size: number; total: number }> {
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
+  const { page, pageSize } = parsePage(url);
+  const productId = url.searchParams.get("product_id")?.trim() || undefined;
+  const status = parseOptionalEnum(url.searchParams.get("status"), ["available", "in_use", "empty", "discarded"]);
+  const result = await repository.listInventoryRolls({
+    organizationId: context.organizationId,
+    productId,
+    status,
+    page,
+    pageSize,
+  });
+  return { items: result.items, page, page_size: pageSize, total: result.total };
+}
+
+export async function createInventoryRoll(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  body: unknown,
+): Promise<InventoryRollData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const payload = parseCreateRoll(body);
+  try {
+    return await repository.createInventoryRoll({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      ...payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function updateInventoryRoll(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  rollId: string,
+  body: unknown,
+): Promise<InventoryRollData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const payload = parseUpdateRoll(body);
+  const result = await repository.updateInventoryRoll({
+    organizationId: context.organizationId,
+    actorUserId: context.actorUserId,
+    rollId,
+    ...payload,
+  });
+  if (result === null) throw notFound();
+  return result;
+}
+
+export async function listInventorySheets(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  url: URL,
+): Promise<{ items: InventorySheetData[]; page: number; page_size: number; total: number }> {
+  requireAnyPermission(context, ["perm.create_order", "perm.manage_inventory"]);
+  const { page, pageSize } = parsePage(url);
+  const productId = url.searchParams.get("product_id")?.trim() || undefined;
+  const status = parseOptionalEnum(url.searchParams.get("status"), ["available", "used", "discarded"]);
+  const result = await repository.listInventorySheets({
+    organizationId: context.organizationId,
+    productId,
+    status,
+    page,
+    pageSize,
+  });
+  return { items: result.items, page, page_size: pageSize, total: result.total };
+}
+
+export async function createInventorySheet(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  body: unknown,
+): Promise<InventorySheetData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const payload = parseCreateSheet(body);
+  try {
+    return await repository.createInventorySheet({
+      organizationId: context.organizationId,
+      actorUserId: context.actorUserId,
+      ...payload,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function updateInventorySheet(
+  repository: FoundationRepository,
+  context: InventoryContext,
+  sheetId: string,
+  body: unknown,
+): Promise<InventorySheetData> {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  const payload = parseUpdateSheet(body);
+  const result = await repository.updateInventorySheet({
+    organizationId: context.organizationId,
+    actorUserId: context.actorUserId,
+    sheetId,
+    ...payload,
+  });
+  if (result === null) throw notFound();
+  return result;
+}
+
+export function rejectStocktakeMutation(context: InventoryContext): never {
+  requireAnyPermission(context, ["perm.manage_inventory"]);
+  throw new ApiError({
+    status: 400,
+    code: "VALIDATION_ERROR",
+    message: "Manual stocktake mutations are not implemented yet.",
+  });
+}
+
 export async function getMaterialOpeningOptions(
   repository: FoundationRepository,
   context: InventoryContext,
@@ -159,22 +294,124 @@ export async function adjustNormalProductStock(
   }
 }
 
+function parseCreateRoll(body: unknown): {
+  productId: string;
+  code: string;
+  widthM: number;
+  initialLengthM: number;
+  remainingLengthM?: number;
+  status?: InventoryRollData["status"];
+  note?: string | null;
+} {
+  if (!isRecord(body)) throw validationError();
+  const remainingLengthM = body.remaining_length_m === undefined ? undefined : parseNonNegativeNumber(body.remaining_length_m);
+  return {
+    productId: parseRequiredText(body.product_id),
+    code: parseRequiredText(body.code),
+    widthM: parsePositiveNumber(body.width_m),
+    initialLengthM: parseNonNegativeNumber(body.initial_length_m),
+    ...(remainingLengthM === undefined ? {} : { remainingLengthM }),
+    status: parseOptionalEnum(typeof body.status === "string" ? body.status : null, ["available", "in_use", "empty", "discarded"]),
+    note: typeof body.note === "string" && body.note.trim().length > 0 ? body.note.trim() : null,
+  };
+}
+
+function parseUpdateRoll(body: unknown): {
+  remainingLengthM?: number;
+  status?: InventoryRollData["status"];
+  reason: string;
+} {
+  if (!isRecord(body)) throw validationError();
+  return {
+    remainingLengthM: body.remaining_length_m === undefined ? undefined : parseNonNegativeNumber(body.remaining_length_m),
+    status: parseOptionalEnum(typeof body.status === "string" ? body.status : null, ["available", "in_use", "empty", "discarded"]),
+    reason: parseRequiredText(body.reason),
+  };
+}
+
+function parseCreateSheet(body: unknown): {
+  productId: string;
+  code: string;
+  sheetKind: InventorySheetData["sheet_kind"];
+  widthM: number;
+  lengthM: number;
+  status?: InventorySheetData["status"];
+  note?: string | null;
+} {
+  if (!isRecord(body)) throw validationError();
+  return {
+    productId: parseRequiredText(body.product_id),
+    code: parseRequiredText(body.code),
+    sheetKind: parseOptionalEnum(typeof body.sheet_kind === "string" ? body.sheet_kind : null, ["full", "in_use", "remnant"]) ?? "full",
+    widthM: parsePositiveNumber(body.width_m),
+    lengthM: parsePositiveNumber(body.length_m),
+    status: parseOptionalEnum(typeof body.status === "string" ? body.status : null, ["available", "used", "discarded"]),
+    note: typeof body.note === "string" && body.note.trim().length > 0 ? body.note.trim() : null,
+  };
+}
+
+function parseUpdateSheet(body: unknown): {
+  widthM?: number;
+  lengthM?: number;
+  status?: InventorySheetData["status"];
+  reason: string;
+} {
+  if (!isRecord(body)) throw validationError();
+  return {
+    widthM: body.width_m === undefined ? undefined : parsePositiveNumber(body.width_m),
+    lengthM: body.length_m === undefined ? undefined : parsePositiveNumber(body.length_m),
+    status: parseOptionalEnum(typeof body.status === "string" ? body.status : null, ["available", "used", "discarded"]),
+    reason: parseRequiredText(body.reason),
+  };
+}
+
 function parseMaterialOpening(body: unknown): {
   productId: string;
-  inventoryShape: "normal";
-  openedUnitId: string;
-  openedQty: number;
+  inventoryShape: "normal" | "roll" | "sheet";
+  openedUnitId?: string;
+  openedQty?: number;
   oldRemainingQty?: number;
+  oldInventoryRollId?: string;
+  oldRemainingLengthM?: number;
+  oldInventorySheetId?: string;
+  oldRemainingWidthM?: number;
+  oldRemainingLengthMForSheet?: number;
+  discardOldSheet?: boolean;
   note?: string;
 } {
   if (!isRecord(body)) throw validationError();
-  if (body.inventory_shape !== "normal") throw validationError();
+  if (body.inventory_shape !== "normal" && body.inventory_shape !== "roll" && body.inventory_shape !== "sheet") throw validationError();
   const productId = parseRequiredText(body.product_id);
-  const openedUnitId = parseRequiredText(body.opened_unit_id);
-  const openedQty = parsePositiveNumber(body.opened_qty);
-  const oldRemainingQty = body.old_remaining_qty === undefined ? undefined : parseNonNegativeNumber(body.old_remaining_qty);
   const note = typeof body.note === "string" && body.note.trim().length > 0 ? body.note.trim() : undefined;
-  return { productId, inventoryShape: "normal", openedUnitId, openedQty, oldRemainingQty, note };
+  if (body.inventory_shape === "normal") {
+    return {
+      productId,
+      inventoryShape: "normal",
+      openedUnitId: parseRequiredText(body.opened_unit_id),
+      openedQty: parsePositiveNumber(body.opened_qty),
+      oldRemainingQty: body.old_remaining_qty === undefined ? undefined : parseNonNegativeNumber(body.old_remaining_qty),
+      note,
+    };
+  }
+  if (body.inventory_shape === "roll") {
+    return {
+      productId,
+      inventoryShape: "roll",
+      oldInventoryRollId: parseRequiredText(body.old_inventory_roll_id),
+      oldRemainingLengthM: parseNonNegativeNumber(body.old_remaining_length_m),
+      note,
+    };
+  }
+  const discardOldSheet = body.discard_old_sheet === true;
+  return {
+    productId,
+    inventoryShape: "sheet",
+    oldInventorySheetId: parseRequiredText(body.old_inventory_sheet_id),
+    oldRemainingWidthM: discardOldSheet ? undefined : parsePositiveNumber(body.old_remaining_width_m),
+    oldRemainingLengthMForSheet: discardOldSheet ? undefined : parsePositiveNumber(body.old_remaining_length_m),
+    discardOldSheet,
+    note,
+  };
 }
 
 function parsePosShortagePreview(body: unknown): { productId: string; quantity: number } {

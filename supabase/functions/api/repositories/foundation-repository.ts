@@ -17,6 +17,8 @@ import type {
   FoundationRepository,
   GetCurrentUserInput,
   InventoryProductData,
+  InventoryRollData,
+  InventorySheetData,
   MaterialOpeningOptionsData,
   MaterialOpeningResultData,
   PermissionCode,
@@ -28,6 +30,7 @@ import type {
   PriceListData,
   ProductBomData,
   ProductData,
+  ProductGroupData,
   ProductionQueueDraftPayloadData,
   ProductionQueueItemData,
   PurchasePhysicalPayloadData,
@@ -828,7 +831,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listProducts(input): Promise<{ items: ProductData[]; total: number }> {
       let query = client
         .from("products")
-        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at, product_group_id, product_groups(id, code, name)", {
           count: "exact",
         })
         .eq("organization_id", input.organizationId)
@@ -836,6 +839,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       if (input.productKind !== undefined) {
         query = query.eq("product_kind", input.productKind);
+      }
+      if (input.productGroupId !== undefined) {
+        query = query.eq("product_group_id", input.productGroupId);
       }
 
       if (input.productKind === undefined && input.inventoryShape !== undefined) {
@@ -860,29 +866,68 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
-      const items = (data ?? []) as ProductData[];
+      const items = (data ?? []).map(mapProductRow);
       if (items.length === 0) return { items, total: count ?? 0 };
 
       const { data: settings, error: settingsError } = await client
         .from("product_inventory_settings")
-        .select("product_id, inventory_shape, track_inventory")
+        .select("product_id, inventory_shape, track_inventory, stock_unit_id")
         .eq("organization_id", input.organizationId)
         .in("product_id", items.map((item) => item.id));
       if (settingsError !== null) throw settingsError;
       const settingsByProduct = new Map((settings ?? []).map((row) => [row.product_id, {
+        stock_unit_id: isString(row.stock_unit_id) ? row.stock_unit_id : null,
         inventory_shape: row.inventory_shape as "normal" | "roll" | "sheet",
         track_inventory: Boolean(row.track_inventory),
       }]));
+      const conversionsByProduct = await loadCatalogProductUnitConversions(
+        client,
+        input.organizationId,
+        items.map((item) => item.id),
+      );
       return {
         items: items.map((item) => ({
           ...item,
           inventory_shape: settingsByProduct.get(item.id)?.inventory_shape ?? "normal",
           track_inventory: settingsByProduct.get(item.id)?.track_inventory ?? true,
+          unit_conversions: conversionsByProduct.get(item.id) ?? [],
         })),
         total: count ?? 0,
       };
     },
+    async listProductGroups(input): Promise<{ items: ProductGroupData[] }> {
+      let query = client
+        .from("product_groups")
+        .select("id, code, name, is_default, is_active")
+        .eq("organization_id", input.organizationId)
+        .order("is_default", { ascending: false })
+        .order("name", { ascending: true });
+
+      if (input.activeOnly) query = query.eq("is_active", true);
+
+      const { data, error } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []) as ProductGroupData[] };
+    },
+    async createProductGroup(input): Promise<ProductGroupData> {
+      const { data, error } = await client
+        .from("product_groups")
+        .insert({
+          organization_id: input.organizationId,
+          code: input.code ?? productGroupCodeFromName(input.name),
+          name: input.name,
+          is_default: false,
+          is_active: true,
+        })
+        .select("id, code, name, is_default, is_active")
+        .single();
+      if (error !== null) throw error;
+      return data as ProductGroupData;
+    },
     async createProduct(input): Promise<ProductData> {
+      const productGroupId = input.productGroupId === undefined
+        ? await ensureDefaultProductGroup(client, input.organizationId)
+        : input.productGroupId;
       const { data, error } = await client
         .from("products")
         .insert({
@@ -896,8 +941,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           latest_purchase_cost: input.latestPurchaseCost ?? null,
           latest_purchase_cost_at: input.latestPurchaseCost === undefined ? null : new Date().toISOString(),
           latest_purchase_cost_updated_by: input.latestPurchaseCostUpdatedBy ?? null,
+          product_group_id: productGroupId,
         })
-        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at, product_group_id, product_groups(id, code, name)")
         .single();
       if (error !== null) throw error;
       const shape = input.inventoryShape ?? "normal";
@@ -912,7 +958,22 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           stock_unit_id: stockUnitId,
         }, { onConflict: "organization_id,product_id" });
       if (settingsError !== null) throw settingsError;
-      return { ...(data as ProductData), inventory_shape: shape, track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo") };
+      if (input.unitConversions !== undefined) {
+        await replaceProductUnitConversions(client, {
+          organizationId: input.organizationId,
+          productId: data.id,
+          stockUnitId,
+          sellMethod: input.sellMethod,
+          unitConversions: input.unitConversions,
+        });
+      }
+      const conversions = await loadCatalogProductUnitConversions(client, input.organizationId, [data.id]);
+      return {
+        ...mapProductRow(data),
+        inventory_shape: shape,
+        track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo"),
+        unit_conversions: conversions.get(data.id) ?? [],
+      };
     },
     async updateProduct(input): Promise<ProductData | null> {
       const patch: {
@@ -2108,7 +2169,166 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
-      return { items: (data ?? []) as StocktakeData[], total: count ?? 0 };
+      return {
+        items: await hydrateStocktakeAggregates(client, input.organizationId, (data ?? []) as Array<Record<string, unknown>>),
+        total: count ?? 0,
+      };
+    },
+    async getStocktake(input): Promise<StocktakeData | null> {
+      const { data, error } = await client
+        .from("stocktakes")
+        .select("id, code, status, source_type, created_at, balanced_at, note")
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.stocktakeId)
+        .maybeSingle();
+      if (error !== null) throw error;
+      if (data === null) return null;
+      const items = await hydrateStocktakeAggregates(client, input.organizationId, [data as Record<string, unknown>]);
+      return items[0] ?? null;
+    },
+    async listInventoryRolls(input): Promise<{ items: InventoryRollData[]; total: number }> {
+      let query = client
+        .from("inventory_rolls")
+        .select("id, product_id, code, width_m, initial_length_m, remaining_length_m, initial_area_m2, remaining_area_m2, status, note, created_at", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      if (input.productId !== undefined) query = query.eq("product_id", input.productId);
+      if (input.status !== undefined) query = query.eq("status", input.status);
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(mapInventoryRoll), total: count ?? 0 };
+    },
+    async createInventoryRoll(input): Promise<InventoryRollData> {
+      const remainingLength = input.remainingLengthM ?? input.initialLengthM;
+      const row = {
+        organization_id: input.organizationId,
+        product_id: input.productId,
+        code: input.code,
+        width_m: input.widthM,
+        initial_length_m: input.initialLengthM,
+        remaining_length_m: remainingLength,
+        initial_area_m2: input.widthM * input.initialLengthM,
+        remaining_area_m2: input.widthM * remainingLength,
+        status: input.status ?? "available",
+        note: input.note ?? null,
+        created_by: input.actorUserId,
+      };
+      const { data, error } = await client
+        .from("inventory_rolls")
+        .insert(row)
+        .select("id, product_id, code, width_m, initial_length_m, remaining_length_m, initial_area_m2, remaining_area_m2, status, note, created_at")
+        .single();
+      if (error !== null) throw error;
+      return mapInventoryRoll(data);
+    },
+    async updateInventoryRoll(input): Promise<InventoryRollData | null> {
+      const { data: current, error: currentError } = await client
+        .from("inventory_rolls")
+        .select("id, product_id, width_m, remaining_length_m, remaining_area_m2")
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.rollId)
+        .maybeSingle();
+      if (currentError !== null) throw currentError;
+      if (current === null) return null;
+      const nextRemainingLength = input.remainingLengthM ?? Number(current.remaining_length_m);
+      const nextRemainingArea = Number(current.width_m) * nextRemainingLength;
+      const patch: Record<string, unknown> = {
+        remaining_length_m: nextRemainingLength,
+        remaining_area_m2: nextRemainingArea,
+      };
+      if (input.status !== undefined) patch.status = input.status;
+      const { data, error } = await client
+        .from("inventory_rolls")
+        .update(patch)
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.rollId)
+        .select("id, product_id, code, width_m, initial_length_m, remaining_length_m, initial_area_m2, remaining_area_m2, status, note, created_at")
+        .single();
+      if (error !== null) throw error;
+      await insertObjectAdjustmentMovement(client, {
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        productId: String(current.product_id),
+        quantityDelta: nextRemainingArea - Number(current.remaining_area_m2),
+        inventoryObjectType: "roll",
+        inventoryRollId: input.rollId,
+        inventorySheetId: null,
+        reason: input.reason,
+      });
+      return mapInventoryRoll(data);
+    },
+    async listInventorySheets(input): Promise<{ items: InventorySheetData[]; total: number }> {
+      let query = client
+        .from("inventory_sheets")
+        .select("id, product_id, code, sheet_kind, width_m, length_m, area_m2, status, note, created_at", { count: "exact" })
+        .eq("organization_id", input.organizationId)
+        .order("created_at", { ascending: false })
+        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+      if (input.productId !== undefined) query = query.eq("product_id", input.productId);
+      if (input.status !== undefined) query = query.eq("status", input.status);
+      const { data, error, count } = await query;
+      if (error !== null) throw error;
+      return { items: (data ?? []).map(mapInventorySheet), total: count ?? 0 };
+    },
+    async createInventorySheet(input): Promise<InventorySheetData> {
+      const row = {
+        organization_id: input.organizationId,
+        product_id: input.productId,
+        code: input.code,
+        sheet_kind: input.sheetKind,
+        width_m: input.widthM,
+        length_m: input.lengthM,
+        area_m2: input.widthM * input.lengthM,
+        status: input.status ?? "available",
+        note: input.note ?? null,
+        created_by: input.actorUserId,
+      };
+      const { data, error } = await client
+        .from("inventory_sheets")
+        .insert(row)
+        .select("id, product_id, code, sheet_kind, width_m, length_m, area_m2, status, note, created_at")
+        .single();
+      if (error !== null) throw error;
+      return mapInventorySheet(data);
+    },
+    async updateInventorySheet(input): Promise<InventorySheetData | null> {
+      const { data: current, error: currentError } = await client
+        .from("inventory_sheets")
+        .select("id, product_id, width_m, length_m, area_m2")
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.sheetId)
+        .maybeSingle();
+      if (currentError !== null) throw currentError;
+      if (current === null) return null;
+      const nextWidth = input.widthM ?? Number(current.width_m);
+      const nextLength = input.lengthM ?? Number(current.length_m);
+      const nextArea = nextWidth * nextLength;
+      const patch: Record<string, unknown> = {
+        width_m: nextWidth,
+        length_m: nextLength,
+        area_m2: nextArea,
+      };
+      if (input.status !== undefined) patch.status = input.status;
+      const { data, error } = await client
+        .from("inventory_sheets")
+        .update(patch)
+        .eq("organization_id", input.organizationId)
+        .eq("id", input.sheetId)
+        .select("id, product_id, code, sheet_kind, width_m, length_m, area_m2, status, note, created_at")
+        .single();
+      if (error !== null) throw error;
+      await insertObjectAdjustmentMovement(client, {
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        productId: String(current.product_id),
+        quantityDelta: nextArea - Number(current.area_m2),
+        inventoryObjectType: "sheet",
+        inventoryRollId: null,
+        inventorySheetId: input.sheetId,
+        reason: input.reason,
+      });
+      return mapInventorySheet(data);
     },
     async adjustNormalProductStock(input): Promise<StocktakeData> {
       const { data, error } = await client.rpc("adjust_normal_product_stock_tx", {
@@ -2127,6 +2347,11 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         source_type: "product_edit",
         created_at: String(data.created_at),
         balanced_at: String(data.balanced_at),
+        total_actual_qty: input.actualQty,
+        total_actual_value: null,
+        total_difference_value: null,
+        increased_qty: 0,
+        decreased_qty: 0,
         note: data.note === null ? null : String(data.note),
       };
     },
@@ -2137,14 +2362,20 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return await loadPosMaterialShortagePreview(client, input.organizationId, input.productId, input.quantity);
     },
     async createMaterialOpening(input): Promise<MaterialOpeningResultData> {
+      if (input.inventoryShape === "roll") {
+        return await createRollMaterialOpening(client, input);
+      }
+      if (input.inventoryShape === "sheet") {
+        return await createSheetMaterialOpening(client, input);
+      }
       const { data, error } = await client.rpc("open_normal_material_tx", {
         p_actor_user_id: input.actorUserId,
         p_organization_id: input.organizationId,
         p_payload: {
           product_id: input.productId,
           inventory_shape: input.inventoryShape,
-          opened_unit_id: input.openedUnitId,
-          opened_qty: input.openedQty,
+          opened_unit_id: input.openedUnitId ?? "",
+          opened_qty: input.openedQty ?? 0,
           old_remaining_qty: input.oldRemainingQty ?? 0,
           note: input.note ?? null,
         },
@@ -4175,15 +4406,33 @@ async function loadProductBom(
   if (itemError !== null) throw itemError;
 
   const componentIds = [...new Set((rows ?? []).map((row) => row.component_product_id).filter(isString))];
-  const productsById = new Map<string, { id: string; code: string; name: string; unit_name: string }>();
+  const productsById = new Map<string, {
+    id: string;
+    code: string;
+    name: string;
+    unit_name: string;
+    product_kind: ProductData["product_kind"];
+    latest_purchase_cost: number | null;
+  }>();
   if (componentIds.length > 0) {
     const { data: products, error: productError } = await client
       .from("products")
-      .select("id, code, name, unit_name")
+      .select("id, code, name, unit_name, product_kind, latest_purchase_cost")
       .eq("organization_id", organizationId)
       .in("id", componentIds);
     if (productError !== null) throw productError;
-    for (const product of products ?? []) productsById.set(product.id, product);
+    for (const product of products ?? []) {
+      productsById.set(product.id, {
+        id: product.id,
+        code: product.code,
+        name: product.name,
+        unit_name: product.unit_name,
+        product_kind: product.product_kind as ProductData["product_kind"],
+        latest_purchase_cost: product.latest_purchase_cost === null || product.latest_purchase_cost === undefined
+          ? null
+          : Number(product.latest_purchase_cost),
+      });
+    }
   }
 
   return {
@@ -4203,6 +4452,8 @@ async function loadProductBom(
           code: product?.code ?? "",
           name: product?.name ?? "",
           unit_name: product?.unit_name ?? "",
+          product_kind: product?.product_kind,
+          latest_purchase_cost: product?.latest_purchase_cost ?? null,
         },
         quantity: Number(row.quantity),
         sort_order: Number(row.sort_order),
@@ -4214,6 +4465,610 @@ async function loadProductBom(
 
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+async function hydrateStocktakeAggregates(
+  client: DatabaseClient,
+  organizationId: string,
+  rows: Array<Record<string, unknown>>,
+): Promise<StocktakeData[]> {
+  const stocktakeIds = rows.map((row) => String(row.id));
+  if (stocktakeIds.length === 0) return [];
+
+  const { data: itemRows, error: itemError } = await client
+    .from("stocktake_items")
+    .select("stocktake_id, product_id, actual_qty, difference_qty")
+    .eq("organization_id", organizationId)
+    .in("stocktake_id", stocktakeIds);
+  if (itemError !== null) throw itemError;
+
+  const productIds = [...new Set((itemRows ?? []).map((row) => row.product_id).filter(isString))];
+  const costByProduct = new Map<string, number | null>();
+  if (productIds.length > 0) {
+    const { data: products, error: productError } = await client
+      .from("products")
+      .select("id, latest_purchase_cost")
+      .eq("organization_id", organizationId)
+      .in("id", productIds);
+    if (productError !== null) throw productError;
+    for (const product of products ?? []) {
+      costByProduct.set(
+        product.id,
+        product.latest_purchase_cost === null || product.latest_purchase_cost === undefined ? null : Number(product.latest_purchase_cost),
+      );
+    }
+  }
+
+  const aggregates = new Map<string, {
+    totalActualQty: number;
+    totalActualValue: number | null;
+    totalDifferenceValue: number | null;
+    increasedQty: number;
+    decreasedQty: number;
+  }>();
+
+  for (const item of itemRows ?? []) {
+    const current = aggregates.get(item.stocktake_id) ?? {
+      totalActualQty: 0,
+      totalActualValue: 0,
+      totalDifferenceValue: 0,
+      increasedQty: 0,
+      decreasedQty: 0,
+    };
+    const actualQty = Number(item.actual_qty);
+    const differenceQty = Number(item.difference_qty);
+    current.totalActualQty += actualQty;
+    if (differenceQty > 0) current.increasedQty += differenceQty;
+    if (differenceQty < 0) current.decreasedQty += Math.abs(differenceQty);
+
+    const cost = costByProduct.get(item.product_id);
+    if (cost === null || cost === undefined) {
+      current.totalActualValue = null;
+      current.totalDifferenceValue = null;
+    } else {
+      if (current.totalActualValue !== null) current.totalActualValue += actualQty * cost;
+      if (current.totalDifferenceValue !== null) current.totalDifferenceValue += differenceQty * cost;
+    }
+    aggregates.set(item.stocktake_id, current);
+  }
+
+  return rows.map((row) => {
+    const aggregate = aggregates.get(String(row.id)) ?? {
+      totalActualQty: 0,
+      totalActualValue: null,
+      totalDifferenceValue: null,
+      increasedQty: 0,
+      decreasedQty: 0,
+    };
+    return {
+      id: String(row.id),
+      code: String(row.code),
+      status: row.status as StocktakeData["status"],
+      source_type: row.source_type as StocktakeData["source_type"],
+      created_at: String(row.created_at),
+      balanced_at: row.balanced_at === null || row.balanced_at === undefined ? null : String(row.balanced_at),
+      total_actual_qty: aggregate.totalActualQty,
+      total_actual_value: aggregate.totalActualValue,
+      total_difference_value: aggregate.totalDifferenceValue,
+      increased_qty: aggregate.increasedQty,
+      decreased_qty: aggregate.decreasedQty,
+      note: row.note === null || row.note === undefined ? null : String(row.note),
+    };
+  });
+}
+
+function mapInventoryRoll(row: Record<string, unknown>): InventoryRollData {
+  return {
+    id: String(row.id),
+    product_id: String(row.product_id),
+    code: String(row.code),
+    width_m: Number(row.width_m),
+    initial_length_m: Number(row.initial_length_m),
+    remaining_length_m: Number(row.remaining_length_m),
+    initial_area_m2: Number(row.initial_area_m2),
+    remaining_area_m2: Number(row.remaining_area_m2),
+    status: row.status as InventoryRollData["status"],
+    note: row.note === null || row.note === undefined ? null : String(row.note),
+    created_at: String(row.created_at),
+  };
+}
+
+function mapInventorySheet(row: Record<string, unknown>): InventorySheetData {
+  return {
+    id: String(row.id),
+    product_id: String(row.product_id),
+    code: String(row.code),
+    sheet_kind: row.sheet_kind as InventorySheetData["sheet_kind"],
+    width_m: Number(row.width_m),
+    length_m: Number(row.length_m),
+    area_m2: Number(row.area_m2),
+    status: row.status as InventorySheetData["status"],
+    note: row.note === null || row.note === undefined ? null : String(row.note),
+    created_at: String(row.created_at),
+  };
+}
+
+async function insertObjectAdjustmentMovement(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    quantityDelta: number;
+    inventoryObjectType: "roll" | "sheet";
+    inventoryRollId: string | null;
+    inventorySheetId: string | null;
+    reason: string;
+  },
+): Promise<void> {
+  if (input.quantityDelta === 0) return;
+  const { data: settings, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("stock_unit_id")
+    .eq("organization_id", input.organizationId)
+    .eq("product_id", input.productId)
+    .maybeSingle();
+  if (settingsError !== null) throw settingsError;
+  if (settings === null || settings.stock_unit_id === null) throw new Error("INVENTORY_SETTINGS_NOT_FOUND");
+
+  const { error } = await client.from("stock_movements").insert({
+    organization_id: input.organizationId,
+    product_id: input.productId,
+    movement_type: "manual_adjustment",
+    quantity_delta: input.quantityDelta,
+    stock_unit_id: settings.stock_unit_id,
+    display_quantity: input.quantityDelta,
+    display_unit_id: settings.stock_unit_id,
+    inventory_object_type: input.inventoryObjectType,
+    inventory_roll_id: input.inventoryRollId,
+    inventory_sheet_id: input.inventorySheetId,
+    reason: input.reason,
+    created_by: input.actorUserId,
+  });
+  if (error !== null) throw error;
+}
+
+async function createRollMaterialOpening(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    oldInventoryRollId?: string;
+    oldRemainingLengthM?: number;
+    note?: string;
+  },
+): Promise<MaterialOpeningResultData> {
+  if (input.oldInventoryRollId === undefined || input.oldRemainingLengthM === undefined) {
+    throw new Error("MATERIAL_OPENING_ROLL_INVALID");
+  }
+  const { data: roll, error: rollError } = await client
+    .from("inventory_rolls")
+    .select("id, product_id, width_m, remaining_length_m, remaining_area_m2")
+    .eq("organization_id", input.organizationId)
+    .eq("product_id", input.productId)
+    .eq("id", input.oldInventoryRollId)
+    .maybeSingle();
+  if (rollError !== null) throw rollError;
+  if (roll === null) throw new Error("INVENTORY_OBJECT_NOT_FOUND");
+
+  const nextRemainingLength = input.oldRemainingLengthM;
+  const nextRemainingArea = Number(roll.width_m) * nextRemainingLength;
+  const opening = await insertMaterialOpeningLog(client, {
+    organizationId: input.organizationId,
+    actorUserId: input.actorUserId,
+    productId: input.productId,
+    inventoryShape: "roll",
+    oldInventoryRollId: input.oldInventoryRollId,
+    oldInventorySheetId: null,
+    oldSnapshot: {
+      old_remaining_length_m: Number(roll.remaining_length_m),
+      old_remaining_area_m2: Number(roll.remaining_area_m2),
+    },
+    inputPayload: {
+      product_id: input.productId,
+      inventory_shape: "roll",
+      old_inventory_roll_id: input.oldInventoryRollId,
+      old_remaining_length_m: nextRemainingLength,
+      note: input.note ?? null,
+    },
+    resultPayload: {
+      old_remaining_length_m: nextRemainingLength,
+      old_remaining_area_m2: nextRemainingArea,
+      stock_movement_id: null,
+    },
+    note: input.note,
+  });
+
+  const { error: updateError } = await client
+    .from("inventory_rolls")
+    .update({
+      remaining_length_m: nextRemainingLength,
+      remaining_area_m2: nextRemainingArea,
+      status: nextRemainingLength === 0 ? "empty" : "in_use",
+    })
+    .eq("organization_id", input.organizationId)
+    .eq("id", input.oldInventoryRollId);
+  if (updateError !== null) throw updateError;
+
+  const stockMovementId = await insertMaterialOpeningMovement(client, {
+    organizationId: input.organizationId,
+    actorUserId: input.actorUserId,
+    productId: input.productId,
+    materialOpeningId: opening.id,
+    quantityDelta: nextRemainingArea - Number(roll.remaining_area_m2),
+    displayQuantity: nextRemainingArea - Number(roll.remaining_area_m2),
+    displayUnitId: null,
+    inventoryObjectType: "roll",
+    inventoryRollId: input.oldInventoryRollId,
+    inventorySheetId: null,
+    reason: input.note ?? "Khui vật tư cuộn",
+  });
+  await updateMaterialOpeningResult(client, input.organizationId, opening.id, {
+    old_remaining_length_m: nextRemainingLength,
+    old_remaining_area_m2: nextRemainingArea,
+    stock_movement_id: stockMovementId,
+  });
+
+  return {
+    id: opening.id,
+    product_id: input.productId,
+    inventory_shape: "roll",
+    source_type: "standard_object",
+    opened_unit_id: null,
+    opened_qty: null,
+    opened_stock_qty: nextRemainingArea,
+    stock_movement_id: stockMovementId,
+    warnings: [],
+    created_at: opening.createdAt,
+  };
+}
+
+async function createSheetMaterialOpening(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    oldInventorySheetId?: string;
+    oldRemainingWidthM?: number;
+    oldRemainingLengthMForSheet?: number;
+    discardOldSheet?: boolean;
+    note?: string;
+  },
+): Promise<MaterialOpeningResultData> {
+  if (input.oldInventorySheetId === undefined) throw new Error("MATERIAL_OPENING_SHEET_INVALID");
+  const { data: sheet, error: sheetError } = await client
+    .from("inventory_sheets")
+    .select("id, product_id, width_m, length_m, area_m2")
+    .eq("organization_id", input.organizationId)
+    .eq("product_id", input.productId)
+    .eq("id", input.oldInventorySheetId)
+    .maybeSingle();
+  if (sheetError !== null) throw sheetError;
+  if (sheet === null) throw new Error("INVENTORY_OBJECT_NOT_FOUND");
+
+  const discard = input.discardOldSheet === true;
+  if (!discard && (input.oldRemainingWidthM === undefined || input.oldRemainingLengthMForSheet === undefined)) {
+    throw new Error("MATERIAL_OPENING_SHEET_INVALID");
+  }
+  const nextWidth = discard ? Number(sheet.width_m) : input.oldRemainingWidthM as number;
+  const nextLength = discard ? Number(sheet.length_m) : input.oldRemainingLengthMForSheet as number;
+  const nextArea = discard ? 0 : nextWidth * nextLength;
+  const opening = await insertMaterialOpeningLog(client, {
+    organizationId: input.organizationId,
+    actorUserId: input.actorUserId,
+    productId: input.productId,
+    inventoryShape: "sheet",
+    oldInventoryRollId: null,
+    oldInventorySheetId: input.oldInventorySheetId,
+    oldSnapshot: {
+      old_width_m: Number(sheet.width_m),
+      old_length_m: Number(sheet.length_m),
+      old_area_m2: Number(sheet.area_m2),
+    },
+    inputPayload: {
+      product_id: input.productId,
+      inventory_shape: "sheet",
+      old_inventory_sheet_id: input.oldInventorySheetId,
+      old_remaining_width_m: discard ? null : nextWidth,
+      old_remaining_length_m: discard ? null : nextLength,
+      discard_old_sheet: discard,
+      note: input.note ?? null,
+    },
+    resultPayload: {
+      old_remaining_area_m2: nextArea,
+      stock_movement_id: null,
+    },
+    note: input.note,
+  });
+
+  const sheetPatch = discard
+    ? { status: "discarded" }
+    : { width_m: nextWidth, length_m: nextLength, area_m2: nextArea, status: "available" };
+  const { error: updateError } = await client
+    .from("inventory_sheets")
+    .update(sheetPatch)
+    .eq("organization_id", input.organizationId)
+    .eq("id", input.oldInventorySheetId);
+  if (updateError !== null) throw updateError;
+
+  const stockMovementId = await insertMaterialOpeningMovement(client, {
+    organizationId: input.organizationId,
+    actorUserId: input.actorUserId,
+    productId: input.productId,
+    materialOpeningId: opening.id,
+    quantityDelta: nextArea - Number(sheet.area_m2),
+    displayQuantity: nextArea - Number(sheet.area_m2),
+    displayUnitId: null,
+    inventoryObjectType: "sheet",
+    inventoryRollId: null,
+    inventorySheetId: input.oldInventorySheetId,
+    reason: input.note ?? "Khui vật tư tấm",
+  });
+  await updateMaterialOpeningResult(client, input.organizationId, opening.id, {
+    old_remaining_area_m2: nextArea,
+    stock_movement_id: stockMovementId,
+  });
+
+  return {
+    id: opening.id,
+    product_id: input.productId,
+    inventory_shape: "sheet",
+    source_type: "standard_object",
+    opened_unit_id: null,
+    opened_qty: null,
+    opened_stock_qty: nextArea,
+    stock_movement_id: stockMovementId,
+    warnings: [],
+    created_at: opening.createdAt,
+  };
+}
+
+async function insertMaterialOpeningLog(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    inventoryShape: "roll" | "sheet";
+    oldInventoryRollId: string | null;
+    oldInventorySheetId: string | null;
+    oldSnapshot: Record<string, unknown>;
+    inputPayload: Record<string, unknown>;
+    resultPayload: Record<string, unknown>;
+    note?: string;
+  },
+): Promise<{ id: string; createdAt: string }> {
+  const { data, error } = await client
+    .from("inventory_material_openings")
+    .insert({
+      organization_id: input.organizationId,
+      product_id: input.productId,
+      inventory_shape: input.inventoryShape,
+      source_type: "standard_object",
+      old_inventory_roll_id: input.oldInventoryRollId,
+      old_inventory_sheet_id: input.oldInventorySheetId,
+      old_snapshot: input.oldSnapshot,
+      input_payload: input.inputPayload,
+      result_payload: input.resultPayload,
+      warning_codes: [],
+      note: input.note ?? null,
+      created_by: input.actorUserId,
+    })
+    .select("id, created_at")
+    .single();
+  if (error !== null) throw error;
+  return { id: String(data.id), createdAt: String(data.created_at) };
+}
+
+async function updateMaterialOpeningResult(
+  client: DatabaseClient,
+  organizationId: string,
+  materialOpeningId: string,
+  resultPayload: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await client
+    .from("inventory_material_openings")
+    .update({ result_payload: resultPayload })
+    .eq("organization_id", organizationId)
+    .eq("id", materialOpeningId);
+  if (error !== null) throw error;
+}
+
+async function insertMaterialOpeningMovement(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    actorUserId: string;
+    productId: string;
+    materialOpeningId: string;
+    quantityDelta: number;
+    displayQuantity: number;
+    displayUnitId: string | null;
+    inventoryObjectType: "roll" | "sheet";
+    inventoryRollId: string | null;
+    inventorySheetId: string | null;
+    reason: string;
+  },
+): Promise<string | null> {
+  if (input.quantityDelta === 0) return null;
+  const { data: settings, error: settingsError } = await client
+    .from("product_inventory_settings")
+    .select("stock_unit_id")
+    .eq("organization_id", input.organizationId)
+    .eq("product_id", input.productId)
+    .maybeSingle();
+  if (settingsError !== null) throw settingsError;
+  if (settings === null || settings.stock_unit_id === null) throw new Error("INVENTORY_SETTINGS_NOT_FOUND");
+
+  const { data, error } = await client
+    .from("stock_movements")
+    .insert({
+      organization_id: input.organizationId,
+      product_id: input.productId,
+      movement_type: "material_opening",
+      quantity_delta: input.quantityDelta,
+      stock_unit_id: settings.stock_unit_id,
+      display_quantity: input.displayQuantity,
+      display_unit_id: input.displayUnitId ?? settings.stock_unit_id,
+      inventory_object_type: input.inventoryObjectType,
+      inventory_roll_id: input.inventoryRollId,
+      inventory_sheet_id: input.inventorySheetId,
+      material_opening_id: input.materialOpeningId,
+      reason: input.reason,
+      created_by: input.actorUserId,
+    })
+    .select("id")
+    .single();
+  if (error !== null) throw error;
+  return String(data.id);
+}
+
+async function loadCatalogProductUnitConversions(
+  client: DatabaseClient,
+  organizationId: string,
+  productIds: string[],
+): Promise<Map<string, ProductData["unit_conversions"]>> {
+  if (productIds.length === 0) return new Map();
+  const { data: conversions, error } = await client
+    .from("product_unit_conversions")
+    .select("product_id, sale_unit_id, stock_qty_per_sale_unit, is_default_purchase_unit, is_default_sale_unit")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .in("product_id", productIds);
+  if (error !== null) throw error;
+
+  const unitIds = [...new Set((conversions ?? []).map((row) => row.sale_unit_id).filter(isString))];
+  const unitsById = new Map<string, { name: string }>();
+  if (unitIds.length > 0) {
+    const { data: units, error: unitsError } = await client
+      .from("inventory_units")
+      .select("id, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("id", unitIds);
+    if (unitsError !== null) throw unitsError;
+    for (const unit of units ?? []) unitsById.set(unit.id, { name: unit.name });
+  }
+
+  const result = new Map<string, ProductData["unit_conversions"]>();
+  for (const conversion of conversions ?? []) {
+    const unit = unitsById.get(conversion.sale_unit_id);
+    if (unit === undefined) continue;
+    const items = result.get(conversion.product_id) ?? [];
+    items.push({
+      unit_id: conversion.sale_unit_id,
+      unit_name: unit.name,
+      stock_qty_per_unit: Number(conversion.stock_qty_per_sale_unit),
+      is_default_purchase_unit: Boolean(conversion.is_default_purchase_unit),
+      is_default_sale_unit: Boolean(conversion.is_default_sale_unit),
+    });
+    result.set(conversion.product_id, items);
+  }
+  return result;
+}
+
+async function replaceProductUnitConversions(
+  client: DatabaseClient,
+  input: {
+    organizationId: string;
+    productId: string;
+    stockUnitId: string;
+    sellMethod: "quantity" | "area_m2" | "linear_m" | "sheet" | "combo";
+    unitConversions: Array<{
+      unitName: string;
+      stockQtyPerUnit: number;
+      isDefaultPurchaseUnit: boolean;
+      isDefaultSaleUnit: boolean;
+    }>;
+  },
+): Promise<void> {
+  const { error: deactivateError } = await client
+    .from("product_unit_conversions")
+    .update({ is_active: false, is_default_purchase_unit: false, is_default_sale_unit: false })
+    .eq("organization_id", input.organizationId)
+    .eq("product_id", input.productId);
+  if (deactivateError !== null) throw deactivateError;
+
+  for (const conversion of input.unitConversions) {
+    const saleUnitId = await ensureInventoryUnit(client, input.organizationId, conversion.unitName, input.sellMethod);
+    const { error } = await client
+      .from("product_unit_conversions")
+      .upsert({
+        organization_id: input.organizationId,
+        product_id: input.productId,
+        sale_unit_id: saleUnitId,
+        stock_unit_id: input.stockUnitId,
+        stock_qty_per_sale_unit: conversion.stockQtyPerUnit,
+        is_active: true,
+        is_default_purchase_unit: conversion.isDefaultPurchaseUnit,
+        is_default_sale_unit: conversion.isDefaultSaleUnit,
+      }, { onConflict: "organization_id,product_id,sale_unit_id" });
+    if (error !== null) throw error;
+  }
+}
+
+function mapProductRow(row: Record<string, unknown>): ProductData {
+  const group = firstRelation(row.product_groups as { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null | undefined);
+  return {
+    id: String(row.id),
+    code: String(row.code),
+    name: String(row.name),
+    status: row.status as ProductData["status"],
+    product_kind: row.product_kind as ProductData["product_kind"],
+    unit_name: String(row.unit_name),
+    sell_method: row.sell_method as ProductData["sell_method"],
+    latest_purchase_cost: row.latest_purchase_cost === null || row.latest_purchase_cost === undefined
+      ? null
+      : Number(row.latest_purchase_cost),
+    latest_purchase_cost_at: row.latest_purchase_cost_at === null || row.latest_purchase_cost_at === undefined
+      ? null
+      : String(row.latest_purchase_cost_at),
+    product_group_id: row.product_group_id === null || row.product_group_id === undefined
+      ? null
+      : String(row.product_group_id),
+    product_group: group,
+  };
+}
+
+async function ensureDefaultProductGroup(client: DatabaseClient, organizationId: string): Promise<string> {
+  const { data: existing, error: existingError } = await client
+    .from("product_groups")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("is_default", true)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (existingError !== null) throw existingError;
+  if (existing?.id !== undefined) return existing.id;
+
+  const { data: created, error: createError } = await client
+    .from("product_groups")
+    .insert({
+      organization_id: organizationId,
+      code: "GENERAL",
+      name: "Giá chung",
+      is_default: true,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+  if (createError !== null) throw createError;
+  return created.id;
+}
+
+function productGroupCodeFromName(name: string): string {
+  const code = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+  return code || "GROUP";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
