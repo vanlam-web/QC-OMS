@@ -69,6 +69,7 @@ Frontend permission codes dùng chung qua `src/features/users/permissions.ts`:
 Frontend/tooling unit tests:
 
 - `npm test` chạy unit/component tests trong `src`, đồng thời chạy helper unit tests trong `scripts/*.test.mjs` và `tests/e2e/*.test.ts`;
+- CI chạy `npm run test:e2e:list` để bắt lỗi load Playwright config hoặc lẫn file test sai scope mà không cần Supabase env hoặc browser/E2E thật;
 - test Playwright thật vẫn chạy bằng `npm run test:e2e`, không đặt trong file `*.test.ts` để tránh nhầm scope.
 
 Frontend API error contract:

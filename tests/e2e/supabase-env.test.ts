@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { resolveE2eApiBaseUrl, resolveE2eSupabaseEnv } from "./supabase-env";
+import {
+  e2eConfigOnlySupabaseEnv,
+  loadPlaywrightConfigSupabaseEnv,
+  resolveE2eApiBaseUrl,
+  resolveE2eSupabaseEnv,
+} from "./supabase-env";
 
 describe("resolveE2eSupabaseEnv", () => {
   test("uses complete CLI env instead of mixing incomplete file env with local service role", () => {
@@ -118,5 +123,13 @@ describe("resolveE2eApiBaseUrl", () => {
         },
       ),
     ).toBe("http://127.0.0.1:54399/functions/v1");
+  });
+});
+
+describe("loadPlaywrightConfigSupabaseEnv", () => {
+  test("uses config-only placeholder env when Playwright only lists specs", () => {
+    expect(loadPlaywrightConfigSupabaseEnv(["node", "playwright", "test", "--list"])).toEqual(
+      e2eConfigOnlySupabaseEnv,
+    );
   });
 });

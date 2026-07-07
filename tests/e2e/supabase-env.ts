@@ -8,10 +8,20 @@ export interface E2eSupabaseEnv {
   SUPABASE_SERVICE_ROLE_KEY?: string;
 }
 
+export const e2eConfigOnlySupabaseEnv: E2eSupabaseEnv = {
+  SUPABASE_URL: "http://127.0.0.1:54321",
+  SUPABASE_ANON_KEY: "e2e-config-only",
+};
+
 interface E2eSupabaseEnvSources {
   processEnv: Record<string, string | undefined>;
   fileEnv: Record<string, string | undefined>;
   cliEnv: Record<string, string | undefined>;
+}
+
+export function loadPlaywrightConfigSupabaseEnv(argv: string[] = process.argv): E2eSupabaseEnv {
+  if (argv.includes("--list")) return e2eConfigOnlySupabaseEnv;
+  return loadE2eSupabaseEnv();
 }
 
 export function loadE2eSupabaseEnv(): E2eSupabaseEnv {
