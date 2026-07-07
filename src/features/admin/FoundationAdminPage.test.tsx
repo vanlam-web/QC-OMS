@@ -83,9 +83,18 @@ it('loads user and permission administration data from the API service', async (
   expect(screen.getByRole('region', { name: 'Tài khoản người dùng' })).toHaveClass('management-list-surface')
   expect(document.querySelector('.admin-grid')).toBeNull()
   expect(document.querySelector('.admin-form')).toBeNull()
-  expect(screen.queryByRole('search', { name: 'Lọc người dùng' })).not.toBeInTheDocument()
+  const userSearch = screen.getByRole('search', { name: 'Lọc người dùng' })
+  expect(userSearch).toBeInTheDocument()
+  expect(within(userSearch).getByRole('textbox', { name: 'Tìm người dùng' })).toHaveAttribute(
+    'placeholder',
+    'Tìm tên, email, điện thoại',
+  )
+  expect(within(userSearch).getByRole('button', { name: 'Tạo người dùng' })).toHaveClass(
+    'management-compact-create-action',
+  )
+  expect(screen.queryByRole('button', { name: 'Tạo tài khoản' })).not.toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Tạo người dùng' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Tạo tài khoản' }).closest('.inline-detail-tabbar')).not.toBeNull()
+  expect(screen.getByRole('tab', { name: 'Tài khoản người dùng' }).closest('.management-page-actions')).not.toBeNull()
   expect(screen.queryByRole('heading', { name: 'Máy trạm' })).not.toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
   expect(screen.getByText('admin')).toBeInTheDocument()
@@ -141,7 +150,7 @@ it('maps API errors to operator-facing messages', async () => {
   )
 
   await screen.findByText('admin')
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo người dùng' }))
   const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
   expect(screen.getByRole('dialog', { name: 'Tạo tài khoản' })).toHaveClass('management-modal-dialog')
   expect(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' })).toBeInTheDocument()
@@ -166,8 +175,12 @@ it('creates, disables, and updates permissions for users', async () => {
   render(<FoundationAdminPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('admin')
-  expect(screen.queryByRole('search', { name: 'Lọc người dùng' })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  const userFilter = screen.getByRole('search', { name: 'Lọc người dùng' })
+  await userEvent.type(within(userFilter).getByRole('textbox', { name: 'Tìm người dùng' }), 'Admin')
+  await userEvent.selectOptions(within(userFilter).getByRole('combobox', { name: 'Trạng thái' }), 'active')
+  await userEvent.click(within(userFilter).getByRole('button', { name: 'Lọc' }))
+  expect(service.listUsers).toHaveBeenCalledWith({ search: 'Admin', status: 'active' })
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo người dùng' }))
   const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Cashier')
   await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Điện thoại' }), '0912345678')
@@ -186,7 +199,7 @@ it('creates, disables, and updates permissions for users', async () => {
     permissions: ['perm.create_order', 'perm.apply_discount', 'perm.view_shift_report'],
   })
 
-  await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo người dùng' }))
   const mismatchForm = screen.getByRole('form', { name: 'Tạo người dùng' })
   await userEvent.type(within(mismatchForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Cashier 2')
   await userEvent.type(within(mismatchForm).getByRole('textbox', { name: 'Email' }), 'cashier2@example.test')

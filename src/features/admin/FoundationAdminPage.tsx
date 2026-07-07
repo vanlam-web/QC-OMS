@@ -5,6 +5,9 @@ import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
 import {
   ManagementDetailRow,
+  ManagementCompactCreateAction,
+  ManagementCompactSearch,
+  ManagementCompactToolbar,
   ManagementListSurface,
   ManagementPage,
   ManagementRowActionButton,
@@ -25,6 +28,8 @@ interface RoleListItem {
   status: 'active' | 'inactive'
   userCount: number
 }
+
+type UserStatusFilter = 'all' | 'active' | 'inactive'
 
 const internalStaffDefaultPermissions = [
   'perm.create_order',
@@ -92,12 +97,23 @@ export function FoundationAdminPage({
   const [roleForm, setRoleForm] = useState({ name: '', description: '', permissions: [] as Permission['code'][] })
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users')
   const [savingUser, setSavingUser] = useState(false)
+  const [userSearch, setUserSearch] = useState('')
+  const [userStatus, setUserStatus] = useState<UserStatusFilter>('all')
+  const [lastUserSearch, setLastUserSearch] = useState('')
+  const [lastUserStatus, setLastUserStatus] = useState<UserStatusFilter>('all')
   const createUserEmailRef = useRef<HTMLInputElement | null>(null)
 
-  async function load() {
+  async function load(input: { search?: string; status?: UserStatusFilter } = {}) {
+    const search = input.search ?? lastUserSearch
+    const status = input.status ?? lastUserStatus
     setError(null)
     try {
-      const [users, permissions] = await Promise.all([service.listUsers(), service.listPermissions()])
+      const [users, permissions] = await Promise.all([
+        service.listUsers({ search: search.trim() || undefined, status: status === 'all' ? undefined : status }),
+        service.listPermissions(),
+      ])
+      setLastUserSearch(search)
+      setLastUserStatus(status)
       setState({ users: users.items, permissions })
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được dữ liệu quản trị.'))
@@ -110,7 +126,7 @@ export function FoundationAdminPage({
     async function loadInitialData() {
       setError(null)
       try {
-        const [users, permissions] = await Promise.all([service.listUsers(), service.listPermissions()])
+        const [users, permissions] = await Promise.all([service.listUsers({}), service.listPermissions()])
         if (!active) return
         setState({ users: users.items, permissions })
       } catch (cause) {
@@ -144,6 +160,11 @@ export function FoundationAdminPage({
 
   function closeUserDialog() {
     setUserDialogOpen(false)
+  }
+
+  async function filterUsers(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await load({ search: userSearch, status: userStatus })
   }
 
   async function createUser(event: React.FormEvent<HTMLFormElement>) {
@@ -254,6 +275,28 @@ export function FoundationAdminPage({
   return (
     <ManagementPage
       title="Thiết lập"
+      actions={
+        <div className="admin-header-tabs">
+          <div aria-label="Quản lý người dùng" className="inline-detail-tabs" role="tablist">
+            <button
+              aria-selected={activeTab === 'users'}
+              role="tab"
+              type="button"
+              onClick={() => setActiveTab('users')}
+            >
+              Tài khoản người dùng
+            </button>
+            <button
+              aria-selected={activeTab === 'roles'}
+              role="tab"
+              type="button"
+              onClick={() => setActiveTab('roles')}
+            >
+              Quản lý vai trò
+            </button>
+          </div>
+        </div>
+      }
       filter={
         <AdminSettingsMenu />
       }
@@ -263,33 +306,32 @@ export function FoundationAdminPage({
 
       {state ? (
         <div className="admin-settings-workspace">
-          <div className="inline-detail-tabbar">
-            <div aria-label="Quản lý người dùng" className="inline-detail-tabs" role="tablist">
-              <button
-                aria-selected={activeTab === 'users'}
-                role="tab"
-                type="button"
-                onClick={() => setActiveTab('users')}
-              >
-                Tài khoản người dùng
-              </button>
-              <button
-                aria-selected={activeTab === 'roles'}
-                role="tab"
-                type="button"
-                onClick={() => setActiveTab('roles')}
-              >
-                Quản lý vai trò
-              </button>
-            </div>
-            {activeTab === 'users' ? (
-              <button className="button button-secondary" type="button" onClick={openUserDialog}>
-                Tạo tài khoản
-              </button>
-            ) : null}
-          </div>
           {activeTab === 'users' ? (
           <ManagementListSurface ariaLabel="Tài khoản người dùng">
+            <div className="admin-list-toolbar">
+              <ManagementCompactToolbar ariaLabel="Lọc người dùng" onSubmit={filterUsers}>
+                <ManagementCompactSearch
+                  label="Tìm người dùng"
+                  leadingIcon={<Search aria-hidden="true" size={16} />}
+                  placeholder="Tìm tên, email, điện thoại"
+                  trailingAction={<ManagementCompactCreateAction ariaLabel="Tạo người dùng" onClick={openUserDialog} />}
+                  value={userSearch}
+                  onChange={setUserSearch}
+                />
+                <label className="admin-status-filter">
+                  Trạng thái
+                  <select
+                    value={userStatus}
+                    onChange={(event) => setUserStatus(event.target.value as UserStatusFilter)}
+                  >
+                    <option value="all">Tất cả</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                  </select>
+                </label>
+                <button className="button button-secondary" type="submit">Lọc</button>
+              </ManagementCompactToolbar>
+            </div>
             <ManagementTableViewport>
               <table>
                 <thead>
