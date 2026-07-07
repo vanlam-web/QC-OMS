@@ -26,4 +26,37 @@ Deno.test("GET /api/v1/health returns the standard success envelope", async () =
     version: "test-sha",
   });
   assertMatch(body.trace_id, /^[0-9a-f-]{36}$/);
+  assertEquals(response.headers.get("x-request-id"), body.trace_id);
+});
+
+Deno.test("server errors log trace id, method, path and safe code", async () => {
+  const logs: unknown[][] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    logs.push(args);
+  };
+
+  try {
+    const response = await createApp({ version: "test-sha" })(
+      new Request("http://local/api/v1/me", {
+        headers: { "x-request-id": "trace-observe-1" },
+      }),
+    );
+    const body = await response.json();
+
+    assertEquals(response.status, 500);
+    assertEquals(body.trace_id, "trace-observe-1");
+    assertEquals(response.headers.get("x-request-id"), "trace-observe-1");
+    assertEquals(logs.length, 1);
+    assertEquals(logs[0][0], "api_error");
+    assertEquals(logs[0][1], {
+      trace_id: "trace-observe-1",
+      method: "GET",
+      path: "/api/v1/me",
+      status: 500,
+      code: "INTERNAL_ERROR",
+    });
+  } finally {
+    console.error = originalError;
+  }
 });

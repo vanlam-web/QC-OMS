@@ -45,6 +45,16 @@ export function createApp(options: AppOptions): AppHandler {
           message: "An internal error occurred.",
         });
 
+      if (error.status >= 500) {
+        console.error("api_error", {
+          trace_id: traceId,
+          method: request.method,
+          path: new URL(request.url).pathname,
+          status: error.status,
+          code: error.code,
+        });
+      }
+
       return errorResponse(error, traceId, headers);
     }
   };
