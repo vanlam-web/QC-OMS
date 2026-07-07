@@ -504,13 +504,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listUsers(input): Promise<{ items: UserListItem[]; total: number }> {
       let query = client
         .from("profiles")
-        .select("user_id, display_name, status", { count: "exact" })
+        .select("user_id, display_name, username, phone, status", { count: "exact" })
         .eq("organization_id", input.organizationId)
         .order("display_name", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
 
       if (input.status !== undefined) query = query.eq("status", input.status);
-      if (input.search !== undefined) query = query.ilike("display_name", `%${input.search}%`);
+      if (input.search !== undefined) query = query.or(`display_name.ilike.%${input.search}%,username.ilike.%${input.search}%,phone.ilike.%${input.search}%`);
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
@@ -520,7 +520,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async getUser(input): Promise<UserListItem | null> {
       const { data, error } = await client
         .from("profiles")
-        .select("user_id, display_name, status")
+        .select("user_id, display_name, username, phone, status")
         .eq("organization_id", input.organizationId)
         .eq("user_id", input.userId)
         .maybeSingle();
@@ -544,6 +544,14 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           p_trace_id: input.traceId,
         });
         if (error !== null) throw error;
+        const { error: profileError } = await client
+          .from("profiles")
+          .update({
+            username: input.username ?? input.email,
+            phone: input.phone ?? null,
+          })
+          .eq("user_id", createdId);
+        if (profileError !== null) throw profileError;
       } catch (cause) {
         await client.auth.admin.deleteUser(createdId);
         throw cause;
@@ -551,6 +559,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return {
         id: createdId,
         email: input.email,
+        username: input.username ?? input.email,
+        phone: input.phone ?? null,
         display_name: input.displayName,
         status: "active",
         permissions: [...input.permissions].sort(),
@@ -3793,7 +3803,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function hydrateUser(
   client: DatabaseClient,
-  row: { user_id: string; display_name: string; status: "active" | "inactive" },
+  row: { user_id: string; display_name: string; username?: string | null; phone?: string | null; status: "active" | "inactive" },
   email: string,
 ): Promise<UserListItem> {
   const { data: permissionRows, error } = await client
@@ -3805,6 +3815,8 @@ async function hydrateUser(
   return {
     id: row.user_id,
     email,
+    username: row.username ?? null,
+    phone: row.phone ?? null,
     display_name: row.display_name,
     status: row.status,
     permissions: (permissionRows ?? []).map((permission) => permission.permission_code as PermissionCode),

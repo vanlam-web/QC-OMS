@@ -209,6 +209,8 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 ```json
 {
   "email": "cashier@example.com",
+  "username": "cashier-01",
+  "phone": "0947900909",
   "password": "temporary-secret",
   "display_name": "Thu ngân 1",
   "permissions": ["perm.create_order"]
@@ -218,6 +220,8 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 **Validation:**
 
 - Email hợp lệ và chưa tồn tại.
+- `username` cho phép trống; nếu gửi thì trim, không rỗng, tối đa 100 ký tự.
+- `phone` cho phép trống; nếu gửi thì trim, chỉ gồm ký tự điện thoại phổ biến, 8-20 ký tự.
 - Password đáp ứng policy Auth của môi trường.
 - `display_name` sau trim không rỗng, tối đa 100 ký tự.
 - Mọi permission code tồn tại và đang active.

@@ -19,6 +19,8 @@ export function createFoundationService(api: ApiRequester) {
     },
     createUser: (input: {
       email: string
+      username?: string | null
+      phone?: string | null
       password: string
       display_name: string
       permissions: PermissionCode[]

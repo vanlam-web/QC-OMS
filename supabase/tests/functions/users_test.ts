@@ -34,6 +34,8 @@ function currentUser(permissions: PermissionCode[] = ["perm.manage_users"]): Cur
 const user: UserListItem = {
   id: "u-1",
   email: "cashier@example.test",
+  username: "cashier",
+  phone: "0900000000",
   display_name: "Cashier",
   status: "active",
   permissions: ["perm.create_order"],
@@ -54,6 +56,8 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
       Promise.resolve({
         id: "u-new",
         email: input.email,
+        username: input.username ?? null,
+        phone: input.phone ?? null,
         display_name: input.displayName,
         status: "active",
         permissions: input.permissions,
@@ -127,18 +131,43 @@ Deno.test("user and permission route matrix works for manage_users", async () =>
 });
 
 Deno.test("create user defaults to internal staff MVP operational permissions when omitted", async () => {
-  const response = await call("/api/v1/users", {
-    method: "POST",
-    body: JSON.stringify({
-      email: "operator@example.test",
-      password: "password123",
-      display_name: "Operator",
+  const createInputs: Array<Parameters<FoundationRepository["createUser"]>[0]> = [];
+  const response = await call(
+    "/api/v1/users",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email: "operator@example.test",
+        username: "operator-login",
+        phone: " 0947 900 909 ",
+        password: "password123",
+        display_name: "Operator",
+      }),
+    },
+    repo({
+      createUser: (input: Parameters<FoundationRepository["createUser"]>[0]) => {
+        createInputs.push(input);
+        return Promise.resolve({
+          id: "u-new",
+          email: input.email,
+          username: input.username ?? null,
+          phone: input.phone ?? null,
+          display_name: input.displayName,
+          status: "active",
+          permissions: input.permissions,
+        });
+      },
     }),
-  });
+  );
   const responseBody = await response.json();
   const created = responseBody.data as UserListItem;
 
   assertEquals(response.status, 201);
+  const createInput = createInputs[0];
+  assertEquals(createInput?.username, "operator-login");
+  assertEquals(createInput?.phone, "0947 900 909");
+  assertEquals(created.username, "operator-login");
+  assertEquals(created.phone, "0947 900 909");
   assertEquals(created.permissions, [
     "perm.create_order",
     "perm.apply_discount",

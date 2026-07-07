@@ -45,7 +45,7 @@ export function FoundationAdminPage({
   const [userStatus, setUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [lastUserStatus, setLastUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [showFilters, setShowFilters] = useState(true)
-  const [userForm, setUserForm] = useState({ email: '', password: '', displayName: '' })
+  const [userForm, setUserForm] = useState({ email: '', username: '', phone: '', password: '', displayName: '' })
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [savingUser, setSavingUser] = useState(false)
   const createUserEmailRef = useRef<HTMLInputElement | null>(null)
@@ -104,11 +104,13 @@ export function FoundationAdminPage({
     try {
       await service.createUser({
         email: userForm.email,
+        username: nullableFormValue(userForm.username),
+        phone: nullableFormValue(userForm.phone),
         password: userForm.password,
         display_name: userForm.displayName,
         permissions: [...internalStaffDefaultPermissions],
       })
-      setUserForm({ email: '', password: '', displayName: '' })
+      setUserForm({ email: '', username: '', phone: '', password: '', displayName: '' })
       await load()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được người dùng.'))
@@ -251,6 +253,20 @@ export function FoundationAdminPage({
                 />
               </label>
               <label>
+                Tên đăng nhập
+                <input
+                  value={userForm.username}
+                  onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))}
+                />
+              </label>
+              <label>
+                Điện thoại
+                <input
+                  value={userForm.phone}
+                  onChange={(event) => setUserForm((current) => ({ ...current, phone: event.target.value }))}
+                />
+              </label>
+              <label>
                 Mật khẩu
                 <input
                   type="password"
@@ -387,4 +403,9 @@ export function FoundationAdminPage({
       ) : null}
     </ManagementPage>
   )
+}
+
+function nullableFormValue(value: string): string | null {
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
 }

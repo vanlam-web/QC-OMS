@@ -30,6 +30,8 @@ export interface WorkstationData {
 export interface UserListItem {
   id: string;
   email: string;
+  username: string | null;
+  phone: string | null;
   display_name: string;
   status: "active" | "inactive";
   permissions: PermissionCode[];
@@ -656,6 +658,8 @@ export interface FoundationRepository {
   createUser(input: {
     organizationId: string;
     email: string;
+    username?: string | null;
+    phone?: string | null;
     password: string;
     displayName: string;
     permissions: PermissionCode[];
