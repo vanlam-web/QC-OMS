@@ -4,9 +4,6 @@ import type { Permission, UserListItem } from '../users/types'
 import type { FoundationService } from '../users/foundation-service'
 import { formatApiError } from '../../lib/api/error-message'
 import {
-  ManagementCompactCreateAction,
-  ManagementCompactSearch,
-  ManagementCompactToolbar,
   ManagementDetailRow,
   ManagementListSurface,
   ManagementPage,
@@ -78,12 +75,17 @@ export function FoundationAdminPage({
 }) {
   const [state, setState] = useState<AdminState | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [userSearch, setUserSearch] = useState('')
-  const [lastUserSearch, setLastUserSearch] = useState('')
-  const [userStatus, setUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
-  const [lastUserStatus, setLastUserStatus] = useState<'all' | 'active' | 'inactive'>('all')
-  const [userForm, setUserForm] = useState({ email: '', password: '', displayName: '' })
+  const [userForm, setUserForm] = useState({
+    displayName: '',
+    phone: '',
+    email: '',
+    username: '',
+    password: '',
+    passwordConfirmation: '',
+    roleId: 'cashier',
+  })
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
+  const [userDialogOpen, setUserDialogOpen] = useState(false)
   const [customRoles, setCustomRoles] = useState<RoleListItem[]>([])
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
   const [roleDialogOpen, setRoleDialogOpen] = useState(false)
@@ -92,18 +94,11 @@ export function FoundationAdminPage({
   const [savingUser, setSavingUser] = useState(false)
   const createUserEmailRef = useRef<HTMLInputElement | null>(null)
 
-  async function load(userFilters = { search: lastUserSearch, status: lastUserStatus }) {
+  async function load() {
     setError(null)
     try {
-      const status = userFilters.status === 'all' ? undefined : userFilters.status
-      const search = userFilters.search.trim()
-      const [users, permissions] = await Promise.all([
-        service.listUsers({ search: search || undefined, status }),
-        service.listPermissions(),
-      ])
+      const [users, permissions] = await Promise.all([service.listUsers(), service.listPermissions()])
       setState({ users: users.items, permissions })
-      setLastUserSearch(search)
-      setLastUserStatus(userFilters.status)
     } catch (cause) {
       setError(formatApiError(cause, 'Không tải được dữ liệu quản trị.'))
     }
@@ -130,28 +125,47 @@ export function FoundationAdminPage({
     }
   }, [service])
 
-  async function filterUsers(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    await load({ search: userSearch, status: userStatus })
+  useEffect(() => {
+    if (userDialogOpen) createUserEmailRef.current?.focus()
+  }, [userDialogOpen])
+
+  function openUserDialog() {
+    setUserForm({
+      displayName: '',
+      phone: '',
+      email: '',
+      username: '',
+      password: '',
+      passwordConfirmation: '',
+      roleId: 'cashier',
+    })
+    setUserDialogOpen(true)
   }
 
-  function focusCreateUserForm() {
-    createUserEmailRef.current?.focus()
+  function closeUserDialog() {
+    setUserDialogOpen(false)
   }
 
   async function createUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (userForm.password !== userForm.passwordConfirmation) {
+      setError('Mật khẩu nhập lại không khớp.')
+      return
+    }
     setSavingUser(true)
     setError(null)
     try {
+      const role = findRoleById(userForm.roleId, customRoles)
       await service.createUser({
         email: userForm.email,
+        username: userForm.username,
+        phone: userForm.phone,
         password: userForm.password,
         display_name: userForm.displayName,
-        permissions: [...internalStaffDefaultPermissions],
+        permissions: role ? role.permissions : [...internalStaffDefaultPermissions],
       })
-      setUserForm({ email: '', password: '', displayName: '' })
       await load()
+      closeUserDialog()
     } catch (cause) {
       setError(formatApiError(cause, 'Không lưu được người dùng.'))
     } finally {
@@ -268,70 +282,14 @@ export function FoundationAdminPage({
                 Quản lý vai trò
               </button>
             </div>
-          </div>
-
-          {activeTab === 'users' ? (
-          <ManagementListSurface ariaLabel="Tài khoản người dùng">
-            <div className="admin-list-toolbar">
-              <ManagementCompactToolbar ariaLabel="Lọc người dùng" onSubmit={filterUsers}>
-                <ManagementCompactSearch
-                  label="Tìm người dùng"
-                  leadingIcon={<Search aria-hidden="true" size={16} />}
-                  placeholder="Tìm tên, email, điện thoại"
-                  trailingAction={
-                    <ManagementCompactCreateAction ariaLabel="Tạo người dùng" onClick={focusCreateUserForm} />
-                  }
-                  value={userSearch}
-                  onChange={setUserSearch}
-                />
-                <label className="admin-status-filter">
-                  <span>Trạng thái</span>
-                  <select
-                    aria-label="Trạng thái người dùng"
-                    value={userStatus}
-                    onChange={(event) => setUserStatus(event.target.value as typeof userStatus)}
-                  >
-                    <option value="all">Tất cả</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="inactive">Ngừng hoạt động</option>
-                  </select>
-                </label>
-                <button className="button button-secondary" type="submit">Lọc</button>
-              </ManagementCompactToolbar>
-            </div>
-            <form aria-label="Tạo người dùng" className="management-create-form admin-create-account-form" onSubmit={createUser}>
-              <label>
-                Email
-                <input
-                  ref={createUserEmailRef}
-                  type="email"
-                  value={userForm.email}
-                  onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))}
-                />
-              </label>
-              <label>
-                Tên
-                <input
-                  value={userForm.displayName}
-                  onChange={(event) =>
-                    setUserForm((current) => ({ ...current, displayName: event.target.value }))
-                  }
-                />
-              </label>
-              <label>
-                Mật khẩu
-                <input
-                  type="password"
-                  value={userForm.password}
-                  onChange={(event) =>
-                    setUserForm((current) => ({ ...current, password: event.target.value }))
-                  }
-                />
-              </label>
-              <button className="button button-primary" disabled={savingUser} type="submit">
+            {activeTab === 'users' ? (
+              <button className="button button-secondary" type="button" onClick={openUserDialog}>
                 Tạo tài khoản
               </button>
-            </form>
+            ) : null}
+          </div>
+          {activeTab === 'users' ? (
+          <ManagementListSurface ariaLabel="Tài khoản người dùng">
             <ManagementTableViewport>
               <table>
                 <thead>
@@ -412,6 +370,94 @@ export function FoundationAdminPage({
               onPrevious={() => undefined}
             />
           </ManagementListSurface>
+          ) : null}
+
+          {userDialogOpen ? (
+            <div className="management-modal-backdrop">
+              <section aria-label="Tạo tài khoản" aria-modal="true" className="management-modal-dialog admin-user-dialog" role="dialog">
+                <header className="management-modal-header">
+                  <h2>Tạo tài khoản</h2>
+                  <button aria-label="Đóng" className="management-icon-button" type="button" onClick={closeUserDialog}>
+                    <X aria-hidden="true" size={18} />
+                  </button>
+                </header>
+                <form aria-label="Tạo người dùng" className="admin-user-form" onSubmit={createUser}>
+                  <div className="admin-user-form-fields">
+                    <label>
+                      Tên hiển thị
+                      <input
+                        value={userForm.displayName}
+                        onChange={(event) =>
+                          setUserForm((current) => ({ ...current, displayName: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Điện thoại
+                      <input
+                        value={userForm.phone}
+                        onChange={(event) => setUserForm((current) => ({ ...current, phone: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Email
+                      <input
+                        ref={createUserEmailRef}
+                        type="email"
+                        value={userForm.email}
+                        onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Tên đăng nhập
+                      <input
+                        value={userForm.username}
+                        onChange={(event) =>
+                          setUserForm((current) => ({ ...current, username: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Mật khẩu
+                      <input
+                        type="password"
+                        value={userForm.password}
+                        onChange={(event) =>
+                          setUserForm((current) => ({ ...current, password: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Nhập lại mật khẩu
+                      <input
+                        type="password"
+                        value={userForm.passwordConfirmation}
+                        onChange={(event) =>
+                          setUserForm((current) => ({ ...current, passwordConfirmation: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Vai trò
+                      <select
+                        value={userForm.roleId}
+                        onChange={(event) => setUserForm((current) => ({ ...current, roleId: event.target.value }))}
+                      >
+                        {roleRows.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <footer className="management-modal-footer">
+                    <button className="button button-secondary" type="button" onClick={closeUserDialog}>Bỏ qua</button>
+                    <button className="button button-primary" disabled={savingUser} type="submit">Lưu</button>
+                  </footer>
+                </form>
+              </section>
+            </div>
           ) : null}
 
           {activeTab === 'roles' ? (
@@ -624,6 +670,10 @@ function userRoleLabel(user: UserListItem) {
   if (user.permissions.includes('perm.manage_inventory')) return 'Quản lý kho'
   if (user.permissions.includes('perm.create_order')) return 'Nhân viên thu ngân'
   return 'Nhân viên'
+}
+
+function findRoleById(roleId: string, customRoles: RoleListItem[]): Pick<RoleListItem, 'permissions'> | undefined {
+  return roleDefinitions.find((role) => role.id === roleId) ?? customRoles.find((role) => role.id === roleId)
 }
 
 function groupPermissionsByModule(permissions: Permission[]) {

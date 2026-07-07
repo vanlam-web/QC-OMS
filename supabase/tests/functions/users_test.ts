@@ -56,8 +56,8 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
       Promise.resolve({
         id: "u-new",
         email: input.email,
-        username: input.email,
-        phone: null,
+        username: input.username,
+        phone: input.phone,
         display_name: input.displayName,
         status: "active",
         permissions: input.permissions,
@@ -135,6 +135,8 @@ Deno.test("create user defaults to internal staff MVP operational permissions wh
     method: "POST",
     body: JSON.stringify({
       email: "operator@example.test",
+      username: "operator-login",
+      phone: " 0947 900 909 ",
       password: "password123",
       display_name: "Operator",
     }),
@@ -143,8 +145,8 @@ Deno.test("create user defaults to internal staff MVP operational permissions wh
   const created = responseBody.data as UserListItem;
 
   assertEquals(response.status, 201);
-  assertEquals(created.username, "operator@example.test");
-  assertEquals(created.phone, null);
+  assertEquals(created.username, "operator-login");
+  assertEquals(created.phone, "0947 900 909");
   assertEquals(created.permissions, [
     "perm.create_order",
     "perm.apply_discount",

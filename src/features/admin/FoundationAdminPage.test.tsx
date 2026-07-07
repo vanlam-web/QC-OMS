@@ -35,8 +35,8 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
     createUser: vi.fn(async () => ({
       id: 'u-2',
       email: 'cashier@example.test',
-      username: 'cashier',
-      phone: '0900000000',
+      username: 'cashier-login',
+      phone: '0912345678',
       display_name: 'Cashier',
       status: 'active' as const,
       permissions: ['perm.create_order' as const],
@@ -83,10 +83,9 @@ it('loads user and permission administration data from the API service', async (
   expect(screen.getByRole('region', { name: 'Tài khoản người dùng' })).toHaveClass('management-list-surface')
   expect(document.querySelector('.admin-grid')).toBeNull()
   expect(document.querySelector('.admin-form')).toBeNull()
-  const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
-  expect(filterForm.closest('.admin-list-toolbar')).not.toBeNull()
-  expect(within(filterForm).getByLabelText('Tìm người dùng').closest('.management-compact-search')).not.toBeNull()
-  expect(within(filterForm).getByRole('button', { name: 'Lọc' })).toHaveClass('button-secondary')
+  expect(screen.queryByRole('search', { name: 'Lọc người dùng' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('form', { name: 'Tạo người dùng' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tạo tài khoản' }).closest('.inline-detail-tabbar')).not.toBeNull()
   expect(screen.queryByRole('heading', { name: 'Máy trạm' })).not.toBeInTheDocument()
   expect(screen.queryByText('POS-01')).not.toBeInTheDocument()
   expect(screen.getByText('admin')).toBeInTheDocument()
@@ -142,48 +141,60 @@ it('maps API errors to operator-facing messages', async () => {
   )
 
   await screen.findByText('admin')
-  const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
-  await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'admin@example.test')
-  await userEvent.type(createUserForm.querySelectorAll('input')[1], 'Admin')
-  await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
   await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
+  expect(screen.getByRole('dialog', { name: 'Tạo tài khoản' })).toHaveClass('management-modal-dialog')
+  expect(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' })).toBeInTheDocument()
+  expect(within(createUserForm).getByRole('textbox', { name: 'Điện thoại' })).toBeInTheDocument()
+  expect(within(createUserForm).getByRole('textbox', { name: 'Email' })).toBeInTheDocument()
+  expect(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' })).toBeInTheDocument()
+  expect(within(createUserForm).getByRole('combobox', { name: 'Vai trò' })).toBeInTheDocument()
+  await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'admin@example.test')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Admin')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'admin-login')
+  await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
+  await userEvent.type(within(createUserForm).getByLabelText('Nhập lại mật khẩu'), 'Password123!')
+  await userEvent.click(within(createUserForm).getByRole('button', { name: 'Lưu' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Dữ liệu đã tồn tại hoặc xung đột với bản ghi hiện có.',
   )
 })
 
-it('filters, creates, disables, and updates permissions for users', async () => {
+it('creates, disables, and updates permissions for users', async () => {
   const service = makeService()
   render(<FoundationAdminPage service={service} onOpenDashboard={vi.fn()} />)
 
   await screen.findByText('admin')
-  const filterForm = screen.getByRole('search', { name: 'Lọc người dùng' })
-  const searchInput = within(filterForm).getByLabelText('Tìm người dùng')
-  await userEvent.type(searchInput, 'Admin')
-  await userEvent.selectOptions(within(filterForm).getByRole('combobox', { name: 'Trạng thái người dùng' }), 'active')
-  await userEvent.click(within(filterForm).getByRole('button', { name: 'Lọc' }))
-  expect(service.listUsers).toHaveBeenLastCalledWith({ search: 'Admin', status: 'active' })
-  expect(screen.queryByText('Tìm: Admin')).not.toBeInTheDocument()
-
-  const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
-  await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'cashier@example.test')
-  await userEvent.type(createUserForm.querySelectorAll('input')[1], 'Cashier')
-  await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
+  expect(screen.queryByRole('search', { name: 'Lọc người dùng' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Cashier')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Điện thoại' }), '0912345678')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Email' }), 'cashier@example.test')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'cashier-login')
+  await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
+  await userEvent.type(within(createUserForm).getByLabelText('Nhập lại mật khẩu'), 'Password123!')
+  await userEvent.selectOptions(within(createUserForm).getByRole('combobox', { name: 'Vai trò' }), 'cashier')
+  await userEvent.click(within(createUserForm).getByRole('button', { name: 'Lưu' }))
   expect(service.createUser).toHaveBeenCalledWith({
     email: 'cashier@example.test',
+    username: 'cashier-login',
+    phone: '0912345678',
     password: 'Password123!',
     display_name: 'Cashier',
-    permissions: [
-      'perm.create_order',
-      'perm.apply_discount',
-      'perm.edit_price_book',
-      'perm.manage_inventory',
-      'perm.manage_finance',
-      'perm.view_shift_report',
-    ],
+    permissions: ['perm.create_order', 'perm.apply_discount', 'perm.view_shift_report'],
   })
+
+  await userEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }))
+  const mismatchForm = screen.getByRole('form', { name: 'Tạo người dùng' })
+  await userEvent.type(within(mismatchForm).getByRole('textbox', { name: 'Tên hiển thị' }), 'Cashier 2')
+  await userEvent.type(within(mismatchForm).getByRole('textbox', { name: 'Email' }), 'cashier2@example.test')
+  await userEvent.type(within(mismatchForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'cashier-2')
+  await userEvent.type(mismatchForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
+  await userEvent.type(within(mismatchForm).getByLabelText('Nhập lại mật khẩu'), 'Password456!')
+  await userEvent.click(within(mismatchForm).getByRole('button', { name: 'Lưu' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Mật khẩu nhập lại không khớp.')
 
   await userEvent.click(screen.getByRole('button', { name: 'Ngừng hoạt động Admin' }))
   expect(service.updateUser).toHaveBeenCalledWith('u-1', { status: 'inactive' })

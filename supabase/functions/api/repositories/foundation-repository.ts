@@ -758,6 +758,15 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           p_trace_id: input.traceId,
         });
         if (error !== null) throw error;
+        const { error: profileError } = await client
+          .from("profiles")
+          .update({
+            username: input.username ?? input.email,
+            phone: input.phone ?? null,
+            email: input.email,
+          })
+          .eq("user_id", createdId);
+        if (profileError !== null) throw profileError;
       } catch (cause) {
         await client.auth.admin.deleteUser(createdId);
         throw cause;
@@ -765,8 +774,8 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return {
         id: createdId,
         email: input.email,
-        username: input.email,
-        phone: null,
+        username: input.username ?? input.email,
+        phone: input.phone ?? null,
         display_name: input.displayName,
         status: "active",
         permissions: [...input.permissions].sort(),

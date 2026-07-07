@@ -129,21 +129,34 @@ export async function replacePermissions(
 
 function parseCreateUser(body: unknown): {
   email: string;
+  username: string;
+  phone: string | null;
   password: string;
   displayName: string;
   permissions: PermissionCode[];
 } {
   if (!isRecord(body)) throw validationError();
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const username = typeof body.username === "string" ? body.username.trim() : email;
+  const phone = typeof body.phone === "string" ? nullIfBlank(body.phone) : null;
   const password = typeof body.password === "string" ? body.password : "";
   const displayName = typeof body.display_name === "string" ? body.display_name.trim() : "";
   const permissions = "permissions" in body
     ? parsePermissionArray(body.permissions)
     : [...internalStaffDefaultPermissions];
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || password.length < 8 || password.length > 128 || displayName.length < 1 || displayName.length > 100) {
+  if (
+    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ||
+    username.length < 1 ||
+    username.length > 100 ||
+    (phone !== null && !/^[0-9+\s().-]{8,20}$/.test(phone)) ||
+    password.length < 8 ||
+    password.length > 128 ||
+    displayName.length < 1 ||
+    displayName.length > 100
+  ) {
     throw validationError();
   }
-  return { email, password, displayName, permissions };
+  return { email, username, phone, password, displayName, permissions };
 }
 
 function parseUpdateUser(body: unknown): { displayName?: string; status?: "active" | "inactive" } {
@@ -179,6 +192,11 @@ function parsePermissionArray(value: unknown): PermissionCode[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function nullIfBlank(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
 }
 
 function validationError(): ApiError {

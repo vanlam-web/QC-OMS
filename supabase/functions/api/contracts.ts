@@ -706,6 +706,8 @@ export interface FoundationRepository {
   createUser(input: {
     organizationId: string;
     email: string;
+    username?: string | null;
+    phone?: string | null;
     password: string;
     displayName: string;
     permissions: PermissionCode[];

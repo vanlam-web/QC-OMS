@@ -4131,6 +4131,18 @@ td:has(.money-text) {
   min-width: 0;
 }
 
+.admin-header-tabs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.admin-header-tabs .inline-detail-tabs button {
+  min-height: 1.75rem;
+  padding: 0 var(--space-2);
+  font-size: 0.8125rem;
+}
+
 .admin-settings-workspace > .inline-detail-tabbar {
   align-items: flex-start;
   min-height: 1.75rem;
@@ -4165,12 +4177,23 @@ td:has(.money-text) {
   font: inherit;
 }
 
-.admin-create-account-form {
-  padding: var(--space-3) var(--space-2) 0;
-}
-
 .admin-role-dialog {
   width: min(60rem, calc(100vw - var(--space-4)));
+}
+
+.admin-user-dialog {
+  width: min(44rem, calc(100vw - var(--space-4)));
+}
+
+.admin-user-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-user-form-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 
 .admin-role-form {
@@ -4184,6 +4207,7 @@ td:has(.money-text) {
   gap: var(--space-3);
 }
 
+.admin-user-form-fields label,
 .admin-role-form-fields label {
   display: grid;
   gap: var(--space-2);
@@ -4191,6 +4215,8 @@ td:has(.money-text) {
   font-size: 0.875rem;
 }
 
+.admin-user-form-fields input,
+.admin-user-form-fields select,
 .admin-role-form-fields input {
   min-height: 2.25rem;
   border: 1px solid var(--color-border);
