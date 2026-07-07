@@ -1,55 +1,88 @@
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { LoginPage } from '../features/auth/LoginPage'
 import { ForbiddenPage } from './ForbiddenPage'
-import { PosShell } from '../features/pos/PosShell'
 import { useAuth } from '../features/auth/auth-context'
-import { useMemo } from 'react'
-import { FoundationAdminPage } from '../features/admin/FoundationAdminPage'
+import { lazy, Suspense, useMemo } from 'react'
 import { createBrowserFoundationService } from '../features/users/foundation-service'
-import { DashboardPage } from '../features/dashboard/DashboardPage'
-import { CatalogPage } from '../features/catalog/CatalogPage'
-import { PriceBookPage } from '../features/catalog/PriceBookPage'
-import { CustomersPage } from '../features/catalog/CustomersPage'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
 import { createBrowserProductionQueueService } from '../features/production-queue/production-queue-service'
-import { SuppliersPage } from '../features/purchase/SuppliersPage'
 import { createBrowserSupplierService } from '../features/purchase/supplier-service'
-import { PurchaseReceiptsPage } from '../features/purchase/PurchaseReceiptsPage'
 import { createBrowserPurchaseReceiptService } from '../features/purchase/purchase-receipt-service'
-import { SalesDocumentsPage } from '../features/sales-documents/SalesDocumentsPage'
-import { QuotePrintPage } from '../features/sales-documents/QuotePrintPage'
 import { createBrowserSalesDocumentService } from '../features/sales-documents/sales-document-service'
-import { InventoryPage } from '../features/inventory/InventoryPage'
 import { createBrowserInventoryService } from '../features/inventory/inventory-service'
-import { FinancePage } from '../features/finance/FinancePage'
 import { createBrowserFinanceService } from '../features/finance/finance-service'
-import { ReportsPage } from '../features/reports/ReportsPage'
 import { createBrowserReportService } from '../features/reports/report-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 import { AppShell } from '../components/ui-shell/AppShell'
 
+const PosShell = lazy(() => import('../features/pos/PosShell').then(({ PosShell }) => ({ default: PosShell })))
+const FoundationAdminPage = lazy(() =>
+  import('../features/admin/FoundationAdminPage').then(({ FoundationAdminPage }) => ({
+    default: FoundationAdminPage,
+  })),
+)
+const DashboardPage = lazy(() =>
+  import('../features/dashboard/DashboardPage').then(({ DashboardPage }) => ({ default: DashboardPage })),
+)
+const CatalogPage = lazy(() =>
+  import('../features/catalog/CatalogPage').then(({ CatalogPage }) => ({ default: CatalogPage })),
+)
+const PriceBookPage = lazy(() =>
+  import('../features/catalog/PriceBookPage').then(({ PriceBookPage }) => ({ default: PriceBookPage })),
+)
+const CustomersPage = lazy(() =>
+  import('../features/catalog/CustomersPage').then(({ CustomersPage }) => ({ default: CustomersPage })),
+)
+const SuppliersPage = lazy(() =>
+  import('../features/purchase/SuppliersPage').then(({ SuppliersPage }) => ({ default: SuppliersPage })),
+)
+const PurchaseReceiptsPage = lazy(() =>
+  import('../features/purchase/PurchaseReceiptsPage').then(({ PurchaseReceiptsPage }) => ({
+    default: PurchaseReceiptsPage,
+  })),
+)
+const SalesDocumentsPage = lazy(() =>
+  import('../features/sales-documents/SalesDocumentsPage').then(({ SalesDocumentsPage }) => ({
+    default: SalesDocumentsPage,
+  })),
+)
+const QuotePrintPage = lazy(() =>
+  import('../features/sales-documents/QuotePrintPage').then(({ QuotePrintPage }) => ({ default: QuotePrintPage })),
+)
+const InventoryPage = lazy(() =>
+  import('../features/inventory/InventoryPage').then(({ InventoryPage }) => ({ default: InventoryPage })),
+)
+const FinancePage = lazy(() =>
+  import('../features/finance/FinancePage').then(({ FinancePage }) => ({ default: FinancePage })),
+)
+const ReportsPage = lazy(() =>
+  import('../features/reports/ReportsPage').then(({ ReportsPage }) => ({ default: ReportsPage })),
+)
+
 export function AppRoutes() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginRoute />} />
-        <Route path="/dashboard" element={<DashboardRoute />} />
-        <Route path="/pos" element={<PosRoute />} />
-        <Route path="/admin" element={<AdminRoute />} />
-        <Route path="/products" element={<CatalogRoute />} />
-        <Route path="/price-book" element={<PriceBookRoute />} />
-        <Route path="/customers" element={<CustomersRoute />} />
-        <Route path="/suppliers" element={<SuppliersRoute />} />
-        <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
-        <Route path="/inventory" element={<InventoryRoute />} />
-        <Route path="/finance" element={<FinanceRoute />} />
-        <Route path="/reports" element={<ReportsRoute />} />
-        <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
-        <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
-        <Route path="/forbidden" element={<ForbiddenRoute />} />
-        <Route path="*" element={<RootRedirect />} />
-      </Routes>
+      <Suspense fallback={<BootstrapScreen />}>
+        <Routes>
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/dashboard" element={<DashboardRoute />} />
+          <Route path="/pos" element={<PosRoute />} />
+          <Route path="/admin" element={<AdminRoute />} />
+          <Route path="/products" element={<CatalogRoute />} />
+          <Route path="/price-book" element={<PriceBookRoute />} />
+          <Route path="/customers" element={<CustomersRoute />} />
+          <Route path="/suppliers" element={<SuppliersRoute />} />
+          <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
+          <Route path="/inventory" element={<InventoryRoute />} />
+          <Route path="/finance" element={<FinanceRoute />} />
+          <Route path="/reports" element={<ReportsRoute />} />
+          <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
+          <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
+          <Route path="/forbidden" element={<ForbiddenRoute />} />
+          <Route path="*" element={<RootRedirect />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

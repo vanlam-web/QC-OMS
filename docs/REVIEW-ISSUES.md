@@ -38,38 +38,7 @@ Issue không thay thế PR comments, implementation plan, hoặc Source of Truth
 
 ## Issue Đang Mở
 
-### REV-2026-07-03-003 — Production bundle exceeds Vite warning threshold
-
-**Tình trạng:** Open
-
-**Phụ trách:** Implement, khi Owner/Spec ưu tiên performance cleanup.
-
-**Bằng chứng:**
-
-`npm run build` pass, nhưng Vite từng cảnh báo:
-
-```text
-dist/assets/index-gIOCjsYl.js 592.31 kB
-Some chunks are larger than 500 kB after minification.
-```
-
-**Ghi chú review:**
-
-- Không phải lỗi build.
-- Có thể thành vấn đề performance khi app lớn hơn.
-- Không chặn các slice nghiệp vụ hiện tại.
-
-**Khi mở xử lý:**
-
-- Đánh giá route-level code splitting.
-- Hoặc cấu hình chunk/build nếu phù hợp.
-- Không refactor rộng nếu chỉ cần giảm warning.
-
-**Re-check:**
-
-```sh
-npm run build
-```
+Không có.
 
 ---
 
@@ -77,6 +46,7 @@ npm run build
 
 | Issue | Kết quả |
 |---|---|
+| `REV-2026-07-03-003` — Production bundle exceeds Vite warning threshold | Closed; route-level lazy loading tách page chunks, `npm run build` không còn cảnh báo >500 kB |
 | `REV-2026-07-03-001` — Catalog management unit tests fail | Closed; targeted tests pass |
 | `REV-2026-07-03-002` — Playwright e2e blocked by invalid Supabase API key | Closed; e2e pass |
 | `REV-2026-07-03-004` — Workspace has many uncommitted changes | Closed; `main...origin/main` sạch ngày 2026-07-05 |
