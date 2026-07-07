@@ -294,7 +294,10 @@ Tạo sản phẩm/dịch vụ.
   "name": "Mica 3mm",
   "status": "active",
   "unit_name": "m",
-  "sell_method": "linear_m"
+  "sell_method": "linear_m",
+  "inventory_shape": "sheet",
+  "track_inventory": true,
+  "latest_purchase_cost": 125000
 }
 ```
 
@@ -304,6 +307,29 @@ Tạo sản phẩm/dịch vụ.
 - `code` không trùng trong organization.
 - `status` thuộc `active | inactive`.
 - `sell_method` thuộc `quantity | area_m2 | linear_m | sheet | combo`.
+- `inventory_shape` thuộc `normal | roll | sheet`; nếu bỏ trống mặc định là `normal`.
+- `product_kind` thuộc `goods | service | auxiliary_material | roll | sheet | combo`; nếu bỏ trống Backend tự suy ra từ `sell_method`, `inventory_shape` và `track_inventory`.
+- `track_inventory` là boolean; nếu bỏ trống Backend tự suy ra theo loại tồn/cách tính bán.
+- `latest_purchase_cost` là số lớn hơn hoặc bằng `0`; nếu bỏ trống thì chưa ghi giá vốn gần nhất.
+
+`GET /products` hỗ trợ query `product_kind = goods | service | auxiliary_material | roll | sheet | combo`. Backend lọc theo `products.product_kind` để `Vật tư phụ` được lưu thật, không lẫn với hàng thường:
+
+- `service`: `inventory_shape = normal`, `sell_method = quantity`, `track_inventory = false`.
+- `auxiliary_material`: vật tư phụ; vẫn có tồn như hàng thường nhưng được nhận diện riêng cho BOM/khui vật tư.
+- `goods`: `inventory_shape = normal`, `track_inventory = true`, không phải combo.
+- `roll`: `inventory_shape = roll`.
+- `sheet`: `inventory_shape = sheet`.
+- `combo`: `sell_method = combo`.
+
+**Ghi chú UI Hàng hóa:**
+
+- Form `+ Tạo hàng hóa` dùng một modal chung, chọn loại hàng ở đầu form: hàng thường, dịch vụ, vật tư phụ, hàng cuộn, hàng tấm, combo - đóng gói.
+- Dịch vụ là phân loại riêng trong UI/filter, nhưng Backend nhận diện bằng cấu hình tồn hiện có: `inventory_shape = normal`, `sell_method = quantity`, `track_inventory = false`; UI ẩn phần tồn kho khi tạo.
+- Hàng cuộn lưu `inventory_shape = roll`, hàng tấm lưu `inventory_shape = sheet`.
+- Combo lưu `sell_method = combo`, `track_inventory = false`; UI ẩn phần tồn kho và hiện khu vực vật tư cấu thành. Khi tạo combo, frontend gọi `POST /products` trước rồi gọi `POST /products/{product_id}/bom` để lưu BOM cho sản phẩm vừa tạo. Khi bán combo, tồn trừ vào vật tư cấu thành theo BOM active, không trừ theo chính mã combo. Mỗi dòng BOM không gửi `component_type`; vật tư phụ được nhận diện từ loại hàng của vật tư sau khi có metadata lưu loại hàng riêng.
+- Thành phần combo vẫn có thể sửa sau ở chi tiết hàng hóa; mỗi lần lưu tạo BOM/version hiện hành theo contract BOM.
+- `Lưu & tạo thêm` dùng cùng endpoint `POST /products`, tạo xong reset form ở frontend và giữ modal mở.
+- Modal tạo hàng không có vùng ảnh hàng hóa, không có tab mô tả disabled và không có checkbox `Bán trực tiếp`; sản phẩm/dịch vụ đang hoạt động mặc định được bán trực tiếp. Module này không dùng nút `In tem mã`.
 
 ### `PATCH /products/{id}`
 

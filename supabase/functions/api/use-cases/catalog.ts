@@ -7,6 +7,7 @@ import type {
   PriceFormulaPreviewData,
   ProductBomData,
   ProductData,
+  ProductKind,
   ProductStatus,
   ResolvedPriceData,
   SellMethod,
@@ -51,6 +52,7 @@ export interface PriceFormulaApplyResponse {
 }
 
 const sellMethods = new Set<SellMethod>(["quantity", "area_m2", "linear_m", "sheet", "combo"]);
+const productKinds = new Set<ProductKind>(["goods", "service", "auxiliary_material", "roll", "sheet", "combo"]);
 
 export function requireAnyPermission(context: CatalogContext, allowed: PermissionCode[]): void {
   if (!allowed.some((permission) => context.permissions.includes(permission))) {
@@ -68,11 +70,14 @@ export async function listProducts(
   url: URL,
 ): Promise<ProductListResponse> {
   requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
-  const { search, status, page, pageSize } = parseListProducts(url, context.permissions);
+  const { search, status, sellMethod, inventoryShape, productKind, page, pageSize } = parseListProducts(url, context.permissions);
   const result = await repository.listProducts({
     organizationId: context.organizationId,
     search,
     status,
+    sellMethod,
+    inventoryShape,
+    productKind,
     page,
     pageSize,
   });
@@ -88,7 +93,11 @@ export async function createProduct(
   const input = parseProductCreate(body);
 
   try {
-    return await repository.createProduct({ organizationId: context.organizationId, ...input });
+    return await repository.createProduct({
+      organizationId: context.organizationId,
+      ...input,
+      latestPurchaseCostUpdatedBy: input.latestPurchaseCost === undefined ? undefined : context.actorUserId,
+    });
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -393,11 +402,22 @@ export async function updateCustomerGroup(
 function parseListProducts(
   url: URL,
   permissions: readonly PermissionCode[],
-): { search?: string; status: ProductStatus | "all"; page: number; pageSize: number } {
+): {
+  search?: string;
+  status: ProductStatus | "all";
+  sellMethod?: SellMethod;
+  inventoryShape?: "normal" | "roll" | "sheet";
+  productKind?: ProductKind;
+  page: number;
+  pageSize: number;
+} {
   const search = url.searchParams.get("search")?.trim();
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   const requestedStatus = url.searchParams.get("status") ?? "active";
+  const requestedSellMethod = url.searchParams.get("sell_method") ?? undefined;
+  const requestedInventoryShape = url.searchParams.get("inventory_shape") ?? undefined;
+  const requestedProductKind = url.searchParams.get("product_kind") ?? undefined;
   const canEditPriceBook = permissions.includes("perm.edit_price_book");
 
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
@@ -409,10 +429,27 @@ function parseListProducts(
   if (requestedStatus !== "active" && requestedStatus !== "inactive" && requestedStatus !== "all") {
     throw validationError();
   }
+  if (requestedSellMethod !== undefined && !sellMethods.has(requestedSellMethod as SellMethod)) {
+    throw validationError();
+  }
+  if (requestedProductKind !== undefined && !productKinds.has(requestedProductKind as ProductKind)) {
+    throw validationError();
+  }
+  if (
+    requestedInventoryShape !== undefined &&
+    requestedInventoryShape !== "normal" &&
+    requestedInventoryShape !== "roll" &&
+    requestedInventoryShape !== "sheet"
+  ) {
+    throw validationError();
+  }
 
   return {
     search: search || undefined,
     status: canEditPriceBook ? requestedStatus : "active",
+    sellMethod: requestedSellMethod as SellMethod | undefined,
+    inventoryShape: requestedInventoryShape as "normal" | "roll" | "sheet" | undefined,
+    productKind: requestedProductKind as ProductKind | undefined,
     page,
     pageSize,
   };
@@ -422,16 +459,27 @@ function parseProductCreate(body: unknown): {
   code: string;
   name: string;
   status: ProductStatus;
+  productKind: ProductKind;
   unitName: string;
   sellMethod: SellMethod;
+  inventoryShape?: "normal" | "roll" | "sheet";
+  trackInventory?: boolean;
+  latestPurchaseCost?: number | null;
 } {
   if (!isRecord(body)) throw validationError();
+  const sellMethod = parseSellMethod(body.sell_method);
+  const inventoryShape = parseOptionalInventoryShape(body.inventory_shape);
+  const trackInventory = "track_inventory" in body ? parseBoolean(body.track_inventory) : undefined;
   return {
     code: normalizeCode(body.code),
     name: normalizeText(body.name, 200),
     status: parseStatus(body.status ?? "active"),
+    productKind: parseOptionalProductKind(body.product_kind) ?? inferProductKind(sellMethod, inventoryShape, trackInventory),
     unitName: normalizeText(body.unit_name, 30),
-    sellMethod: parseSellMethod(body.sell_method),
+    sellMethod,
+    inventoryShape,
+    trackInventory,
+    latestPurchaseCost: "latest_purchase_cost" in body ? parseOptionalMoney(body.latest_purchase_cost) : undefined,
   };
 }
 
@@ -439,6 +487,7 @@ function parseProductUpdate(body: unknown): {
   code?: string;
   name?: string;
   status?: ProductStatus;
+  productKind?: ProductKind;
   unitName?: string;
   sellMethod?: SellMethod;
   latestPurchaseCost?: number | null;
@@ -448,6 +497,7 @@ function parseProductUpdate(body: unknown): {
     code?: string;
     name?: string;
     status?: ProductStatus;
+    productKind?: ProductKind;
     unitName?: string;
     sellMethod?: SellMethod;
     latestPurchaseCost?: number | null;
@@ -455,6 +505,7 @@ function parseProductUpdate(body: unknown): {
   if ("code" in body) input.code = normalizeCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("status" in body) input.status = parseStatus(body.status);
+  if ("product_kind" in body) input.productKind = parseProductKind(body.product_kind);
   if ("unit_name" in body) input.unitName = normalizeText(body.unit_name, 30);
   if ("sell_method" in body) input.sellMethod = parseSellMethod(body.sell_method);
   if ("latest_purchase_cost" in body) input.latestPurchaseCost = parseOptionalMoney(body.latest_purchase_cost);
@@ -695,6 +746,34 @@ function parseStatus(value: unknown): ProductStatus {
 function parseSellMethod(value: unknown): SellMethod {
   if (typeof value !== "string" || !sellMethods.has(value as SellMethod)) throw validationError();
   return value as SellMethod;
+}
+
+function parseProductKind(value: unknown): ProductKind {
+  if (typeof value !== "string" || !productKinds.has(value as ProductKind)) throw validationError();
+  return value as ProductKind;
+}
+
+function parseOptionalProductKind(value: unknown): ProductKind | undefined {
+  if (value === undefined) return undefined;
+  return parseProductKind(value);
+}
+
+function inferProductKind(
+  sellMethod: SellMethod,
+  inventoryShape: "normal" | "roll" | "sheet" | undefined,
+  trackInventory: boolean | undefined,
+): ProductKind {
+  if (sellMethod === "combo") return "combo";
+  if (inventoryShape === "roll") return "roll";
+  if (inventoryShape === "sheet") return "sheet";
+  if (sellMethod === "quantity" && trackInventory === false) return "service";
+  return "goods";
+}
+
+function parseOptionalInventoryShape(value: unknown): "normal" | "roll" | "sheet" | undefined {
+  if (value === undefined) return undefined;
+  if (value !== "normal" && value !== "roll" && value !== "sheet") throw validationError();
+  return value;
 }
 
 function parseBoolean(value: unknown): boolean {

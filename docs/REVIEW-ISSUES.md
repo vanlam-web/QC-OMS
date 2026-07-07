@@ -38,38 +38,7 @@ Issue không thay thế PR comments, implementation plan, hoặc Source of Truth
 
 ## Issue Đang Mở
 
-### REV-2026-07-03-003 — Production bundle exceeds Vite warning threshold
-
-**Tình trạng:** Open
-
-**Phụ trách:** Implement, khi Owner/Spec ưu tiên performance cleanup.
-
-**Bằng chứng:**
-
-`npm run build` pass, nhưng Vite từng cảnh báo:
-
-```text
-dist/assets/index-gIOCjsYl.js 592.31 kB
-Some chunks are larger than 500 kB after minification.
-```
-
-**Ghi chú review:**
-
-- Không phải lỗi build.
-- Có thể thành vấn đề performance khi app lớn hơn.
-- Không chặn các slice nghiệp vụ hiện tại.
-
-**Khi mở xử lý:**
-
-- Đánh giá route-level code splitting.
-- Hoặc cấu hình chunk/build nếu phù hợp.
-- Không refactor rộng nếu chỉ cần giảm warning.
-
-**Re-check:**
-
-```sh
-npm run build
-```
+Không có issue đang mở.
 
 ---
 
@@ -77,6 +46,16 @@ npm run build
 
 | Issue | Kết quả |
 |---|---|
+| `REV-2026-07-07-006` — Local DB tests blocked because Docker daemon is not running | Closed; Docker daemon started, `npx supabase start` succeeded, `npx supabase test db supabase/tests/database/001_foundation_schema.test.sql` passed 61 tests |
+| `REV-2026-07-07-007` — Browser smoke after lazy route split | Closed; in-app browser smoke for dashboard, sales documents, finance, POS, account, admin, products, price book, customers, suppliers, purchase receipts, inventory, and reports found no alerts or console errors |
+| `REV-2026-07-07-005` — Function test fixtures drift after `UserListItem` adds `username` and `phone` | Closed; catalog, inventory/finance, and orders fixtures now include `username`/`phone`; `npm run test:functions -- supabase/tests/functions/me_test.ts supabase/tests/functions/users_test.ts supabase/tests/functions/health_test.ts` pass with 106 tests |
+| `REV-2026-07-07-003` — Generated `deno.lock` stays untracked and pollutes status | Closed; `.gitignore` now ignores root `deno.lock` |
+| `REV-2026-07-07-004` — Prunable temp review worktree records pollute `git worktree list` | Closed; `git worktree prune` removed stale `/private/tmp/qc-oms-pr6x-review` records |
+| `REV-2026-07-03-003` — Production bundle exceeds Vite warning threshold | Closed; route page components lazy-load from `src/app/router.tsx`, `npm run build` pass with main chunk `488.71 kB` and no Vite chunk warning |
+| `REV-2026-07-07-001` — Root `npm test` scans ignored `.worktrees` and runs stale worktree tests | Closed; `vite.config.ts` excludes `**/.worktrees/**`, root `npm test` only runs current `src` suite |
+| `REV-2026-07-07-002` — Account route hook dependency lint warning | Closed; `AccountRoute` depends on stable `currentUserId` instead of reading `currentUser` in effect |
+| `REV-2026-07-05-002` — PR #72 docs diff-check fails on trailing whitespace | Closed; PR head `7230c04` removes trailing whitespace and `git diff --check origin/main...HEAD` passes |
+| `REV-2026-07-05-001` — PR #68 material opening foundation schema drifts from Inventory SoT | Closed; PR head `8565cd9` aligns provisional balance columns/status/unique rule and material opening shape constraints with Inventory SoT; re-check commands pass |
 | `REV-2026-07-03-001` — Catalog management unit tests fail | Closed; targeted tests pass |
 | `REV-2026-07-03-002` — Playwright e2e blocked by invalid Supabase API key | Closed; e2e pass |
 | `REV-2026-07-03-004` — Workspace has many uncommitted changes | Closed; `main...origin/main` sạch ngày 2026-07-05 |

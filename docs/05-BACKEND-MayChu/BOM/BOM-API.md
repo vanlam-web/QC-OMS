@@ -16,6 +16,10 @@
 | `POST` | `/v1/boms/preview` | Deep-scan BOM để xem vật tư lá/chi phí tham khảo |
 | `POST` | `/v1/boms/validate` | Kiểm tra vòng lặp, thiếu cấu hình, độ sâu |
 
+Trong QC-OMS hiện tại, modal `+ Tạo hàng hóa` tạo combo theo 2 bước: `POST /products` để tạo sản phẩm `sell_method = combo`, sau đó `POST /products/{product_id}/bom` để lưu vật tư cấu thành cho combo vừa tạo. Sau khi tạo, người dùng mở chi tiết hàng hóa để sửa BOM/version hiện hành. Khi bán combo, hệ thống trừ tồn vào vật tư cấu thành theo BOM active, không trừ tồn theo chính mã combo.
+
+BOM không lưu `component_type` trên từng dòng. `Vật tư phụ` là loại hàng/metadata của chính vật tư; mọi vật tư còn lại được xem là vật tư chính. API lưu dòng BOM chỉ cần `component_product_id`, `quantity` và `notes`. Logic tự hiệu chỉnh định mức từ kiểm kho, sửa tồn, khui vật tư và lịch sử sản xuất là phase sau.
+
 ---
 
 ## 2. Checkout contract

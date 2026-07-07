@@ -10,6 +10,25 @@ export interface ApiRequester {
 export function createFoundationService(api: ApiRequester) {
   return {
     getMe: () => api.request<CurrentUserData>('/api/v1/me'),
+    updateCurrentUserProfile: (input: {
+      display_name: string
+      username: string | null
+      phone: string | null
+      email: string | null
+      birthday: string | null
+      region: string | null
+      ward: string | null
+      address: string | null
+      note: string | null
+    }) =>
+      api.request<CurrentUserData>('/api/v1/me/profile', {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    signOutCurrentUserDevice: (deviceId: string) =>
+      api.request<CurrentUserData['devices']>(`/api/v1/me/devices/${encodeURIComponent(deviceId)}/sign-out`, {
+        method: 'PATCH',
+      }),
     listUsers: (input: { search?: string; status?: 'active' | 'inactive' } = {}) => {
       const params = new URLSearchParams()
       if (input.search) params.set('search', input.search)
@@ -19,6 +38,13 @@ export function createFoundationService(api: ApiRequester) {
     },
     createUser: (input: {
       email: string
+      username?: string | null
+      phone?: string | null
+      birthday?: string | null
+      region?: string | null
+      ward?: string | null
+      address?: string | null
+      note?: string | null
       password: string
       display_name: string
       permissions: PermissionCode[]

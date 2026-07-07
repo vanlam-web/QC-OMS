@@ -10,7 +10,9 @@ import type {
   PriceFormulaPreview,
   PriceListResponse,
   Product,
+  ProductKind,
   ProductListResponse,
+  ProductStockMovementListResponse,
   ProductStatus,
   ResolvePricesResponse,
   SellMethod,
@@ -41,6 +43,7 @@ export function createCatalogService(api: CatalogApiRequester) {
       status?: ProductStatus | 'all'
       sell_method?: SellMethod
       inventory_shape?: Product['inventory_shape']
+      product_kind?: ProductKind
       page?: number
       page_size?: number
     } = {}) => {
@@ -49,17 +52,30 @@ export function createCatalogService(api: CatalogApiRequester) {
       if (input.status) params.set('status', input.status)
       if (input.sell_method) params.set('sell_method', input.sell_method)
       if (input.inventory_shape) params.set('inventory_shape', input.inventory_shape)
+      if (input.product_kind) params.set('product_kind', input.product_kind)
       if (input.page) params.set('page', String(input.page))
       if (input.page_size) params.set('page_size', String(input.page_size))
       const query = params.toString()
       return api.request<ProductListResponse>(`/api/v1/products${query ? `?${query}` : ''}`)
     },
+    listStockMovements: (input: { product_id?: string; page?: number; page_size?: number } = {}) => {
+      const params = new URLSearchParams()
+      if (input.product_id) params.set('product_id', input.product_id)
+      if (input.page) params.set('page', String(input.page))
+      if (input.page_size) params.set('page_size', String(input.page_size))
+      const query = params.toString()
+      return api.request<ProductStockMovementListResponse>(`/api/v1/inventory/stock-movements${query ? `?${query}` : ''}`)
+    },
     createProduct: (input: {
       code: string
       name: string
       status: ProductStatus
+      product_kind?: ProductKind
       unit_name: string
       sell_method: SellMethod
+      inventory_shape?: Product['inventory_shape']
+      track_inventory?: boolean
+      latest_purchase_cost?: number | null
     }) =>
       api.request<Product>('/api/v1/products', {
         method: 'POST',
@@ -71,6 +87,7 @@ export function createCatalogService(api: CatalogApiRequester) {
         code: string
         name: string
         status: ProductStatus
+        product_kind: ProductKind
         unit_name: string
         sell_method: SellMethod
         latest_purchase_cost: number | null

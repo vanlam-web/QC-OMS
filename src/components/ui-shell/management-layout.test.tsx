@@ -305,7 +305,7 @@ it('renders shared detail action footer with left and right action groups', () =
         { label: 'Sao chép', disabled: true },
       ]}
       rightActions={[
-        { label: 'Chỉnh sửa', disabled: true },
+        { label: 'Sửa', disabled: true },
         { label: 'Lưu', variant: 'primary', disabled: true },
         { label: 'In', onClick: onPrint },
       ]}
@@ -314,7 +314,7 @@ it('renders shared detail action footer with left and right action groups', () =
 
   const footer = screen.getByText('Hủy').closest('.management-detail-footer-actions')
   expect(footer).not.toBeNull()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toHaveClass('management-detail-action-danger')
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toHaveClass('button-danger')
   expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toBeDisabled()
   expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toHaveClass('button-primary')
   expect(footer?.querySelector('.management-detail-footer-actions-left')).toContainElement(screen.getByTestId('cancel-icon'))

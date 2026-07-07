@@ -229,9 +229,17 @@ Response phải gồm tối thiểu:
 - phương thức thu: tiền mặt/tài khoản ngân hàng, số tiền
 - khách nộp nếu có
 - chứng từ gốc nếu sinh từ hóa đơn/thu nợ
-- danh sách phân bổ vào hóa đơn: mã hóa đơn, giá trị hóa đơn, đã thu trước, giá trị thu, trạng thái sau thu
+- danh sách phân bổ vào hóa đơn: mã hóa đơn, giá trị hóa đơn, đã thu trước, giá trị thu, còn nợ sau thu
 
 Phiếu sinh từ hóa đơn/thu nợ không được sửa rời qua API này. Muốn sửa phải đi qua nghiệp vụ gốc tương ứng để Sales, Debt và Cashbook cùng khớp.
+
+Quy ước phân bổ:
+
+- Phiếu thu `sale_payment` từ POS cũng phải trả một dòng allocation cho hóa đơn vừa bán, kể cả khi hóa đơn trả đủ hoặc trả một phần và chưa phát sinh `customer_debt_allocations`.
+- Phiếu thu `debt_collection` trả allocations từ `customer_debt_allocations`.
+- Phiếu thu `mixed_sale_and_debt` trả allocation của hóa đơn mới trước, sau đó đến các allocation thu nợ cũ.
+- Với dòng sổ quỹ legacy thiếu `payment_receipts.order_id` nhưng có ghi chú dạng `Checkout HD...`, backend phải suy ra hóa đơn từ mã trong ghi chú và trả allocation gồm `orders.total_amount`, số tiền thu của dòng sổ quỹ, `orders.paid_amount`, `orders.debt_amount`.
+- Trạng thái thanh toán gắn hóa đơn do frontend map từ số liệu allocation và hiển thị ở chip đầu detail: còn nợ `0` là `Hoàn tất` màu success; còn nợ lớn hơn `0` là `Thanh toán 1 phần` màu warning. `Chưa thanh toán` màu neutral chỉ thuộc màn hóa đơn vì chưa thanh toán nghĩa là chưa có phiếu thu.
 
 ---
 
@@ -250,6 +258,7 @@ Xem sổ quỹ theo từng quỹ/tài khoản.
 | Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
 | `finance_account_id` | `uuid` | Không | Lọc theo quỹ/tài khoản |
+| `finance_account_type` | `string` | Không | Lọc theo loại sổ quỹ: `cash` hoặc `bank`; dùng khi UI chọn `Ngân hàng` để lấy tất cả tài khoản ngân hàng |
 | `search` | `string` | Không | Tìm theo mã phiếu, người nộp/nhận hoặc ghi chú |
 | `direction` | `string` | Không | `in` hoặc `out` |
 | `source_type` | `string` | Không | `payment_receipt_method` hoặc `cashbook_voucher` |
@@ -266,7 +275,9 @@ Chỉ tính số dư hiệu lực từ `cashbook_entries.status = posted`.
 
 Khi `search` khớp chính xác mã phiếu, backend phải tìm trên toàn bộ lịch sử hoặc bỏ qua `from/to` nếu client đang dùng filter thời gian mặc định. Không trả rỗng chỉ vì mã phiếu nằm ngoài tháng hiện tại.
 
-`counterparty` trên list và detail phải dùng cùng nguồn dữ liệu. Dòng sinh từ `payment_receipt_method` lấy khách từ `payment_receipts.customer_id`; nếu phiếu thu không có `customer_id` nhưng có `order_id`, dùng `orders.customer_snapshot` để hiển thị `Khách lẻ` hoặc tên khách đã lưu lúc bán hàng.
+`counterparty` trên list và detail phải dùng cùng nguồn dữ liệu. Dòng sinh từ `payment_receipt_method` lấy khách từ `payment_receipts.customer_id`; nếu phiếu thu không có `customer_id` nhưng có `order_id`, dùng `orders.customer_snapshot` để hiển thị `Khách lẻ` hoặc tên khách đã lưu lúc bán hàng. Với dữ liệu cũ thiếu cả `customer_id` và `order_id` nhưng dòng sổ quỹ có ghi chú dạng `Checkout HD...`, backend được phép suy ra hóa đơn từ mã trong ghi chú để lấy `customer_snapshot` cho list và detail. Frontend có thể hydrate nền từ detail cho dòng cũ còn thiếu `counterparty`, nhưng đó chỉ là lớp bù tương thích; contract đúng vẫn là list trả sẵn người nộp/nhận.
+
+Detail dòng sổ quỹ sinh từ `payment_receipt_method` phải trả `allocations` đủ để UI không cần đoán `Tổng sau giảm`/giá trị chứng từ. Với phiếu thu bán hàng, `order_total_amount` lấy từ hóa đơn gốc và hiển thị ở cột `Tổng sau giảm`, `allocated_amount` là số tiền thu, `remaining_after` là số nợ còn lại của hóa đơn và hiển thị ở cột `Chưa TT`. `collected_before` vẫn trả để biết hóa đơn đã từng thu ở các phiếu trước khi thanh toán nhiều lần, nhưng không dùng làm cột chính. Với dữ liệu cũ có `receipt_type = sale_payment` và `order_id` nhưng thiếu `sale_payment_amount`, backend dùng `total_received_amount` để dựng allocation cho hóa đơn thay vì để frontend fallback từ ghi chú. Không dùng `cashbook_entries.amount_delta` làm tổng hóa đơn; field đó chỉ là giá trị của dòng tiền vào/ra.
 
 Response list phải có summary theo filter:
 

@@ -35,6 +35,8 @@ function currentUser(permissions: PermissionCode[]): CurrentUserRecord {
 const user: UserListItem = {
   id: "u-1",
   email: "cashier@example.test",
+  username: "cashier",
+  phone: "0947900909",
   display_name: "Cashier",
   status: "active",
   permissions: ["perm.create_order"],
@@ -862,6 +864,42 @@ Deno.test("stocktake list accepts long date ranges when default period is empty"
   assertEquals(response.status, 200);
   assertEquals(createdFrom, "2016-07-01");
   assertEquals(createdTo, "2026-07-01");
+});
+
+Deno.test("stock movements expose document, prices and partner for product stock card", async () => {
+  const response = await call(
+    "/api/v1/inventory/stock-movements?product_id=p-1",
+    { method: "GET" },
+    repo(["perm.manage_inventory"], {
+      listStockMovements: (input: { productId?: string }) => {
+        assertEquals(input.productId, "p-1");
+        return Promise.resolve({
+          items: [
+            {
+              id: "movement-1",
+              product_id: "p-1",
+              movement_type: "sale_deduction",
+              quantity_delta: -1.656,
+              created_at: "2026-07-07T05:30:00Z",
+              document_code: "HD011036",
+              document_type: "sale_invoice",
+              transaction_price: 300000,
+              cost_price: 107751.2,
+              partner_name: "Khách lẻ",
+            },
+          ],
+          total: 1,
+        });
+      },
+    }),
+  );
+
+  const result = await data(response) as { items: Array<Record<string, unknown>>; total: number };
+  assertEquals(response.status, 200);
+  assertEquals(result.items[0].document_code, "HD011036");
+  assertEquals(result.items[0].transaction_price, 300000);
+  assertEquals(result.items[0].cost_price, 107751.2);
+  assertEquals(result.items[0].partner_name, "Khách lẻ");
 });
 
 Deno.test("roll and sheet products reject total stock adjustment", async () => {

@@ -10,6 +10,7 @@ import type {
   CustomerDebtDetailData,
   CustomerDebtSummaryData,
   CustomerGroupData,
+  CurrentUserDeviceData,
   CurrentUserRecord,
   DebtCollectionResultData,
   FinanceAccountData,
@@ -65,12 +66,30 @@ type CustomerRepositoryRow = {
   customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
 };
 
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
 interface PriceRow {
   product_id: string;
   unit_price: number | string | null;
   price_list_id: string;
   pricing_mode?: "manual" | "formula";
   formula_rule_id?: string | null;
+}
+
+interface AccountDeviceRow {
+  id: string;
+  device_key: string;
+  device_name: string;
+  device_type: "desktop" | "mobile" | "tablet" | "unknown";
+  browser_name: string | null;
+  os_name: string | null;
+  ip_address: string | null;
+  last_seen_at: string;
+  created_at: string;
+  status: "active" | "signed_out";
 }
 
 interface PriceFormulaRuleRow {
@@ -355,7 +374,7 @@ async function loadCurrentUser(
 ): Promise<CurrentUserRecord | null> {
   const { data: profile, error: profileError } = await client
     .from("profiles")
-    .select("user_id, display_name, organization_id, organizations(id, code, name)")
+    .select("user_id, display_name, username, phone, email, birthday, region, ward, address, note, organization_id, organizations(id, code, name)")
     .eq("user_id", input.userId)
     .eq("status", "active")
     .maybeSingle();
@@ -415,15 +434,174 @@ async function loadCurrentUser(
       email: input.email,
       displayName: profile.display_name,
     },
+    profile: {
+      username: profile.username ?? null,
+      phone: profile.phone ?? null,
+      email: profile.email ?? null,
+      birthday: profile.birthday ?? null,
+      region: profile.region ?? null,
+      ward: profile.ward ?? null,
+      address: profile.address ?? null,
+      note: profile.note ?? null,
+    },
     organization: {
       id: organization.id,
       code: organization.code,
       name: organization.name,
     },
     workstation,
+    devices: [],
     permissions: (permissionRows ?? []).map((row) => row.permission_code),
     workstationInvalid,
   };
+}
+
+async function recordAccountDevice(
+  client: DatabaseClient,
+  input: { userId: string; clientDeviceId: string | null; userAgent: string | null; ipAddress: string | null },
+): Promise<CurrentUserDeviceData[]> {
+  const parsed = parseDevice(input.userAgent);
+  const deviceKey = await makeDeviceKey(input.userId, input.clientDeviceId, input.userAgent, input.ipAddress);
+  const now = new Date().toISOString();
+
+  const { error } = await client
+    .from("account_devices")
+    .upsert({
+      user_id: input.userId,
+      device_key: deviceKey,
+      device_name: parsed.deviceName,
+      device_type: parsed.deviceType,
+      browser_name: parsed.browserName,
+      os_name: parsed.osName,
+      ip_address: input.ipAddress,
+      status: "active",
+      last_seen_at: now,
+    }, { onConflict: "user_id,device_key" });
+
+  if (error !== null) throw error;
+  return await listAccountDevices(client, input.userId, deviceKey);
+}
+
+async function signOutAccountDevice(
+  client: DatabaseClient,
+  input: {
+    userId: string;
+    accessToken: string;
+    deviceId: string;
+    clientDeviceId: string | null;
+    userAgent: string | null;
+    ipAddress: string | null;
+  },
+): Promise<CurrentUserDeviceData[] | null> {
+  const currentDeviceKey = await makeDeviceKey(input.userId, input.clientDeviceId, input.userAgent, input.ipAddress);
+  const { data: device, error: lookupError } = await client
+    .from("account_devices")
+    .select("id, device_key")
+    .eq("id", input.deviceId)
+    .eq("user_id", input.userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (lookupError !== null) throw lookupError;
+  if (device === null || device.device_key === currentDeviceKey) return null;
+
+  const { error: signOutError } = await client.auth.admin.signOut(input.accessToken, "others");
+  if (signOutError !== null) throw signOutError;
+
+  const { error } = await client
+    .from("account_devices")
+    .update({ status: "signed_out" })
+    .eq("user_id", input.userId)
+    .eq("status", "active")
+    .neq("device_key", currentDeviceKey);
+
+  if (error !== null) throw error;
+  return await listAccountDevices(client, input.userId, currentDeviceKey);
+}
+
+async function listAccountDevices(
+  client: DatabaseClient,
+  userId: string,
+  currentDeviceKey: string | null,
+): Promise<CurrentUserDeviceData[]> {
+  const { data, error } = await client
+    .from("account_devices")
+    .select("id, device_key, device_name, device_type, browser_name, os_name, ip_address, last_seen_at, created_at, status")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("last_seen_at", { ascending: false })
+    .limit(10);
+
+  if (error !== null) throw error;
+  return ((data ?? []) as AccountDeviceRow[]).map((row) => ({
+    id: row.id,
+    device_name: row.device_name,
+    device_type: row.device_type,
+    browser_name: row.browser_name,
+    os_name: row.os_name,
+    ip_address: row.ip_address,
+    last_seen_at: row.last_seen_at,
+    created_at: row.created_at,
+    is_current_device: row.device_key === currentDeviceKey,
+    status: row.status,
+  }));
+}
+
+function parseDevice(userAgent: string | null): {
+  deviceName: string;
+  deviceType: "desktop" | "mobile" | "tablet" | "unknown";
+  browserName: string | null;
+  osName: string | null;
+} {
+  const value = userAgent ?? "";
+  const osName = value.includes("Windows")
+    ? "Windows"
+    : value.includes("Mac OS X")
+    ? "macOS"
+    : value.includes("Android")
+    ? "Android"
+    : value.includes("iPhone")
+    ? "iOS"
+    : value.includes("iPad")
+    ? "iPadOS"
+    : value.includes("Linux")
+    ? "Linux"
+    : null;
+  const browserName = value.includes("Edg/")
+    ? "Edge"
+    : value.includes("Chrome/")
+    ? "Chrome"
+    : value.includes("Firefox/")
+    ? "Firefox"
+    : value.includes("Safari/")
+    ? "Safari"
+    : null;
+  const deviceType = value.includes("iPad") || value.includes("Tablet")
+    ? "tablet"
+    : value.includes("Mobile") || value.includes("iPhone") || value.includes("Android")
+    ? "mobile"
+    : value.trim().length > 0
+    ? "desktop"
+    : "unknown";
+  const deviceName = browserName !== null && osName !== null
+    ? `${browserName} trên ${osName}`
+    : osName ?? browserName ?? (deviceType === "unknown" ? "Thiết bị không xác định" : "Thiết bị");
+  return { deviceName, deviceType, browserName, osName };
+}
+
+async function makeDeviceKey(
+  userId: string,
+  clientDeviceId: string | null,
+  userAgent: string | null,
+  ipAddress: string | null,
+): Promise<string> {
+  const clientKey = clientDeviceId?.trim();
+  const source = clientKey && clientKey.length > 0
+    ? `${userId}|client:${clientKey}`
+    : `${userId}|ua:${userAgent ?? ""}|ip:${ipAddress ?? ""}`;
+  const bytes = new TextEncoder().encode(source);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function createFoundationRepository(client: DatabaseClient): FoundationRepository {
@@ -441,6 +619,45 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         currentUserCache.delete(cacheKey);
         throw cause;
       }
+    },
+    async updateCurrentUserProfile(input): Promise<CurrentUserRecord | null> {
+      const { data: existing, error: existingError } = await client
+        .from("profiles")
+        .select("organization_id")
+        .eq("user_id", input.userId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (existingError !== null) throw existingError;
+      if (existing === null) return null;
+
+      const { error } = await client
+        .from("profiles")
+        .update({
+          display_name: input.displayName,
+          username: input.profile.username,
+          phone: input.profile.phone,
+          email: input.profile.email,
+          birthday: input.profile.birthday,
+          region: input.profile.region,
+          ward: input.profile.ward,
+          address: input.profile.address,
+          note: input.profile.note,
+        })
+        .eq("user_id", input.userId)
+        .eq("status", "active");
+
+      if (error !== null) throw error;
+      for (const key of currentUserCache.keys()) {
+        if (key.includes(input.userId)) currentUserCache.delete(key);
+      }
+      return await loadCurrentUser(client, { userId: input.userId, email: input.authEmail, workstationId: null });
+    },
+    async recordCurrentUserDevice(input): Promise<CurrentUserDeviceData[]> {
+      return await recordAccountDevice(client, input);
+    },
+    async signOutCurrentUserDevice(input): Promise<CurrentUserDeviceData[] | null> {
+      return await signOutAccountDevice(client, input);
     },
     async listWorkstations(organizationId: string): Promise<WorkstationData[]> {
       const { data, error } = await client
@@ -504,13 +721,15 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listUsers(input): Promise<{ items: UserListItem[]; total: number }> {
       let query = client
         .from("profiles")
-        .select("user_id, display_name, status", { count: "exact" })
+        .select("user_id, display_name, username, phone, email, birthday, region, ward, address, note, status", { count: "exact" })
         .eq("organization_id", input.organizationId)
         .order("display_name", { ascending: true })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
 
       if (input.status !== undefined) query = query.eq("status", input.status);
-      if (input.search !== undefined) query = query.ilike("display_name", `%${input.search}%`);
+      if (input.search !== undefined) {
+        query = query.or(`display_name.ilike.%${input.search}%,username.ilike.%${input.search}%,phone.ilike.%${input.search}%,email.ilike.%${input.search}%`);
+      }
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
@@ -520,7 +739,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async getUser(input): Promise<UserListItem | null> {
       const { data, error } = await client
         .from("profiles")
-        .select("user_id, display_name, status")
+        .select("user_id, display_name, username, phone, email, birthday, region, ward, address, note, status")
         .eq("organization_id", input.organizationId)
         .eq("user_id", input.userId)
         .maybeSingle();
@@ -544,6 +763,20 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           p_trace_id: input.traceId,
         });
         if (error !== null) throw error;
+        const { error: profileError } = await client
+          .from("profiles")
+          .update({
+            username: input.username ?? input.email,
+            phone: input.phone ?? null,
+            email: input.email,
+            birthday: input.birthday ?? null,
+            region: input.region ?? null,
+            ward: input.ward ?? null,
+            address: input.address ?? null,
+            note: input.note ?? null,
+          })
+          .eq("user_id", createdId);
+        if (profileError !== null) throw profileError;
       } catch (cause) {
         await client.auth.admin.deleteUser(createdId);
         throw cause;
@@ -551,6 +784,13 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       return {
         id: createdId,
         email: input.email,
+        username: input.username ?? input.email,
+        phone: input.phone ?? null,
+        birthday: input.birthday ?? null,
+        region: input.region ?? null,
+        ward: input.ward ?? null,
+        address: input.address ?? null,
+        note: input.note ?? null,
         display_name: input.displayName,
         status: "active",
         permissions: [...input.permissions].sort(),
@@ -588,18 +828,35 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listProducts(input): Promise<{ items: ProductData[]; total: number }> {
       let query = client
         .from("products")
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
           count: "exact",
         })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
+
+      if (input.productKind !== undefined) {
+        query = query.eq("product_kind", input.productKind);
+      }
+
+      if (input.productKind === undefined && input.inventoryShape !== undefined) {
+        const { data: matchingSettings, error: matchingSettingsError } = await client
+          .from("product_inventory_settings")
+          .select("product_id")
+          .eq("organization_id", input.organizationId)
+          .eq("inventory_shape", input.inventoryShape);
+        if (matchingSettingsError !== null) throw matchingSettingsError;
+        const productIds = (matchingSettings ?? []).map((row) => row.product_id).filter(isString);
+        if (productIds.length === 0) return { items: [], total: 0 };
+        query = query.in("id", productIds);
+      }
 
       if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.sellMethod !== undefined) query = query.eq("sell_method", input.sellMethod);
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
       }
+      query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
@@ -608,15 +865,19 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data: settings, error: settingsError } = await client
         .from("product_inventory_settings")
-        .select("product_id, inventory_shape")
+        .select("product_id, inventory_shape, track_inventory")
         .eq("organization_id", input.organizationId)
         .in("product_id", items.map((item) => item.id));
       if (settingsError !== null) throw settingsError;
-      const shapeByProduct = new Map((settings ?? []).map((row) => [row.product_id, row.inventory_shape as "normal" | "roll" | "sheet"]));
+      const settingsByProduct = new Map((settings ?? []).map((row) => [row.product_id, {
+        inventory_shape: row.inventory_shape as "normal" | "roll" | "sheet",
+        track_inventory: Boolean(row.track_inventory),
+      }]));
       return {
         items: items.map((item) => ({
           ...item,
-          inventory_shape: shapeByProduct.get(item.id) ?? "normal",
+          inventory_shape: settingsByProduct.get(item.id)?.inventory_shape ?? "normal",
+          track_inventory: settingsByProduct.get(item.id)?.track_inventory ?? true,
         })),
         total: count ?? 0,
       };
@@ -629,19 +890,36 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           code: input.code,
           name: input.name,
           status: input.status,
+          product_kind: input.productKind,
           unit_name: input.unitName,
           sell_method: input.sellMethod,
+          latest_purchase_cost: input.latestPurchaseCost ?? null,
+          latest_purchase_cost_at: input.latestPurchaseCost === undefined ? null : new Date().toISOString(),
+          latest_purchase_cost_updated_by: input.latestPurchaseCostUpdatedBy ?? null,
         })
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .single();
       if (error !== null) throw error;
-      return data as ProductData;
+      const shape = input.inventoryShape ?? "normal";
+      const stockUnitId = await ensureInventoryUnit(client, input.organizationId, input.unitName, input.sellMethod);
+      const { error: settingsError } = await client
+        .from("product_inventory_settings")
+        .upsert({
+          organization_id: input.organizationId,
+          product_id: data.id,
+          track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo"),
+          inventory_shape: shape,
+          stock_unit_id: stockUnitId,
+        }, { onConflict: "organization_id,product_id" });
+      if (settingsError !== null) throw settingsError;
+      return { ...(data as ProductData), inventory_shape: shape, track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo") };
     },
     async updateProduct(input): Promise<ProductData | null> {
       const patch: {
         code?: string;
         name?: string;
         status?: "active" | "inactive";
+        product_kind?: string;
         unit_name?: string;
         sell_method?: string;
         latest_purchase_cost?: number | null;
@@ -651,6 +929,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.status !== undefined) patch.status = input.status;
+      if (input.productKind !== undefined) patch.product_kind = input.productKind;
       if (input.unitName !== undefined) patch.unit_name = input.unitName;
       if (input.sellMethod !== undefined) patch.sell_method = input.sellMethod;
       if (input.latestPurchaseCost !== undefined) {
@@ -664,7 +943,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .maybeSingle();
       if (error !== null) throw error;
       return data as ProductData | null;
@@ -1614,6 +1893,9 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (error !== null) throw error;
 
       let items = await Promise.all((data ?? []).map((row) => hydrateCashbookEntry(client, input.organizationId, row)));
+      if (input.financeAccountType !== undefined) {
+        items = items.filter((item) => item.finance_account.account_type === input.financeAccountType);
+      }
       if (input.search !== undefined) {
         const search = input.search.toLocaleLowerCase("vi");
         items = items.filter((item) => {
@@ -1749,7 +2031,10 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listStockMovements(input): Promise<{ items: StockMovementData[]; total: number }> {
       let query = client
         .from("stock_movements")
-        .select("id, product_id, movement_type, quantity_delta, created_at", { count: "exact" })
+        .select(
+          "id, product_id, movement_type, quantity_delta, created_at, orders(id, code, customer_snapshot), order_items(id, unit_price), purchase_receipts(id, code, suppliers(id, code, name)), purchase_receipt_items(id, unit_cost), stocktakes(id, code), products(id, latest_purchase_cost)",
+          { count: "exact" },
+        )
         .eq("organization_id", input.organizationId)
         .order("created_at", { ascending: false })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -1760,13 +2045,48 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       const { data, error, count } = await query;
       if (error !== null) throw error;
       return {
-        items: (data ?? []).map((row) => ({
-          id: row.id,
-          product_id: row.product_id,
-          movement_type: row.movement_type,
-          quantity_delta: Number(row.quantity_delta),
-          created_at: row.created_at,
-        })),
+        items: (data ?? []).map((row) => {
+          const order = firstRelation(row.orders);
+          const orderItem = firstRelation(row.order_items);
+          const purchaseReceipt = firstRelation(row.purchase_receipts);
+          const purchaseReceiptItem = firstRelation(row.purchase_receipt_items);
+          const supplier = firstRelation(purchaseReceipt?.suppliers);
+          const stocktake = firstRelation(row.stocktakes);
+          const product = firstRelation(row.products);
+          const customer = order === null ? null : customerSnapshot(order.customer_snapshot);
+          const documentCode = order?.code ?? purchaseReceipt?.code ?? stocktake?.code ?? null;
+          const documentType = order !== null
+            ? "sale_invoice"
+            : purchaseReceipt !== null
+              ? "purchase_receipt"
+              : stocktake !== null
+                ? "stocktake"
+                : row.movement_type === "material_opening"
+                  ? "material_opening"
+                  : row.movement_type === "manual_adjustment"
+                    ? "manual"
+                    : null;
+          return {
+            id: row.id,
+            product_id: row.product_id,
+            movement_type: row.movement_type,
+            quantity_delta: Number(row.quantity_delta),
+            created_at: row.created_at,
+            document_code: documentCode,
+            document_type: documentType,
+            transaction_price: orderItem?.unit_price === undefined || orderItem?.unit_price === null
+              ? purchaseReceiptItem?.unit_cost === undefined || purchaseReceiptItem?.unit_cost === null
+                ? null
+                : Number(purchaseReceiptItem.unit_cost)
+              : Number(orderItem.unit_price),
+            cost_price: product?.latest_purchase_cost === undefined || product?.latest_purchase_cost === null
+              ? purchaseReceiptItem?.unit_cost === undefined || purchaseReceiptItem?.unit_cost === null
+                ? null
+                : Number(purchaseReceiptItem.unit_cost)
+              : Number(product.latest_purchase_cost),
+            partner_name: customer?.name ?? supplier?.name ?? null,
+          };
+        }),
         total: count ?? 0,
       };
     },
@@ -2843,9 +3163,13 @@ async function hydrateCashbookEntry(
       code = receipt.code;
       note = note || `Thu ${receipt.code}`;
       const receiptDetail = await loadPaymentReceiptDetail(client, organizationId, receipt.id);
+      const noteCustomer = receiptDetail?.customer == null
+        ? await loadOrderCustomerRefFromCashbookNote(client, organizationId, note)
+        : null;
+      const customer = receiptDetail?.customer ?? noteCustomer;
       counterparty = {
-        type: receiptDetail?.customer == null ? "none" : "customer",
-        name: receiptDetail?.customer?.name ?? null,
+        type: customer == null ? "none" : "customer",
+        name: customer?.name ?? null,
         phone: null,
       };
     }
@@ -2909,14 +3233,24 @@ async function hydrateCashbookEntryDetail(
         type: "payment_receipt",
         id: receiptRow.id,
         code: receiptRow.code,
-        order_code: receipt?.source_order?.code ?? null,
+        order_code: receipt?.source_order?.code ?? cashbookDocumentCodeFromNote(base.note),
       };
+      const receiptCounterparty = receipt?.customer == null
+        ? null
+        : { type: "customer" as const, name: receipt.customer.name, phone: null };
       detail.counterparty = {
-        type: receipt?.customer === null ? "none" : "customer",
-        name: receipt?.customer?.name ?? null,
-        phone: null,
+        ...(receiptCounterparty ?? base.counterparty),
       };
       detail.allocations = receipt?.allocations ?? [];
+      if (detail.allocations.length === 0) {
+        const inferredAllocation = await loadCashbookNoteSaleAllocation(
+          client,
+          organizationId,
+          base.note,
+          Math.abs(base.amount_delta),
+        );
+        if (inferredAllocation !== null) detail.allocations = [inferredAllocation];
+      }
     }
   }
 
@@ -2972,7 +3306,7 @@ async function loadPaymentReceiptDetail(
 ): Promise<PaymentReceiptDetailData | null> {
   const { data: receipt, error } = await client
     .from("payment_receipts")
-    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, created_by, created_at")
+    .select("id, code, status, receipt_type, customer_id, order_id, total_received_amount, sale_payment_amount, created_by, created_at")
     .eq("id", receiptId)
     .eq("organization_id", organizationId)
     .maybeSingle();
@@ -2997,6 +3331,13 @@ async function loadPaymentReceiptDetail(
     ? await loadOrderCustomerRef(client, organizationId, receipt.order_id)
     : null;
   const customer = receiptCustomer ?? orderCustomer;
+  const debtAllocations = await loadPaymentReceiptAllocations(client, organizationId, receipt.id);
+  const salePaymentAmount = Number(receipt.sale_payment_amount) > 0
+    ? Number(receipt.sale_payment_amount)
+    : receipt.receipt_type === "sale_payment" ? Number(receipt.total_received_amount) : 0;
+  const saleAllocation = typeof receipt.order_id === "string" && salePaymentAmount > 0
+    ? await loadPaymentReceiptSaleAllocation(client, organizationId, receipt.order_id, salePaymentAmount)
+    : null;
 
   return {
     id: receipt.id,
@@ -3020,8 +3361,30 @@ async function loadPaymentReceiptDetail(
         },
       };
     }),
-    allocations: await loadPaymentReceiptAllocations(client, organizationId, receipt.id),
+    allocations: saleAllocation === null ? debtAllocations : [saleAllocation, ...debtAllocations],
   };
+}
+
+async function loadPaymentReceiptSaleAllocation(
+  client: DatabaseClient,
+  organizationId: string,
+  orderId: string,
+  allocatedAmount: number,
+): Promise<PaymentReceiptAllocationData | null> {
+  const order = await loadOrderRef(client, organizationId, orderId);
+  return order === null ? null : paymentAllocationFromOrderSnapshot(order, allocatedAmount);
+}
+
+async function loadCashbookNoteSaleAllocation(
+  client: DatabaseClient,
+  organizationId: string,
+  note: string | null,
+  allocatedAmount: number,
+): Promise<PaymentReceiptAllocationData | null> {
+  const orderCode = cashbookDocumentCodeFromNote(note);
+  if (orderCode === null || !orderCode.startsWith("HD")) return null;
+  const order = await loadOrderRefByCode(client, organizationId, orderCode);
+  return order === null ? null : paymentAllocationFromOrderSnapshot(order, allocatedAmount);
 }
 
 async function loadPaymentReceiptAllocations(
@@ -3069,15 +3432,57 @@ async function loadOrderRef(
   client: DatabaseClient,
   organizationId: string,
   orderId: string,
-): Promise<{ id: string; code: string; total_amount: number } | null> {
+): Promise<{ id: string; code: string; total_amount: number; paid_amount: number; debt_amount: number } | null> {
   const { data, error } = await client
     .from("orders")
-    .select("id, code, total_amount")
+    .select("id, code, total_amount, paid_amount, debt_amount")
     .eq("id", orderId)
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error !== null) throw error;
-  return data === null ? null : { id: data.id, code: data.code, total_amount: Number(data.total_amount) };
+  return data === null ? null : {
+    id: data.id,
+    code: data.code,
+    total_amount: Number(data.total_amount),
+    paid_amount: Number(data.paid_amount),
+    debt_amount: Number(data.debt_amount),
+  };
+}
+
+async function loadOrderRefByCode(
+  client: DatabaseClient,
+  organizationId: string,
+  orderCode: string,
+): Promise<{ id: string; code: string; total_amount: number; paid_amount: number; debt_amount: number } | null> {
+  const { data, error } = await client
+    .from("orders")
+    .select("id, code, total_amount, paid_amount, debt_amount")
+    .eq("code", orderCode)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  return data === null ? null : {
+    id: data.id,
+    code: data.code,
+    total_amount: Number(data.total_amount),
+    paid_amount: Number(data.paid_amount),
+    debt_amount: Number(data.debt_amount),
+  };
+}
+
+function paymentAllocationFromOrderSnapshot(
+  order: { id: string; code: string; total_amount: number; paid_amount: number; debt_amount: number },
+  allocatedAmount: number,
+): PaymentReceiptAllocationData {
+  const amount = Math.max(allocatedAmount, 0);
+  return {
+    order_id: order.id,
+    order_code: order.code,
+    order_total_amount: order.total_amount,
+    collected_before: Math.max(order.paid_amount - amount, 0),
+    allocated_amount: amount,
+    remaining_after: Math.max(order.debt_amount, 0),
+  };
 }
 
 async function loadOrderCustomerRef(
@@ -3095,6 +3500,30 @@ async function loadOrderCustomerRef(
   if (data === null) return null;
   const customer = customerSnapshot(data.customer_snapshot);
   return { id: customer.id, code: customer.code, name: customer.name };
+}
+
+async function loadOrderCustomerRefFromCashbookNote(
+  client: DatabaseClient,
+  organizationId: string,
+  note: string | null,
+): Promise<{ id: string | null; code: string | null; name: string } | null> {
+  const orderCode = cashbookDocumentCodeFromNote(note);
+  if (orderCode === null || !orderCode.startsWith("HD")) return null;
+  const { data, error } = await client
+    .from("orders")
+    .select("customer_snapshot")
+    .eq("code", orderCode)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error !== null) throw error;
+  if (data === null) return null;
+  const customer = customerSnapshot(data.customer_snapshot);
+  return { id: customer.id, code: customer.code, name: customer.name };
+}
+
+function cashbookDocumentCodeFromNote(note: string | null): string | null {
+  const match = note?.match(/\b(?:HD|PN)\d+(?:\.\d+)?\b/i);
+  return match?.[0].toUpperCase() ?? null;
 }
 
 async function loadProfileName(client: DatabaseClient, userId: string): Promise<string> {
@@ -3791,9 +4220,63 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+async function ensureInventoryUnit(
+  client: DatabaseClient,
+  organizationId: string,
+  unitName: string,
+  sellMethod: "quantity" | "area_m2" | "linear_m" | "sheet" | "combo",
+): Promise<string> {
+  const normalizedName = unitName.trim() || "đơn vị";
+  const code = normalizedName.slice(0, 30).toUpperCase();
+  const { data: existing, error: existingError } = await client
+    .from("inventory_units")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("code", code)
+    .maybeSingle();
+  if (existingError !== null) throw existingError;
+  if (existing?.id !== undefined) return existing.id;
+
+  const { data: created, error: createError } = await client
+    .from("inventory_units")
+    .insert({
+      organization_id: organizationId,
+      code,
+      name: normalizedName.slice(0, 60),
+      unit_kind: inventoryUnitKindForSellMethod(sellMethod),
+      decimal_precision: sellMethod === "quantity" || sellMethod === "sheet" || sellMethod === "combo" ? 0 : 3,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+  if (createError !== null) throw createError;
+  return created.id;
+}
+
+function inventoryUnitKindForSellMethod(
+  sellMethod: "quantity" | "area_m2" | "linear_m" | "sheet" | "combo",
+): "quantity" | "length" | "area" | "package" {
+  if (sellMethod === "area_m2") return "area";
+  if (sellMethod === "linear_m") return "length";
+  if (sellMethod === "combo") return "package";
+  return "quantity";
+}
+
 async function hydrateUser(
   client: DatabaseClient,
-  row: { user_id: string; display_name: string; status: "active" | "inactive" },
+  row: {
+    user_id: string;
+    display_name: string;
+    username?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    birthday?: string | null;
+    region?: string | null;
+    ward?: string | null;
+    address?: string | null;
+    note?: string | null;
+    status: "active" | "inactive";
+  },
   email: string,
 ): Promise<UserListItem> {
   const { data: permissionRows, error } = await client
@@ -3804,7 +4287,14 @@ async function hydrateUser(
   if (error !== null) throw error;
   return {
     id: row.user_id,
-    email,
+    email: row.email ?? email,
+    username: row.username ?? null,
+    phone: row.phone ?? null,
+    birthday: row.birthday ?? null,
+    region: row.region ?? null,
+    ward: row.ward ?? null,
+    address: row.address ?? null,
+    note: row.note ?? null,
     display_name: row.display_name,
     status: row.status,
     permissions: (permissionRows ?? []).map((permission) => permission.permission_code as PermissionCode),

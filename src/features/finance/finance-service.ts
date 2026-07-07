@@ -16,6 +16,7 @@ import type {
   DebtCollectionResult,
   FinanceAccountListResponse,
   CashbookBalanceListResponse,
+  FinanceSalesDocumentSummary,
 } from './types'
 
 export interface FinanceApiRequester {
@@ -50,6 +51,7 @@ export function createFinanceService(api: FinanceApiRequester) {
       search?: string
       search_scope?: CashbookSearchScope
       finance_account_id?: string
+      finance_account_type?: 'cash' | 'bank'
       direction?: CashbookDirection | 'all'
       status?: CashbookStatus | 'all'
       is_business_accounted?: boolean
@@ -62,6 +64,7 @@ export function createFinanceService(api: FinanceApiRequester) {
       if (input.search) params.set('search', input.search)
       if (input.search_scope && input.search_scope !== 'all') params.set('search_scope', input.search_scope)
       if (input.finance_account_id) params.set('finance_account_id', input.finance_account_id)
+      if (input.finance_account_type) params.set('finance_account_type', input.finance_account_type)
       if (input.direction && input.direction !== 'all') params.set('direction', input.direction)
       if (input.status && input.status !== 'all') params.set('status', input.status)
       if (input.is_business_accounted !== undefined) params.set('is_business_accounted', String(input.is_business_accounted))
@@ -73,6 +76,16 @@ export function createFinanceService(api: FinanceApiRequester) {
       return api.request<CashbookListResponse>(`/api/v1/finance/cashbook${query ? `?${query}` : ''}`)
     },
     getCashbookEntry: (entryId: string) => api.request<CashbookEntryDetail>(`/api/v1/finance/cashbook/${entryId}`),
+    getSalesDocumentByCode: async (code: string) => {
+      const params = new URLSearchParams({
+        search: code,
+        type: 'invoice',
+        page: '1',
+        page_size: '1',
+      })
+      const result = await api.request<{ items: FinanceSalesDocumentSummary[] }>(`/api/v1/sales-documents?${params.toString()}`)
+      return result.items.find((item) => item.code === code) ?? null
+    },
     listCashbookVouchers: () => api.request<CashbookVoucherListResponse>('/api/v1/finance/cashbook/vouchers'),
     createCashbookVoucher: (input: CreateCashbookVoucherInput) =>
       api.request<CashbookVoucher>('/api/v1/finance/cashbook-vouchers', {
@@ -108,7 +121,7 @@ export function buildCashbookCsv(items: CashbookEntry[]) {
       String(entry.is_business_accounted),
     ]),
   ]
-  return rows.map((row) => row.map(csvCell).join(',')).join('\n')
+  return `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\n')}`
 }
 
 function csvCell(value: string) {

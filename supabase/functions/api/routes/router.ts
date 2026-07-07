@@ -45,7 +45,11 @@ export function routeRequest(
     );
   }
 
-  if (request.method === "GET" && url.pathname === "/api/v1/me") {
+  if (
+    (request.method === "GET" && url.pathname === "/api/v1/me") ||
+    (request.method === "PATCH" && url.pathname === "/api/v1/me/profile") ||
+    (request.method === "PATCH" && /^\/api\/v1\/me\/devices\/[^/]+\/sign-out$/.test(url.pathname))
+  ) {
     if (options.auth === undefined || options.repository === undefined) {
       throw new ApiError({
         status: 500,

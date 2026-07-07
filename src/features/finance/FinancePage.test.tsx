@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FinancePage } from './FinancePage'
 import type { FinanceService } from './finance-service'
 import type {
@@ -160,6 +160,61 @@ const noteLinkedReceiptDetail: CashbookEntryDetail = {
   allocations: [],
 }
 
+const receiptEntryWithoutDocumentNote: CashbookEntry = {
+  ...noteLinkedReceiptEntry,
+  id: 'entry-receipt-no-note',
+  code: 'PT000009',
+  amount_delta: 90000,
+  note: null,
+}
+
+const receiptDetailWithoutDocumentNote: CashbookEntryDetail = {
+  ...noteLinkedReceiptDetail,
+  ...receiptEntryWithoutDocumentNote,
+  created_by: { id: 'user-1', name: 'Văn Viết Phương Lâm' },
+  counterparty: { type: 'customer', name: 'Khách lẻ', phone: null },
+  payment_method: 'cash',
+  source: { type: 'payment_receipt', id: 'receipt-no-note', code: 'PT000009', order_code: null },
+  allocations: [],
+}
+
+const partialCheckoutReceiptEntry: CashbookEntry = {
+  id: 'entry-partial-checkout',
+  code: 'PT000020',
+  status: 'posted',
+  direction: 'in',
+  amount_delta: 100000,
+  finance_account: { id: 'cash-1', code: 'CASH', name: 'Quỹ tiền mặt', account_type: 'cash' },
+  is_business_accounted: true,
+  source_type: 'payment_receipt_method',
+  created_at: '2026-07-06T04:15:00Z',
+  note: 'Checkout HD000020',
+  counterparty: { type: 'customer', name: 'Khách lẻ', phone: null },
+}
+
+const partialCheckoutReceiptDetail: CashbookEntryDetail = {
+  ...partialCheckoutReceiptEntry,
+  created_by: { id: 'user-1', name: 'Văn Viết Phương Lâm' },
+  counterparty: { type: 'customer', name: 'Khách lẻ', phone: null },
+  payment_method: 'cash',
+  source: { type: 'payment_receipt', id: 'receipt-partial-checkout', code: 'PT000020', order_code: 'HD000020' },
+  allocations: [
+    {
+      order_id: 'order-20',
+      order_code: 'HD000020',
+      order_total_amount: 600000,
+      collected_before: 0,
+      allocated_amount: 100000,
+      remaining_after: 500000,
+    },
+  ],
+}
+
+const stalePartialCheckoutReceiptDetail: CashbookEntryDetail = {
+  ...partialCheckoutReceiptDetail,
+  allocations: [],
+}
+
 const voucher: CashbookVoucher = {
   id: 'voucher-1',
   code: 'PT0001',
@@ -201,6 +256,7 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
     })),
     listCashbookBalances: vi.fn(async () => ({ items: balances })),
     getCashbookEntry: vi.fn(async () => cashbookDetail),
+    getSalesDocumentByCode: vi.fn(async () => null),
     listCashbookEntries: vi.fn(async () => ({
       summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
       items: [entry],
@@ -214,6 +270,10 @@ function makeService(overrides: Partial<FinanceService> = {}): FinanceService {
 }
 
 describe('FinancePage', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
   it('shows cashbook without auxiliary account debt and voucher sections', async () => {
     render(<FinancePage service={makeService()} />)
 
@@ -244,11 +304,11 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await userEvent.type(await screen.findByLabelText('Tìm công nợ'), 'nam')
-    const debtFilterButton = screen.getByRole('button', { name: 'Lọc công nợ' })
-    expect(screen.getByLabelText('Tìm công nợ').closest('.management-compact-search')).toContainElement(debtFilterButton)
-    expect(debtFilterButton).toHaveClass('management-compact-create-action')
-    expect(debtFilterButton).toHaveTextContent('')
-    await userEvent.click(debtFilterButton)
+    const createVoucherButton = screen.getByRole('button', { name: 'Tạo phiếu thu chi' })
+    expect(screen.getByLabelText('Tìm công nợ').closest('.management-compact-search')).toContainElement(createVoucherButton)
+    expect(createVoucherButton).toHaveClass('management-compact-create-action')
+    expect(createVoucherButton).toHaveTextContent('')
+    await userEvent.keyboard('{Enter}')
 
     expect(service.listCustomerDebts).toHaveBeenLastCalledWith({ search: 'nam', page: 1, page_size: 15 })
 
@@ -260,7 +320,8 @@ describe('FinancePage', () => {
       search_scope: 'all',
       from: '2026-07-01',
       to: '2026-07-31',
-      finance_account_id: 'cash-1',
+      finance_account_id: undefined,
+      finance_account_type: undefined,
       direction: 'in',
       status: 'posted',
       is_business_accounted: undefined,
@@ -280,22 +341,35 @@ describe('FinancePage', () => {
     expect(within(sidebar).queryByRole('heading', { name: 'Sổ quỹ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm sổ quỹ')).not.toBeInTheDocument()
     expect(within(sidebar).queryByLabelText('Tìm theo')).not.toBeInTheDocument()
-    expect(within(sidebar).getByRole('radio', { name: 'Tiền mặt' })).toBeChecked()
+    expect(within(sidebar).getByRole('radio', { name: 'Tổng quỹ' })).toBeChecked()
+    expect(within(sidebar).getByRole('radio', { name: 'Tiền mặt' })).not.toBeChecked()
     expect(within(sidebar).getByRole('radio', { name: 'Ngân hàng' })).not.toBeChecked()
     expect(within(sidebar).getAllByRole('radio', { name: /Tiền mặt|Ngân hàng|Tổng quỹ/ }).map((input) => input.closest('label')?.textContent)).toEqual([
+      'Tổng quỹ',
       'Tiền mặt',
       'Ngân hàng',
-      'Tổng quỹ',
     ])
+    await waitFor(() => expect(service.listCashbookEntries).toHaveBeenCalled())
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.not.objectContaining({
+      finance_account_id: 'cash-1',
+    }))
     expect(within(sidebar).queryByRole('combobox', { name: 'Quỹ tiền' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Loại chứng từ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Trạng thái sổ quỹ' })).not.toBeInTheDocument()
     expect(within(sidebar).queryByRole('combobox', { name: 'Hạch toán KQKD' })).not.toBeInTheDocument()
 
     await userEvent.click(within(sidebar).getByRole('radio', { name: 'Ngân hàng' }))
+    await waitFor(() => {
+      expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
+        finance_account_id: undefined,
+        finance_account_type: 'bank',
+      }))
+    })
     expect(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' })).toHaveTextContent('Chọn tài khoản')
     await userEvent.click(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' }))
-    expect(within(sidebar).getByRole('textbox', { name: 'Tìm kiếm tài khoản' })).toBeInTheDocument()
+    expect(within(sidebar).queryByRole('textbox', { name: 'Tìm kiếm tài khoản' })).not.toBeInTheDocument()
+    expect(within(sidebar).getByRole('button', { name: /Sửa tài khoản MB01 - MB Bank/ })).toHaveClass('management-icon-button')
+    expect(within(sidebar).getByRole('button', { name: /Ghim tài khoản MB01 - MB Bank/ })).toHaveClass('management-icon-button')
     await userEvent.click(within(sidebar).getByRole('option', { name: /MB01 - MB Bank/ }))
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Phiếu thu' }))
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' }))
@@ -315,6 +389,45 @@ describe('FinancePage', () => {
     })
   })
 
+  it('shows edit and pin actions on bank account options', async () => {
+    const secondBankAccount: FinanceAccount = {
+      id: 'bank-2',
+      code: 'VCB',
+      name: 'Vietcombank',
+      account_type: 'bank',
+      is_default_cash: false,
+      is_active: true,
+      account_number: '0771000598653',
+      account_holder: 'VAN VIET PHUONG LAM',
+    }
+    const service = makeService({
+      listAccounts: vi.fn(async () => ({ items: [...accounts, secondBankAccount] })),
+    })
+    render(<FinancePage service={service} />)
+
+    const sidebar = await screen.findByRole('complementary', { name: 'Bộ lọc tài chính' })
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'Ngân hàng' }))
+    await userEvent.click(within(sidebar).getByRole('button', { name: 'Chọn tài khoản' }))
+
+    const pinButton = within(sidebar).getByRole('button', { name: /Ghim tài khoản MB01 - MB Bank/ })
+    expect(pinButton).toHaveClass('management-icon-button')
+    expect(pinButton).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(pinButton)
+    expect(pinButton).toHaveAttribute('aria-pressed', 'true')
+    expect(pinButton).toHaveClass('management-filter-account-action-pinned')
+    expect(JSON.parse(window.localStorage.getItem('finance.bankAccounts.pinnedIds') ?? '[]')).toEqual(['bank-1'])
+
+    await userEvent.click(within(sidebar).getByRole('button', { name: /Sửa tài khoản MB01 - MB Bank/ }))
+    const dialog = await screen.findByRole('dialog', { name: 'Sửa tài khoản ngân hàng' })
+    expect(within(dialog).getByLabelText('Số tài khoản')).toHaveValue('')
+    expect(within(dialog).getByLabelText('Chủ tài khoản')).toHaveValue('')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Đóng popup sửa tài khoản ngân hàng' }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo phiếu thu chi' }))
+    const voucherDialog = await screen.findByRole('dialog', { name: 'Tạo phiếu thu' })
+    expect(within(voucherDialog).getByLabelText('Tài khoản nhận')).toHaveValue('bank-1')
+  })
+
   it('uses KV-style checkbox defaults for cashbook direction and status filters', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
@@ -327,8 +440,10 @@ describe('FinancePage', () => {
     expect(within(sidebar).getByRole('checkbox', { name: 'Đã thanh toán' })).toBeChecked()
     expect(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' })).not.toBeChecked()
 
-    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.not.objectContaining({
       finance_account_id: 'cash-1',
+    }))
+    expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
       direction: 'all',
       status: 'posted',
     }))
@@ -342,6 +457,34 @@ describe('FinancePage', () => {
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã thanh toán' }))
     await userEvent.click(within(sidebar).getByRole('checkbox', { name: 'Đã hủy' }))
     expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'cancelled' }))
+  })
+
+  it('shows only bank cashbook rows when the bank fund filter is selected', async () => {
+    const service = makeService({
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 0, total_in: 500000, total_out: -6899000, ending_balance: -6399000 },
+        items: [entry, expenseEntry],
+        page: 1,
+        page_size: 15,
+        total: 2,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc tài chính' })
+
+    await userEvent.click(within(sidebar).getByRole('radio', { name: 'Ngân hàng' }))
+
+    await waitFor(() => {
+      expect(service.listCashbookEntries).toHaveBeenLastCalledWith(expect.objectContaining({
+        finance_account_id: undefined,
+        finance_account_type: 'bank',
+      }))
+    })
+    expect(within(table).queryByRole('row', { name: /PT0001/ })).not.toBeInTheDocument()
+    expect(within(table).getByRole('row', { name: /PCPN000679/ })).toHaveTextContent('Ngân hàng')
+    expect(within(table).queryByText('Tiền mặt')).not.toBeInTheDocument()
   })
 
   it('adds a local bank account from the cashbook bank picker', async () => {
@@ -411,7 +554,7 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('table', { name: 'Sổ quỹ' })
-    const voucherActions = screen.getByLabelText('Tạo phiếu thu chi')
+    const voucherActions = screen.getByLabelText('Tác vụ sổ quỹ')
     expect(within(voucherActions).getByRole('button', { name: 'Xuất file' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Cột' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Chọn cột sổ quỹ' })).not.toBeInTheDocument()
@@ -430,13 +573,16 @@ describe('FinancePage', () => {
     render(<FinancePage service={makeService()} />)
 
     const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
-    const voucherActions = screen.getByLabelText('Tạo phiếu thu chi')
+    const voucherActions = screen.getByLabelText('Tác vụ sổ quỹ')
 
-    expect(within(voucherActions).getByRole('button', { name: '+ Phiếu thu' })).toBeInTheDocument()
-    expect(within(voucherActions).getByRole('button', { name: '+ Phiếu chi' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tạo phiếu thu chi' })).toBeInTheDocument()
+    expect(within(voucherActions).queryByRole('button', { name: '+ Phiếu thu' })).not.toBeInTheDocument()
+    expect(within(voucherActions).queryByRole('button', { name: '+ Phiếu chi' })).not.toBeInTheDocument()
     expect(within(voucherActions).getByRole('button', { name: 'Xuất file' })).toBeInTheDocument()
 
-    expect(within(table).getByRole('checkbox', { name: 'Chọn tất cả dòng sổ quỹ' })).toBeInTheDocument()
+    const selectAllCheckbox = within(table).getByRole('checkbox', { name: 'Chọn tất cả dòng sổ quỹ' })
+    expect(selectAllCheckbox).toBeInTheDocument()
+    expect(selectAllCheckbox.parentElement).toHaveClass('finance-cashbook-checkbox-control')
     expect(within(table).getByRole('columnheader', { name: 'Đánh dấu' })).toBeInTheDocument()
     expect(within(table).getByRole('columnheader', { name: 'Mã phiếu' })).toBeInTheDocument()
     expect(within(table).getByRole('columnheader', { name: 'Thời gian' })).toBeInTheDocument()
@@ -477,7 +623,7 @@ describe('FinancePage', () => {
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
   })
 
-  it('keeps cashbook rows visible when an older API response omits counterparty', async () => {
+  it('keeps cashbook rows visible and hydrates when an older API response omits counterparty', async () => {
     const legacyEntry = { ...entry }
     delete (legacyEntry as Partial<CashbookEntry>).counterparty
     const service = makeService({
@@ -494,10 +640,12 @@ describe('FinancePage', () => {
     const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
     const row = within(table).getByRole('row', { name: /PT0001/ })
 
-    expect(within(row).getByText('-')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT0001 từ Người nộp Anh Nam' })).toBeInTheDocument()
+    })
   })
 
-  it('hydrates the cashbook row counterparty from opened detail', async () => {
+  it('keeps hydrated cashbook row counterparties when opening detail', async () => {
     const service = makeService({
       getCashbookEntry: vi.fn(async () => noteLinkedReceiptDetail),
       listCashbookEntries: vi.fn(async () => ({
@@ -513,21 +661,72 @@ describe('FinancePage', () => {
     const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
     const row = within(table).getByRole('row', { name: /PT000015/ })
 
-    expect(within(row).getByText('-')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp khách lẻ' })).toBeInTheDocument()
+    })
     await userEvent.click(row)
 
     expect(await screen.findByRole('button', { name: 'Người nộp Khách lẻ' })).toBeInTheDocument()
     await waitFor(() => {
-      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp Khách lẻ' })).toBeInTheDocument()
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp khách lẻ' })).toBeInTheDocument()
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp khách lẻ' })).toHaveTextContent('khách lẻ')
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp khách lẻ' })).toHaveClass('finance-cashbook-counterparty-link')
     })
+  })
+
+  it('hydrates missing cashbook row counterparties before opening detail', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => noteLinkedReceiptDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 500000, total_out: 100000, ending_balance: 400000 },
+        items: [noteLinkedReceiptEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const row = within(table).getByRole('row', { name: /PT000015/ })
+
+    await waitFor(() => {
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000015 từ Người nộp khách lẻ' })).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('region', { name: 'Chi tiết sổ quỹ PT000015' })).not.toBeInTheDocument()
+    expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-note-linked')
+  })
+
+  it('hydrates missing payment receipt counterparty even when note has no invoice code', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => receiptDetailWithoutDocumentNote),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 90000, total_out: 100000, ending_balance: 90000 },
+        items: [receiptEntryWithoutDocumentNote],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    const table = await screen.findByRole('table', { name: 'Sổ quỹ' })
+    const row = within(table).getByRole('row', { name: /PT000009/ })
+
+    await waitFor(() => {
+      expect(within(row).getByRole('button', { name: 'Mở chi tiết PT000009 từ Người nộp khách lẻ' })).toBeInTheDocument()
+    })
+    expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-receipt-no-note')
   })
 
   it('creates a manual cashbook expense voucher and reloads cashbook data', async () => {
     const service = makeService()
     render(<FinancePage service={service} />)
 
-    await userEvent.click(await screen.findByRole('button', { name: '+ Phiếu chi' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Tạo phiếu thu chi' }))
+    await userEvent.click(await screen.findByRole('tab', { name: 'Phiếu chi' }))
     expect(await screen.findByRole('dialog', { name: 'Tạo phiếu chi' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Phiếu chi' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('heading', { name: 'Tạo phiếu chi tiền mặt' })).toBeInTheDocument()
     const form = await screen.findByRole('form', { name: 'Tạo phiếu chi' })
 
@@ -575,7 +774,8 @@ describe('FinancePage', () => {
     expect(detail.closest('tr')).toHaveClass('management-detail-row')
     expect(within(detail).getByRole('tab', { name: 'Thông tin' })).toBeInTheDocument()
     expect(within(detail).getByRole('heading', { name: 'Phiếu thu PT0001' })).toBeInTheDocument()
-    expect(within(detail).getAllByText('Đã thanh toán').length).toBeGreaterThan(0)
+    expect(within(detail).queryByText('Đã thanh toán')).not.toBeInTheDocument()
+    expect(within(detail).getByText('Hoàn tất')).toHaveClass('status-chip', 'status-chip-success')
     expect(within(detail).getByText('Có hạch toán')).toBeInTheDocument()
     expect(within(detail).queryByText('Chi nhánh trung tâm')).not.toBeInTheDocument()
     expect(detail.querySelector('.finance-cashbook-detail')).toHaveClass('management-detail-panel')
@@ -589,7 +789,7 @@ describe('FinancePage', () => {
       detail.querySelector('.management-detail-inline-note')?.compareDocumentPosition(
         detail.querySelector('.finance-cashbook-linked-documents') as Node,
       ),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    ).toBe(Node.DOCUMENT_POSITION_PRECEDING)
     const detailText = detail.textContent ?? ''
     expect(detailText).toContain('Người tạo: Văn Viết Phương Lâm')
     expect(detailText).not.toContain('Người thu')
@@ -602,20 +802,27 @@ describe('FinancePage', () => {
     expect(within(detail).getByRole('button', { name: 'Người nộp Anh Nam' })).toBeInTheDocument()
     expect(within(detail).getByText('Đến quỹ')).toBeInTheDocument()
     expect(within(detail).getByText('Phiếu thu tự động được gắn với hóa đơn HD0001.')).toBeInTheDocument()
-    expect(within(detail).getByRole('table', { name: 'Chứng từ liên kết' })).toBeInTheDocument()
+    const linkedDocumentsTable = within(detail).getByRole('table', { name: 'Chứng từ liên kết' })
+    expect(linkedDocumentsTable).toBeInTheDocument()
+    expect(within(linkedDocumentsTable).getByRole('columnheader', { name: 'Tổng sau giảm' })).toBeInTheDocument()
+    expect(within(linkedDocumentsTable).queryByRole('columnheader', { name: 'Giá trị phiếu' })).not.toBeInTheDocument()
+    expect(within(linkedDocumentsTable).queryByRole('columnheader', { name: 'Trạng thái' })).not.toBeInTheDocument()
     expect(within(detail).getByText('Thu nợ')).toBeInTheDocument()
-    expect(within(detail).getByRole('button', { name: 'Xóa phiếu PT0001' })).toBeDisabled()
+    expect(within(detail).getByText('Hoàn tất')).toHaveClass('status-chip', 'status-chip-success')
+    expect(within(detail).getByRole('button', { name: 'Xóa phiếu PT0001' })).toBeEnabled()
     expect(within(detail).queryByRole('button', { name: 'Hủy phiếu PT0001' })).not.toBeInTheDocument()
-    expect(within(detail).getByRole('button', { name: 'Chỉnh sửa phiếu PT0001' })).toBeDisabled()
-    expect(within(detail).getByRole('button', { name: 'In phiếu PT0001' })).toBeDisabled()
+    expect(within(detail).getByRole('button', { name: 'Sửa phiếu PT0001' })).toBeEnabled()
+    expect(within(detail).getByRole('button', { name: 'Sửa phiếu PT0001' })).toHaveClass('button-secondary')
+    expect(within(detail).queryByRole('button', { name: 'Chỉnh sửa phiếu PT0001' })).not.toBeInTheDocument()
+    expect(within(detail).getByRole('button', { name: 'In phiếu PT0001' })).toBeEnabled()
     expect(within(detail).getAllByText('HD0001').length).toBeGreaterThan(0)
     expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1')
-    expect(service.getCashbookEntry).toHaveBeenCalledTimes(1)
+    const callsBeforeClose = vi.mocked(service.getCashbookEntry).mock.calls.length
 
     await userEvent.click(cashbookRow as HTMLTableRowElement)
     expect(screen.queryByRole('region', { name: 'Chi tiết sổ quỹ PT0001' })).not.toBeInTheDocument()
     expect(cashbookRow).not.toHaveClass('management-data-row-selected')
-    expect(service.getCashbookEntry).toHaveBeenCalledTimes(1)
+    expect(service.getCashbookEntry).toHaveBeenCalledTimes(callsBeforeClose)
   })
 
   it('keeps cashbook row utilities from opening inline detail', async () => {
@@ -624,11 +831,13 @@ describe('FinancePage', () => {
     render(<FinancePage service={service} />)
 
     await screen.findByRole('button', { name: 'Mở chi tiết PT0001' })
+    await waitFor(() => expect(service.getCashbookEntry).toHaveBeenCalledWith('entry-1'))
+    const callsBeforeUtilityClicks = vi.mocked(service.getCashbookEntry).mock.calls.length
     await userEvent.click(screen.getByRole('button', { name: 'Đánh dấu ưu tiên PT0001' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'Chọn dòng PT0001' }))
 
     expect(screen.queryByRole('region', { name: 'Chi tiết sổ quỹ PT0001' })).not.toBeInTheDocument()
-    expect(service.getCashbookEntry).not.toHaveBeenCalled()
+    expect(service.getCashbookEntry).toHaveBeenCalledTimes(callsBeforeUtilityClicks)
   })
 
   it('shows expense cashbook detail with payer-free log and expense allocation wording', async () => {
@@ -694,12 +903,82 @@ describe('FinancePage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PT000015' }))
 
     const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT000015' })
+    expect(within(detail).getByText('Hoàn tất')).toHaveClass('status-chip', 'status-chip-success')
     expect(within(detail).queryByText('Không có chứng từ liên kết.')).not.toBeInTheDocument()
     expect(within(detail).queryByText('Không có kết quả phù hợp')).not.toBeInTheDocument()
     expect(within(detail).getByText('Phiếu thu tự động được gắn với hóa đơn HD000015.')).toBeInTheDocument()
     expect(within(detail).getAllByText('HD000015').length).toBeGreaterThan(0)
+    const linkedDocuments = within(detail).getByRole('table', { name: 'Chứng từ liên kết' })
+    const row = within(linkedDocuments).getByText('HD000015').closest('tr')
+    expect(row).not.toBeNull()
+    expect(within(linkedDocuments).queryByRole('columnheader', { name: 'Trạng thái' })).not.toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).queryByText('Hoàn tất')).not.toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).queryByText('Đã thanh toán')).not.toBeInTheDocument()
     expect(within(detail).queryByText('Checkout HD000015')).not.toBeInTheDocument()
     expect(within(detail).getByText('Chưa có ghi chú')).toBeInTheDocument()
+  })
+
+  it('shows invoice payment state from linked allocation totals', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => partialCheckoutReceiptDetail),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 100000, total_out: 0, ending_balance: 200000 },
+        items: [partialCheckoutReceiptEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PT000020' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT000020' })
+    expect(within(detail).getByText('Thanh toán 1 phần')).toHaveClass('status-chip', 'status-chip-warning')
+    const linkedDocuments = within(detail).getByRole('table', { name: 'Chứng từ liên kết' })
+    expect(within(linkedDocuments).getByRole('columnheader', { name: 'Chưa TT' })).toBeInTheDocument()
+    expect(within(linkedDocuments).queryByRole('columnheader', { name: 'Đã thu trước' })).not.toBeInTheDocument()
+    expect(within(linkedDocuments).queryByRole('columnheader', { name: 'Trạng thái' })).not.toBeInTheDocument()
+    const row = within(linkedDocuments).getByText('HD000020').closest('tr')
+    expect(row).not.toBeNull()
+    expect(within(row as HTMLTableRowElement).getByText('600 000')).toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).getByText('500 000')).toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).getByText('100 000')).toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).queryByText('Thanh toán 1 phần')).not.toBeInTheDocument()
+  })
+
+  it('hydrates missing linked invoice allocation from the sales document', async () => {
+    const service = makeService({
+      getCashbookEntry: vi.fn(async () => stalePartialCheckoutReceiptDetail),
+      getSalesDocumentByCode: vi.fn(async () => ({
+        id: 'order-20',
+        code: 'HD000020',
+        total_amount: 600000,
+        paid_amount: 100000,
+        debt_amount: 500000,
+        payment_status: 'partial' as const,
+      })),
+      listCashbookEntries: vi.fn(async () => ({
+        summary: { opening_balance: 100000, total_in: 100000, total_out: 0, ending_balance: 200000 },
+        items: [partialCheckoutReceiptEntry],
+        page: 1,
+        page_size: 15,
+        total: 1,
+      })),
+    })
+    render(<FinancePage service={service} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mở chi tiết PT000020' }))
+
+    const detail = await screen.findByRole('region', { name: 'Chi tiết sổ quỹ PT000020' })
+    expect(within(detail).getByText('Thanh toán 1 phần')).toHaveClass('status-chip', 'status-chip-warning')
+    const linkedDocuments = within(detail).getByRole('table', { name: 'Chứng từ liên kết' })
+    const row = within(linkedDocuments).getByText('HD000020').closest('tr')
+    expect(row).not.toBeNull()
+    expect(within(row as HTMLTableRowElement).getByText('600 000')).toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).getByText('500 000')).toBeInTheDocument()
+    expect(within(row as HTMLTableRowElement).getByText('100 000')).toBeInTheDocument()
+    expect(service.getSalesDocumentByCode).toHaveBeenCalledWith('HD000020')
   })
 
   it('persists cashbook favorite marks and filters the current page by favorites', async () => {

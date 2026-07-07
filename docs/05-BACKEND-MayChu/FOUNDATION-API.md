@@ -15,6 +15,7 @@ Mọi endpoint được bảo vệ nhận:
 ```http
 Authorization: Bearer <supabase_access_token>
 X-Workstation-Id: <uuid>
+X-Client-Device-Id: <uuid>
 X-Request-Id: <client-generated-id>   # không bắt buộc
 ```
 
@@ -22,6 +23,7 @@ Quy tắc:
 
 - `Authorization` bắt buộc, trừ health check.
 - `X-Workstation-Id` bắt buộc với request nghiệp vụ sau khi user đã chọn máy trạm; `/me` và danh sách workstation cho phép thiếu trong lần khởi tạo đầu tiên.
+- `X-Client-Device-Id` do frontend sinh và lưu trong `localStorage` theo từng browser; `/me` dùng header này để tách thiết bị đăng nhập. Header này phải nằm trong CORS allowlist, nếu thiếu browser sẽ chặn request sau preflight.
 - Backend xác thực workstation active và cùng organization với user.
 - Nếu thiếu `X-Request-Id`, Backend tự sinh `trace_id`.
 
@@ -122,7 +124,8 @@ Không trả environment variable, connection string hoặc thông tin hạ tầ
 3. Từ chối profile không tồn tại hoặc inactive.
 4. Tải danh sách permission active.
 5. Nếu có `X-Workstation-Id`, kiểm tra workstation.
-6. Trả dữ liệu phiên ứng dụng.
+6. Ghi nhận thiết bị hiện tại từ `x-client-device-id`; fallback về `User-Agent` và IP request nếu header thiếu.
+7. Trả dữ liệu phiên ứng dụng.
 
 **Response data:**
 
@@ -132,6 +135,16 @@ Không trả environment variable, connection string hoặc thông tin hạ tầ
     "id": "uuid",
     "email": "user@example.com",
     "display_name": "Thu ngân 1"
+  },
+  "profile": {
+    "username": "0947900909",
+    "phone": "0947900909",
+    "email": "contact@example.com",
+    "birthday": "1990-01-31",
+    "region": "TP Hồ Chí Minh",
+    "ward": "Phường Bến Nghé",
+    "address": "1 Lê Lợi",
+    "note": "Ca sáng"
   },
   "organization": {
     "id": "uuid",
@@ -143,11 +156,63 @@ Không trả environment variable, connection string hoặc thông tin hạ tầ
     "code": "POS-01",
     "name": "Quầy thu ngân 1"
   },
+  "devices": [
+    {
+      "id": "uuid",
+      "device_name": "Chrome trên macOS",
+      "device_type": "desktop",
+      "browser_name": "Chrome",
+      "os_name": "macOS",
+      "ip_address": "203.0.113.10",
+      "last_seen_at": "2026-07-06T14:00:00Z",
+      "created_at": "2026-07-06T13:00:00Z",
+      "is_current_device": true,
+      "status": "active"
+    }
+  ],
   "permissions": ["perm.create_order"]
 }
 ```
 
 `workstation` trả `null` nếu request khởi tạo chưa gửi header.
+Các field trong `profile` trả `null` nếu chưa lưu dữ liệu.
+`devices` trả tối đa 10 thiết bị active mới nhất của user hiện tại. Frontend phải gửi header `x-client-device-id` ổn định theo từng browser để backend không gộp Chrome ngoài với browser Codex khi cùng `User-Agent` và IP. Tên thiết bị ưu tiên dạng `Chrome trên macOS` khi backend nhận diện được trình duyệt và hệ điều hành từ `User-Agent`.
+
+### `PATCH /me/devices/:id/sign-out`
+
+**Auth:** Bắt buộc; user chỉ thao tác trên thiết bị của chính mình.
+
+Thu hồi session khác của cùng user bằng Supabase Auth Admin `signOut(accessToken, "others")`, đánh dấu mọi thiết bị active khác thiết bị hiện tại thành `signed_out` trong `account_devices`, rồi trả danh sách thiết bị active còn lại. Endpoint không cho sign out thiết bị hiện tại. Do giới hạn Supabase, thao tác theo một dòng thiết bị sẽ đăng xuất tất cả session khác, không chỉ đúng một session remote riêng lẻ.
+
+### `PATCH /me/profile`
+
+**Auth:** Bắt buộc; user chỉ sửa hồ sơ của chính mình.
+
+**Input:**
+
+```json
+{
+  "display_name": "Văn Lâm",
+  "username": "0947900909",
+  "phone": "0947900909",
+  "email": "contact@example.com",
+  "birthday": "1990-01-31",
+  "region": "TP Hồ Chí Minh",
+  "ward": "Phường Bến Nghé",
+  "address": "1 Lê Lợi",
+  "note": "Ghi chú"
+}
+```
+
+**Validation:**
+
+- `display_name` bắt buộc, trim, 1-100 ký tự.
+- Chuỗi rỗng của các field còn lại lưu thành `null`.
+- `phone` chỉ gồm số/khoảng trắng/`+().-`, 8-20 ký tự.
+- `email` là email liên hệ hiển thị, không đổi email đăng nhập Supabase Auth.
+- `birthday` dùng định dạng `YYYY-MM-DD`.
+
+**Response data:** giống `GET /me` sau khi cập nhật.
 
 ---
 
@@ -192,11 +257,27 @@ Mọi endpoint trong mục này yêu cầu `perm.manage_users`.
 
 Query hỗ trợ:
 
-- `search`: tìm theo display name hoặc email;
+- `search`: tìm theo display name, username, phone hoặc email liên hệ;
 - `status`: `active` hoặc `inactive`;
 - `page`, `page_size`; `page_size` tối đa 100.
 
 Chỉ trả user trong cùng organization với actor.
+
+Response mỗi item:
+
+```json
+{
+  "id": "uuid",
+  "email": "cashier@example.com",
+  "username": "cashier01",
+  "phone": "0900000000",
+  "display_name": "Thu ngân 1",
+  "status": "active",
+  "permissions": ["perm.create_order"]
+}
+```
+
+Frontend `/admin` hiển thị `Vai trò` bằng cách suy ra từ permissions hiện có trong MVP: `perm.manage_users` → `Quản trị`, `perm.manage_finance` → `Kế toán`, `perm.manage_inventory` → `Quản lý kho`, `perm.create_order` → `Nhân viên thu ngân`, còn lại → `Nhân viên`.
 
 ### `GET /users/{id}`
 
@@ -209,6 +290,13 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 ```json
 {
   "email": "cashier@example.com",
+  "username": "cashier-01",
+  "phone": "0947900909",
+  "birthday": "1990-01-31",
+  "region": "TP Hồ Chí Minh",
+  "ward": "Phường Bến Thành",
+  "address": "12 Nguyễn Trãi",
+  "note": "Ca tối",
   "password": "temporary-secret",
   "display_name": "Thu ngân 1",
   "permissions": ["perm.create_order"]
@@ -218,6 +306,10 @@ Trả profile, email, trạng thái và permission của một user cùng organi
 **Validation:**
 
 - Email hợp lệ và chưa tồn tại.
+- `username` sau trim không rỗng, tối đa 100 ký tự; nếu không gửi thì dùng email.
+- `phone` cho phép trống hoặc số/ký tự điện thoại phổ biến, 8-20 ký tự.
+- `birthday` cho phép trống hoặc định dạng `YYYY-MM-DD`.
+- `region`, `ward`, `address`, `note` cho phép trống; lần lượt tối đa 100, 100, 255, 500 ký tự.
 - Password đáp ứng policy Auth của môi trường.
 - `display_name` sau trim không rỗng, tối đa 100 ký tự.
 - Mọi permission code tồn tại và đang active.

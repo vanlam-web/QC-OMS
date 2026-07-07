@@ -62,6 +62,14 @@ Mở rộng định danh `auth.users` bằng dữ liệu ứng dụng.
 | `user_id` | `uuid` | Không | PK, FK → `auth.users.id`, `ON DELETE RESTRICT` |
 | `organization_id` | `uuid` | Không | FK → `organizations.id`, `ON DELETE RESTRICT` |
 | `display_name` | `text` | Không | Tên hiển thị trong POS |
+| `username` | `text` | Có | Tên đăng nhập hiển thị trong app, tối đa 100 ký tự; không phải Supabase Auth login |
+| `phone` | `text` | Có | Điện thoại liên hệ, CHECK số/khoảng trắng/`+().-`, 8-20 ký tự |
+| `email` | `text` | Có | Email liên hệ hiển thị trong app; không thay email đăng nhập Supabase Auth |
+| `birthday` | `date` | Có | Sinh nhật người dùng |
+| `region` | `text` | Có | Khu vực/tỉnh thành, tối đa 100 ký tự |
+| `ward` | `text` | Có | Phường/xã, tối đa 100 ký tự |
+| `address` | `text` | Có | Địa chỉ, tối đa 255 ký tự |
+| `note` | `text` | Có | Ghi chú hồ sơ, tối đa 500 ký tự |
 | `status` | `text` | Không | CHECK theo §2, mặc định `active` |
 | `created_at` | `timestamptz` | Không | Mặc định `now()` |
 | `updated_at` | `timestamptz` | Không | Mặc định `now()` |
@@ -71,11 +79,42 @@ Index:
 - `idx_profiles_organization_id` trên `organization_id`.
 - `idx_profiles_org_status` trên `(organization_id, status)`.
 
-Email và mật khẩu không lặp lại ở bảng này; đọc từ Supabase Auth trong Backend khi thật sự cần.
+Email đăng nhập và mật khẩu không lặp lại ở bảng này; đọc từ Supabase Auth trong Backend khi thật sự cần. Cột `profiles.email` chỉ là email liên hệ/hiển thị cho trang tài khoản và có thể khác email đăng nhập.
 
 ---
 
-## 5. BẢNG `public.workstations`
+## 5. BẢNG `public.account_devices`
+
+Lưu các thiết bị/phiên đã thấy của từng user để trang `/account` hiển thị “Các thiết bị đã đăng nhập”.
+
+| Cột | Kiểu | Null | Ràng buộc/Mô tả |
+|---|---|---|---|
+| `id` | `uuid` | Không | PK, mặc định `gen_random_uuid()` |
+| `user_id` | `uuid` | Không | FK → `profiles.user_id`, `ON DELETE CASCADE` |
+| `device_key` | `text` | Không | Hash nội bộ theo user + `x-client-device-id`; fallback user + user agent + IP nếu header thiếu; unique theo user |
+| `device_name` | `text` | Không | Tên hiển thị, ưu tiên dạng `Chrome trên macOS` khi nhận diện được |
+| `device_type` | `text` | Không | `desktop`, `mobile`, `tablet`, `unknown` |
+| `browser_name` | `text` | Có | Chrome, Safari, Firefox, Edge nếu nhận diện được |
+| `os_name` | `text` | Có | macOS, Windows, Android, iOS, Linux nếu nhận diện được |
+| `ip_address` | `text` | Có | IP gần nhất backend thấy |
+| `status` | `text` | Không | `active` hoặc `signed_out` |
+| `last_seen_at` | `timestamptz` | Không | Lần gần nhất request `/me` ghi nhận thiết bị |
+| `created_at` | `timestamptz` | Không | Lần đầu thấy thiết bị |
+| `updated_at` | `timestamptz` | Không | Trigger `set_updated_at` |
+
+Index:
+
+- `idx_account_devices_user_last_seen` trên `(user_id, last_seen_at desc)`.
+
+Quyền backend:
+
+- `service_role` cần `SELECT`, `INSERT`, `UPDATE` trên `public.account_devices` vì Edge Function `/api/v1/me` ghi/upsert thiết bị hiện tại và đọc danh sách thiết bị cho trang `/account`.
+
+Logout thiết bị khác hiện dùng Supabase Auth Admin `signOut(accessToken, "others")`, nên thu hồi tất cả session khác của cùng user rồi đánh dấu các thiết bị active khác thiết bị hiện tại là `signed_out`. Supabase không expose chắc chắn thao tác “xóa đúng một session remote” theo từng dòng `account_devices`; nếu cần mức đó phải thiết kế thêm session binding riêng.
+
+---
+
+## 6. BẢNG `public.workstations`
 
 Lưu định danh máy/quầy sử dụng QC-OMS.
 
@@ -99,7 +138,7 @@ Máy trạm không gắn cứng vào user. Trình duyệt lưu workstation đang
 
 ---
 
-## 6. BẢNG `public.permissions`
+## 7. BẢNG `public.permissions`
 
 Danh mục mã quyền do hệ thống cung cấp.
 
@@ -115,9 +154,11 @@ Mã quyền chỉ được thêm bằng migration/seed có review. Không cho ng
 
 ---
 
-## 7. BẢNG `public.user_permissions`
+## 8. BẢNG `public.user_permissions`
 
 Gán permission cho từng user.
+
+MVP chưa có bảng `roles` riêng. Màn `/admin` hiển thị cột `Vai trò` bằng nhãn suy ra từ tập permission hiện tại để operator dễ đọc, nhưng nguồn dữ liệu thật vẫn là `user_permissions`. Khi cần phân quyền theo vai trò đầy đủ, tạo schema role/role_permissions mới thay vì nhét role text vào profile.
 
 | Cột | Kiểu | Null | Ràng buộc/Mô tả |
 |---|---|---|---|
@@ -134,7 +175,7 @@ Ràng buộc và index:
 
 ---
 
-## 8. BẢNG `public.permission_audit_logs`
+## 9. BẢNG `public.permission_audit_logs`
 
 Lưu lịch sử thay đổi permission, không update hoặc delete qua ứng dụng.
 

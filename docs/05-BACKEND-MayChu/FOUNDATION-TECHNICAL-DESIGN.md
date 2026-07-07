@@ -153,6 +153,22 @@ Sau khi Auth thành công:
 
 Máy trạm là định danh thiết bị/quầy, không gắn cứng vào một người dùng. Một người có thể đăng nhập ở máy khác nếu có quyền sử dụng hệ thống.
 
+### 6.1.1. Hồ sơ tài khoản tự sửa
+
+Trang `/account` đọc dữ liệu từ `GET /api/v1/me` và lưu bằng `PATCH /api/v1/me/profile`.
+
+Backend lưu các field tự sửa vào `public.profiles`: `display_name`, `username`, `phone`, `email`, `birthday`, `region`, `ward`, `address`, `note`. `profiles.email` là email liên hệ/hiển thị trong app, không đổi email đăng nhập Supabase Auth. Chuỗi rỗng được chuẩn hóa thành `null`.
+
+`Vai trò` không lưu qua popup tài khoản. Quyền hệ thống vẫn lấy từ `user_permissions`; thay đổi quyền phải đi qua luồng quản trị user.
+
+### 6.1.2. Thiết bị đã đăng nhập
+
+Mỗi lần `GET /api/v1/me` thành công, frontend gửi `x-client-device-id` lưu trong `localStorage` của từng browser; backend dùng mã này để tách thiết bị, fallback về `User-Agent` + IP nếu header thiếu. Nhờ vậy Chrome ngoài, browser Codex và browser khác không bị gộp nếu cùng IP/UA. Backend ghi/upsert thiết bị hiện tại vào `public.account_devices`; tên thiết bị ưu tiên dạng `Chrome trên macOS` khi nhận diện được cả trình duyệt và hệ điều hành. Response `/me` trả `devices` gồm tối đa 10 thiết bị active mới nhất, đánh dấu `is_current_device` cho thiết bị đang dùng.
+
+Migration tạo `account_devices` phải grant `SELECT`, `INSERT`, `UPDATE` cho `service_role`; nếu thiếu grant, Edge Function không ghi được thiết bị và `/me` sẽ trả `INTERNAL_ERROR`.
+
+Trang `/account` hiển thị tên thiết bị, loại thiết bị, trình duyệt, hệ điều hành, IP và `last_seen_at`. Nút `Đăng xuất` thiết bị khác gọi `PATCH /api/v1/me/devices/:id/sign-out`. Backend dùng Supabase Auth Admin `signOut(accessToken, "others")`, vì vậy thao tác này thu hồi tất cả session khác của cùng user, không thu hồi đúng 1 session remote riêng lẻ. Sau đó backend đánh dấu mọi thiết bị active khác thiết bị hiện tại là `signed_out` để danh sách chỉ còn thiết bị đang dùng.
+
 ### 6.2. Mất hoặc thu hồi quyền
 
 - FE subscribe thay đổi permission của user đang đăng nhập.
