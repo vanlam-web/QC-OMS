@@ -15,6 +15,7 @@ import { createBrowserFinanceService } from '../features/finance/finance-service
 import { createBrowserReportService } from '../features/reports/report-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 import { AppShell } from '../components/ui-shell/AppShell'
+import { appRoutes, quotePrintPath } from './routes'
 
 const PosShell = lazy(() => import('../features/pos/PosShell').then(({ PosShell }) => ({ default: PosShell })))
 const FoundationAdminPage = lazy(() =>
@@ -65,21 +66,21 @@ export function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<BootstrapScreen />}>
         <Routes>
-          <Route path="/login" element={<LoginRoute />} />
-          <Route path="/dashboard" element={<DashboardRoute />} />
-          <Route path="/pos" element={<PosRoute />} />
-          <Route path="/admin" element={<AdminRoute />} />
-          <Route path="/products" element={<CatalogRoute />} />
-          <Route path="/price-book" element={<PriceBookRoute />} />
-          <Route path="/customers" element={<CustomersRoute />} />
-          <Route path="/suppliers" element={<SuppliersRoute />} />
-          <Route path="/purchase/receipts" element={<PurchaseReceiptsRoute />} />
-          <Route path="/inventory" element={<InventoryRoute />} />
-          <Route path="/finance" element={<FinanceRoute />} />
-          <Route path="/reports" element={<ReportsRoute />} />
-          <Route path="/sales-documents" element={<SalesDocumentsRoute />} />
-          <Route path="/sales-documents/:id/quote-print" element={<QuotePrintRoute />} />
-          <Route path="/forbidden" element={<ForbiddenRoute />} />
+          <Route path={appRoutes.login} element={<LoginRoute />} />
+          <Route path={appRoutes.dashboard} element={<DashboardRoute />} />
+          <Route path={appRoutes.pos} element={<PosRoute />} />
+          <Route path={appRoutes.admin} element={<AdminRoute />} />
+          <Route path={appRoutes.products} element={<CatalogRoute />} />
+          <Route path={appRoutes.priceBook} element={<PriceBookRoute />} />
+          <Route path={appRoutes.customers} element={<CustomersRoute />} />
+          <Route path={appRoutes.suppliers} element={<SuppliersRoute />} />
+          <Route path={appRoutes.purchaseReceipts} element={<PurchaseReceiptsRoute />} />
+          <Route path={appRoutes.inventory} element={<InventoryRoute />} />
+          <Route path={appRoutes.finance} element={<FinanceRoute />} />
+          <Route path={appRoutes.reports} element={<ReportsRoute />} />
+          <Route path={appRoutes.salesDocuments} element={<SalesDocumentsRoute />} />
+          <Route path={appRoutes.quotePrint} element={<QuotePrintRoute />} />
+          <Route path={appRoutes.forbidden} element={<ForbiddenRoute />} />
           <Route path="*" element={<RootRedirect />} />
         </Routes>
       </Suspense>
@@ -90,7 +91,7 @@ export function AppRoutes() {
 function LoginRoute() {
   const { currentUser, initialized } = useAuth()
   if (!initialized) return <BootstrapScreen />
-  if (currentUser) return <Navigate to="/dashboard" replace />
+  if (currentUser) return <Navigate to={appRoutes.dashboard} replace />
   return <LoginPage />
 }
 
@@ -99,18 +100,18 @@ function DashboardRoute() {
   const navigate = useNavigate()
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
       <DashboardPage
         currentUser={currentUser}
-        onOpenPos={() => navigate('/pos')}
-        onOpenAdmin={() => navigate('/admin')}
-        onOpenPriceBook={() => navigate('/price-book')}
-        onOpenSalesDocuments={() => navigate('/sales-documents')}
-        onOpenSuppliers={() => navigate('/suppliers')}
-        onOpenPurchaseReceipts={() => navigate('/purchase/receipts')}
+        onOpenPos={() => navigate(appRoutes.pos)}
+        onOpenAdmin={() => navigate(appRoutes.admin)}
+        onOpenPriceBook={() => navigate(appRoutes.priceBook)}
+        onOpenSalesDocuments={() => navigate(appRoutes.salesDocuments)}
+        onOpenSuppliers={() => navigate(appRoutes.suppliers)}
+        onOpenPurchaseReceipts={() => navigate(appRoutes.purchaseReceipts)}
         onSignOut={() => void signOut()}
         showSignOut={false}
       />
@@ -129,8 +130,8 @@ function PosRoute() {
     [getAccessToken],
   )
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
-  if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to="/forbidden" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
+  if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to={appRoutes.forbidden} replace />
   return (
     <PosShell
       catalogService={catalogService}
@@ -140,8 +141,8 @@ function PosRoute() {
       currentUser={currentUser}
       connected={accessConnection === 'connected'}
       onSignOut={() => void signOut()}
-      onOpenAdmin={() => navigate('/admin')}
-      onOpenDashboard={() => navigate('/dashboard')}
+      onOpenAdmin={() => navigate(appRoutes.admin)}
+      onOpenDashboard={() => navigate(appRoutes.dashboard)}
     />
   )
 }
@@ -152,14 +153,14 @@ function AdminRoute() {
   const service = useMemo(() => createBrowserFoundationService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.access_admin_panel')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <FoundationAdminPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <FoundationAdminPage service={service} onOpenDashboard={() => navigate(appRoutes.dashboard)} />
     </AppShell>
   )
 }
@@ -170,14 +171,14 @@ function CatalogRoute() {
   const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.edit_price_book')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <CatalogPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <CatalogPage service={service} onOpenDashboard={() => navigate(appRoutes.dashboard)} />
     </AppShell>
   )
 }
@@ -188,14 +189,14 @@ function PriceBookRoute() {
   const service = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.edit_price_book')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <PriceBookPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <PriceBookPage service={service} onOpenDashboard={() => navigate(appRoutes.dashboard)} />
     </AppShell>
   )
 }
@@ -207,9 +208,9 @@ function CustomersRoute() {
   const salesDocumentService = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.create_order')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
@@ -229,14 +230,14 @@ function SuppliersRoute() {
   const service = useMemo(() => createBrowserSupplierService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.manage_inventory')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <SuppliersPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <SuppliersPage service={service} onOpenDashboard={() => navigate(appRoutes.dashboard)} />
     </AppShell>
   )
 }
@@ -247,14 +248,14 @@ function PurchaseReceiptsRoute() {
   const service = useMemo(() => createBrowserPurchaseReceiptService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.manage_inventory')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
     <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
-      <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate('/dashboard')} />
+      <PurchaseReceiptsPage service={service} onOpenDashboard={() => navigate(appRoutes.dashboard)} />
     </AppShell>
   )
 }
@@ -264,9 +265,9 @@ function InventoryRoute() {
   const service = useMemo(() => createBrowserInventoryService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.manage_inventory')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
@@ -281,9 +282,9 @@ function FinanceRoute() {
   const service = useMemo(() => createBrowserFinanceService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (!currentUser.permissions.includes('perm.manage_finance')) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
@@ -298,12 +299,12 @@ function ReportsRoute() {
   const service = useMemo(() => createBrowserReportService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
     !currentUser.permissions.includes('perm.manage_finance') ||
     !currentUser.permissions.includes('perm.manage_inventory')
   ) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
@@ -322,12 +323,12 @@ function SalesDocumentsRoute() {
   const catalogService = useMemo(() => createBrowserCatalogService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
     !currentUser.permissions.includes('perm.create_order') &&
     !currentUser.permissions.includes('perm.manage_finance')
   ) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
 
   return (
@@ -337,13 +338,13 @@ function SalesDocumentsRoute() {
         orderService={orderService}
         userService={userService}
         catalogService={catalogService}
-        onCreateSalesDocument={() => navigate('/pos')}
-        onOpenDashboard={() => navigate('/dashboard')}
+        onCreateSalesDocument={() => navigate(appRoutes.pos)}
+        onOpenDashboard={() => navigate(appRoutes.dashboard)}
         onOpenQuoteInPos={(payload) => {
           saveQuoteReopenPayload(payload)
-          navigate('/pos')
+          navigate(appRoutes.pos)
         }}
-        onOpenQuotePrint={(documentId) => navigate(`/sales-documents/${documentId}/quote-print`)}
+        onOpenQuotePrint={(documentId) => navigate(quotePrintPath(documentId))}
       />
     </AppShell>
   )
@@ -356,30 +357,30 @@ function QuotePrintRoute() {
   const service = useMemo(() => createBrowserSalesDocumentService(getAccessToken), [getAccessToken])
 
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
     !currentUser.permissions.includes('perm.create_order') &&
     !currentUser.permissions.includes('perm.manage_finance')
   ) {
-    return <Navigate to="/forbidden" replace />
+    return <Navigate to={appRoutes.forbidden} replace />
   }
-  if (!id) return <Navigate to="/sales-documents" replace />
+  if (!id) return <Navigate to={appRoutes.salesDocuments} replace />
 
-  return <QuotePrintPage documentId={id} service={service} onClose={() => navigate('/sales-documents')} />
+  return <QuotePrintPage documentId={id} service={service} onClose={() => navigate(appRoutes.salesDocuments)} />
 }
 
 function ForbiddenRoute() {
   const { currentUser, initialized } = useAuth()
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
   return <ForbiddenPage />
 }
 
 function RootRedirect() {
   const { currentUser, initialized } = useAuth()
   if (!initialized) return <BootstrapScreen />
-  if (!currentUser) return <Navigate to="/login" replace />
-  return <Navigate to="/dashboard" replace />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
+  return <Navigate to={appRoutes.dashboard} replace />
 }
 
 function BootstrapScreen() {
