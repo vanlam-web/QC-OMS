@@ -12,7 +12,7 @@
     "test": "vitest run src",
     "test:watch": "vitest",
     "test:db": "supabase test db",
-    "test:functions": "npx deno test supabase/tests/functions --allow-env --allow-net",
+    "test:functions": "node scripts/deno-function-tests.mjs",
     "test:e2e": "playwright test",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
