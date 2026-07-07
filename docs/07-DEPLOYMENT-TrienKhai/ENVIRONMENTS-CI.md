@@ -193,6 +193,8 @@ E2E smoke test chạy trên staging sau deploy, tối thiểu:
 Đăng nhập → gọi /me → chọn máy trạm → mở POS Shell → đăng xuất
 ```
 
+Playwright E2E dùng Supabase URL/key đã resolve nhất quán từ process env, Supabase CLI local, hoặc `.env.local`. API base mặc định được derive từ Supabase URL đó theo mẫu `<SUPABASE_URL>/functions/v1`; nếu cần override riêng cho E2E, dùng `E2E_API_BASE_URL`. Không dùng `VITE_API_BASE_URL` để điều khiển Playwright vì biến này có thể còn trỏ môi trường dev/cloud khác.
+
 Deploy staging/production thất bại nếu bước bắt buộc trước đó thất bại.
 
 ---

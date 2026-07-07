@@ -1,11 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
-import { loadE2eSupabaseEnv } from "./tests/e2e/supabase-env";
+import { loadE2eSupabaseEnv, resolveE2eApiBaseUrl } from "./tests/e2e/supabase-env";
 
 process.env.E2E_ADMIN_EMAIL ??= "admin@qc.local";
 process.env.E2E_ADMIN_PASSWORD ??= "123456";
 
 const supabase = loadE2eSupabaseEnv();
-const apiBaseUrl = process.env.VITE_API_BASE_URL ?? `${supabase.SUPABASE_URL}/functions/v1`;
+const apiBaseUrl = resolveE2eApiBaseUrl(supabase);
 const webServerEnv = {
   ...process.env,
   SUPABASE_URL: supabase.SUPABASE_URL,
@@ -20,6 +20,7 @@ const webServerEnv = {
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  testMatch: "**/*.spec.ts",
   globalSetup: "./tests/e2e/global-setup.ts",
   use: {
     baseURL: "http://127.0.0.1:5174",
