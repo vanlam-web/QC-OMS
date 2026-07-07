@@ -1,4 +1,4 @@
-import { createApiClient } from './client'
+import { ApiError, createApiClient } from './client'
 
 it('sends bearer token and request id without workstation coupling', async () => {
   const calls: [RequestInfo | URL, RequestInit | undefined][] = []
@@ -146,4 +146,50 @@ it('rejects base URLs that already include the API route prefix', async () => {
   ).toThrow(
     'VITE_API_BASE_URL must not include /api because client requests already include /api/v1',
   )
+})
+
+it('maps network failures to typed internal API errors with the request id', async () => {
+  let requestId = ''
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => null,
+    fetch: (async (_input, init) => {
+      requestId = (init?.headers as Headers).get('x-request-id') ?? ''
+      throw new TypeError('Failed to fetch')
+    }) as typeof fetch,
+  })
+
+  let error: unknown
+  try {
+    await client.request('/api/v1/me')
+  } catch (cause) {
+    error = cause
+  }
+
+  expect(error).toMatchObject({
+    status: 0,
+    code: 'INTERNAL_ERROR',
+    message: 'Không kết nối được máy chủ.',
+    traceId: requestId,
+  } satisfies Partial<ApiError>)
+  expect(requestId).toMatch(/[0-9a-f-]{36}/)
+})
+
+it('maps malformed server responses to typed internal API errors with response request id', async () => {
+  const client = createApiClient({
+    baseUrl: 'https://api.test',
+    getAccessToken: async () => null,
+    fetch: (async () =>
+      new Response('not-json', {
+        status: 500,
+        headers: { 'x-request-id': 'server-trace-1' },
+      })) as typeof fetch,
+  })
+
+  await expect(client.request('/api/v1/me')).rejects.toMatchObject({
+    status: 500,
+    code: 'INTERNAL_ERROR',
+    message: 'Máy chủ trả dữ liệu không hợp lệ.',
+    traceId: 'server-trace-1',
+  } satisfies Partial<ApiError>)
 })

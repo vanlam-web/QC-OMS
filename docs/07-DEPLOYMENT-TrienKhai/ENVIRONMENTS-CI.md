@@ -54,6 +54,13 @@ Frontend URL route dùng chung qua `src/app/routes.ts`:
 - URL động như in báo giá dùng helper riêng, ví dụ `quotePrintPath(documentId)`;
 - khi đổi path/module mới, cập nhật constants + `src/app/routes.test.ts` trước để tránh lệch URL giữa menu và router.
 
+Frontend API error contract:
+
+- mọi request gửi `x-request-id` để đối chiếu log FE-BE;
+- lỗi API chuẩn trả `trace_id` và được client giữ trong `ApiError.traceId`;
+- lỗi mất mạng hoặc response không phải JSON vẫn phải được client map thành `ApiError(INTERNAL_ERROR)` với trace ID an toàn;
+- UI dùng `formatApiError` để tránh lộ lỗi kỹ thuật thô cho nhân viên vận hành.
+
 ---
 
 ## 2. BIẾN MÔI TRƯỜNG
