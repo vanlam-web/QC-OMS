@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { UserCircle } from 'lucide-react'
 import type { PermissionCode } from '../users/types'
+import { permissions as permissionCodes } from '../users/permissions'
 
 export function ProfileMenu({
   displayName,
@@ -55,8 +56,12 @@ export function ProfileMenu({
           <button className="button button-secondary" role="menuitem" onClick={onOpenDashboard} type="button">
             Trang chủ
           </button>
-          {permissions.includes('perm.view_shift_report') ? <button className="button button-secondary" role="menuitem">Báo cáo ca</button> : null}
-          {permissions.includes('perm.access_admin_panel') ? (
+          {permissions.includes(permissionCodes.viewShiftReport) ? (
+            <button className="button button-secondary" role="menuitem">
+              Báo cáo ca
+            </button>
+          ) : null}
+          {permissions.includes(permissionCodes.accessAdminPanel) ? (
             <button className="button button-secondary" role="menuitem" onClick={onOpenAdmin} type="button">
               Quản trị
             </button>

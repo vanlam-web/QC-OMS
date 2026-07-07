@@ -20,7 +20,14 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:e2e:list
       - run: npm run build
+      - name: Start local Supabase
+        run: npm run supabase:start
+      - name: Replay Supabase migrations
+        run: npm run supabase:reset
+      - name: Run database migration tests
+        run: npm run test:db
       - run: npm run test:functions
       - name: Secret scan
         shell: bash

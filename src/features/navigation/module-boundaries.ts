@@ -1,24 +1,31 @@
 import type { CurrentUserData } from '../../lib/api/types'
+import { appRoutes } from '../../app/routes'
+import { permissions } from '../users/permissions'
 
 export const phaseOneModules = [
-  { id: 'pos', label: 'POS', path: '/pos', permissions: ['perm.create_order'] },
+  { id: 'pos', label: 'POS', path: appRoutes.pos, permissions: [permissions.createOrder] },
   {
     id: 'sales-documents',
     label: 'Chứng từ bán hàng',
-    path: '/sales-documents',
-    permissions: ['perm.create_order'],
+    path: appRoutes.salesDocuments,
+    permissions: [permissions.createOrder],
   },
-  { id: 'customers', label: 'Khách hàng', path: '/customers', permissions: ['perm.create_order'] },
-  { id: 'goods', label: 'Hàng hóa', path: '/products', permissions: ['perm.manage_inventory'] },
-  { id: 'suppliers', label: 'Nhà cung cấp', path: '/suppliers', permissions: ['perm.manage_inventory'] },
-  { id: 'purchase-receipts', label: 'Nhập hàng', path: '/purchase/receipts', permissions: ['perm.manage_inventory'] },
-  { id: 'price-book', label: 'Bảng giá', path: '/price-book', permissions: ['perm.edit_price_book'] },
-  { id: 'finance', label: 'Sổ quỹ', path: '/finance', permissions: ['perm.manage_finance'] },
+  { id: 'customers', label: 'Khách hàng', path: appRoutes.customers, permissions: [permissions.createOrder] },
+  { id: 'goods', label: 'Hàng hóa', path: appRoutes.products, permissions: [permissions.manageInventory] },
+  { id: 'suppliers', label: 'Nhà cung cấp', path: appRoutes.suppliers, permissions: [permissions.manageInventory] },
+  {
+    id: 'purchase-receipts',
+    label: 'Nhập hàng',
+    path: appRoutes.purchaseReceipts,
+    permissions: [permissions.manageInventory],
+  },
+  { id: 'price-book', label: 'Bảng giá', path: appRoutes.priceBook, permissions: [permissions.editPriceBook] },
+  { id: 'finance', label: 'Sổ quỹ', path: appRoutes.finance, permissions: [permissions.manageFinance] },
   {
     id: 'reports',
     label: 'Báo cáo',
-    path: '/reports',
-    permissions: ['perm.manage_finance', 'perm.manage_inventory'],
+    path: appRoutes.reports,
+    permissions: [permissions.manageFinance, permissions.manageInventory],
     requireAllPermissions: true,
   },
 ] as const

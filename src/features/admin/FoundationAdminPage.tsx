@@ -14,6 +14,7 @@ import {
   ManagementTableFooter,
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
+import { permissions } from '../users/permissions'
 
 interface AdminState {
   users: UserListItem[]
@@ -32,12 +33,12 @@ interface RoleListItem {
 type UserStatusFilter = 'all' | 'active' | 'inactive'
 
 const internalStaffDefaultPermissions = [
-  'perm.create_order',
-  'perm.apply_discount',
-  'perm.edit_price_book',
-  'perm.manage_inventory',
-  'perm.manage_finance',
-  'perm.view_shift_report',
+  permissions.createOrder,
+  permissions.applyDiscount,
+  permissions.editPriceBook,
+  permissions.manageInventory,
+  permissions.manageFinance,
+  permissions.viewShiftReport,
 ] as const
 
 const roleDefinitions = [

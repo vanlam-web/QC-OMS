@@ -1000,8 +1000,11 @@ it('shows remove in the header and add-row action in the note row while selected
   const row = screen.getByLabelText('Số lượng Mica 3mm').closest('.pos-cart-line-shell')
   expect(row).not.toBeNull()
 
-  expect(screen.queryByRole('button', { name: 'Xóa Mica 3mm' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Thêm dòng Mica 3mm' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('textbox', { name: 'Tìm hàng (F3)' }))
+  await waitFor(() => {
+    expect(screen.queryByRole('button', { name: 'Xóa Mica 3mm' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Thêm dòng Mica 3mm' })).not.toBeInTheDocument()
+  })
 
   await userEvent.hover(row as HTMLElement)
   expect(screen.getByRole('button', { name: 'Xóa Mica 3mm' })).toBeInTheDocument()

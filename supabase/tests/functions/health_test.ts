@@ -79,3 +79,34 @@ Deno.test("OPTIONS preflight allows client device header", async () => {
   assertEquals(response.status, 204);
   assertMatch(response.headers.get("access-control-allow-headers") ?? "", /x-client-device-id/);
 });
+
+Deno.test("unsafe request id headers are replaced before response and logs", async () => {
+  const logs: unknown[][] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    logs.push(args);
+  };
+
+  try {
+    const response = await createApp({ version: "test-sha" })(
+      new Request("http://local/api/v1/me", {
+        headers: { "x-request-id": "trace bad <script>" },
+      }),
+    );
+    const body = await response.json();
+
+    assertEquals(response.status, 500);
+    assertMatch(body.trace_id, /^[0-9a-f-]{36}$/);
+    assertEquals(response.headers.get("x-request-id"), body.trace_id);
+    assertEquals(logs.length, 1);
+    assertEquals(logs[0][1], {
+      trace_id: body.trace_id,
+      method: "GET",
+      path: "/api/v1/me",
+      status: 500,
+      code: "INTERNAL_ERROR",
+    });
+  } finally {
+    console.error = originalError;
+  }
+});
