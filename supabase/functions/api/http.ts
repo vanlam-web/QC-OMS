@@ -36,7 +36,11 @@ export interface CorsOptions {
 }
 
 export function createTraceId(request: Request): string {
-  return request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const requestId = request.headers.get("x-request-id");
+  if (requestId !== null && /^[A-Za-z0-9._:-]{1,128}$/.test(requestId)) {
+    return requestId;
+  }
+  return crypto.randomUUID();
 }
 
 export function corsHeaders({ origin, allowedOrigins }: CorsOptions): HeadersInit {
