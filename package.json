@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run src",
+    "test": "vitest run src scripts/*.test.mjs tests/e2e/*.test.ts",
     "test:watch": "vitest",
     "test:db": "supabase test db",
     "test:functions": "node scripts/deno-function-tests.mjs",
