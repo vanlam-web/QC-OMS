@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { resolveE2eSupabaseEnv } from "./supabase-env";
+import { resolveE2eApiBaseUrl, resolveE2eSupabaseEnv } from "./supabase-env";
 
 describe("resolveE2eSupabaseEnv", () => {
   test("uses complete CLI env instead of mixing incomplete file env with local service role", () => {
@@ -86,5 +86,37 @@ describe("resolveE2eSupabaseEnv", () => {
       SUPABASE_ANON_KEY: "process-anon",
       SUPABASE_SERVICE_ROLE_KEY: "process-service-role",
     });
+  });
+});
+
+describe("resolveE2eApiBaseUrl", () => {
+  test("derives API base URL from the selected Supabase URL instead of stale VITE env", () => {
+    expect(
+      resolveE2eApiBaseUrl(
+        {
+          SUPABASE_URL: "http://127.0.0.1:54321",
+          SUPABASE_ANON_KEY: "local-anon",
+          SUPABASE_SERVICE_ROLE_KEY: "local-service-role",
+        },
+        {
+          VITE_API_BASE_URL: "https://cloud.supabase.co/functions/v1",
+        },
+      ),
+    ).toBe("http://127.0.0.1:54321/functions/v1");
+  });
+
+  test("allows an explicit E2E API base URL override", () => {
+    expect(
+      resolveE2eApiBaseUrl(
+        {
+          SUPABASE_URL: "http://127.0.0.1:54321",
+          SUPABASE_ANON_KEY: "local-anon",
+        },
+        {
+          E2E_API_BASE_URL: "http://127.0.0.1:54399/functions/v1",
+          VITE_API_BASE_URL: "https://cloud.supabase.co/functions/v1",
+        },
+      ),
+    ).toBe("http://127.0.0.1:54399/functions/v1");
   });
 });

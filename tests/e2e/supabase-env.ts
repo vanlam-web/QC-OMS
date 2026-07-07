@@ -81,6 +81,13 @@ export function requireE2eServiceRoleKey(env: E2eSupabaseEnv): string {
   return env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
+export function resolveE2eApiBaseUrl(
+  env: Pick<E2eSupabaseEnv, "SUPABASE_URL">,
+  processEnv: Record<string, string | undefined> = process.env,
+): string {
+  return processEnv.E2E_API_BASE_URL ?? `${env.SUPABASE_URL}/functions/v1`;
+}
+
 function readEnvFiles(): Record<string, string> {
   return [
     resolve(process.cwd(), ".env.local"),
