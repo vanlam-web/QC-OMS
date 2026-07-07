@@ -16,6 +16,7 @@ import { createBrowserReportService } from '../features/reports/report-service'
 import { saveQuoteReopenPayload } from '../features/pos/quote-draft-handoff'
 import { AppShell } from '../components/ui-shell/AppShell'
 import { appRoutes, quotePrintPath } from './routes'
+import { permissions } from '../features/users/permissions'
 
 const PosShell = lazy(() => import('../features/pos/PosShell').then(({ PosShell }) => ({ default: PosShell })))
 const FoundationAdminPage = lazy(() =>
@@ -131,7 +132,7 @@ function PosRoute() {
   )
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.create_order')) return <Navigate to={appRoutes.forbidden} replace />
+  if (!currentUser.permissions.includes(permissions.createOrder)) return <Navigate to={appRoutes.forbidden} replace />
   return (
     <PosShell
       catalogService={catalogService}
@@ -154,7 +155,7 @@ function AdminRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.access_admin_panel')) {
+  if (!currentUser.permissions.includes(permissions.accessAdminPanel)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -172,7 +173,7 @@ function CatalogRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.edit_price_book')) {
+  if (!currentUser.permissions.includes(permissions.editPriceBook)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -190,7 +191,7 @@ function PriceBookRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.edit_price_book')) {
+  if (!currentUser.permissions.includes(permissions.editPriceBook)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -209,7 +210,7 @@ function CustomersRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.create_order')) {
+  if (!currentUser.permissions.includes(permissions.createOrder)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -231,7 +232,7 @@ function SuppliersRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+  if (!currentUser.permissions.includes(permissions.manageInventory)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -249,7 +250,7 @@ function PurchaseReceiptsRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+  if (!currentUser.permissions.includes(permissions.manageInventory)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -266,7 +267,7 @@ function InventoryRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.manage_inventory')) {
+  if (!currentUser.permissions.includes(permissions.manageInventory)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -283,7 +284,7 @@ function FinanceRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes('perm.manage_finance')) {
+  if (!currentUser.permissions.includes(permissions.manageFinance)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 
@@ -301,8 +302,8 @@ function ReportsRoute() {
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
-    !currentUser.permissions.includes('perm.manage_finance') ||
-    !currentUser.permissions.includes('perm.manage_inventory')
+    !currentUser.permissions.includes(permissions.manageFinance) ||
+    !currentUser.permissions.includes(permissions.manageInventory)
   ) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
@@ -325,8 +326,8 @@ function SalesDocumentsRoute() {
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
-    !currentUser.permissions.includes('perm.create_order') &&
-    !currentUser.permissions.includes('perm.manage_finance')
+    !currentUser.permissions.includes(permissions.createOrder) &&
+    !currentUser.permissions.includes(permissions.manageFinance)
   ) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
@@ -359,8 +360,8 @@ function QuotePrintRoute() {
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
   if (
-    !currentUser.permissions.includes('perm.create_order') &&
-    !currentUser.permissions.includes('perm.manage_finance')
+    !currentUser.permissions.includes(permissions.createOrder) &&
+    !currentUser.permissions.includes(permissions.manageFinance)
   ) {
     return <Navigate to={appRoutes.forbidden} replace />
   }

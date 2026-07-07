@@ -28,6 +28,7 @@ import { ProfileMenu } from './ProfileMenu'
 import { ProductGrid } from './ProductGrid'
 import { ProductionQueuePanel } from './ProductionQueuePanel'
 import { consumeQuoteReopenPayload } from './quote-draft-handoff'
+import { permissions } from '../users/permissions'
 
 const posDraftStorageKey = 'qc-oms.pos.invoice-tabs.v1'
 const maxInvoiceTabs = 10
@@ -120,7 +121,7 @@ export function PosShell({
   )
   const activeCartLineId =
     selectedCartLineId ?? priceEditorLineId ?? recentPriceLineId ?? hoveredCartLineId
-  const canApplyDiscount = currentUser.permissions.includes('perm.apply_discount')
+  const canApplyDiscount = currentUser.permissions.includes(permissions.applyDiscount)
   const quickOpeningLine = quickOpeningLineId === null
     ? null
     : cartLines.find((line) => line.id === quickOpeningLineId) ?? null

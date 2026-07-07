@@ -54,6 +54,12 @@ Frontend URL route dùng chung qua `src/app/routes.ts`:
 - URL động như in báo giá dùng helper riêng, ví dụ `quotePrintPath(documentId)`;
 - khi đổi path/module mới, cập nhật constants + `src/app/routes.test.ts` trước để tránh lệch URL giữa menu và router.
 
+Frontend permission codes dùng chung qua `src/features/users/permissions.ts`:
+
+- runtime code dùng `permissions` thay vì gõ lại chuỗi `perm.*` trong router, menu, module boundary, POS hoặc admin;
+- `src/features/users/permissions.test.ts` giữ danh sách code ổn định để bắt typo khi đổi quyền;
+- test UI vẫn có thể dùng literal khi cần xác nhận text hoặc dữ liệu mock theo đúng hợp đồng API.
+
 Frontend API error contract:
 
 - mọi request gửi `x-request-id` để đối chiếu log FE-BE;
