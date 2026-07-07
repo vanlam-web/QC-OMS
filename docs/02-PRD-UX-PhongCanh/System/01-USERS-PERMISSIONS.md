@@ -85,6 +85,8 @@ Không hiển thị mật khẩu hoặc token.
 Form tạo mới:
 
 - email
+- tên đăng nhập
+- điện thoại
 - tên hiển thị
 - mật khẩu tạm
 - preset quyền hoặc danh sách quyền tick chọn
@@ -95,6 +97,7 @@ Quy tắc:
 - Nếu tạo tài khoản quản trị, admin chọn preset `Chủ xưởng/Quản trị` có thêm quyền quản lý user/quyền và cấu hình hệ thống.
 - Nếu cần tài khoản hạn chế đặc biệt, admin có thể bỏ tick thủ công.
 - Email phải hợp lệ và chưa tồn tại.
+- Tên đăng nhập và điện thoại không bắt buộc; nếu nhập thì lưu vào profile nhân viên để nhận diện trong màn quản trị và API.
 - Mật khẩu tạm không hiển thị lại sau khi lưu.
 - Sau khi tạo, admin gửi mật khẩu tạm cho nhân viên bằng kênh nội bộ; QC-OMS không tự gửi email trong MVP/current scope.
 

@@ -13,6 +13,8 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
         {
           id: 'u-1',
           email: 'admin@example.test',
+          username: 'admin',
+          phone: '0900000000',
           display_name: 'Admin',
           status: 'active' as const,
           permissions: ['perm.manage_users' as const, 'perm.create_order' as const],
@@ -31,6 +33,8 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
     createUser: vi.fn(async () => ({
       id: 'u-2',
       email: 'cashier@example.test',
+      username: 'cashier-login',
+      phone: '0912345678',
       display_name: 'Cashier',
       status: 'active' as const,
       permissions: ['perm.create_order' as const],
@@ -38,6 +42,8 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
     updateUser: vi.fn(async () => ({
       id: 'u-1',
       email: 'admin@example.test',
+      username: 'admin',
+      phone: '0900000000',
       display_name: 'Admin',
       status: 'inactive' as const,
       permissions: ['perm.manage_users' as const, 'perm.create_order' as const],
@@ -45,6 +51,8 @@ function makeService(overrides: Partial<FoundationService> = {}): FoundationServ
     replaceUserPermissions: vi.fn(async () => ({
       id: 'u-1',
       email: 'admin@example.test',
+      username: 'admin',
+      phone: '0900000000',
       display_name: 'Admin',
       status: 'active' as const,
       permissions: ['perm.manage_users' as const],
@@ -145,10 +153,14 @@ it('filters, creates, disables, and updates permissions for users', async () => 
   const createUserForm = screen.getByRole('form', { name: 'Tạo người dùng' })
   await userEvent.type(createUserForm.querySelector('input[type="email"]') as HTMLInputElement, 'cashier@example.test')
   await userEvent.type(createUserForm.querySelectorAll('input')[1], 'Cashier')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Tên đăng nhập' }), 'cashier-login')
+  await userEvent.type(within(createUserForm).getByRole('textbox', { name: 'Điện thoại' }), '0912345678')
   await userEvent.type(createUserForm.querySelector('input[type="password"]') as HTMLInputElement, 'Password123!')
   await userEvent.click(screen.getByRole('button', { name: 'Thêm người dùng' }))
   expect(service.createUser).toHaveBeenCalledWith({
     email: 'cashier@example.test',
+    username: 'cashier-login',
+    phone: '0912345678',
     password: 'Password123!',
     display_name: 'Cashier',
     permissions: [

@@ -129,12 +129,16 @@ export async function replacePermissions(
 
 function parseCreateUser(body: unknown): {
   email: string;
+  username: string | null;
+  phone: string | null;
   password: string;
   displayName: string;
   permissions: PermissionCode[];
 } {
   if (!isRecord(body)) throw validationError();
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const username = parseNullableText(body.username, 100);
+  const phone = parsePhone(body.phone);
   const password = typeof body.password === "string" ? body.password : "";
   const displayName = typeof body.display_name === "string" ? body.display_name.trim() : "";
   const permissions = "permissions" in body
@@ -143,7 +147,7 @@ function parseCreateUser(body: unknown): {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || password.length < 8 || password.length > 128 || displayName.length < 1 || displayName.length > 100) {
     throw validationError();
   }
-  return { email, password, displayName, permissions };
+  return { email, username, phone, password, displayName, permissions };
 }
 
 function parseUpdateUser(body: unknown): { displayName?: string; status?: "active" | "inactive" } {
@@ -175,6 +179,21 @@ function parsePermissionArray(value: unknown): PermissionCode[] {
     throw validationError();
   }
   return permissions as PermissionCode[];
+}
+
+function parseNullableText(value: unknown, maxLength: number): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw validationError();
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > maxLength) throw validationError();
+  return trimmed;
+}
+
+function parsePhone(value: unknown): string | null {
+  const phone = parseNullableText(value, 20);
+  if (phone !== null && !/^[0-9+()\-\s.]{8,20}$/.test(phone)) throw validationError();
+  return phone;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

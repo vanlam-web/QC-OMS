@@ -1,6 +1,6 @@
 begin;
 
-select plan(38);
+select plan(42);
 
 select has_table('public', 'organizations', 'organizations table exists');
 select has_table('public', 'profiles', 'profiles table exists');
@@ -11,6 +11,8 @@ select has_table('public', 'permission_audit_logs', 'permission_audit_logs table
 
 select col_is_pk('public', 'organizations', 'id', 'organizations.id is the primary key');
 select col_is_pk('public', 'profiles', 'user_id', 'profiles.user_id is the primary key');
+select has_column('public', 'profiles', 'username', 'profiles stores username');
+select has_column('public', 'profiles', 'phone', 'profiles stores phone');
 
 select has_index(
   'public',
@@ -114,6 +116,14 @@ select ok(
 select ok(
   exists (select 1 from pg_catalog.pg_constraint where conrelid = 'public.profiles'::regclass and conname = 'profiles_display_name_check'),
   'profiles display name is constrained'
+);
+select ok(
+  exists (select 1 from pg_catalog.pg_constraint where conrelid = 'public.profiles'::regclass and conname = 'profiles_username_check'),
+  'profiles username is constrained'
+);
+select ok(
+  exists (select 1 from pg_catalog.pg_constraint where conrelid = 'public.profiles'::regclass and conname = 'profiles_phone_check'),
+  'profiles phone is constrained'
 );
 select ok(
   exists (select 1 from pg_catalog.pg_constraint where conrelid = 'public.workstations'::regclass and conname = 'workstations_code_format_check'),
