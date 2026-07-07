@@ -121,7 +121,7 @@ export function buildCashbookCsv(items: CashbookEntry[]) {
       String(entry.is_business_accounted),
     ]),
   ]
-  return rows.map((row) => row.map(csvCell).join(',')).join('\n')
+  return `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\n')}`
 }
 
 function csvCell(value: string) {
