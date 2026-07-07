@@ -18,10 +18,10 @@ interface ShellNavItem {
 const shellNavItems: ShellNavItem[] = [
   { label: 'POS', shortLabel: 'POS', path: appRoutes.pos, marker: 'POS', permissions: [permissions.createOrder] },
   {
-    label: 'Hóa đơn',
-    shortLabel: 'HĐ',
+    label: 'Chứng từ',
+    shortLabel: 'CT',
     path: appRoutes.salesDocuments,
-    marker: 'HĐ',
+    marker: 'CT',
     permissions: [permissions.createOrder, permissions.manageFinance],
   },
   { label: 'Sổ quỹ', shortLabel: 'SQ', path: appRoutes.finance, marker: 'SQ', permissions: [permissions.manageFinance] },
