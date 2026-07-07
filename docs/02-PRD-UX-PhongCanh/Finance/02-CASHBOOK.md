@@ -57,7 +57,7 @@ Quan sát trước đó ngày `01/07/2026`:
   - phương thức thanh toán `Tiền mặt`
   - người nộp là khách hàng
   - ghi rõ phiếu thu tự động gắn với hóa đơn `HD010973`
-  - có bảng phân bổ: mã hóa đơn, giá trị phiếu, đã thu trước, giá trị thu, trạng thái
+  - có bảng phân bổ: mã hóa đơn, tổng sau giảm, chưa TT, giá trị thu
 - Ví dụ phiếu chi thủ công `CTM001170`:
   - trạng thái `Đã thanh toán`
   - `Có hạch toán`
@@ -87,7 +87,7 @@ Quan sát trước đó ngày `01/07/2026`:
   - phương thức thanh toán `Tiền mặt`
   - người nộp hiển thị tên và mã khách
   - có khối `Phiếu thu tự động được gắn với hóa đơn HD...`
-  - bảng gắn hóa đơn gồm mã phiếu/hóa đơn, thời gian, giá trị phiếu, đã thu trước, giá trị thu, trạng thái
+  - bảng gắn hóa đơn gồm mã phiếu/hóa đơn, thời gian, tổng sau giảm, chưa TT, giá trị thu
 - Form tạo phiếu thu tiền mặt có:
   - mã phiếu tự động
   - thời gian
@@ -119,10 +119,11 @@ Hiện trạng detail inline sau ngày `06/07/2026`:
 - Nhật ký chỉ hiển thị `Người tạo` và `Thời gian`; mặc định `Người tạo` chính là người thu/chi nếu backend chưa tách trường riêng.
 - Grid thông tin chính chia 4 cột: số tiền, loại thu/chi, đối tượng nộp/nhận, phương thức thanh toán. Các dòng phụ bên dưới hiển thị người nộp/nhận dạng link và quỹ/tài khoản nhận hoặc chi.
 - Ghi chú hiển thị phía trên khối chứng từ liên kết. Ghi chú hệ thống dạng `Checkout HD...` không hiển thị như ghi chú thủ công; mã hóa đơn trong chuỗi này chỉ dùng để suy luận chứng từ liên kết khi API chưa trả `allocations`.
-- Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, giá trị phiếu, đã thu/trả trước, giá trị thu/chi, trạng thái.
-- Nếu không có `allocations` nhưng ghi chú/source chứa mã `HD...` hoặc `PN...`, panel vẫn hiển thị dòng chứng từ liên kết suy luận để người dùng thấy phiếu thu/chi gắn với hóa đơn/phiếu nhập nào. Nếu không có dữ liệu liên kết, bảng con hiển thị trạng thái rỗng.
+- Nếu API trả `allocations`, panel hiển thị câu liên kết chứng từ và bảng con: mã chứng từ, thời gian, `Tổng sau giảm` với phiếu thu bán hàng HD hoặc `Giá trị phiếu` với chứng từ chi/mua hàng, `Chưa TT` với phiếu thu bán hàng hoặc `Đã trả trước` với chứng từ chi/mua hàng, giá trị thu/chi. `Đã thu trước` là số tiền hóa đơn đã thu ở các phiếu trước đó khi thanh toán nhiều lần; UI không dùng làm cột chính vì `Chưa TT` giúp nhìn rõ còn thiếu bao nhiêu sau phiếu hiện tại.
+- Với phiếu thu gắn hóa đơn, trạng thái thanh toán hiển thị trên chip đầu detail, không lặp lại trong bảng con: `Hoàn tất` khi trả đủ dùng màu `success`, `Thanh toán 1 phần` khi vẫn còn nợ dùng màu `warning`, `Chưa thanh toán` dùng màu `neutral` nhưng chỉ xuất hiện ở màn hóa đơn vì chưa thanh toán nghĩa là chưa có phiếu thu.
+- Nếu không có `allocations` nhưng ghi chú/source chứa mã `HD...` hoặc `PN...`, panel vẫn hiển thị dòng chứng từ liên kết suy luận để người dùng thấy phiếu thu/chi gắn với hóa đơn/phiếu nhập nào. Với dữ liệu legacy dạng `Checkout HD...`, backend phải ưu tiên suy ra hóa đơn và trả allocation từ tổng tiền/đã thu/còn nợ của hóa đơn; frontend được phép đọc hóa đơn theo mã để bù `Tổng sau giảm`, `Chưa TT` và chip trạng thái, chỉ dùng fallback theo số tiền phiếu khi cả finance API và sales API đều chưa đủ dữ liệu. Nếu không có dữ liệu liên kết, bảng con hiển thị trạng thái rỗng.
 - Không hiển thị dòng `Tiền chưa phân bổ: 0` trong detail.
-- Footer detail dùng CSS chung `management-detail-footer-actions` để các trang danh sách có cùng hàng action cuối. Hiện sổ quỹ có `Xóa` canh trái, `Chỉnh sửa` và `In` canh phải; các nút đang disabled nếu chưa có API/hành vi an toàn.
+- Footer detail dùng shared component `ManagementDetailActionFooter` và shared button `ManagementRowActionButton`, tương ứng CSS chung `management-detail-footer-actions` và `button button-secondary/button-primary`. Hiện sổ quỹ có `Xóa` canh trái, `Sửa` và `In` canh phải; các nút đang disabled nếu chưa có API/hành vi an toàn.
 
 Field còn thiếu để giống KV tuyệt đối: chi nhánh thật theo phiếu, tài khoản ngân hàng nguồn/đích đầy đủ, loại thu/chi chi tiết theo `voucher_type`, mã/tên/số điện thoại đối tượng đầy đủ trong detail. Không hiển thị `Người thu`/`Người chi` riêng khi backend chưa cần tách trường này.
 
@@ -136,11 +137,12 @@ Hiện trạng sau các slice sổ quỹ ngày `06/07/2026`:
 
 - `/finance` là màn sổ quỹ chính; thân trang chỉ còn bảng sổ quỹ, inline detail dòng sổ và form phiếu thu/chi khi mở.
 - Các khối `Tài khoản quỹ`, `Công nợ khách hàng`, `Phiếu thu/chi` đã ẩn khỏi thân trang để tránh rối layout.
-- Header có ô `Tìm công nợ` theo kiểu search chung; nút `+ Phiếu thu`, `+ Phiếu chi`, `Xuất file` nằm cùng hàng, nhãn không wrap xuống dòng, và canh phải trước cụm tài khoản/giao diện của shell.
+- Header có ô `Tìm công nợ` theo kiểu search chung; nút `+` trong ô tìm mở popup tạo phiếu thu/chi có tab chọn loại phiếu, không còn 2 nút `+ Phiếu thu` và `+ Phiếu chi` riêng ở ngoài. Nút `Xuất file` nằm cùng hàng và canh phải trước cụm tài khoản/giao diện của shell.
 - Summary `Quỹ đầu kỳ`, `Tổng thu`, `Tổng chi`, `Tồn quỹ` nằm trong khu vực chính bên phải, ngay trên bảng sổ quỹ, và lấy từ `summary` của API sổ quỹ theo filter.
 - `Tồn quỹ` dùng `summary.ending_balance`, không dùng tổng số dư hiện tại của tất cả tài khoản.
 - Bộ lọc sổ quỹ tự áp dụng khi chọn giá trị; không có nút `Lọc sổ` hoặc `Đặt lại bộ lọc`.
-- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Cột người nộp/nhận lấy `counterparty` từ API list sổ quỹ; nếu có tên thì hiển thị dạng link mở inline detail cùng dòng, nếu chưa có thì hiển thị `-`. Click cả hàng mở detail; sao từng dòng lưu ưu tiên cục bộ và không làm bung detail; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
+- Bảng dùng layout KiotViet-like nhưng màu sắc/border/spacing theo design system QC-OMS, không copy màu KiotViet: có checkbox chọn dòng, cột đánh dấu sao, mã phiếu dạng link, thời gian, loại thu chi, người nộp/nhận, loại sổ quỹ và giá trị. Header sổ quỹ giữ đúng chữ thường/chữ hoa theo label nghiệp vụ như `Người nộp/nhận`, không ép uppercase toàn bộ. Cột người nộp/nhận lấy `counterparty` từ API list sổ quỹ; nếu có tên thì hiển thị dạng button mở inline detail cùng dòng, nếu chưa có thì hiển thị `-`; riêng khách mặc định `Khách lẻ` hiển thị trong bảng là `khách lẻ`, dùng typography thân bảng thay vì link xanh đậm để nhẹ nhãn, dữ liệu lưu và detail không đổi. Với dòng phiếu thu từ `payment_receipt_method` mà list chưa trả `counterparty`, frontend được phép hydrate nền từ detail để điền người nộp trước khi người dùng click mở detail. Click cả hàng mở detail; sao từng dòng lưu ưu tiên cục bộ và không làm bung detail; sao ở header lọc các dòng ưu tiên trong trang hiện tại.
+- Tất cả button trong màn sổ quỹ phải ưu tiên CSS/component chung: `button button-primary`, `button button-secondary`, `management-compact-create-action`, `ManagementRowActionButton`, `ManagementDetailActionFooter`. Không tạo style riêng cho từng trang nếu chỉ khác text/icon; chỉ thêm class riêng tại nơi dùng khi nút có hành vi hoặc trạng thái thật sự đặc biệt.
 - Surface bảng dùng viền/padding ngoài mỏng để bảng sát khung hơn; vẫn giữ border và hover theo design system.
 
 MVP của QC-OMS hỗ trợ:
@@ -156,7 +158,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────┐
-│ Sổ quỹ                            [Tìm công nợ +] [+ Phiếu thu] [+ Phiếu chi] [Xuất]│
+│ Sổ quỹ                                      [Tìm công nợ +]                  [Xuất]│
 ├───────────────────────┬────────────────────────────────────────────────────────────┤
 │ Thời gian             │ Quỹ đầu kỳ | Tổng thu | Tổng chi | Tồn quỹ                 │
 │ Quỹ tiền              │ [ ] | ☆ | Mã phiếu | Thời gian | Loại thu chi | Người      │
@@ -173,7 +175,7 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 
 | Bộ lọc | Giá trị |
 |---|---|
-| Quỹ tiền | Radio list chọn một: `Tiền mặt`, `Ngân hàng`, `Tổng quỹ`. `Ngân hàng` là phương thức, không phải từng tài khoản. Khi chọn `Ngân hàng`, UI hiện khối `Tài khoản` bên dưới để chọn tài khoản cụ thể |
+| Quỹ tiền | Radio list chọn một theo thứ tự: `Tổng quỹ`, `Tiền mặt`, `Ngân hàng`. Mặc định chọn `Tổng quỹ`. `Ngân hàng` lọc tất cả dòng có loại sổ quỹ ngân hàng; khối `Tài khoản` bên dưới chỉ dùng để thu hẹp về một tài khoản cụ thể |
 | Thời gian | Hôm nay, hôm qua, tuần này, tuần trước, 7 ngày qua, tháng này, tháng trước, 30 ngày qua, quý này, quý trước, năm nay, năm trước, toàn thời gian, tùy chỉnh |
 | Loại chứng từ | Checkbox group: `Phiếu thu`, `Phiếu chi`; mặc định không tick nghĩa là xem cả hai |
 | Loại thu chi | Chưa có trong UI hiện tại; thuộc slice sau |
@@ -186,8 +188,10 @@ Không dùng ví điện tử trong MVP nếu chưa có nghiệp vụ riêng.
 Ghi chú:
 
 - Filter hiện tại tự gọi lại danh sách sổ quỹ khi đổi thời gian, quỹ tiền, loại chứng từ, trạng thái, hạch toán KQKD.
+- `Trạng thái` trong bộ lọc là trạng thái phiếu thu/chi (`posted/cancelled`), khác với trạng thái thanh toán hóa đơn trong bảng chứng từ liên kết của detail.
 - UI filter dùng hình thái giống KiotViet cho những phần đã đủ API: quỹ tiền là radio list, loại chứng từ/trạng thái là checkbox group, hạch toán KQKD là segmented tabs. Màu sắc vẫn theo design system QC-OMS.
-- Khi chọn `Ngân hàng`, khối `Tài khoản` hiện nút `Thêm` ở góc phải tiêu đề và ô `Chọn tài khoản`. Click ô này xổ dropdown có ô tìm kiếm nhanh và danh sách tài khoản dạng `Ngân hàng - Số tài khoản - Chủ tài khoản`; chọn dòng sẽ lọc sổ quỹ theo `finance_account_id`.
+- Khi chọn `Ngân hàng`, bảng lọc ngay theo `finance_account_type = bank` để thấy tất cả tài khoản ngân hàng. Frontend vẫn giữ guard theo `finance_account.account_type = bank` trước khi render/export để tránh API cũ hoặc response stale làm lẫn dòng `Tiền mặt`. Khối `Tài khoản` hiện nút `Thêm` ở góc phải tiêu đề và ô `Chọn tài khoản`; click ô này xổ dropdown danh sách tài khoản dạng `Ngân hàng - Số tài khoản - Chủ tài khoản`, không có ô tìm kiếm trong dropdown. Mỗi dòng tài khoản có action hover `Sửa` và `Ghim`; khi đã ghim thì icon ghim luôn hiển thị cả khi không rê chuột. Tài khoản ghim được lưu cục bộ, đưa lên đầu danh sách và dùng làm mặc định cho mọi nơi cần chọn tài khoản ngân hàng như lọc sổ quỹ, tạo phiếu thu/chi chuyển khoản, thu nợ chuyển khoản. Chọn dòng mới lọc sổ quỹ theo `finance_account_id`.
+- Quản lý đa tài khoản giai đoạn hiện tại là bản nhẹ ngay trong picker tài khoản: thêm, sửa local, ghim mặc định. Khi backend có endpoint quản lý tài khoản quỹ, nâng cấp thành màn quản lý riêng trong `Quản trị` hoặc tab con `Sổ quỹ > Tài khoản` để bật/tắt, xóa/ngừng dùng, đối soát và phân quyền.
 - Popup `Thêm tài khoản ngân hàng` hiện là UI local trong frontend vì backend chưa có endpoint tạo tài khoản quỹ. Popup dùng shared modal compact, gồm số tài khoản, ngân hàng, chủ tài khoản, số dư ban đầu, ghi chú, checkbox bật thông báo và footer `Bỏ qua`/`Lưu`.
 - `Công nợ đối tác` cần dùng cho phiếu liên quan khách hàng/nhà cung cấp; hiện đã có trường khi tạo phiếu thủ công, chưa có filter list.
 - `Người nộp/nhận` đã hiển thị được tên trong bảng khi API list trả `counterparty`; slice sau cần bổ sung tìm theo tên, mã và số điện thoại.
@@ -243,7 +247,7 @@ Xuất file tối thiểu phải có các cột giống file KV mẫu:
 
 Sau đó thêm các cột QC-OMS cần đối soát: quỹ/tài khoản, trạng thái, ghi chú, người tạo, hạch toán KQKD.
 
-Hiện trạng UI: nút `Xuất file` nằm cạnh `+ Phiếu thu` và `+ Phiếu chi` ở header.
+Hiện trạng UI: nút `Xuất file` nằm ở cụm tác vụ sổ quỹ bên phải; nút `+` trong ô `Tìm công nợ` mở popup tạo phiếu thu/chi.
 
 ---
 
@@ -251,9 +255,9 @@ Hiện trạng UI: nút `Xuất file` nằm cạnh `+ Phiếu thu` và `+ Phiế
 
 Hiện trạng UI sau ngày `06/07/2026`:
 
-- Nút `+ Phiếu thu` và `+ Phiếu chi` mở popup modal ở giữa màn hình, có backdrop mờ, không chuyển trang và không đẩy layout sổ quỹ.
+- Nút `+` trong ô `Tìm công nợ` mở popup modal ở giữa màn hình, có backdrop mờ, không chuyển trang và không đẩy layout sổ quỹ. Popup mở mặc định tab `Phiếu thu`; người dùng chuyển tab `Phiếu chi` ngay trong popup để đổi loại phiếu.
 - Modal dùng CSS chung `management-modal-*`, không tạo layout riêng cho từng trang. Kích thước khoảng 800-900px, thân form dùng grid 2 cột.
-- Header hiển thị `Tạo phiếu thu tiền mặt/ngân hàng` hoặc `Tạo phiếu chi tiền mặt/ngân hàng` theo tài khoản đang chọn; bên phải có nút đóng `X`.
+- Header hiển thị `Tạo phiếu thu tiền mặt/ngân hàng` hoặc `Tạo phiếu chi tiền mặt/ngân hàng` theo tab và tài khoản đang chọn; bên dưới header có tab `Phiếu thu`/`Phiếu chi`; bên phải có nút đóng `X`. Tab dùng CSS chung `inline-detail-tabbar`/`inline-detail-tabs` cho trạng thái chọn và không chọn, không tạo style riêng cho finance.
 - Footer modal có 3 nút cùng hàng, canh phải: `Bỏ qua`, `Lưu & In`, `Lưu`. Hiện `Lưu & In` dùng chung luồng lưu; in thật là slice sau.
 - Các field mã phiếu, thời gian, người thu/chi, phương thức thanh toán hiện mới phục vụ UI/đối soát nhanh; backend tạo mã và thời gian ghi thật khi lưu.
 

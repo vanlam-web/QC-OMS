@@ -1,10 +1,8 @@
 import {
   ArrowRight,
-  Bell,
   DollarSign,
   PackagePlus,
   ReceiptText,
-  Settings,
   ShieldAlert,
   ShoppingCart,
   TrendingUp,
@@ -79,30 +77,15 @@ export function DashboardPage({
 }) {
   return (
     <main className="dashboard-shell">
-      <header className="dashboard-header">
-        <nav aria-label="Điều hướng tổng quan" className="dashboard-nav">
-          <span aria-current="page">Tổng quan</span>
-          <span>Hàng hóa</span>
-          <span>Mua hàng</span>
-          <span>Đơn hàng</span>
-          <span>Khách hàng</span>
-          <span>Sổ quỹ</span>
-          <span>Phân tích</span>
-        </nav>
-        <div className="dashboard-header-actions">
-          <button aria-label="Thông báo" className="dashboard-icon-button" type="button">
-            <Bell aria-hidden="true" size={18} />
-          </button>
-          <button aria-label="Cài đặt" className="dashboard-icon-button" type="button">
-            <Settings aria-hidden="true" size={18} />
-          </button>
-          {showSignOut ? (
-            <button className="dashboard-signout-button" type="button" onClick={onSignOut}>
+      {showSignOut ? (
+        <header className="dashboard-header">
+          <div className="dashboard-header-actions">
+            <button className="dashboard-signout-button button button-secondary" type="button" onClick={onSignOut}>
               Đăng xuất
             </button>
-          ) : null}
-        </div>
-      </header>
+          </div>
+        </header>
+      ) : null}
 
       <section className="dashboard-grid">
         <div className="dashboard-main-column">
@@ -151,13 +134,13 @@ export function DashboardPage({
               <svg aria-label="Sóng doanh thu thuần" role="img" viewBox="0 0 640 180" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="dashboardWaveStroke" x1="0" x2="1" y1="0" y2="0">
-                    <stop offset="0%" stopColor="#0f8f7d" />
-                    <stop offset="55%" stopColor="#ef8f35" />
-                    <stop offset="100%" stopColor="#4f73c9" />
+                    <stop offset="0%" stopColor="var(--color-primary)" />
+                    <stop offset="55%" stopColor="var(--color-warning)" />
+                    <stop offset="100%" stopColor="var(--color-success)" />
                   </linearGradient>
                   <linearGradient id="dashboardWaveFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#0f8f7d" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#0f8f7d" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 {[36, 72, 108, 144].map((y) => (

@@ -30,6 +30,8 @@ export interface WorkstationData {
 export interface UserListItem {
   id: string;
   email: string;
+  username: string | null;
+  phone: string | null;
   display_name: string;
   status: "active" | "inactive";
   permissions: PermissionCode[];
@@ -609,17 +611,45 @@ export interface ProductionQueueDraftPayloadData {
   };
 }
 
+export interface CurrentUserProfileData {
+  username: string | null;
+  phone: string | null;
+  email: string | null;
+  birthday: string | null;
+  region: string | null;
+  ward: string | null;
+  address: string | null;
+  note: string | null;
+}
+
+export interface CurrentUserDeviceData {
+  id: string;
+  device_name: string;
+  device_type: "desktop" | "mobile" | "tablet" | "unknown";
+  browser_name: string | null;
+  os_name: string | null;
+  ip_address: string | null;
+  last_seen_at: string;
+  created_at: string;
+  is_current_device: boolean;
+  status: "active" | "signed_out";
+}
+
 export interface CurrentUserData {
   user: { id: string; email: string; display_name: string };
+  profile: CurrentUserProfileData;
   organization: { id: string; code: string; name: string };
   workstation: { id: string; code: string; name: string } | null;
+  devices: CurrentUserDeviceData[];
   permissions: PermissionCode[];
 }
 
 export interface CurrentUserRecord {
   user: { id: string; email: string; displayName: string };
+  profile?: CurrentUserProfileData;
   organization: { id: string; code: string; name: string };
   workstation: { id: string; code: string; name: string } | null;
+  devices?: CurrentUserDeviceData[];
   permissions: PermissionCode[];
   workstationInvalid: boolean;
 }
@@ -632,6 +662,26 @@ export interface GetCurrentUserInput {
 
 export interface FoundationRepository {
   getCurrentUser(input: GetCurrentUserInput): Promise<CurrentUserRecord | null>;
+  updateCurrentUserProfile(input: {
+    userId: string;
+    authEmail: string;
+    displayName: string;
+    profile: CurrentUserProfileData;
+  }): Promise<CurrentUserRecord | null>;
+  recordCurrentUserDevice(input: {
+    userId: string;
+    clientDeviceId: string | null;
+    userAgent: string | null;
+    ipAddress: string | null;
+  }): Promise<CurrentUserDeviceData[]>;
+  signOutCurrentUserDevice(input: {
+    userId: string;
+    accessToken: string;
+    deviceId: string;
+    clientDeviceId: string | null;
+    userAgent: string | null;
+    ipAddress: string | null;
+  }): Promise<CurrentUserDeviceData[] | null>;
   listWorkstations(organizationId: string): Promise<WorkstationData[]>;
   createWorkstation(input: {
     organizationId: string;
@@ -997,6 +1047,7 @@ export interface FoundationRepository {
   listCashbookEntries(input: {
     organizationId: string;
     financeAccountId?: string;
+    financeAccountType?: "cash" | "bank";
     search?: string;
     searchScope?: "code" | "note" | "transfer_content";
     direction?: "in" | "out";

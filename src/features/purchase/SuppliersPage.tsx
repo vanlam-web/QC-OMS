@@ -491,7 +491,7 @@ export function SuppliersPage({
       <form noValidate aria-label="Thanh toán nhà cung cấp" className="supplier-form" onSubmit={saveSupplierPayment}>
         <header>
           <h2>Thanh toán {paymentSupplier.code}</h2>
-          <button className="button button-ghost" type="button" onClick={() => setPaymentSupplier(null)}>
+          <button className="button button-secondary" type="button" onClick={() => setPaymentSupplier(null)}>
             <X aria-hidden="true" size={15} />
             Đóng
           </button>

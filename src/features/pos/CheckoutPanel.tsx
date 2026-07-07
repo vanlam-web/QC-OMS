@@ -317,6 +317,7 @@ export function CheckoutPanel({
       {cartLines.map((line) => (
         <div className="recent-price-row" key={line.id}>
           <button
+            className="button button-secondary"
             disabled={selectedCustomer === null}
             type="button"
             onClick={() => void showRecentPrices(line)}
@@ -336,6 +337,7 @@ export function CheckoutPanel({
       {sourceQuote ? <p>Từ báo giá {sourceQuote.code}</p> : null}
       {quoteBlockedReason ? <p role="status">{quoteBlockedReason}</p> : null}
       <button
+        className="button button-secondary"
         disabled={submitting || cartLines.length === 0 || quoteBlockedReason !== null}
         type="button"
         onClick={() => void saveQuote()}
@@ -343,6 +345,7 @@ export function CheckoutPanel({
         Báo giá
       </button>
       <button
+        className="button button-primary"
         disabled={submitting || quoteBlockedReason !== null}
         type="button"
         onClick={() => void submitCheckout()}

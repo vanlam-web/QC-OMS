@@ -34,6 +34,8 @@ function currentUser(permissions: PermissionCode[] = ["perm.manage_users"]): Cur
 const user: UserListItem = {
   id: "u-1",
   email: "cashier@example.test",
+  username: "cashier",
+  phone: "0947900909",
   display_name: "Cashier",
   status: "active",
   permissions: ["perm.create_order"],
@@ -54,6 +56,8 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
       Promise.resolve({
         id: "u-new",
         email: input.email,
+        username: input.email,
+        phone: null,
         display_name: input.displayName,
         status: "active",
         permissions: input.permissions,
@@ -139,6 +143,8 @@ Deno.test("create user defaults to internal staff MVP operational permissions wh
   const created = responseBody.data as UserListItem;
 
   assertEquals(response.status, 201);
+  assertEquals(created.username, "operator@example.test");
+  assertEquals(created.phone, null);
   assertEquals(created.permissions, [
     "perm.create_order",
     "perm.apply_discount",

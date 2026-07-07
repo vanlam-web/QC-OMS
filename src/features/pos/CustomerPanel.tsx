@@ -88,7 +88,7 @@ export function CustomerPanel({
             SĐT
             <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
           </label>
-          <button type="submit">Tạo khách</button>
+          <button className="button button-primary" type="submit">Tạo khách</button>
         </form>
       ) : null}
 
@@ -96,7 +96,7 @@ export function CustomerPanel({
         <ul className="customer-results">
           {results.map((customer) => (
             <li key={customer.id}>
-              <button type="button" onClick={() => {
+              <button className="button button-secondary" type="button" onClick={() => {
                 setSearch(customer.name)
                 onSelectCustomer(customer)
               }}>

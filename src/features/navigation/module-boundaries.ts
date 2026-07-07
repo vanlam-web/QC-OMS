@@ -9,10 +9,10 @@ export const phaseOneModules = [
     permissions: ['perm.create_order'],
   },
   { id: 'customers', label: 'Khách hàng', path: '/customers', permissions: ['perm.create_order'] },
+  { id: 'goods', label: 'Hàng hóa', path: '/products', permissions: ['perm.manage_inventory'] },
   { id: 'suppliers', label: 'Nhà cung cấp', path: '/suppliers', permissions: ['perm.manage_inventory'] },
   { id: 'purchase-receipts', label: 'Nhập hàng', path: '/purchase/receipts', permissions: ['perm.manage_inventory'] },
   { id: 'price-book', label: 'Bảng giá', path: '/price-book', permissions: ['perm.edit_price_book'] },
-  { id: 'inventory', label: 'Kho', path: '/inventory', permissions: ['perm.manage_inventory'] },
   { id: 'finance', label: 'Sổ quỹ', path: '/finance', permissions: ['perm.manage_finance'] },
   {
     id: 'reports',

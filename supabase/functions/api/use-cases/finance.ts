@@ -175,6 +175,7 @@ export async function listCashbookEntries(
   return await repository.listCashbookEntries({
     organizationId: context.organizationId,
     financeAccountId: url.searchParams.get("finance_account_id")?.trim() || undefined,
+    financeAccountType: parseOptionalEnum(url.searchParams.get("finance_account_type"), ["cash", "bank"]),
     search,
     searchScope,
     direction: parseOptionalEnum(url.searchParams.get("direction"), ["in", "out"]),

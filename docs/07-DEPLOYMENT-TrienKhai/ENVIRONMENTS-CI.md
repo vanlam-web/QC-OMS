@@ -159,6 +159,7 @@ Deploy staging/production thất bại nếu bước bắt buộc trước đó 
 - Production API chỉ cho domain production và các origin tích hợp đã chốt.
 - Không dùng wildcard `*` cho endpoint có credential trong production.
 - Mọi endpoint công khai dùng HTTPS.
+- CORS `Access-Control-Allow-Headers` của API phải cho phép tối thiểu: `authorization`, `content-type`, `x-request-id`, `x-workstation-id`, `x-client-device-id`. Thiếu `x-client-device-id` sẽ làm login fail ở browser vì `/me` bị chặn sau preflight.
 
 ---
 

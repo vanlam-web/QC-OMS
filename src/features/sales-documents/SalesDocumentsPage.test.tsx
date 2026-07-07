@@ -127,6 +127,16 @@ const paidDetail = {
   ],
 } as SalesDocumentDetail
 
+const partialPaidDetail = {
+  ...detail,
+  id: 'order-partial',
+  code: 'HD000020',
+  total_amount: 600000,
+  paid_amount: 100000,
+  debt_amount: 500000,
+  payment_status: 'partial' as const,
+} as SalesDocumentDetail
+
 const quoteReopenPayload: QuoteReopenPayload = {
   quote: {
     id: 'quote-1',
@@ -443,12 +453,12 @@ it('filters quotes and exposes reopen only for active quote rows', async () => {
   await clickDocumentRow('BG000123')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ BG000123' })
   expect(within(detailRegion).getByRole('button', { name: 'Mở tại POS' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
-  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeDisabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sửa' })).toBeEnabled()
+  expect(within(detailRegion).queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeEnabled()
 })
 
 it('filters sales documents by supported invoice payment seller and price list fields', async () => {
@@ -641,7 +651,8 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(detailHeader).toHaveClass('management-detail-header')
   expect(within(detailRegion).getByRole('heading', { name: 'Công ty Phong Cảnh' })).toBeInTheDocument()
   expect(within(detailRegion).getByText('HD010985')).toBeInTheDocument()
-  expect(within(detailRegion).getByText('Hoàn tất')).toBeInTheDocument()
+  expect(within(detailHeader).getByText('Chưa thanh toán')).toHaveClass('status-chip', 'status-chip-neutral')
+  expect(within(detailHeader).queryByText('Hoàn tất')).not.toBeInTheDocument()
   expect(within(detailRegion).queryByText('Người tạo:')).not.toBeInTheDocument()
   expect(within(detailRegion).getByText('Người bán:').closest('div')).toHaveTextContent('Người bán:Admin')
   expect(within(detailRegion).getByText('Ngày bán:').closest('div')).toHaveTextContent('Ngày bán:00:08 1/7/26')
@@ -674,11 +685,13 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(detailRegion.querySelector('.management-detail-lower')).toHaveClass('management-detail-lower-right')
   const footer = detailRegion.querySelector('.management-detail-footer-actions')
   expect(footer).not.toBeNull()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toBeDisabled()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toBeDisabled()
-  expect(within(footer as HTMLElement).getByRole('button', { name: 'In' })).toBeDisabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Hủy' })).toBeEnabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Sao chép' })).toBeEnabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Sửa' })).toBeEnabled()
+  expect(within(footer as HTMLElement).queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toBeEnabled()
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'Lưu' })).toHaveClass('button-secondary')
+  expect(within(footer as HTMLElement).getByRole('button', { name: 'In' })).toBeEnabled()
   expect(footer?.querySelector('.management-detail-footer-actions-left')).not.toBeNull()
   expect(footer?.querySelector('.management-detail-footer-actions-right')).not.toBeNull()
   expect(footer?.querySelectorAll('svg')).toHaveLength(5)
@@ -688,24 +701,51 @@ it('opens invoice detail with item, price list, debt and stock snapshots', async
   expect(screen.queryByRole('region', { name: 'Chi tiết chứng từ HD010985' })).not.toBeInTheDocument()
 })
 
-it('keeps the info tab visible when an invoice has no payment history', async () => {
+it('shows invoice payment status in the detail header', async () => {
+  const service = makeService({
+    getSalesDocument: vi.fn(async () => partialPaidDetail),
+    listSalesDocuments: vi.fn(async () => ({
+      items: [{ ...listItem, id: 'order-partial', code: 'HD000020', total_amount: 600000, paid_amount: 100000, debt_amount: 500000, payment_status: 'partial' as const }],
+      total: 1,
+      page: 1,
+      page_size: 15,
+      summary: { total_amount: 600000, paid_amount: 100000, debt_amount: 500000 },
+    })),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await clickDocumentRow('HD000020')
+
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD000020' })
+  const detailHeader = within(detailRegion).getByRole('banner')
+  expect(within(detailHeader).getByText('Thanh toán 1 phần')).toHaveClass('status-chip', 'status-chip-warning')
+  expect(within(detailHeader).queryByText('Hoàn tất')).not.toBeInTheDocument()
+})
+
+it('uses the shared paid invoice success chip color', async () => {
+  const service = makeService({
+    getSalesDocument: vi.fn(async () => paidDetail),
+  })
+  render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await clickDocumentRow('HD010985')
+
+  const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
+  const detailHeader = within(detailRegion).getByRole('banner')
+  expect(within(detailHeader).getByText('Hoàn tất')).toHaveClass('status-chip', 'status-chip-success')
+})
+
+it('hides payment history tab when an invoice has no receipts', async () => {
   const service = makeService()
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await clickDocumentRow('HD010985')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
-  const historyTab = within(detailRegion).getByRole('tab', { name: 'Lịch sử thanh toán' })
 
   expect(within(detailRegion).getByRole('tab', { name: 'Thông tin' })).toHaveAttribute('aria-selected', 'true')
-  expect(historyTab).toHaveAttribute('aria-selected', 'false')
+  expect(within(detailRegion).queryByRole('tab', { name: 'Lịch sử thanh toán' })).not.toBeInTheDocument()
   expect(within(detailRegion).getByRole('tabpanel', { name: 'Thông tin' })).toBeInTheDocument()
-
-  await userEvent.click(historyTab)
-
-  expect(historyTab).toHaveAttribute('aria-selected', 'true')
-  expect(within(detailRegion).queryByRole('tabpanel', { name: 'Thông tin' })).not.toBeInTheDocument()
-  expect(within(detailRegion).getByRole('tabpanel', { name: 'Lịch sử thanh toán' })).toBeInTheDocument()
-  expect(within(detailRegion).getByText('Chưa có lịch sử thanh toán.')).toBeInTheDocument()
+  expect(within(detailRegion).queryByText('Chưa có lịch sử thanh toán.')).not.toBeInTheDocument()
 })
 
 it('keeps invoice detail open when a bubbled click reports coordinates outside the selected row', async () => {
@@ -754,6 +794,7 @@ it('shows payment receipt rows in the payment history tab', async () => {
   expect(within(paymentHistory).getByText('PT000125')).toBeInTheDocument()
   expect(within(paymentHistory).getByText('Thu ngân')).toBeInTheDocument()
   expect(within(paymentHistory).getByText('Chuyển khoản')).toBeInTheDocument()
+  expect(within(paymentHistory).getByText('Đã thanh toán')).toBeInTheDocument()
   expect(within(paymentHistory).getAllByText('150 000').length).toBeGreaterThan(0)
 })
 
@@ -787,19 +828,19 @@ it('keeps payment history visible when receipt data misses optional nested field
   expect(within(paymentHistory).getAllByText('-')).toHaveLength(1)
 })
 
-it('shows disabled invoice detail action placeholders until flows exist', async () => {
+it('shows active invoice detail action placeholders until flows exist', async () => {
   const service = makeService()
   render(<SalesDocumentsPage service={service} onOpenDashboard={vi.fn()} />)
 
   await clickDocumentRow('HD010985')
   const detailRegion = await screen.findByRole('region', { name: 'Chi tiết chứng từ HD010985' })
 
-  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Chỉnh sửa' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeDisabled()
-  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeDisabled()
-  expect(within(detailRegion).queryByRole('button', { name: 'Sửa' })).not.toBeInTheDocument()
+  expect(within(detailRegion).getByRole('button', { name: 'Hủy' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sao chép' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'Sửa' })).toBeEnabled()
+  expect(within(detailRegion).queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+  expect(within(detailRegion).getByRole('button', { name: 'Lưu' })).toBeEnabled()
+  expect(within(detailRegion).getByRole('button', { name: 'In' })).toBeEnabled()
   expect(within(detailRegion).queryByRole('button', { name: 'Huỷ' })).not.toBeInTheDocument()
   expect(within(detailRegion).queryByRole('button', { name: 'In lại' })).not.toBeInTheDocument()
 })

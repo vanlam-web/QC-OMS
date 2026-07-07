@@ -43,6 +43,7 @@ export function ProfileMenu({
         aria-controls={id}
         aria-expanded={open}
         aria-label={compact ? 'Tài khoản' : undefined}
+        className={compact ? 'management-icon-button' : 'button button-secondary'}
         onClick={() => setOpen((value) => !value)}
         title={compact ? displayName : undefined}
         type="button"
@@ -51,16 +52,16 @@ export function ProfileMenu({
       </button>
       {open ? (
         <div id={id} role="menu">
-          <button role="menuitem" onClick={onOpenDashboard} type="button">
+          <button className="button button-secondary" role="menuitem" onClick={onOpenDashboard} type="button">
             Trang chủ
           </button>
-          {permissions.includes('perm.view_shift_report') ? <button role="menuitem">Báo cáo ca</button> : null}
+          {permissions.includes('perm.view_shift_report') ? <button className="button button-secondary" role="menuitem">Báo cáo ca</button> : null}
           {permissions.includes('perm.access_admin_panel') ? (
-            <button role="menuitem" onClick={onOpenAdmin} type="button">
+            <button className="button button-secondary" role="menuitem" onClick={onOpenAdmin} type="button">
               Quản trị
             </button>
           ) : null}
-          <button role="menuitem" onClick={onSignOut} type="button">
+          <button className="button button-secondary" role="menuitem" onClick={onSignOut} type="button">
             Đăng xuất
           </button>
         </div>

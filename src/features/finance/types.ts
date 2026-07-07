@@ -149,6 +149,15 @@ export interface PaymentReceiptAllocation {
   remaining_after: number
 }
 
+export interface FinanceSalesDocumentSummary {
+  id: string
+  code: string
+  total_amount: number
+  paid_amount: number
+  debt_amount: number
+  payment_status: 'not_applicable' | 'unpaid' | 'partial' | 'paid'
+}
+
 export interface CashbookEntryDetail extends CashbookEntry {
   created_by: { id: string; name: string }
   counterparty: CashbookCounterparty

@@ -19,7 +19,7 @@ import { AuthContext, type AuthContextValue } from './auth-context'
 import { runtimeConfig } from '../../lib/config/runtime'
 
 const bootstrapTimeoutMs = 8000
-const currentUserCacheKey = 'qc-oms.auth.current-user.v1'
+const currentUserCacheKey = 'qc-oms.auth.current-user.v2'
 const currentUserCacheTtlMs = 5 * 60_000
 
 export function AuthProvider({

@@ -5,6 +5,8 @@ export type PermissionCode = CurrentUserData['permissions'][number]
 export interface UserListItem {
   id: string
   email: string
+  username: string | null
+  phone: string | null
   display_name: string
   status: 'active' | 'inactive'
   permissions: PermissionCode[]
