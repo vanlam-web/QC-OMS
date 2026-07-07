@@ -61,6 +61,8 @@ Frontend API error contract:
 - lỗi mất mạng hoặc response không phải JSON vẫn phải được client map thành `ApiError(INTERNAL_ERROR)` với trace ID an toàn;
 - UI dùng `formatApiError` để tránh lộ lỗi kỹ thuật thô cho nhân viên vận hành.
 
+Backend chỉ echo `x-request-id` nếu giá trị an toàn: chữ, số, `.`, `_`, `:`, `-`, tối đa 128 ký tự. Header không hợp lệ phải được thay bằng UUID mới trước khi ghi response hoặc log.
+
 ---
 
 ## 2. BIẾN MÔI TRƯỜNG
