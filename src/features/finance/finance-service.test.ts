@@ -194,7 +194,7 @@ describe('finance-service', () => {
         counterparty: { type: 'supplier', name: 'Thu Nghĩa', phone: '000100' },
       },
     ])).toBe([
-      'Mã phiếu,Thời gian,Loại thu chi,Người nộp/nhận,Giá trị,Quỹ/Tài khoản,Trạng thái,Ghi chú,Hạch toán KQKD',
+      '\uFEFFMã phiếu,Thời gian,Loại thu chi,Người nộp/nhận,Giá trị,Quỹ/Tài khoản,Trạng thái,Ghi chú,Hạch toán KQKD',
       'CTM001180,2026-07-04T07:46:00.000Z,,Thu Nghĩa,-30000,CASH,posted,Vận chuyển,true',
     ].join('\n'))
   })

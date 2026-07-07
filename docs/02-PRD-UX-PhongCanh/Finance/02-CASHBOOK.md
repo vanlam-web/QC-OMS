@@ -34,6 +34,7 @@ Quan sát bổ sung ngày `05/07/2026` từ KiotViet đang mở và file xuất 
 - Bảng mặc định gồm `Mã phiếu`, `Thời gian`, `Loại thu chi`, `Người nộp/nhận`, `Giá trị`.
 - Chọn cột có thêm: `Thời gian tạo`, `Người tạo`, `Nhân viên`, `Chi nhánh`, `Tên tài khoản`, `Số tài khoản`, `Mã người nộp/nhận`, `Số điện thoại`, `Địa chỉ`, `Nội dung chuyển khoản`, `Ghi chú`, `Loại sổ quỹ`, `Trạng thái`.
 - File xuất 1 tháng có 241 dòng, cột xuất tối thiểu: `Mã phiếu`, `Thời gian`, `Loại thu chi`, `Người nộp/nhận`, `Giá trị`.
+- File xuất CSV của QC-OMS phải có UTF-8 BOM để Excel mở trực tiếp không lỗi dấu tiếng Việt.
 - File xuất tháng 06/2026 có các nhóm thực tế:
   - `Phiếu thu Tiền khách trả`: 143 dòng
   - `Phiếu chi Lương NV`: 21 dòng
