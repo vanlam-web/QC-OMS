@@ -79,15 +79,34 @@ async function executeRequest<T>(
     headers.set('authorization', `Bearer ${accessToken}`)
   }
 
-  const response = await fetcher(`${baseUrl}${path}`, { ...init, headers })
-  const body = (await response.json()) as ApiEnvelope<T>
+  let response: Response
+  try {
+    response = await fetcher(`${baseUrl}${path}`, { ...init, headers })
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause
+    throw new ApiError(0, 'INTERNAL_ERROR', 'Không kết nối được máy chủ.', traceId)
+  }
+
+  const responseTraceId = response.headers.get('x-request-id') ?? traceId
+  let body: ApiEnvelope<T>
+  try {
+    body = (await response.json()) as ApiEnvelope<T>
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause
+    throw new ApiError(
+      response.status,
+      'INTERNAL_ERROR',
+      'Máy chủ trả dữ liệu không hợp lệ.',
+      responseTraceId,
+    )
+  }
 
   if (!body.success) {
     throw new ApiError(
       response.status,
       body.error.code,
       body.error.message,
-      body.trace_id,
+      body.trace_id || responseTraceId,
       body.error.fields,
     )
   }
