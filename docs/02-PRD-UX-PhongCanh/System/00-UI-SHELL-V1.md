@@ -64,7 +64,7 @@ Mục tiêu: quản lý nhiều dữ liệu và thao tác sâu.
 - không dùng sidebar trái rộng làm mặc định vì các màn quản lý cần chiều ngang
 - top navigation là module bar ngang: brand/logo nhỏ bên trái link về `/dashboard`, module ở giữa, cụm thao tác nhanh bên phải
 - không hiển thị mục chữ `Tổng quan` trong module bar; dashboard đi qua brand/logo để tiết kiệm chiều ngang
-- module bar chính chỉ chứa các khu vực vận hành thường dùng như `Hóa đơn`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Phiếu nhập`; route nội bộ vẫn là `/sales-documents`
+- module bar chính chỉ chứa các khu vực vận hành thường dùng như `Chứng từ`, `Khách hàng`, `Hàng hóa`, `Bảng giá`, `Nhà cung cấp`, `Nhập hàng`; route nội bộ vẫn là `/sales-documents`
 - `Quản trị` không đứng trong module bar chính; đưa vào menu xổ xuống của icon tài khoản để giảm nhiễu cho vận hành hằng ngày. Route `/admin` và quyền `perm.access_admin_panel` giữ nguyên.
 - không có top-level tab `Kho`: tồn kho, kiểm kho, tồn cuộn/tấm và biến động tồn nằm trong module `Hàng hóa` như nhóm nghiệp vụ KiotViet. Route/màn kiểm kho nội bộ có thể giữ để chưa mất luồng, nhưng không xuất hiện thành mục topbar riêng.
 - POS là thao tác bán hàng nhanh nên đứng ở cụm thao tác nhanh bên phải, không chen vào module bar quản lý; quy tắc này supersede quy tắc PR #52 sau feedback preview của Owner trong PR #53
