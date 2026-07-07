@@ -573,6 +573,40 @@ Tra cứu sổ kho chính thức.
 
 Backend chỉ cho đọc. Tạo stock movement phải đi qua use case nghiệp vụ tương ứng: checkout, kiểm kho, sửa cuộn/tấm hoặc điều chỉnh thủ công có lý do.
 
+**Response MVP:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "product_id": "uuid",
+      "movement_type": "sale_deduction",
+      "quantity_delta": -1.656,
+      "created_at": "2026-07-07T05:30:00Z",
+      "document_code": "HD011036",
+      "document_type": "sale_invoice",
+      "transaction_price": 300000,
+      "cost_price": 107751.2,
+      "partner_name": "Khách lẻ"
+    }
+  ],
+  "page": 1,
+  "page_size": 15,
+  "total": 1
+}
+```
+
+Tab `Thẻ kho` trong chi tiết hàng hóa dùng response này để hiện bảng kiểu KiotViet. Backend hydrate:
+
+- `document_code`: `orders.code`, `purchase_receipts.code` hoặc `stocktakes.code`.
+- `document_type`: `sale_invoice`, `purchase_receipt`, `stocktake`, `manual`, `material_opening`.
+- `transaction_price`: bán lấy `order_items.unit_price`, mua lấy `purchase_receipt_items.unit_cost`.
+- `cost_price`: ưu tiên `products.latest_purchase_cost`, fallback `purchase_receipt_items.unit_cost`.
+- `partner_name`: bán lấy khách từ `orders.customer_snapshot`, mua lấy `suppliers.name`.
+
+API chưa trả `balance_after`, nên `Tồn cuối` trong UI vẫn hiện `Chưa có`. Khi cần đúng như KiotViet, nên lưu snapshot tồn sau mỗi stock movement hoặc bổ sung query tính running balance ổn định ở backend.
+
 ---
 
 ## 9. Stocktake

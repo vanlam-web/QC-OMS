@@ -32,6 +32,25 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       page_size: input.page_size ?? 15,
       total: 2,
     })),
+    listStockMovements: vi.fn(async () => ({
+      items: [
+        {
+          id: 'movement-1',
+          product_id: 'p-1',
+          movement_type: 'sale_deduction',
+          quantity_delta: -1.656,
+          created_at: '2026-07-07T05:30:00Z',
+          document_code: 'HD011036',
+          document_type: 'sale_invoice' as const,
+          transaction_price: 300000,
+          cost_price: 107751.2,
+          partner_name: 'Khách lẻ',
+        },
+      ],
+      page: 1,
+      page_size: 15,
+      total: 1,
+    })),
     createProduct: vi.fn(async () => ({
       id: 'p-2',
       code: 'DECAL',
@@ -39,6 +58,8 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
       status: 'active' as const,
       unit_name: 'm²',
       sell_method: 'area_m2' as const,
+      latest_purchase_cost: 50000,
+      inventory_shape: 'normal' as const,
     })),
     updateProduct: vi.fn(async () => ({
       id: 'p-1',
@@ -130,22 +151,148 @@ it('lists products and creates a product', async () => {
   expect(screen.queryByRole('button', { name: 'Lọc' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Trang chủ' })).not.toBeInTheDocument()
 
-  expect(screen.queryByRole('form', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Tạo hàng hóa' })).not.toBeInTheDocument()
   await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
-  const createForm = screen.getByRole('form', { name: 'Tạo hàng hóa' })
-  expect(createForm.closest('.management-list-surface')).not.toBeNull()
+  const createDialog = screen.getByRole('dialog', { name: 'Tạo hàng hóa' })
+  const createForm = within(createDialog).getByRole('form', { name: 'Tạo hàng hóa' })
+  expect(within(createDialog).queryByRole('tab', { name: 'Thông tin' })).not.toBeInTheDocument()
+  expect(within(createDialog).queryByRole('tab', { name: 'Mô tả' })).not.toBeInTheDocument()
+  expect(within(createForm).getByRole('combobox', { name: 'Loại hàng' })).toHaveValue('goods')
+  expect(within(createForm).getByRole('region', { name: 'Giá vốn, giá bán' })).toBeInTheDocument()
+  expect(within(createForm).getByRole('region', { name: 'Tồn kho' })).toBeInTheDocument()
+  expect(within(createDialog).queryByText('Thêm ảnh')).not.toBeInTheDocument()
+  expect(within(createDialog).queryByText('Mỗi ảnh không quá 2 MB')).not.toBeInTheDocument()
+  expect(within(createDialog).queryByText('Bán trực tiếp')).not.toBeInTheDocument()
   await userEvent.type(within(createForm).getByLabelText('Mã hàng'), 'DECAL')
   await userEvent.type(within(createForm).getByLabelText('Tên hàng'), 'Decal')
   await userEvent.type(within(createForm).getByLabelText('Đơn vị'), 'm²')
-  await userEvent.selectOptions(within(createForm).getByLabelText('Cách bán'), 'area_m2')
-  await userEvent.click(within(createForm).getByRole('button', { name: 'Thêm hàng hóa' }))
+  await userEvent.clear(within(createForm).getByLabelText('Giá vốn'))
+  await userEvent.type(within(createForm).getByLabelText('Giá vốn'), '50000')
+  await userEvent.selectOptions(within(createForm).getByLabelText('Cách tính bán'), 'area_m2')
+  await userEvent.click(within(createForm).getByRole('button', { name: 'Lưu' }))
 
   expect(service.createProduct).toHaveBeenCalledWith({
     code: 'DECAL',
     name: 'Decal',
     status: 'active',
+    product_kind: 'goods',
     unit_name: 'm²',
     sell_method: 'area_m2',
+    inventory_shape: 'normal',
+    track_inventory: true,
+    latest_purchase_cost: 50000,
+  })
+})
+
+it('switches the shared create product modal for service, roll, sheet, and combo goods', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('MICA-3MM')
+  await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
+  const createDialog = screen.getByRole('dialog', { name: 'Tạo hàng hóa' })
+  const createForm = within(createDialog).getByRole('form', { name: 'Tạo hàng hóa' })
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'service')
+  expect(within(createForm).queryByRole('region', { name: 'Tồn kho' })).not.toBeInTheDocument()
+  expect(within(createForm).queryByRole('region', { name: 'Vật tư cấu thành' })).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'auxiliary_material')
+  expect(within(createForm).getByRole('combobox', { name: 'Cách tính bán' })).toHaveValue('quantity')
+  expect(within(createForm).getByRole('region', { name: 'Tồn kho' })).toBeInTheDocument()
+  expect(within(createForm).queryByRole('region', { name: 'Vật tư cấu thành' })).not.toBeInTheDocument()
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'roll')
+  expect(within(createForm).getByRole('combobox', { name: 'Cách tính bán' })).toHaveValue('linear_m')
+  expect(within(createForm).getByRole('region', { name: 'Tồn kho' })).toHaveTextContent('Cuộn')
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'sheet')
+  expect(within(createForm).getByRole('combobox', { name: 'Cách tính bán' })).toHaveValue('sheet')
+  expect(within(createForm).getByRole('region', { name: 'Tồn kho' })).toHaveTextContent('Tấm')
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'combo')
+  expect(within(createForm).getByRole('combobox', { name: 'Cách tính bán' })).toHaveValue('combo')
+  expect(within(createForm).queryByRole('region', { name: 'Tồn kho' })).not.toBeInTheDocument()
+  expect(within(createForm).getByRole('region', { name: 'Vật tư cấu thành' })).toBeInTheDocument()
+})
+
+it('keeps the shared create product modal open when saving and creating another product', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('MICA-3MM')
+  await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
+  const createDialog = screen.getByRole('dialog', { name: 'Tạo hàng hóa' })
+  const createForm = within(createDialog).getByRole('form', { name: 'Tạo hàng hóa' })
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'service')
+  await userEvent.type(within(createForm).getByLabelText('Mã hàng'), 'DESIGN')
+  await userEvent.type(within(createForm).getByLabelText('Tên hàng'), 'Thiết kế')
+  await userEvent.clear(within(createForm).getByLabelText('Giá vốn'))
+  await userEvent.type(within(createForm).getByLabelText('Giá vốn'), '0')
+  await userEvent.click(within(createForm).getByRole('button', { name: 'Lưu & tạo thêm' }))
+
+  expect(service.createProduct).toHaveBeenCalledWith({
+    code: 'DESIGN',
+    name: 'Thiết kế',
+    status: 'active',
+    product_kind: 'service',
+    unit_name: 'lần',
+    sell_method: 'quantity',
+    inventory_shape: 'normal',
+    track_inventory: false,
+    latest_purchase_cost: 0,
+  })
+  expect(screen.getByRole('dialog', { name: 'Tạo hàng hóa' })).toBeInTheDocument()
+  expect(within(createForm).getByRole('combobox', { name: 'Loại hàng' })).toHaveValue('goods')
+  expect(within(createForm).getByLabelText('Mã hàng')).toHaveValue('')
+  expect(within(createForm).getByLabelText('Tên hàng')).toHaveValue('')
+})
+
+it('creates a combo product with BOM components from the shared create modal', async () => {
+  const service = makeService({
+    createProduct: vi.fn(async () => ({
+      id: 'p-combo',
+      code: 'COMBO-01',
+      name: 'Combo bảng hiệu',
+      status: 'active' as const,
+      unit_name: 'combo',
+      sell_method: 'combo' as const,
+      latest_purchase_cost: 0,
+      inventory_shape: 'normal' as const,
+    })),
+  })
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await screen.findByText('MICA-3MM')
+  await userEvent.click(within(screen.getByRole('search', { name: 'Lọc hàng hóa' })).getByRole('button', { name: 'Tạo hàng hóa' }))
+  const createDialog = screen.getByRole('dialog', { name: 'Tạo hàng hóa' })
+  const createForm = within(createDialog).getByRole('form', { name: 'Tạo hàng hóa' })
+
+  await userEvent.selectOptions(within(createForm).getByRole('combobox', { name: 'Loại hàng' }), 'combo')
+  const componentRegion = within(createForm).getByRole('region', { name: 'Vật tư cấu thành' })
+  await userEvent.type(within(createForm).getByLabelText('Mã hàng'), 'COMBO-01')
+  await userEvent.type(within(createForm).getByLabelText('Tên hàng'), 'Combo bảng hiệu')
+  await userEvent.selectOptions(within(componentRegion).getByLabelText('Vật tư'), 'p-2')
+  expect(within(componentRegion).queryByLabelText('Loại')).not.toBeInTheDocument()
+  await userEvent.clear(within(componentRegion).getByLabelText('Định mức'))
+  await userEvent.type(within(componentRegion).getByLabelText('Định mức'), '2')
+  await userEvent.type(within(componentRegion).getByLabelText('Ghi chú'), 'Keo dán')
+  await userEvent.click(within(createForm).getByRole('button', { name: 'Lưu' }))
+
+  expect(service.createProduct).toHaveBeenCalledWith({
+    code: 'COMBO-01',
+    name: 'Combo bảng hiệu',
+    status: 'active',
+    product_kind: 'combo',
+    unit_name: 'combo',
+    sell_method: 'combo',
+    inventory_shape: 'normal',
+    track_inventory: false,
+    latest_purchase_cost: 0,
+  })
+  expect(service.saveProductBom).toHaveBeenCalledWith('p-combo', {
+    items: [{ component_product_id: 'p-2', quantity: 2, notes: 'Keo dán' }],
   })
 })
 
@@ -163,7 +310,9 @@ it('filters by status and toggles product active state', async () => {
   const searchInput = within(filterForm).getByLabelText('Tìm hàng hóa')
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
   expect(within(sidebar).getByRole('combobox', { name: 'Loại hàng' })).toHaveValue('all')
-  expect(within(sidebar).getByRole('combobox', { name: 'Cách bán' })).toHaveValue('all')
+  expect(within(sidebar).getByRole('option', { name: 'Dịch vụ' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('option', { name: 'Vật tư phụ' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('combobox', { name: 'Cách tính bán' })).toHaveValue('all')
   expect(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' })).toHaveValue('active')
   await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Trạng thái hàng hóa' }), 'all')
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
@@ -171,8 +320,8 @@ it('filters by status and toggles product active state', async () => {
   expect(service.listProducts).toHaveBeenLastCalledWith({ page: 1, page_size: 15, search: undefined, status: 'all' })
   expect(screen.queryByText('Trạng thái: Tất cả')).not.toBeInTheDocument()
 
-  await userEvent.click(screen.getAllByRole('button', { name: 'Ngưng bán' })[0])
-  expect(service.updateProduct).toHaveBeenCalledWith('p-1', { status: 'inactive' })
+  expect(screen.queryByRole('button', { name: 'Ngưng bán' })).not.toBeInTheDocument()
+  expect(service.updateProduct).not.toHaveBeenCalled()
 })
 
 it('reactively filters products by existing product fields in the shared sidebar', async () => {
@@ -183,27 +332,27 @@ it('reactively filters products by existing product fields in the shared sidebar
   const sidebar = screen.getByRole('complementary', { name: 'Bộ lọc hàng hóa' })
 
   expect(within(sidebar).getByRole('region', { name: 'Loại hàng' })).toBeInTheDocument()
-  expect(within(sidebar).getByRole('region', { name: 'Cách bán' })).toBeInTheDocument()
+  expect(within(sidebar).getByRole('region', { name: 'Cách tính bán' })).toBeInTheDocument()
   expect(within(sidebar).getByRole('region', { name: 'Trạng thái hàng hóa' })).toBeInTheDocument()
   expect(within(sidebar).queryByRole('region', { name: 'Nhà cung cấp' })).not.toBeInTheDocument()
   expect(within(sidebar).queryByRole('region', { name: 'Thương hiệu' })).not.toBeInTheDocument()
 
-  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Loại hàng' }), 'roll')
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Loại hàng' }), 'service')
   expect(service.listProducts).toHaveBeenLastCalledWith({
     page: 1,
     page_size: 15,
     search: undefined,
     status: 'active',
-    inventory_shape: 'roll',
+    product_kind: 'service',
   })
 
-  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Cách bán' }), 'combo')
+  await userEvent.selectOptions(within(sidebar).getByRole('combobox', { name: 'Cách tính bán' }), 'combo')
   expect(service.listProducts).toHaveBeenLastCalledWith({
     page: 1,
     page_size: 15,
     search: undefined,
     status: 'active',
-    inventory_shape: 'roll',
+    product_kind: 'service',
     sell_method: 'combo',
   })
 })
@@ -215,9 +364,18 @@ it('renders products as a goods and inventory-oriented list, not a pricebook wor
   const grid = await screen.findByRole('table', { name: 'Danh sách hàng hóa' })
   expect(grid.closest('.management-table-viewport')).not.toBeNull()
   const header = within(grid).getByRole('row', {
-    name: 'Mã hàng Tên hàng Giá nhập cuối Đơn vị Cách bán Trạng thái Thao tác',
+    name: 'Chọn tất cả dòng hàng hóa Đánh dấu Mã hàng Tên hàng Giá vốn Giá bán Tồn kho Đơn vị Cách tính bán Dự kiến hết hàng',
   })
   expect(header).toBeInTheDocument()
+  expect(within(grid).getByRole('checkbox', { name: 'Chọn tất cả dòng hàng hóa' }).parentElement).toHaveClass('finance-cashbook-checkbox-control')
+  expect(within(grid).getByRole('button', { name: 'Chỉ hiện hàng ưu tiên' })).toHaveClass('finance-cashbook-star-button')
+  expect(within(grid).getByRole('checkbox', { name: 'Chọn dòng MICA-3MM' }).parentElement).toHaveClass('finance-cashbook-checkbox-control')
+  expect(within(grid).getByRole('button', { name: 'Đánh dấu ưu tiên MICA-3MM' })).toHaveClass('finance-cashbook-star-button')
+  expect(within(grid).queryByRole('columnheader', { name: 'Thao tác' })).not.toBeInTheDocument()
+  expect(within(grid).queryByRole('columnheader', { name: 'Trạng thái' })).not.toBeInTheDocument()
+  expect(within(grid).queryByRole('columnheader', { name: 'Thời gian tạo' })).not.toBeInTheDocument()
+  expect(within(grid).queryByRole('button', { name: 'Ngưng bán' })).not.toBeInTheDocument()
+  expect(within(grid).getAllByText('Chưa có').length).toBeGreaterThanOrEqual(4)
   const footer = screen.getByRole('navigation', { name: 'Phân trang hàng hóa' })
   expect(footer).toHaveClass('management-table-footer')
   expect(footer).toContainElement(screen.getByText('1 - 2 trong 2 hàng hóa'))
@@ -226,13 +384,32 @@ it('renders products as a goods and inventory-oriented list, not a pricebook wor
   expect(screen.queryByRole('form', { name: 'Công thức bảng giá' })).not.toBeInTheDocument()
 })
 
+it('persists product favorite marks and filters the current product page by favorites', async () => {
+  window.localStorage.clear()
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  const grid = await screen.findByRole('table', { name: 'Danh sách hàng hóa' })
+  await userEvent.click(within(grid).getByRole('button', { name: 'Đánh dấu ưu tiên MICA-3MM' }))
+
+  expect(JSON.parse(window.localStorage.getItem('catalog.product.favoriteProductIds') ?? '[]')).toEqual(['p-1'])
+  await userEvent.click(within(grid).getByRole('button', { name: 'Chỉ hiện hàng ưu tiên' }))
+
+  expect(screen.getByText('MICA-3MM')).toBeInTheDocument()
+  expect(screen.queryByText('KEO')).not.toBeInTheDocument()
+  expect(within(grid).getByRole('button', { name: 'Hiện tất cả hàng hóa' })).toHaveAttribute('aria-pressed', 'true')
+})
+
 it('opens product BOM and saves single-level normal components', async () => {
   const service = makeService()
   render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
 
   await userEvent.click(await screen.findByText('MICA-3MM'))
+  await userEvent.click(screen.getByRole('tab', { name: 'BOM/Vật tư cấu thành' }))
   const bomRegion = await screen.findByRole('region', { name: 'BOM MICA-3MM' })
+  expect(within(bomRegion).getByRole('table', { name: 'Vật tư cấu thành MICA-3MM' })).toBeInTheDocument()
   await userEvent.selectOptions(within(bomRegion).getByLabelText('Vật tư'), 'p-2')
+  expect(within(bomRegion).queryByLabelText('Loại')).not.toBeInTheDocument()
   await userEvent.clear(within(bomRegion).getByLabelText('Định mức'))
   await userEvent.type(within(bomRegion).getByLabelText('Định mức'), '2')
   await userEvent.type(within(bomRegion).getByLabelText('Ghi chú'), 'Dán mica')
@@ -242,6 +419,24 @@ it('opens product BOM and saves single-level normal components', async () => {
   expect(service.saveProductBom).toHaveBeenCalledWith('p-1', {
     items: [{ component_product_id: 'p-2', quantity: 2, notes: 'Dán mica' }],
   })
+})
+
+it('opens product detail without a page error when the BOM endpoint is unavailable', async () => {
+  const service = makeService({
+    getProductBom: vi.fn(async () => {
+      throw new Error('BOM tables unavailable')
+    }),
+  })
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByText('MICA-3MM'))
+
+  expect(await screen.findByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('tab', { name: 'BOM/Vật tư cấu thành' }))
+  expect(screen.queryByText('Máy chủ gặp lỗi. Vui lòng thử lại sau.')).not.toBeInTheDocument()
+  expect(screen.queryByText('BOM tables unavailable')).not.toBeInTheDocument()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'BOM MICA-3MM' })).toHaveTextContent('Chưa có BOM')
 })
 
 it('uses the shared table footer to move between product pages', async () => {
@@ -288,10 +483,58 @@ it('expands product details directly under the selected row and closes on second
   expect(productRow).toHaveTextContent('MICA-3MM')
   expect(productRow).toHaveClass('management-data-row-selected')
   expect(detail.closest('tr')).toHaveClass('management-detail-row')
+  expect(detail.querySelector('.management-detail-panel')).not.toBeNull()
+  const tabbar = detail.querySelector('.inline-detail-tabbar')
+  expect(tabbar).not.toBeNull()
+  expect(within(detail).getByRole('tab', { name: 'Thông tin' })).toHaveAttribute('aria-selected', 'true')
+  expect(within(detail).getByRole('tab', { name: 'Đơn vị & quy đổi' })).toHaveAttribute('aria-selected', 'false')
+  expect(within(detail).getByRole('tab', { name: 'BOM/Vật tư cấu thành' })).toHaveAttribute('aria-selected', 'false')
+  expect(within(detail).getByRole('tab', { name: 'Tồn kho' })).toHaveAttribute('aria-selected', 'false')
+  expect(within(detail).getByRole('tab', { name: 'Thẻ kho' })).toHaveAttribute('aria-selected', 'false')
+  expect(within(detail).getByRole('tab', { name: 'Ghi chú' })).toHaveAttribute('aria-selected', 'false')
+  expect(detail.querySelector('.management-detail-header')).not.toBeNull()
+  expect(detail.querySelector('.management-detail-meta-grid')).toHaveClass('management-detail-meta-grid-four')
+  expect(detail.querySelector('.management-detail-footer-actions')).not.toBeNull()
+  expect(within(detail).queryByRole('button', { name: 'In tem mã' })).not.toBeInTheDocument()
   expect(within(detail).getByText('Mica 3mm')).toBeInTheDocument()
   expect(within(detail).getByText('m tới')).toBeInTheDocument()
   expect(within(detail).getByText('100 000')).toBeInTheDocument()
 
+  await userEvent.click(within(detail).getByRole('tab', { name: 'Đơn vị & quy đổi' }))
+  expect(within(detail).getByRole('tab', { name: 'Đơn vị & quy đổi' })).toHaveAttribute('aria-selected', 'true')
+  expect(within(detail).getByRole('region', { name: 'Đơn vị và quy đổi MICA-3MM' })).toHaveTextContent('m')
+  expect(within(detail).getByRole('region', { name: 'Đơn vị và quy đổi MICA-3MM' })).toHaveTextContent('m tới')
+
   await userEvent.click(productRow as HTMLElement)
   expect(screen.queryByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })).not.toBeInTheDocument()
+})
+
+it('shows stock card tab as a KV-style movement table with placeholders for missing API fields', async () => {
+  const service = makeService()
+  render(<CatalogPage service={service} onOpenDashboard={vi.fn()} />)
+
+  await userEvent.click(await screen.findByText('MICA-3MM'))
+  const detail = screen.getByRole('region', { name: 'Chi tiết hàng hóa MICA-3MM' })
+
+  await userEvent.click(within(detail).getByRole('tab', { name: 'Thẻ kho' }))
+
+  expect(service.listStockMovements).toHaveBeenCalledWith({ product_id: 'p-1', page: 1, page_size: 15 })
+  expect(within(detail).getByRole('tab', { name: 'Thẻ kho' })).toHaveAttribute('aria-selected', 'true')
+  const stockCardTable = within(detail).getByRole('table', { name: 'Thẻ kho MICA-3MM' })
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Chứng từ' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Thời gian' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Loại giao dịch' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Giá GD' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Giá vốn' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Số lượng' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Tồn cuối' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('columnheader', { name: 'Đối tác' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByRole('button', { name: 'HD011036' })).toBeInTheDocument()
+  expect(within(stockCardTable).getByText('Bán hàng')).toBeInTheDocument()
+  expect(within(stockCardTable).getByText('300 000')).toBeInTheDocument()
+  expect(within(stockCardTable).getByText('107 751,2')).toBeInTheDocument()
+  expect(within(stockCardTable).getByText('-1,656')).toBeInTheDocument()
+  expect(within(stockCardTable).getByText('Khách lẻ')).toBeInTheDocument()
+  expect(within(stockCardTable).getAllByText('Chưa có')).toHaveLength(1)
+  expect(within(detail).getByRole('navigation', { name: 'Phân trang thẻ kho MICA-3MM' })).toHaveTextContent('1 - 1 trong 1 dòng')
 })

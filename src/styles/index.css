@@ -2087,9 +2087,34 @@ button {
   margin: 0;
 }
 
+.catalog-bom-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.catalog-bom-table th,
+.catalog-bom-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border-muted);
+  text-align: left;
+  vertical-align: top;
+}
+
+.catalog-bom-table th {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.catalog-bom-table select,
+.catalog-bom-table input {
+  width: 100%;
+}
+
 .catalog-bom-line {
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) minmax(8rem, 10rem) minmax(10rem, 1fr);
+  grid-template-columns: minmax(14rem, 1fr) minmax(9rem, 11rem) minmax(8rem, 10rem) minmax(10rem, 1fr);
   gap: var(--space-3);
 }
 
@@ -4363,6 +4388,85 @@ td:has(.money-text) {
   gap: 0.75rem;
   align-items: end;
   margin: 0 0 1rem;
+}
+
+.catalog-create-dialog {
+  width: min(64rem, calc(100vw - var(--space-4)));
+}
+
+.catalog-create-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.catalog-create-section {
+  display: grid;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: var(--space-3);
+}
+
+.catalog-create-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.catalog-create-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.catalog-create-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-create-form label {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.catalog-create-form input:not([type="checkbox"]),
+.catalog-create-form select {
+  width: 100%;
+  min-height: 2.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 var(--space-2);
+  font: inherit;
+}
+
+.catalog-create-form input:disabled {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.catalog-create-component-empty,
+.catalog-create-shape-badge {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.catalog-create-component-empty {
+  min-height: 4rem;
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+}
+
+.catalog-create-shape-badge {
+  justify-self: start;
+  border-style: solid;
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 800;
 }
 
 .catalog-formula-panel {

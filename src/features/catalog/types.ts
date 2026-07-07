@@ -1,16 +1,19 @@
 export type ProductStatus = 'active' | 'inactive'
 export type SellMethod = 'quantity' | 'area_m2' | 'linear_m' | 'sheet' | 'combo'
+export type ProductKind = 'goods' | 'service' | 'auxiliary_material' | 'roll' | 'sheet' | 'combo'
 
 export interface Product {
   id: string
   code: string
   name: string
   status: ProductStatus
+  product_kind?: ProductKind
   unit_name: string
   sell_method: SellMethod
   latest_purchase_cost?: number | null
   latest_purchase_cost_at?: string | null
   inventory_shape?: 'normal' | 'roll' | 'sheet'
+  track_inventory?: boolean
 }
 
 export interface ProductBomItem {
@@ -34,6 +37,26 @@ export interface ProductBom {
 
 export interface ProductListResponse {
   items: Product[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export interface ProductStockMovement {
+  id: string
+  product_id: string
+  movement_type: string
+  quantity_delta: number
+  created_at: string
+  document_code?: string | null
+  document_type?: 'sale_invoice' | 'purchase_receipt' | 'stocktake' | 'manual' | 'material_opening' | null
+  transaction_price?: number | null
+  cost_price?: number | null
+  partner_name?: string | null
+}
+
+export interface ProductStockMovementListResponse {
+  items: ProductStockMovement[]
   page: number
   page_size: number
   total: number

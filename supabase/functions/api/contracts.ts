@@ -1,6 +1,7 @@
 export type PermissionCode = `perm.${string}`;
 export type ProductStatus = "active" | "inactive";
 export type SellMethod = "quantity" | "area_m2" | "linear_m" | "sheet" | "combo";
+export type ProductKind = "goods" | "service" | "auxiliary_material" | "roll" | "sheet" | "combo";
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type PriceSource =
   | "default_price_list"
@@ -53,11 +54,13 @@ export interface ProductData {
   code: string;
   name: string;
   status: ProductStatus;
+  product_kind: ProductKind;
   unit_name: string;
   sell_method: SellMethod;
   latest_purchase_cost: number | null;
   latest_purchase_cost_at: string | null;
   inventory_shape?: "normal" | "roll" | "sheet";
+  track_inventory?: boolean;
 }
 
 export interface ProductBomItemData {
@@ -524,6 +527,11 @@ export interface StockMovementData {
   movement_type: string;
   quantity_delta: number;
   created_at: string;
+  document_code?: string | null;
+  document_type?: "sale_invoice" | "purchase_receipt" | "stocktake" | "manual" | "material_opening" | null;
+  transaction_price?: number | null;
+  cost_price?: number | null;
+  partner_name?: string | null;
 }
 
 export interface StocktakeData {
@@ -743,6 +751,9 @@ export interface FoundationRepository {
     organizationId: string;
     search?: string;
     status: ProductStatus | "all";
+    sellMethod?: SellMethod;
+    inventoryShape?: "normal" | "roll" | "sheet";
+    productKind?: ProductKind;
     page: number;
     pageSize: number;
   }): Promise<{ items: ProductData[]; total: number }>;
@@ -751,8 +762,13 @@ export interface FoundationRepository {
     code: string;
     name: string;
     status: ProductStatus;
+    productKind: ProductKind;
     unitName: string;
     sellMethod: SellMethod;
+    inventoryShape?: "normal" | "roll" | "sheet";
+    trackInventory?: boolean;
+    latestPurchaseCost?: number | null;
+    latestPurchaseCostUpdatedBy?: string;
   }): Promise<ProductData>;
   updateProduct(input: {
     organizationId: string;
@@ -760,6 +776,7 @@ export interface FoundationRepository {
     code?: string;
     name?: string;
     status?: ProductStatus;
+    productKind?: ProductKind;
     unitName?: string;
     sellMethod?: SellMethod;
     latestPurchaseCost?: number | null;

@@ -225,6 +225,66 @@ Deno.test("product search hides inactive products for POS users", async () => {
   assertEquals(requestedStatus, "active");
 });
 
+Deno.test("product create accepts inventory shape and latest purchase cost", async () => {
+  const createInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.edit_price_book"], {
+    createProduct: (input: Record<string, unknown>) => {
+      createInputs.push(input);
+      return Promise.resolve({
+        id: "p-new",
+        code: input.code,
+        name: input.name,
+        status: input.status,
+        product_kind: input.productKind,
+        unit_name: input.unitName,
+        sell_method: input.sellMethod,
+        latest_purchase_cost: input.latestPurchaseCost,
+        inventory_shape: input.inventoryShape,
+      });
+    },
+  });
+
+  const response = await call(
+    "/api/v1/products",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        code: "BAT-32",
+        name: "Bạt 3.2m",
+        status: "active",
+        product_kind: "auxiliary_material",
+        unit_name: "m",
+        sell_method: "linear_m",
+        inventory_shape: "roll",
+        track_inventory: false,
+        latest_purchase_cost: 50000,
+      }),
+    },
+    repository,
+  );
+
+  assertEquals(response.status, 201);
+  assertEquals(createInputs[0].productKind, "auxiliary_material");
+  assertEquals(createInputs[0].inventoryShape, "roll");
+  assertEquals(createInputs[0].trackInventory, false);
+  assertEquals(createInputs[0].latestPurchaseCost, 50000);
+});
+
+Deno.test("product list accepts product kind filter", async () => {
+  const listInputs: Array<Record<string, unknown>> = [];
+  const repository = repo(["perm.edit_price_book"], {
+    listProducts: (input: Record<string, unknown>) => {
+      listInputs.push(input);
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  });
+
+  const response = await call("/api/v1/products?product_kind=auxiliary_material", { method: "GET" }, repository);
+
+  assertEquals(response.status, 200);
+  assertEquals(listInputs[0].productKind, "auxiliary_material");
+});
+
 Deno.test("price resolution uses default price list without discount model", async () => {
   const response = await call(
     "/api/v1/pricing/resolve",

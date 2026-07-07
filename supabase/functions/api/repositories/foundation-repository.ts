@@ -66,6 +66,11 @@ type CustomerRepositoryRow = {
   customer_groups?: { id: string; code: string; name: string } | Array<{ id: string; code: string; name: string }> | null;
 };
 
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
 interface PriceRow {
   product_id: string;
   unit_price: number | string | null;
@@ -823,18 +828,35 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listProducts(input): Promise<{ items: ProductData[]; total: number }> {
       let query = client
         .from("products")
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at", {
           count: "exact",
         })
         .eq("organization_id", input.organizationId)
-        .order("code", { ascending: true })
-        .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
+        .order("code", { ascending: true });
+
+      if (input.productKind !== undefined) {
+        query = query.eq("product_kind", input.productKind);
+      }
+
+      if (input.productKind === undefined && input.inventoryShape !== undefined) {
+        const { data: matchingSettings, error: matchingSettingsError } = await client
+          .from("product_inventory_settings")
+          .select("product_id")
+          .eq("organization_id", input.organizationId)
+          .eq("inventory_shape", input.inventoryShape);
+        if (matchingSettingsError !== null) throw matchingSettingsError;
+        const productIds = (matchingSettings ?? []).map((row) => row.product_id).filter(isString);
+        if (productIds.length === 0) return { items: [], total: 0 };
+        query = query.in("id", productIds);
+      }
 
       if (input.status !== "all") query = query.eq("status", input.status);
+      if (input.sellMethod !== undefined) query = query.eq("sell_method", input.sellMethod);
       if (input.search !== undefined) {
         const search = input.search.replaceAll(",", " ").replaceAll("%", "\\%");
         query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
       }
+      query = query.range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
 
       const { data, error, count } = await query;
       if (error !== null) throw error;
@@ -843,15 +865,19 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
 
       const { data: settings, error: settingsError } = await client
         .from("product_inventory_settings")
-        .select("product_id, inventory_shape")
+        .select("product_id, inventory_shape, track_inventory")
         .eq("organization_id", input.organizationId)
         .in("product_id", items.map((item) => item.id));
       if (settingsError !== null) throw settingsError;
-      const shapeByProduct = new Map((settings ?? []).map((row) => [row.product_id, row.inventory_shape as "normal" | "roll" | "sheet"]));
+      const settingsByProduct = new Map((settings ?? []).map((row) => [row.product_id, {
+        inventory_shape: row.inventory_shape as "normal" | "roll" | "sheet",
+        track_inventory: Boolean(row.track_inventory),
+      }]));
       return {
         items: items.map((item) => ({
           ...item,
-          inventory_shape: shapeByProduct.get(item.id) ?? "normal",
+          inventory_shape: settingsByProduct.get(item.id)?.inventory_shape ?? "normal",
+          track_inventory: settingsByProduct.get(item.id)?.track_inventory ?? true,
         })),
         total: count ?? 0,
       };
@@ -864,19 +890,36 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
           code: input.code,
           name: input.name,
           status: input.status,
+          product_kind: input.productKind,
           unit_name: input.unitName,
           sell_method: input.sellMethod,
+          latest_purchase_cost: input.latestPurchaseCost ?? null,
+          latest_purchase_cost_at: input.latestPurchaseCost === undefined ? null : new Date().toISOString(),
+          latest_purchase_cost_updated_by: input.latestPurchaseCostUpdatedBy ?? null,
         })
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .single();
       if (error !== null) throw error;
-      return data as ProductData;
+      const shape = input.inventoryShape ?? "normal";
+      const stockUnitId = await ensureInventoryUnit(client, input.organizationId, input.unitName, input.sellMethod);
+      const { error: settingsError } = await client
+        .from("product_inventory_settings")
+        .upsert({
+          organization_id: input.organizationId,
+          product_id: data.id,
+          track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo"),
+          inventory_shape: shape,
+          stock_unit_id: stockUnitId,
+        }, { onConflict: "organization_id,product_id" });
+      if (settingsError !== null) throw settingsError;
+      return { ...(data as ProductData), inventory_shape: shape, track_inventory: input.trackInventory ?? (shape !== "normal" || input.sellMethod !== "combo") };
     },
     async updateProduct(input): Promise<ProductData | null> {
       const patch: {
         code?: string;
         name?: string;
         status?: "active" | "inactive";
+        product_kind?: string;
         unit_name?: string;
         sell_method?: string;
         latest_purchase_cost?: number | null;
@@ -886,6 +929,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       if (input.code !== undefined) patch.code = input.code;
       if (input.name !== undefined) patch.name = input.name;
       if (input.status !== undefined) patch.status = input.status;
+      if (input.productKind !== undefined) patch.product_kind = input.productKind;
       if (input.unitName !== undefined) patch.unit_name = input.unitName;
       if (input.sellMethod !== undefined) patch.sell_method = input.sellMethod;
       if (input.latestPurchaseCost !== undefined) {
@@ -899,7 +943,7 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
         .update(patch)
         .eq("id", input.id)
         .eq("organization_id", input.organizationId)
-        .select("id, code, name, status, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
+        .select("id, code, name, status, product_kind, unit_name, sell_method, latest_purchase_cost, latest_purchase_cost_at")
         .maybeSingle();
       if (error !== null) throw error;
       return data as ProductData | null;
@@ -1987,7 +2031,10 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
     async listStockMovements(input): Promise<{ items: StockMovementData[]; total: number }> {
       let query = client
         .from("stock_movements")
-        .select("id, product_id, movement_type, quantity_delta, created_at", { count: "exact" })
+        .select(
+          "id, product_id, movement_type, quantity_delta, created_at, orders(id, code, customer_snapshot), order_items(id, unit_price), purchase_receipts(id, code, suppliers(id, code, name)), purchase_receipt_items(id, unit_cost), stocktakes(id, code), products(id, latest_purchase_cost)",
+          { count: "exact" },
+        )
         .eq("organization_id", input.organizationId)
         .order("created_at", { ascending: false })
         .range((input.page - 1) * input.pageSize, input.page * input.pageSize - 1);
@@ -1998,13 +2045,48 @@ export function createFoundationRepository(client: DatabaseClient): FoundationRe
       const { data, error, count } = await query;
       if (error !== null) throw error;
       return {
-        items: (data ?? []).map((row) => ({
-          id: row.id,
-          product_id: row.product_id,
-          movement_type: row.movement_type,
-          quantity_delta: Number(row.quantity_delta),
-          created_at: row.created_at,
-        })),
+        items: (data ?? []).map((row) => {
+          const order = firstRelation(row.orders);
+          const orderItem = firstRelation(row.order_items);
+          const purchaseReceipt = firstRelation(row.purchase_receipts);
+          const purchaseReceiptItem = firstRelation(row.purchase_receipt_items);
+          const supplier = firstRelation(purchaseReceipt?.suppliers);
+          const stocktake = firstRelation(row.stocktakes);
+          const product = firstRelation(row.products);
+          const customer = order === null ? null : customerSnapshot(order.customer_snapshot);
+          const documentCode = order?.code ?? purchaseReceipt?.code ?? stocktake?.code ?? null;
+          const documentType = order !== null
+            ? "sale_invoice"
+            : purchaseReceipt !== null
+              ? "purchase_receipt"
+              : stocktake !== null
+                ? "stocktake"
+                : row.movement_type === "material_opening"
+                  ? "material_opening"
+                  : row.movement_type === "manual_adjustment"
+                    ? "manual"
+                    : null;
+          return {
+            id: row.id,
+            product_id: row.product_id,
+            movement_type: row.movement_type,
+            quantity_delta: Number(row.quantity_delta),
+            created_at: row.created_at,
+            document_code: documentCode,
+            document_type: documentType,
+            transaction_price: orderItem?.unit_price === undefined || orderItem?.unit_price === null
+              ? purchaseReceiptItem?.unit_cost === undefined || purchaseReceiptItem?.unit_cost === null
+                ? null
+                : Number(purchaseReceiptItem.unit_cost)
+              : Number(orderItem.unit_price),
+            cost_price: product?.latest_purchase_cost === undefined || product?.latest_purchase_cost === null
+              ? purchaseReceiptItem?.unit_cost === undefined || purchaseReceiptItem?.unit_cost === null
+                ? null
+                : Number(purchaseReceiptItem.unit_cost)
+              : Number(product.latest_purchase_cost),
+            partner_name: customer?.name ?? supplier?.name ?? null,
+          };
+        }),
         total: count ?? 0,
       };
     },
@@ -4136,6 +4218,48 @@ function isString(value: unknown): value is string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function ensureInventoryUnit(
+  client: DatabaseClient,
+  organizationId: string,
+  unitName: string,
+  sellMethod: "quantity" | "area_m2" | "linear_m" | "sheet" | "combo",
+): Promise<string> {
+  const normalizedName = unitName.trim() || "đơn vị";
+  const code = normalizedName.slice(0, 30).toUpperCase();
+  const { data: existing, error: existingError } = await client
+    .from("inventory_units")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("code", code)
+    .maybeSingle();
+  if (existingError !== null) throw existingError;
+  if (existing?.id !== undefined) return existing.id;
+
+  const { data: created, error: createError } = await client
+    .from("inventory_units")
+    .insert({
+      organization_id: organizationId,
+      code,
+      name: normalizedName.slice(0, 60),
+      unit_kind: inventoryUnitKindForSellMethod(sellMethod),
+      decimal_precision: sellMethod === "quantity" || sellMethod === "sheet" || sellMethod === "combo" ? 0 : 3,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+  if (createError !== null) throw createError;
+  return created.id;
+}
+
+function inventoryUnitKindForSellMethod(
+  sellMethod: "quantity" | "area_m2" | "linear_m" | "sheet" | "combo",
+): "quantity" | "length" | "area" | "package" {
+  if (sellMethod === "area_m2") return "area";
+  if (sellMethod === "linear_m") return "length";
+  if (sellMethod === "combo") return "package";
+  return "quantity";
 }
 
 async function hydrateUser(
