@@ -80,7 +80,7 @@ it('loads user and permission administration data from the API service', async (
   expect(within(sidebar).getByPlaceholderText('Tìm kiếm thiết lập')).toBeInTheDocument()
   expect(within(sidebar).getByRole('button', { name: 'Quản lý người dùng' })).toHaveAttribute('aria-current', 'page')
   expect(within(sidebar).getByRole('heading', { name: 'Cửa hàng' })).toBeInTheDocument()
-  expect(screen.getByRole('region', { name: 'Tài khoản người dùng' })).toHaveClass('management-list-surface')
+  expect(await screen.findByRole('region', { name: 'Tài khoản người dùng' })).toHaveClass('management-list-surface')
   expect(document.querySelector('.admin-grid')).toBeNull()
   expect(document.querySelector('.admin-form')).toBeNull()
   const userSearch = screen.getByRole('search', { name: 'Lọc người dùng' })
