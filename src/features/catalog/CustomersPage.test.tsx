@@ -12,6 +12,11 @@ function makeService(overrides: Partial<CatalogService> = {}): CatalogService {
     updateProduct: vi.fn(),
     getProductBom: vi.fn(async () => null),
     saveProductBom: vi.fn(),
+    listProductGroups: vi.fn(async () => ({ items: [] })),
+    listStockMovements: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    listInventoryRolls: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    listInventorySheets: vi.fn(async () => ({ items: [], page: 1, page_size: 15, total: 0 })),
+    adjustNormalProductStock: vi.fn(),
     listCustomers: vi.fn(async () => ({
       items: [
         {
@@ -285,7 +290,8 @@ it('searches and creates a customer from the search action', async () => {
   expect(screen.queryByRole('dialog', { name: 'Tạo khách hàng' })).not.toBeInTheDocument()
   await userEvent.click(within(searchForm).getByRole('button', { name: 'Tạo khách hàng' }))
   const dialog = screen.getByRole('dialog', { name: 'Tạo khách hàng' })
-  expect(dialog).toHaveClass('customer-create-backdrop')
+  expect(dialog).toHaveClass('management-modal-dialog')
+  expect(dialog.closest('.management-modal-backdrop')).not.toBeNull()
   const createForm = within(dialog).getByRole('form', { name: 'Tạo khách hàng' })
   expect(within(createForm).getByLabelText('Tên khách hàng')).toHaveFocus()
   const codeInput = within(createForm).getByLabelText('Mã khách hàng')
@@ -402,8 +408,9 @@ it('expands customer details directly under the selected row and closes on secon
   expect(within(infoPanel).queryByText('Đang hoạt động')).not.toBeInTheDocument()
   const detailTablist = within(detail).getByRole('tablist', { name: 'Chi tiết khách hàng' })
   const analysisButton = within(detail).getByRole('button', { name: 'Xem phân tích' })
+  expect(analysisButton).toHaveClass('management-icon-button')
   expect(detailTablist).toBeInTheDocument()
-  expect(analysisButton.closest('.customer-detail-tabbar')).toBe(detailTablist.closest('.customer-detail-tabbar'))
+  expect(analysisButton.closest('.inline-detail-tabbar')).toBe(detailTablist.closest('.inline-detail-tabbar'))
   expect(within(detail).getByRole('tab', { name: 'Thông tin' })).toHaveAttribute('aria-selected', 'true')
   expect(within(detail).getByRole('tab', { name: 'Nợ cần thu' })).toHaveAttribute('aria-selected', 'false')
   expect(within(detail).getByRole('tab', { name: 'Lịch sử' })).toHaveAttribute('aria-selected', 'false')

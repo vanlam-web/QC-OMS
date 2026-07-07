@@ -156,6 +156,8 @@ Lưu hệ số quy đổi từ đơn vị bán hoặc đơn vị khui về đơn
 | `sale_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị bán/khui |
 | `stock_unit_id` | `uuid` | ❌ | FK → `public.inventory_units.id`; đơn vị tồn chính |
 | `stock_qty_per_sale_unit` | `numeric(18,6)` | ❌ | 1 đơn vị bán/khui bằng bao nhiêu đơn vị tồn |
+| `is_default_purchase_unit` | `boolean` | ❌ | Đơn vị mặc định khi nhập/mua sản phẩm này |
+| `is_default_sale_unit` | `boolean` | ❌ | Đơn vị mặc định khi bán sản phẩm này |
 | `is_active` | `boolean` | ❌ | Quy đổi còn dùng |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
 | `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
@@ -163,6 +165,8 @@ Lưu hệ số quy đổi từ đơn vị bán hoặc đơn vị khui về đơn
 ### Ràng buộc
 
 - `UNIQUE (organization_id, product_id, sale_unit_id)`
+- Mỗi sản phẩm chỉ có tối đa một quy đổi active là đơn vị mua mặc định.
+- Mỗi sản phẩm chỉ có tối đa một quy đổi active là đơn vị bán mặc định.
 - `stock_qty_per_sale_unit > 0`
 - `product_id`, `sale_unit_id`, `stock_unit_id` phải thuộc cùng `organization_id`.
 - `stock_unit_id` phải khớp `product_inventory_settings.stock_unit_id` của sản phẩm.
@@ -336,6 +340,8 @@ Bảng này ghi log nghiệp vụ tối thiểu:
 
 Không dùng bảng này để tính giá vốn, lô/ngày mua hoặc báo cáo hao hụt nâng cao.
 
+Không dùng bảng này để thay thế phiếu kiểm kho. Khui vật tư không tạo `stocktakes`; thay đổi tồn chính thức đi qua `stock_movements.material_opening`. Phiếu kiểm kho chỉ dùng cho kiểm/cân bằng kho hoặc sửa tồn trực tiếp từ trang Hàng hóa.
+
 ### Các cột
 
 | Tên cột | Kiểu dữ liệu | Nullable | Mô tả |
@@ -371,6 +377,8 @@ Không dùng bảng này để tính giá vốn, lô/ngày mua hoặc báo cáo 
 ### Quy tắc dữ liệu
 
 - Khui hàng `normal` có quy đổi đơn vị không tạo cuộn/tấm; log nằm ở bảng này, stock movement chỉ tạo nếu có thay đổi tồn thực tế.
+- Nếu phần dở/cũ được chốt về `0`, movement phải thể hiện lượng giảm của phần cũ thay vì sửa âm thầm.
+- Với hàng `normal`, `result_payload.old_stock_movement_id` trỏ movement âm của phần cũ nếu có, và `result_payload.stock_movement_id` trỏ movement dương của lần khui mới.
 - Khui roll/sheet từ tồn tạm phải ghi `source_type = 'kiotviet_provisional'`.
 - Tồn thiếu/âm chỉ là warning, không làm operation thất bại nếu actor có quyền.
 - Rẻo nhỏ hoặc phần m tới dưới `0.2m` chỉ được ghi là đề xuất bỏ trong `result_payload`; nếu người dùng giữ lại, phải tạo/cập nhật object tương ứng.
@@ -483,6 +491,20 @@ Lưu đầu phiếu kiểm kho thủ công hoặc phiếu tự động khi sửa
 
 - `idx_stocktakes_org_status_created` trên `(organization_id, status, created_at DESC)`
 - `idx_stocktakes_org_created_by` trên `(organization_id, created_by, created_at DESC)`
+
+### Aggregate dùng cho danh sách
+
+Danh sách `Phiếu kiểm kho` không lưu các tổng sau dưới dạng cột trong `stocktakes` ở MVP hiện tại:
+
+- `total_actual_qty`
+- `total_actual_value`
+- `total_difference_value`
+- `increased_qty`
+- `decreased_qty`
+
+Backend hydrate các trường này từ `stocktake_items.actual_qty`, `stocktake_items.difference_qty` và `products.latest_purchase_cost`.
+
+Nếu một dòng thiếu giá vốn, các trường tiền liên quan trả `null` để UI hiển thị `Chưa có`. Khi cần số liệu kế toán ổn định theo thời điểm cân bằng, bổ sung snapshot giá vốn trên `stocktake_items` trước khi dùng làm báo cáo tài chính chính thức.
 
 ---
 

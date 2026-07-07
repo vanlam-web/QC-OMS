@@ -5,6 +5,8 @@ node_modules/
 dist/
 logs/
 
+deno.lock
+
 .env
 .env.*
 !.env.example

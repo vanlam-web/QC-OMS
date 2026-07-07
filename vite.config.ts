@@ -33,6 +33,7 @@ export const pwaOptions = {
 export default defineConfig({
   plugins: [react(), tailwindcss(), VitePWA(pwaOptions)],
   test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.worktrees/**'],
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',

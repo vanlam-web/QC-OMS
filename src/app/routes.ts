@@ -1,6 +1,7 @@
 export const appRoutes = {
   login: '/login',
   dashboard: '/dashboard',
+  account: '/account',
   pos: '/pos',
   admin: '/admin',
   products: '/products',

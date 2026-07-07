@@ -1,6 +1,6 @@
 begin;
 
-select plan(31);
+select plan(32);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -235,6 +235,17 @@ select is(
   (select count(*)::integer from public.inventory_material_openings where id = ((select result->>'id' from material_opening_results where name = 'normal_conversion')::uuid)),
   1,
   'normal opening writes one material opening log'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.stocktakes
+    where organization_id = '00000000-0000-4000-8000-000000000001'
+      and source_type = 'material_opening'
+  ),
+  0,
+  'normal opening does not create stocktake'
 );
 
 select is(

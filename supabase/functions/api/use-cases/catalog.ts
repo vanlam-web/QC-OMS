@@ -5,8 +5,10 @@ import type {
   PermissionCode,
   PriceListData,
   PriceFormulaPreviewData,
+  ProductGroupData,
   ProductBomData,
   ProductData,
+  ProductKind,
   ProductStatus,
   ResolvedPriceData,
   SellMethod,
@@ -30,6 +32,10 @@ export interface PriceListResponse {
   items: PriceListData[];
 }
 
+export interface ProductGroupListResponse {
+  items: ProductGroupData[];
+}
+
 export interface CustomerListResponse {
   items: CustomerData[];
   page: number;
@@ -51,6 +57,7 @@ export interface PriceFormulaApplyResponse {
 }
 
 const sellMethods = new Set<SellMethod>(["quantity", "area_m2", "linear_m", "sheet", "combo"]);
+const productKinds = new Set<ProductKind>(["goods", "service", "auxiliary_material", "roll", "sheet", "combo"]);
 
 export function requireAnyPermission(context: CatalogContext, allowed: PermissionCode[]): void {
   if (!allowed.some((permission) => context.permissions.includes(permission))) {
@@ -68,11 +75,15 @@ export async function listProducts(
   url: URL,
 ): Promise<ProductListResponse> {
   requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
-  const { search, status, page, pageSize } = parseListProducts(url, context.permissions);
+  const { search, status, sellMethod, inventoryShape, productKind, productGroupId, page, pageSize } = parseListProducts(url, context.permissions);
   const result = await repository.listProducts({
     organizationId: context.organizationId,
     search,
     status,
+    sellMethod,
+    inventoryShape,
+    productKind,
+    productGroupId,
     page,
     pageSize,
   });
@@ -88,7 +99,35 @@ export async function createProduct(
   const input = parseProductCreate(body);
 
   try {
-    return await repository.createProduct({ organizationId: context.organizationId, ...input });
+    return await repository.createProduct({
+      organizationId: context.organizationId,
+      ...input,
+      latestPurchaseCostUpdatedBy: input.latestPurchaseCost === undefined ? undefined : context.actorUserId,
+    });
+  } catch (cause) {
+    throw mapRepositoryError(cause);
+  }
+}
+
+export async function listProductGroups(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  url: URL,
+): Promise<ProductGroupListResponse> {
+  requireAnyPermission(context, ["perm.create_order", "perm.edit_price_book", "perm.manage_inventory"]);
+  const activeOnly = url.searchParams.get("active_only") !== "false";
+  return await repository.listProductGroups({ organizationId: context.organizationId, activeOnly });
+}
+
+export async function createProductGroup(
+  repository: FoundationRepository,
+  context: CatalogContext,
+  body: unknown,
+): Promise<ProductGroupData> {
+  requireAnyPermission(context, ["perm.edit_price_book"]);
+  const input = parseProductGroupCreate(body);
+  try {
+    return await repository.createProductGroup({ organizationId: context.organizationId, ...input });
   } catch (cause) {
     throw mapRepositoryError(cause);
   }
@@ -393,11 +432,24 @@ export async function updateCustomerGroup(
 function parseListProducts(
   url: URL,
   permissions: readonly PermissionCode[],
-): { search?: string; status: ProductStatus | "all"; page: number; pageSize: number } {
+): {
+  search?: string;
+  status: ProductStatus | "all";
+  sellMethod?: SellMethod;
+  inventoryShape?: "normal" | "roll" | "sheet";
+  productKind?: ProductKind;
+  productGroupId?: string;
+  page: number;
+  pageSize: number;
+} {
   const search = url.searchParams.get("search")?.trim();
   const page = Number(url.searchParams.get("page") ?? "1");
   const pageSize = Number(url.searchParams.get("page_size") ?? "20");
   const requestedStatus = url.searchParams.get("status") ?? "active";
+  const requestedSellMethod = url.searchParams.get("sell_method") ?? undefined;
+  const requestedInventoryShape = url.searchParams.get("inventory_shape") ?? undefined;
+  const requestedProductKind = url.searchParams.get("product_kind") ?? undefined;
+  const requestedProductGroupId = parseOptionalQueryId(url.searchParams.get("product_group_id"));
   const canEditPriceBook = permissions.includes("perm.edit_price_book");
 
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
@@ -409,10 +461,28 @@ function parseListProducts(
   if (requestedStatus !== "active" && requestedStatus !== "inactive" && requestedStatus !== "all") {
     throw validationError();
   }
+  if (requestedSellMethod !== undefined && !sellMethods.has(requestedSellMethod as SellMethod)) {
+    throw validationError();
+  }
+  if (requestedProductKind !== undefined && !productKinds.has(requestedProductKind as ProductKind)) {
+    throw validationError();
+  }
+  if (
+    requestedInventoryShape !== undefined &&
+    requestedInventoryShape !== "normal" &&
+    requestedInventoryShape !== "roll" &&
+    requestedInventoryShape !== "sheet"
+  ) {
+    throw validationError();
+  }
 
   return {
     search: search || undefined,
     status: canEditPriceBook ? requestedStatus : "active",
+    sellMethod: requestedSellMethod as SellMethod | undefined,
+    inventoryShape: requestedInventoryShape as "normal" | "roll" | "sheet" | undefined,
+    productKind: requestedProductKind as ProductKind | undefined,
+    productGroupId: requestedProductGroupId,
     page,
     pageSize,
   };
@@ -422,16 +492,63 @@ function parseProductCreate(body: unknown): {
   code: string;
   name: string;
   status: ProductStatus;
+  productKind: ProductKind;
   unitName: string;
   sellMethod: SellMethod;
+  inventoryShape?: "normal" | "roll" | "sheet";
+  trackInventory?: boolean;
+  productGroupId?: string | null;
+  latestPurchaseCost?: number | null;
+  unitConversions?: Array<{
+    unitName: string;
+    stockQtyPerUnit: number;
+    isDefaultPurchaseUnit: boolean;
+    isDefaultSaleUnit: boolean;
+  }>;
 } {
   if (!isRecord(body)) throw validationError();
+  const sellMethod = parseSellMethod(body.sell_method);
+  const inventoryShape = parseOptionalInventoryShape(body.inventory_shape);
+  const trackInventory = "track_inventory" in body ? parseBoolean(body.track_inventory) : undefined;
   return {
     code: normalizeCode(body.code),
     name: normalizeText(body.name, 200),
     status: parseStatus(body.status ?? "active"),
+    productKind: parseOptionalProductKind(body.product_kind) ?? inferProductKind(sellMethod, inventoryShape, trackInventory),
     unitName: normalizeText(body.unit_name, 30),
-    sellMethod: parseSellMethod(body.sell_method),
+    sellMethod,
+    inventoryShape,
+    trackInventory,
+    productGroupId: "product_group_id" in body ? parseOptionalId(body.product_group_id) : undefined,
+    latestPurchaseCost: "latest_purchase_cost" in body ? parseOptionalMoney(body.latest_purchase_cost) : undefined,
+    unitConversions: "unit_conversions" in body ? parseUnitConversions(body.unit_conversions) : undefined,
+  };
+}
+
+function parseUnitConversions(value: unknown): Array<{
+  unitName: string;
+  stockQtyPerUnit: number;
+  isDefaultPurchaseUnit: boolean;
+  isDefaultSaleUnit: boolean;
+}> {
+  if (!Array.isArray(value)) throw validationError();
+  return value.map((item) => {
+    if (!isRecord(item)) throw validationError();
+    const stockQtyPerUnit = parsePositiveNumber(item.stock_qty_per_unit);
+    return {
+      unitName: normalizeText(item.unit_name, 60),
+      stockQtyPerUnit,
+      isDefaultPurchaseUnit: "is_default_purchase_unit" in item ? parseBoolean(item.is_default_purchase_unit) : false,
+      isDefaultSaleUnit: "is_default_sale_unit" in item ? parseBoolean(item.is_default_sale_unit) : false,
+    };
+  });
+}
+
+function parseProductGroupCreate(body: unknown): { name: string; code?: string } {
+  if (!isRecord(body)) throw validationError();
+  return {
+    name: normalizeText(body.name, 120),
+    ...("code" in body ? { code: normalizeCode(body.code) } : {}),
   };
 }
 
@@ -439,6 +556,7 @@ function parseProductUpdate(body: unknown): {
   code?: string;
   name?: string;
   status?: ProductStatus;
+  productKind?: ProductKind;
   unitName?: string;
   sellMethod?: SellMethod;
   latestPurchaseCost?: number | null;
@@ -448,6 +566,7 @@ function parseProductUpdate(body: unknown): {
     code?: string;
     name?: string;
     status?: ProductStatus;
+    productKind?: ProductKind;
     unitName?: string;
     sellMethod?: SellMethod;
     latestPurchaseCost?: number | null;
@@ -455,6 +574,7 @@ function parseProductUpdate(body: unknown): {
   if ("code" in body) input.code = normalizeCode(body.code);
   if ("name" in body) input.name = normalizeText(body.name, 200);
   if ("status" in body) input.status = parseStatus(body.status);
+  if ("product_kind" in body) input.productKind = parseProductKind(body.product_kind);
   if ("unit_name" in body) input.unitName = normalizeText(body.unit_name, 30);
   if ("sell_method" in body) input.sellMethod = parseSellMethod(body.sell_method);
   if ("latest_purchase_cost" in body) input.latestPurchaseCost = parseOptionalMoney(body.latest_purchase_cost);
@@ -497,6 +617,11 @@ function parseUnitPrice(body: unknown): number {
 function parseOptionalMoney(value: unknown): number | null {
   if (value === null) return null;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) throw validationError();
+  return value;
+}
+
+function parsePositiveNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) throw validationError();
   return value;
 }
 
@@ -697,6 +822,34 @@ function parseSellMethod(value: unknown): SellMethod {
   return value as SellMethod;
 }
 
+function parseProductKind(value: unknown): ProductKind {
+  if (typeof value !== "string" || !productKinds.has(value as ProductKind)) throw validationError();
+  return value as ProductKind;
+}
+
+function parseOptionalProductKind(value: unknown): ProductKind | undefined {
+  if (value === undefined) return undefined;
+  return parseProductKind(value);
+}
+
+function inferProductKind(
+  sellMethod: SellMethod,
+  inventoryShape: "normal" | "roll" | "sheet" | undefined,
+  trackInventory: boolean | undefined,
+): ProductKind {
+  if (sellMethod === "combo") return "combo";
+  if (inventoryShape === "roll") return "roll";
+  if (inventoryShape === "sheet") return "sheet";
+  if (sellMethod === "quantity" && trackInventory === false) return "service";
+  return "goods";
+}
+
+function parseOptionalInventoryShape(value: unknown): "normal" | "roll" | "sheet" | undefined {
+  if (value === undefined) return undefined;
+  if (value !== "normal" && value !== "roll" && value !== "sheet") throw validationError();
+  return value;
+}
+
 function parseBoolean(value: unknown): boolean {
   if (typeof value !== "boolean") throw validationError();
   return value;
@@ -740,6 +893,7 @@ function parseProductBomBody(body: unknown): {
     notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
     items: body.items.map((item) => {
       if (!isRecord(item)) throw validationError();
+      if ("component_role" in item || "role" in item || "is_main" in item || "is_auxiliary" in item) throw validationError();
       const componentProductId = parseRequiredId(item.component_product_id);
       const quantity = typeof item.quantity === "number" ? item.quantity : Number(item.quantity);
       if (!Number.isFinite(quantity) || quantity <= 0) throw validationError();

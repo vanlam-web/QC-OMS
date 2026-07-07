@@ -1,6 +1,6 @@
 begin;
 
-select plan(38);
+select plan(42);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values (
@@ -94,6 +94,112 @@ select is(
   (select count(*)::integer from public.payment_receipts where order_id = ((select result->>'order_id' from checkout_results where name = 'cash_full_paid')::uuid)),
   1,
   'cash checkout creates one payment receipt'
+);
+
+insert into public.products (
+  id,
+  organization_id,
+  code,
+  name,
+  status,
+  unit_name,
+  sell_method,
+  latest_purchase_cost
+)
+values (
+  '20000000-0000-4000-8000-000000000306',
+  '00000000-0000-4000-8000-000000000001',
+  'COMBO-TEST',
+  'Combo test vật tư cấu thành',
+  'active',
+  'bộ',
+  'combo',
+  0
+);
+
+select public.save_product_bom_v1_tx(
+  '20000000-0000-4000-8000-000000000701',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000306',
+  jsonb_build_array(
+    jsonb_build_object(
+      'component_product_id', '00000000-0000-4000-8000-000000000303',
+      'quantity', 2,
+      'notes', 'Vật tư cấu thành test'
+    )
+  ),
+  'BOM combo test'
+);
+
+insert into checkout_results (name, result)
+values (
+  'combo_snapshot',
+  public.checkout_order_tx(
+    '20000000-0000-4000-8000-000000000701',
+    '00000000-0000-4000-8000-000000000001',
+    jsonb_build_object(
+      'customer_id', '00000000-0000-4000-8000-000000000501',
+      'items', jsonb_build_array(
+        jsonb_build_object(
+          'product_id', '20000000-0000-4000-8000-000000000306',
+          'quantity', 2,
+          'unit_price', 120000,
+          'price_source', 'manual'
+        )
+      ),
+      'payment', jsonb_build_object(
+        'cash_amount', 240000,
+        'bank_amount', 0,
+        'old_debt_payment_amount', 0
+      )
+    )
+  )
+);
+
+select is(
+  (
+    select product_snapshot->>'sell_method'
+    from public.order_items
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'combo_snapshot')::uuid)
+  ),
+  'combo',
+  'combo checkout stores product snapshot sell method'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.order_item_bom_snapshots
+    where order_item_id in (
+      select id from public.order_items
+      where order_id = ((select result->>'order_id' from checkout_results where name = 'combo_snapshot')::uuid)
+    )
+  ),
+  1,
+  'combo checkout stores BOM snapshot'
+);
+
+select is(
+  (
+    select sum(quantity_delta)
+    from public.stock_movements
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'combo_snapshot')::uuid)
+      and product_id = '00000000-0000-4000-8000-000000000303'
+      and movement_type = 'sale_deduction'
+  ),
+  -4::numeric,
+  'combo checkout deducts component stock'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.stock_movements
+    where order_id = ((select result->>'order_id' from checkout_results where name = 'combo_snapshot')::uuid)
+      and product_id = '20000000-0000-4000-8000-000000000306'
+  ),
+  0,
+  'combo checkout does not deduct combo product stock'
 );
 
 select is(
@@ -651,8 +757,8 @@ select throws_ok(
 
 select is(
   (select count(*)::integer from public.orders where order_type = 'invoice' and status = 'completed'),
-  10,
-  'successful checkout attempts leave ten completed invoices'
+  11,
+  'successful checkout attempts leave eleven completed invoices'
 );
 
 select * from finish();

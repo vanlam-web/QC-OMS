@@ -200,6 +200,7 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 | `code` | `text` | ❌ | Mã hàng hóa/dịch vụ |
 | `name` | `text` | ❌ | Tên hàng hóa/dịch vụ |
 | `status` | `text` | ❌ | `active` hoặc `inactive` |
+| `product_group_id` | `uuid` | ✅ | FK → `public.product_groups.id`; nếu trống khi tạo thì backend gán nhóm mặc định |
 | `unit_name` | `text` | ❌ | Tên đơn vị hiển thị, ví dụ `m²`, `m`, `cái`, `bộ` |
 | `sell_method` | `text` | ❌ | Cách tính bán: `quantity`, `area_m2`, `linear_m`, `sheet`, `combo` |
 | `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
@@ -219,6 +220,7 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 - `idx_products_org_status` trên `(organization_id, status)`
 - `idx_products_org_code` trên `(organization_id, code)`
 - `idx_products_org_name` trên `(organization_id, name)`
+- `idx_products_org_group` trên `(organization_id, product_group_id)`
 - Cần index hoặc cột phụ phục vụ tìm kiếm không dấu khi triển khai.
 
 ### Ghi chú đơn vị
@@ -226,6 +228,38 @@ Lưu danh sách sản phẩm/dịch vụ phục vụ POS và trang Hàng hóa.
 - `sell_method = 'linear_m'` dùng cho sản phẩm bán theo mét tới; `unit_price` trong `price_list_items` là giá cho `1 m tới`.
 - `Cuộn` không phải đơn vị bán trực tiếp trên POS Phase 1.
 - Quản lý tồn theo cuộn/tấm/lot thuộc Inventory, không nằm trong bảng này.
+
+---
+
+## 6.1. Bảng `public.product_groups` — Nhóm hàng
+
+### Mục đích
+
+Lưu nhóm hàng phục vụ import KiotViet, lọc danh mục hàng hóa và fallback nhóm mặc định.
+
+### Các cột
+
+| Tên cột | Kiểu dữ liệu | Nullable | Mô tả |
+|---|---|---|---|
+| `id` | `uuid` | ❌ | Khóa chính |
+| `organization_id` | `uuid` | ❌ | FK → `public.organizations.id` |
+| `code` | `text` | ❌ | Mã nhóm hàng |
+| `name` | `text` | ❌ | Tên nhóm hàng |
+| `is_default` | `boolean` | ❌ | Nhóm mặc định, tên nghiệp vụ `Giá chung` |
+| `is_active` | `boolean` | ❌ | Còn dùng hay ngừng dùng |
+| `created_at` | `timestamptz` | ❌ | Thời điểm tạo |
+| `updated_at` | `timestamptz` | ❌ | Thời điểm cập nhật gần nhất |
+
+### Ràng buộc
+
+- `UNIQUE (organization_id, code)`
+- Mỗi organization chỉ có một nhóm mặc định đang hoạt động.
+- `products.product_group_id` tham chiếu cùng organization.
+
+### Index
+
+- `product_groups_one_active_default_per_org` trên `(organization_id)` với điều kiện `is_default = true and is_active = true`
+- `idx_product_groups_org_active` trên `(organization_id, is_active)`
 
 ---
 

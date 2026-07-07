@@ -15,6 +15,7 @@
     "test:functions": "node scripts/deno-function-tests.mjs",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list",
+    "import:kiotviet-products": "node scripts/import-kiotviet-products.mjs",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",

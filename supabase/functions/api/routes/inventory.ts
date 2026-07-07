@@ -4,13 +4,21 @@ import type { AuthClient } from "../middleware/auth.ts";
 import { requireAuth } from "../middleware/auth.ts";
 import {
   adjustNormalProductStock,
+  createInventoryRoll,
+  createInventorySheet,
   createMaterialOpening,
+  listInventoryRolls,
+  listInventorySheets,
+  getStocktake,
   getMaterialOpeningOptions,
   getInventoryProduct,
   listInventoryProducts,
   listStockMovements,
   listStocktakes,
   previewPosMaterialShortage,
+  rejectStocktakeMutation,
+  updateInventoryRoll,
+  updateInventorySheet,
 } from "../use-cases/inventory.ts";
 
 export interface InventoryRouteDependencies {
@@ -53,6 +61,49 @@ export async function handleInventory(
 
   if (url.pathname === "/api/v1/inventory/stocktakes" && request.method === "GET") {
     return successResponse(await listStocktakes(dependencies.repository, context, url), traceId);
+  }
+
+  if (url.pathname === "/api/v1/inventory/rolls" && request.method === "GET") {
+    return successResponse(await listInventoryRolls(dependencies.repository, context, url), traceId);
+  }
+  if (url.pathname === "/api/v1/inventory/rolls" && request.method === "POST") {
+    return successResponse(await createInventoryRoll(dependencies.repository, context, await request.json()), traceId, {
+      status: 201,
+    });
+  }
+  const rollMatch = url.pathname.match(/^\/api\/v1\/inventory\/rolls\/([^/]+)$/);
+  if (rollMatch !== null && request.method === "PATCH") {
+    return successResponse(await updateInventoryRoll(dependencies.repository, context, rollMatch[1], await request.json()), traceId);
+  }
+
+  if (url.pathname === "/api/v1/inventory/sheets" && request.method === "GET") {
+    return successResponse(await listInventorySheets(dependencies.repository, context, url), traceId);
+  }
+  if (url.pathname === "/api/v1/inventory/sheets" && request.method === "POST") {
+    return successResponse(await createInventorySheet(dependencies.repository, context, await request.json()), traceId, {
+      status: 201,
+    });
+  }
+  const sheetMatch = url.pathname.match(/^\/api\/v1\/inventory\/sheets\/([^/]+)$/);
+  if (sheetMatch !== null && request.method === "PATCH") {
+    return successResponse(await updateInventorySheet(dependencies.repository, context, sheetMatch[1], await request.json()), traceId);
+  }
+
+  if (url.pathname === "/api/v1/inventory/stocktakes" && request.method === "POST") {
+    return successResponse(rejectStocktakeMutation(context), traceId, { status: 201 });
+  }
+
+  const stocktakeMatch = url.pathname.match(/^\/api\/v1\/inventory\/stocktakes\/([^/]+)$/);
+  if (stocktakeMatch !== null && request.method === "GET") {
+    return successResponse(await getStocktake(dependencies.repository, context, stocktakeMatch[1]), traceId);
+  }
+  if (stocktakeMatch !== null && request.method === "PUT") {
+    return successResponse(rejectStocktakeMutation(context), traceId);
+  }
+
+  const stocktakeActionMatch = url.pathname.match(/^\/api\/v1\/inventory\/stocktakes\/([^/]+)\/(balance|cancel)$/);
+  if (stocktakeActionMatch !== null && request.method === "POST") {
+    return successResponse(rejectStocktakeMutation(context), traceId);
   }
 
   if (url.pathname === "/api/v1/inventory/material-openings/options" && request.method === "GET") {

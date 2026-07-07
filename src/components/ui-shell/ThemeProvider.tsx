@@ -35,7 +35,7 @@ export function ThemeToggle() {
   return (
     <button
       aria-label={`Đổi sang giao diện ${nextTheme}`}
-      className="theme-toggle"
+      className="theme-toggle management-icon-button"
       title={`Đổi sang giao diện ${nextTheme}`}
       type="button"
       onClick={toggleTheme}

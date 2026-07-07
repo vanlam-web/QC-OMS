@@ -306,7 +306,7 @@ function ManagementDetailActionButton({ action }: { action: ManagementDetailActi
   return (
     <button
       aria-label={action.ariaLabel}
-      className={`button button-${action.variant ?? 'secondary'}${action.danger ? ' management-detail-action-danger' : ''}`}
+      className={`button button-${action.danger ? 'danger' : action.variant ?? 'secondary'}`}
       disabled={action.disabled}
       type="button"
       onClick={action.onClick}

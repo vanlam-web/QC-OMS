@@ -14,6 +14,7 @@ import {
   ManagementTableViewport,
 } from '../../components/ui-shell/management-layout'
 import { EmptyState, MetricCard, MetricGrid, MoneyText, StatusChip } from '../../components/ui-shell/primitives'
+import { paymentSettlementStatusLabel, paymentSettlementStatusTone, type PaymentSettlementStatus } from '../../components/ui-shell/payment-status'
 import { formatApiError } from '../../lib/api/error-message'
 import type { SalesDocumentDetail, SalesDocumentListItem } from './types'
 import type { SalesDocumentService } from './sales-document-service'
@@ -785,6 +786,8 @@ function SalesDocumentDetailView({
   const infoPanelId = `sales-document-${document?.id ?? 'loading'}-info-panel`
   const paymentTabId = `sales-document-${document?.id ?? 'loading'}-payment-tab`
   const paymentPanelId = `sales-document-${document?.id ?? 'loading'}-payment-panel`
+  const hasPaymentHistory = Array.isArray(document?.payment_receipts) && document.payment_receipts.length > 0
+  const selectedTab = hasPaymentHistory ? activeTab : 'info'
 
   if (error) return <p role="alert">{error}</p>
   if (loading || !document) return <p>Đang tải chi tiết...</p>
@@ -797,7 +800,7 @@ function SalesDocumentDetailView({
         <div aria-label="Chi tiết chứng từ" className="inline-detail-tabs" role="tablist">
           <button
             aria-controls={infoPanelId}
-            aria-selected={activeTab === 'info'}
+            aria-selected={selectedTab === 'info'}
             id={infoTabId}
             role="tab"
             type="button"
@@ -808,27 +811,29 @@ function SalesDocumentDetailView({
           >
             Thông tin
           </button>
-          <button
-            aria-controls={paymentPanelId}
-            aria-selected={activeTab === 'payment-history'}
-            id={paymentTabId}
-            role="tab"
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              setActiveTab('payment-history')
-            }}
-          >
-            Lịch sử thanh toán
-          </button>
+          {hasPaymentHistory ? (
+            <button
+              aria-controls={paymentPanelId}
+              aria-selected={selectedTab === 'payment-history'}
+              id={paymentTabId}
+              role="tab"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                setActiveTab('payment-history')
+              }}
+            >
+              Lịch sử thanh toán
+            </button>
+          ) : null}
         </div>
       </div>
-      {activeTab === 'info' ? (
+      {selectedTab === 'info' ? (
         <section aria-label="Thông tin chứng từ" aria-labelledby={infoTabId} id={infoPanelId} role="tabpanel">
           <header className="management-detail-header">
             <h2>{document.customer.name}</h2>
             <span>{document.code}</span>
-            <StatusChip tone={document.status === 'cancelled' ? 'danger' : document.status === 'completed' ? 'success' : 'info'}>
+            <StatusChip tone={salesDocumentStatusTone(document)}>
               {salesDocumentStatusLabel(document)}
             </StatusChip>
             {document.order_type === 'quote' && document.code.startsWith('BG') && onOpenQuotePrint ? (
@@ -949,13 +954,13 @@ function SalesDocumentDetailView({
       )}
       <ManagementDetailActionFooter
         leftActions={[
-          { label: 'Hủy', danger: true, disabled: true, icon: <Trash2 aria-hidden="true" size={15} /> },
-          { label: 'Sao chép', disabled: true, icon: <Copy aria-hidden="true" size={15} /> },
+          { label: 'Hủy', danger: true, icon: <Trash2 aria-hidden="true" size={15} /> },
+          { label: 'Sao chép', icon: <Copy aria-hidden="true" size={15} /> },
         ]}
         rightActions={[
-          { label: 'Chỉnh sửa', disabled: true, icon: <Pencil aria-hidden="true" size={15} /> },
-          { label: 'Lưu', variant: 'primary', disabled: true, icon: <Save aria-hidden="true" size={15} /> },
-          { label: 'In', disabled: true, icon: <Printer aria-hidden="true" size={15} /> },
+          { label: 'Sửa', icon: <Pencil aria-hidden="true" size={15} /> },
+          { label: 'Lưu', icon: <Save aria-hidden="true" size={15} /> },
+          { label: 'In', icon: <Printer aria-hidden="true" size={15} /> },
         ]}
       />
     </div>
@@ -970,7 +975,19 @@ function lineSellPrice(item: SalesDocumentDetail['items'][number]) {
 function salesDocumentStatusLabel(document: SalesDocumentDetail) {
   if (document.status === 'cancelled') return 'Đã hủy'
   if (document.order_type === 'quote') return document.status === 'converted' ? 'Đã chuyển' : 'Đang hiệu lực'
-  return 'Hoàn tất'
+  return paymentSettlementStatusLabel(salesDocumentPaymentSettlementStatus(document))
+}
+
+function salesDocumentStatusTone(document: SalesDocumentDetail) {
+  if (document.status === 'cancelled') return 'danger'
+  if (document.order_type === 'quote') return document.status === 'completed' ? 'success' : 'info'
+  return paymentSettlementStatusTone(salesDocumentPaymentSettlementStatus(document))
+}
+
+function salesDocumentPaymentSettlementStatus(document: SalesDocumentDetail): PaymentSettlementStatus {
+  if (document.payment_status === 'paid') return 'paid'
+  if (document.payment_status === 'partial') return 'partial'
+  return 'unpaid'
 }
 
 function documentTypeFilterLabel(value: 'invoice' | 'quote') {
@@ -1007,7 +1024,7 @@ function paymentReceiptMethodTotal(receipt: SalesDocumentDetail['payment_receipt
 }
 
 function paymentReceiptStatusLabel(status: SalesDocumentDetail['payment_receipts'][number]['status']) {
-  return status === 'posted' ? 'Đã ghi nhận' : 'Đã hủy'
+  return status === 'posted' ? 'Đã thanh toán' : 'Đã hủy'
 }
 
 function paymentReceiptCreatorLabel(

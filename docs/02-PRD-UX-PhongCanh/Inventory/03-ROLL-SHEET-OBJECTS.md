@@ -14,6 +14,8 @@ Màn này giúp quản lý tồn kho theo đối tượng vật lý:
 
 Đây là điểm khác lớn giữa QC-OMS và KiotViet, vì QC-OMS không quản lý cuộn bằng tổng m2 gộp.
 
+Cuộn/tấm object-level là phase bắt buộc trước khi POS bán thật các mặt hàng cuộn/tấm. Nếu chưa có object-level, hệ thống chỉ biết tồn tổng/tồn tạm nên không biết cuộn nào hoặc tấm nào còn bao nhiêu sau khi cắt, khui hoặc kiểm kho.
+
 ---
 
 ## 2. Cách mở màn
@@ -33,6 +35,14 @@ Tồn cuộn/tấm đã chuẩn hóa: chưa đủ dữ liệu
 ```
 
 Mục tiêu là cho phép dùng hệ thống trước, rồi chuẩn hóa kho dần khi có thời gian kiểm lại từng cuộn/tấm.
+
+### Trạng thái triển khai hiện tại
+
+- Module Kho có view `Tồn theo cuộn/tấm` hiển thị danh sách cuộn và tấm từ API thật.
+- Chi tiết Hàng hóa tab `Tồn kho` của hàng `roll`/`sheet` hiển thị bảng object-level theo sản phẩm đang mở.
+- API đã có `GET/POST/PATCH /inventory/rolls` và `GET/POST/PATCH /inventory/sheets`.
+- Sửa chiều dài cuộn hoặc kích thước tấm bắt buộc gửi `reason`; nếu diện tích thay đổi, backend ghi `stock_movements.manual_adjustment` theo object.
+- UI chỉnh sửa từng object và tồn KiotViet tạm sẽ làm tiếp; hiện tại view trước để Owner kiểm tra dữ liệu object-level.
 
 ---
 
@@ -78,6 +88,8 @@ Khi sửa chiều dài/diện tích còn lại, UI bắt buộc nhập lý do.
 
 Khi thao tác `Khui vật tư` tạo hoặc cập nhật cuộn, màn này phải hiển thị được nguồn thay đổi trong lịch sử cuộn. Nếu cuộn cũ còn lại được nhập lớn hơn `0`, cuộn đó vẫn còn dùng. Nếu nhập `0`, cuộn đó chuyển hết/bỏ theo rule nghiệp vụ và không tạo object rác.
 
+Khui cuộn không tạo phiếu kiểm kho. Khui là thao tác vận hành riêng và ghi vào `inventory_material_openings` + `stock_movements.movement_type = material_opening`. Phiếu kiểm kho chỉ dùng khi người dùng chủ động kiểm/cân bằng tồn hoặc khi sửa tồn hàng thường từ trang Hàng hóa.
+
 ### Chuẩn hóa cuộn từ tồn KiotViet tạm
 
 Với hàng cuộn đã import tồn tổng từ KiotViet, người dùng có thể:
@@ -119,6 +131,8 @@ UI không bắt người dùng phải tạo đủ tất cả cuộn ngay trong n
 Tấm lỡ dưới `0.3m2` mặc định không tự tạo, nhưng người dùng có thể tạo thủ công nếu muốn giữ lại.
 
 Khi `Khui vật tư` ghi nhận phần tấm cũ còn lại, màn này hiển thị phần còn lại theo `full`, `in_use` hoặc `remnant`. Phần m tới dưới `0.2m` hoặc rẻo nhỏ chỉ được đề xuất bỏ; nếu nhân viên giữ lại, vẫn phải tạo object để dùng tiếp.
+
+Khui tấm không tạo phiếu kiểm kho. Nếu phần tấm cũ về `0`, hệ thống cập nhật object cũ sang hết/bỏ và ghi movement/log khui. Nếu còn dùng được, hệ thống tạo/cập nhật tấm dở/tấm lỡ để POS có thể trừ tiếp sau này.
 
 ---
 

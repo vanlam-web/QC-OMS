@@ -11,6 +11,7 @@ export const phaseOneModules = [
     permissions: [permissions.createOrder],
   },
   { id: 'customers', label: 'Khách hàng', path: appRoutes.customers, permissions: [permissions.createOrder] },
+  { id: 'goods', label: 'Hàng hóa', path: appRoutes.products, permissions: [permissions.manageInventory] },
   { id: 'suppliers', label: 'Nhà cung cấp', path: appRoutes.suppliers, permissions: [permissions.manageInventory] },
   {
     id: 'purchase-receipts',
@@ -19,7 +20,6 @@ export const phaseOneModules = [
     permissions: [permissions.manageInventory],
   },
   { id: 'price-book', label: 'Bảng giá', path: appRoutes.priceBook, permissions: [permissions.editPriceBook] },
-  { id: 'inventory', label: 'Kho', path: appRoutes.inventory, permissions: [permissions.manageInventory] },
   { id: 'finance', label: 'Sổ quỹ', path: appRoutes.finance, permissions: [permissions.manageFinance] },
   {
     id: 'reports',

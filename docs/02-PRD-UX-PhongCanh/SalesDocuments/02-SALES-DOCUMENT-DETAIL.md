@@ -9,7 +9,7 @@
 Quan sát hóa đơn `HD010985` ngày `30/06/2026`:
 
 - Chi tiết nằm ngay dưới dòng hóa đơn trong danh sách.
-- Tab `Thông tin` của KiotViet có khách hàng, mã hóa đơn, trạng thái, người tạo, người bán, ngày bán, kênh bán, bảng giá và chi nhánh.
+- Tab `Thông tin` của KiotViet có khách hàng, mã hóa đơn, trạng thái, người tạo, người bán, ngày bán, kênh bán, bảng giá và chi nhánh. Với hóa đơn QC-OMS, chip trạng thái chính hiển thị trạng thái thanh toán, không hiển thị lifecycle nội bộ.
 - Dòng hàng có mã hàng, tên hàng, số lượng, đơn giá, giá bán và thành tiền.
 - Một số dòng in/kích thước thể hiện ngay trong dòng hàng, ví dụ `2.5m x 3.3m x 1`, số lượng tính thành `8.25`.
 - Tổng cuối chứng từ gồm tổng tiền hàng, giảm giá hóa đơn, khách cần trả, khách đã trả.
@@ -129,7 +129,9 @@ Quy tắc:
 - Không sửa trực tiếp thanh toán trong chi tiết hóa đơn.
 - Thu thêm nợ thực hiện ở module Công nợ/Sổ quỹ theo quy tắc phân bổ hóa đơn cũ nhất trước.
 - Nếu hóa đơn bị sửa/hủy, tác động đảo tiền/công nợ phải được ghi thành lịch sử, không xóa dòng cũ.
-- Tab `Lịch sử thanh toán` đọc từ `payment_receipts` trong detail response. Nếu chưa có phiếu thu hoặc dữ liệu liên kết chưa đủ, UI giữ tab và hiển thị trạng thái trống/chưa có dữ liệu.
+- Tab `Lịch sử thanh toán` đọc từ `payment_receipts` trong detail response. Nếu chưa có phiếu thu, không hiển thị tab lịch sử.
+- Khi có phiếu thu, cột trạng thái trong lịch sử thanh toán map từ trạng thái phiếu thu: `posted` hiển thị `Đã thanh toán`, `cancelled` hiển thị `Đã hủy`.
+- Trạng thái thanh toán hóa đơn dùng chung 3 màu: `Hoàn tất` khi trả đủ dùng `success` xanh như hiện tại; `Thanh toán 1 phần` dùng `warning`; `Chưa thanh toán` dùng `neutral`. Sổ quỹ khi gắn hóa đơn cũng lấy cùng bộ trạng thái này ở chip đầu detail.
 - Dữ liệu phiếu thu từ hệ thống cũ/API cũ có thể thiếu ngày, người thu hoặc phương thức. UI phải hiển thị fallback thay vì làm sập detail.
 - Nếu phiếu thu thiếu thời gian, dùng thời gian bán của chứng từ bán hàng.
 - `created_by` của phiếu thu được xem là người thu tiền/thu ngân, tức user dùng phần mềm ở thời điểm ghi nhận phiếu. Nếu phiếu thu thiếu `created_by`, dùng người bán/user của chứng từ bán hàng làm người thu.

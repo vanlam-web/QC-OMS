@@ -1,8 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { LoginPage } from '../features/auth/LoginPage'
 import { ForbiddenPage } from './ForbiddenPage'
 import { useAuth } from '../features/auth/auth-context'
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { createBrowserFoundationService } from '../features/users/foundation-service'
 import { createBrowserCatalogService } from '../features/catalog/catalog-service'
 import { createBrowserOrderService } from '../features/orders/order-service'
@@ -18,6 +17,7 @@ import { AppShell } from '../components/ui-shell/AppShell'
 import { appRoutes, quotePrintPath } from './routes'
 import { permissions } from '../features/users/permissions'
 
+const LoginPage = lazy(() => import('../features/auth/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })))
 const PosShell = lazy(() => import('../features/pos/PosShell').then(({ PosShell }) => ({ default: PosShell })))
 const FoundationAdminPage = lazy(() =>
   import('../features/admin/FoundationAdminPage').then(({ FoundationAdminPage }) => ({
@@ -61,6 +61,9 @@ const FinancePage = lazy(() =>
 const ReportsPage = lazy(() =>
   import('../features/reports/ReportsPage').then(({ ReportsPage }) => ({ default: ReportsPage })),
 )
+const AccountPage = lazy(() =>
+  import('../features/account/AccountPage').then((module) => ({ default: module.AccountPage })),
+)
 
 export function AppRoutes() {
   return (
@@ -69,6 +72,7 @@ export function AppRoutes() {
         <Routes>
           <Route path={appRoutes.login} element={<LoginRoute />} />
           <Route path={appRoutes.dashboard} element={<DashboardRoute />} />
+          <Route path={appRoutes.account} element={<AccountRoute />} />
           <Route path={appRoutes.pos} element={<PosRoute />} />
           <Route path={appRoutes.admin} element={<AdminRoute />} />
           <Route path={appRoutes.products} element={<CatalogRoute />} />
@@ -115,6 +119,36 @@ function DashboardRoute() {
         onOpenPurchaseReceipts={() => navigate(appRoutes.purchaseReceipts)}
         onSignOut={() => void signOut()}
         showSignOut={false}
+      />
+    </AppShell>
+  )
+}
+
+function AccountRoute() {
+  const { currentUser, initialized, getAccessToken, refreshMe, signOut } = useAuth()
+  const currentUserId = currentUser?.user.id
+  const service = useMemo(() => createBrowserFoundationService(getAccessToken), [getAccessToken])
+
+  useEffect(() => {
+    if (!initialized || !currentUserId) return
+    void refreshMe().catch(() => undefined)
+  }, [currentUserId, initialized, refreshMe])
+
+  if (!initialized) return <BootstrapScreen />
+  if (!currentUser) return <Navigate to={appRoutes.login} replace />
+
+  return (
+    <AppShell currentUser={currentUser} onSignOut={() => void signOut()}>
+      <AccountPage
+        currentUser={currentUser}
+        onSaveProfile={async (input) => {
+          await service.updateCurrentUserProfile(input)
+          await refreshMe()
+        }}
+        onSignOutDevice={async (deviceId) => {
+          await service.signOutCurrentUserDevice(deviceId)
+          await refreshMe()
+        }}
       />
     </AppShell>
   )
@@ -173,7 +207,7 @@ function CatalogRoute() {
 
   if (!initialized) return <BootstrapScreen />
   if (!currentUser) return <Navigate to={appRoutes.login} replace />
-  if (!currentUser.permissions.includes(permissions.editPriceBook)) {
+  if (!currentUser.permissions.includes(permissions.manageInventory)) {
     return <Navigate to={appRoutes.forbidden} replace />
   }
 

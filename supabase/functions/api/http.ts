@@ -50,8 +50,8 @@ export function corsHeaders({ origin, allowedOrigins }: CorsOptions): HeadersIni
 
   return {
     "access-control-allow-origin": origin,
-    "access-control-allow-headers": "authorization, content-type, x-request-id, x-workstation-id",
-    "access-control-allow-methods": "GET, POST, PATCH, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type, x-request-id, x-workstation-id, x-client-device-id",
+    "access-control-allow-methods": "GET, POST, PUT, PATCH, OPTIONS",
     "access-control-max-age": "86400",
     vary: "origin",
   };

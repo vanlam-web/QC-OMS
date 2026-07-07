@@ -37,7 +37,7 @@ const user: UserListItem = {
   id: "u-1",
   email: "cashier@example.test",
   username: "cashier",
-  phone: "0900000000",
+  phone: "0947900909",
   display_name: "Cashier",
   status: "active",
   permissions: ["perm.create_order"],

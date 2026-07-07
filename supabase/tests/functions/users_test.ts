@@ -35,7 +35,7 @@ const user: UserListItem = {
   id: "u-1",
   email: "cashier@example.test",
   username: "cashier",
-  phone: "0900000000",
+  phone: "0947900909",
   display_name: "Cashier",
   status: "active",
   permissions: ["perm.create_order"],
@@ -56,8 +56,8 @@ function repo(overrides: Partial<FoundationRepository> = {}): FoundationReposito
       Promise.resolve({
         id: "u-new",
         email: input.email,
-        username: input.username ?? null,
-        phone: input.phone ?? null,
+        username: input.username,
+        phone: input.phone,
         display_name: input.displayName,
         status: "active",
         permissions: input.permissions,
@@ -132,42 +132,56 @@ Deno.test("user and permission route matrix works for manage_users", async () =>
 
 Deno.test("create user defaults to internal staff MVP operational permissions when omitted", async () => {
   const createInputs: Array<Parameters<FoundationRepository["createUser"]>[0]> = [];
-  const response = await call(
-    "/api/v1/users",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        email: "operator@example.test",
-        username: "operator-login",
-        phone: " 0947 900 909 ",
-        password: "password123",
-        display_name: "Operator",
-      }),
-    },
-    repo({
-      createUser: (input: Parameters<FoundationRepository["createUser"]>[0]) => {
-        createInputs.push(input);
-        return Promise.resolve({
-          id: "u-new",
-          email: input.email,
-          username: input.username ?? null,
-          phone: input.phone ?? null,
-          display_name: input.displayName,
-          status: "active",
-          permissions: input.permissions,
-        });
-      },
+  const response = await call("/api/v1/users", {
+    method: "POST",
+    body: JSON.stringify({
+      email: "operator@example.test",
+      username: "operator-login",
+      phone: " 0947 900 909 ",
+      birthday: "2026-07-07",
+      region: " TP Hồ Chí Minh ",
+      ward: "Phường Bến Thành",
+      address: "12 Nguyen Trai",
+      note: "Ca tối",
+      password: "password123",
+      display_name: "Operator",
     }),
-  );
+  }, repo({
+    createUser: (input: Parameters<FoundationRepository["createUser"]>[0]) => {
+      createInputs.push(input);
+      return Promise.resolve({
+        id: "u-new",
+        email: input.email,
+        username: input.username ?? null,
+        phone: input.phone ?? null,
+        birthday: input.birthday ?? null,
+        region: input.region ?? null,
+        ward: input.ward ?? null,
+        address: input.address ?? null,
+        note: input.note ?? null,
+        display_name: input.displayName,
+        status: "active",
+        permissions: input.permissions,
+      });
+    },
+  }));
   const responseBody = await response.json();
   const created = responseBody.data as UserListItem;
 
   assertEquals(response.status, 201);
   const createInput = createInputs[0];
-  assertEquals(createInput?.username, "operator-login");
-  assertEquals(createInput?.phone, "0947 900 909");
+  assertEquals(createInput?.birthday, "2026-07-07");
+  assertEquals(createInput?.region, "TP Hồ Chí Minh");
+  assertEquals(createInput?.ward, "Phường Bến Thành");
+  assertEquals(createInput?.address, "12 Nguyen Trai");
+  assertEquals(createInput?.note, "Ca tối");
   assertEquals(created.username, "operator-login");
   assertEquals(created.phone, "0947 900 909");
+  assertEquals(created.birthday, "2026-07-07");
+  assertEquals(created.region, "TP Hồ Chí Minh");
+  assertEquals(created.ward, "Phường Bến Thành");
+  assertEquals(created.address, "12 Nguyen Trai");
+  assertEquals(created.note, "Ca tối");
   assertEquals(created.permissions, [
     "perm.create_order",
     "perm.apply_discount",

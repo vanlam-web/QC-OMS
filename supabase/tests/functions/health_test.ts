@@ -61,6 +61,25 @@ Deno.test("server errors log trace id, method, path and safe code", async () => 
   }
 });
 
+Deno.test("OPTIONS preflight allows client device header", async () => {
+  const response = await createApp({
+    version: "test-sha",
+    allowedOrigins: ["http://127.0.0.1:3000"],
+  })(
+    new Request("http://local/api/v1/me", {
+      method: "OPTIONS",
+      headers: {
+        origin: "http://127.0.0.1:3000",
+        "access-control-request-method": "GET",
+        "access-control-request-headers": "authorization,content-type,x-request-id,x-client-device-id",
+      },
+    }),
+  );
+
+  assertEquals(response.status, 204);
+  assertMatch(response.headers.get("access-control-allow-headers") ?? "", /x-client-device-id/);
+});
+
 Deno.test("unsafe request id headers are replaced before response and logs", async () => {
   const logs: unknown[][] = [];
   const originalError = console.error;

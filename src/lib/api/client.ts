@@ -22,6 +22,7 @@ export interface ApiClientOptions {
 const inFlightGetRequests = new WeakMap<typeof fetch, Map<string, Promise<unknown>>>()
 const completedGetRequests = new WeakMap<typeof fetch, Map<string, { expiresAt: number; value: unknown }>>()
 const completedGetCacheTtlMs = 1000
+const clientDeviceIdStorageKey = 'qc-oms.client-device-id.v1'
 
 export function createApiClient(options: ApiClientOptions) {
   const fetcher = options.fetch ?? fetch
@@ -74,6 +75,7 @@ async function executeRequest<T>(
   const headers = new Headers(init.headers)
   headers.set('x-request-id', traceId)
   headers.set('content-type', headers.get('content-type') ?? 'application/json')
+  headers.set('x-client-device-id', getClientDeviceId())
 
   if (accessToken) {
     headers.set('authorization', `Bearer ${accessToken}`)
@@ -112,6 +114,21 @@ async function executeRequest<T>(
   }
 
   return body.data
+}
+
+function getClientDeviceId() {
+  if (typeof window === 'undefined') return crypto.randomUUID()
+
+  try {
+    const existing = window.localStorage.getItem(clientDeviceIdStorageKey)
+    if (existing !== null && existing.trim().length > 0) return existing
+
+    const next = crypto.randomUUID()
+    window.localStorage.setItem(clientDeviceIdStorageKey, next)
+    return next
+  } catch {
+    return crypto.randomUUID()
+  }
 }
 
 function getInFlightByFetcher(fetcher: typeof fetch) {

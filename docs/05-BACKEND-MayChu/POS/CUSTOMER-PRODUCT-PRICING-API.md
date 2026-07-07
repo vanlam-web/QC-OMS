@@ -249,6 +249,8 @@ Tìm sản phẩm/dịch vụ đang bán trên POS.
 |---|---|---|---|
 | `search` | `string` | Không | Tìm theo mã hoặc tên sản phẩm |
 | `status` | `string` | Không | POS mặc định chỉ dùng `active`; chỉ endpoint quản lý được dùng `inactive` hoặc `all` |
+| `product_group_id` | `uuid` | Không | Lọc theo nhóm hàng trong module Hàng hóa |
+| `product_kind` | `string` | Không | Lọc loại hàng: `goods`, `service`, `auxiliary_material`, `roll`, `sheet`, `combo` |
 | `page` | `number` | Không | Mặc định `1` |
 | `page_size` | `number` | Không | Mặc định `20`, tối đa `100` |
 
@@ -270,8 +272,19 @@ Tìm sản phẩm/dịch vụ đang bán trên POS.
       "code": "MICA-3MM",
       "name": "Mica 3mm",
       "status": "active",
+      "product_group_id": "uuid",
+      "product_group": { "id": "uuid", "code": "GENERAL", "name": "Giá chung" },
       "unit_name": "m",
-      "sell_method": "linear_m"
+      "sell_method": "linear_m",
+      "unit_conversions": [
+        {
+          "unit_id": "uuid",
+          "unit_name": "m tới",
+          "stock_qty_per_unit": 0.5,
+          "is_default_purchase_unit": true,
+          "is_default_sale_unit": true
+        }
+      ]
     }
   ],
   "page": 1,
@@ -294,7 +307,19 @@ Tạo sản phẩm/dịch vụ.
   "name": "Mica 3mm",
   "status": "active",
   "unit_name": "m",
-  "sell_method": "linear_m"
+  "sell_method": "linear_m",
+  "inventory_shape": "sheet",
+  "track_inventory": true,
+  "product_group_id": "uuid",
+  "latest_purchase_cost": 125000,
+  "unit_conversions": [
+    {
+      "unit_name": "m tới",
+      "stock_qty_per_unit": 0.5,
+      "is_default_purchase_unit": true,
+      "is_default_sale_unit": true
+    }
+  ]
 }
 ```
 
@@ -304,6 +329,76 @@ Tạo sản phẩm/dịch vụ.
 - `code` không trùng trong organization.
 - `status` thuộc `active | inactive`.
 - `sell_method` thuộc `quantity | area_m2 | linear_m | sheet | combo`.
+- `inventory_shape` thuộc `normal | roll | sheet`; nếu bỏ trống mặc định là `normal`.
+- `product_kind` thuộc `goods | service | auxiliary_material | roll | sheet | combo`; nếu bỏ trống Backend tự suy ra từ `sell_method`, `inventory_shape` và `track_inventory`.
+- `track_inventory` là boolean; nếu bỏ trống Backend tự suy ra theo loại tồn/cách tính bán.
+- `latest_purchase_cost` là số lớn hơn hoặc bằng `0`; nếu bỏ trống thì chưa ghi giá vốn gần nhất.
+- `product_group_id` nếu bỏ trống thì Backend gán nhóm mặc định `Giá chung`.
+- `unit_conversions` là danh sách đơn vị phụ kiểu KiotViet; mỗi dòng có `unit_name`, `stock_qty_per_unit > 0`, và cờ mặc định mua/bán. Ví dụ `Ram = 100 tờ`, `m tới = 0.5 m`, `Tấc = 0.042 đơn vị cơ bản`.
+
+### `GET /product-groups`
+
+Danh sách nhóm hàng.
+
+**Permission:** `perm.create_order`, `perm.edit_price_book` hoặc `perm.manage_inventory`
+
+**Query:**
+
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `active_only` | `boolean` | Không | Mặc định chỉ trả nhóm đang hoạt động |
+
+**Response data:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "code": "GENERAL",
+      "name": "Giá chung",
+      "is_default": true,
+      "is_active": true
+    }
+  ]
+}
+```
+
+### `POST /product-groups`
+
+Tạo nhóm hàng.
+
+**Permission:** `perm.edit_price_book`
+
+**Input:**
+
+```json
+{
+  "name": "Vật tư",
+  "code": "VAT-TU"
+}
+```
+
+`code` không bắt buộc; nếu bỏ trống Backend tự sinh code từ tên nhóm. Mỗi organization có một nhóm mặc định `Giá chung`.
+
+`GET /products` hỗ trợ query `product_kind = goods | service | auxiliary_material | roll | sheet | combo`. Backend lọc theo `products.product_kind` để `Vật tư phụ` được lưu thật, không lẫn với hàng thường:
+
+- `service`: `inventory_shape = normal`, `sell_method = quantity`, `track_inventory = false`.
+- `auxiliary_material`: vật tư phụ; vẫn có tồn như hàng thường nhưng được nhận diện riêng cho BOM/khui vật tư.
+- `goods`: `inventory_shape = normal`, `track_inventory = true`, không phải combo.
+- `roll`: `inventory_shape = roll`.
+- `sheet`: `inventory_shape = sheet`.
+- `combo`: `sell_method = combo`.
+
+**Ghi chú UI Hàng hóa:**
+
+- Form `+ Tạo hàng hóa` dùng một modal chung, chọn loại hàng ở đầu form: hàng thường, dịch vụ, vật tư phụ, hàng cuộn, hàng tấm, combo - đóng gói.
+- Dịch vụ là phân loại riêng trong UI/filter, nhưng Backend nhận diện bằng cấu hình tồn hiện có: `inventory_shape = normal`, `sell_method = quantity`, `track_inventory = false`; UI ẩn phần tồn kho khi tạo.
+- Hàng cuộn lưu `inventory_shape = roll`, hàng tấm lưu `inventory_shape = sheet`.
+- Combo lưu `sell_method = combo`, `track_inventory = false`; UI ẩn phần tồn kho và hiện khu vực vật tư cấu thành. Khi tạo combo, frontend gọi `POST /products` trước rồi gọi `POST /products/{product_id}/bom` để lưu BOM cho sản phẩm vừa tạo. Khi bán combo, tồn trừ vào vật tư cấu thành theo BOM active, không trừ theo chính mã combo. Mỗi dòng BOM không gửi `component_type`; vật tư phụ được nhận diện từ loại hàng của vật tư sau khi có metadata lưu loại hàng riêng.
+- Thành phần combo vẫn có thể sửa sau ở chi tiết hàng hóa; mỗi lần lưu tạo BOM/version hiện hành theo contract BOM.
+- `Lưu & tạo thêm` dùng cùng endpoint `POST /products`, tạo xong reset form ở frontend và giữ modal mở.
+- Modal tạo hàng không có vùng ảnh hàng hóa, không có tab mô tả disabled và không có checkbox `Bán trực tiếp`; sản phẩm/dịch vụ đang hoạt động mặc định được bán trực tiếp. Module này không dùng nút `In tem mã`.
 
 ### `PATCH /products/{id}`
 

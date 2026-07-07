@@ -15,13 +15,13 @@ describe('catalog-service', () => {
       search: 'mica',
       status: 'active',
       sell_method: 'combo',
-      inventory_shape: 'roll',
+      product_kind: 'combo',
       page: 2,
       page_size: 15,
     })
 
     expect(calls).toEqual([
-      ['/api/v1/products?search=mica&status=active&sell_method=combo&inventory_shape=roll&page=2&page_size=15', undefined],
+      ['/api/v1/products?search=mica&status=active&sell_method=combo&product_kind=combo&page=2&page_size=15', undefined],
     ])
   })
 
@@ -54,6 +54,62 @@ describe('catalog-service', () => {
         undefined,
       ],
       ['/api/v1/customer-groups', undefined],
+    ])
+  })
+
+  it('sends product kind when creating products', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return null as T
+    }
+    const service = createCatalogService({ request })
+
+    await service.createProduct({
+      code: 'KEO',
+      name: 'Keo phụ',
+      status: 'active',
+      product_kind: 'auxiliary_material',
+      unit_name: 'chai',
+      sell_method: 'quantity',
+      inventory_shape: 'normal',
+      track_inventory: true,
+      latest_purchase_cost: 10000,
+    })
+
+    expect(calls).toEqual([
+      [
+        '/api/v1/products',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            code: 'KEO',
+            name: 'Keo phụ',
+            status: 'active',
+            product_kind: 'auxiliary_material',
+            unit_name: 'chai',
+            sell_method: 'quantity',
+            inventory_shape: 'normal',
+            track_inventory: true,
+            latest_purchase_cost: 10000,
+          }),
+        },
+      ],
+    ])
+  })
+
+  it('loads stock movements for product detail stock card', async () => {
+    const calls: Array<[string, RequestInit | undefined]> = []
+    const request: CatalogApiRequester['request'] = async <T>(path: string, init?: RequestInit) => {
+      calls.push([path, init])
+      return null as T
+    }
+    const service = createCatalogService({ request })
+
+    await service.listStockMovements({ product_id: 'product-1', page: 2, page_size: 15 })
+
+    expect(calls).toEqual([
+      ['/api/v1/inventory/stock-movements?product_id=product-1&page=2&page_size=15', undefined],
     ])
   })
 

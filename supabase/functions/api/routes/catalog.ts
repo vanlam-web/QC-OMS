@@ -7,12 +7,14 @@ import {
   createCustomerGroup,
   createPriceList,
   createProduct,
+  createProductGroup,
   deletePriceListItem,
   applyPriceFormula,
   getProductBom,
   listCustomerGroups,
   listCustomers,
   listPriceLists,
+  listProductGroups,
   listProducts,
   previewPriceFormula,
   resolvePrices,
@@ -58,6 +60,19 @@ export async function handleCatalog(
     if (request.method === "POST") {
       return successResponse(
         await createProduct(dependencies.repository, context, await request.json()),
+        traceId,
+        { status: 201 },
+      );
+    }
+  }
+
+  if (url.pathname === "/api/v1/product-groups") {
+    if (request.method === "GET") {
+      return successResponse(await listProductGroups(dependencies.repository, context, url), traceId);
+    }
+    if (request.method === "POST") {
+      return successResponse(
+        await createProductGroup(dependencies.repository, context, await request.json()),
         traceId,
         { status: 201 },
       );
@@ -112,7 +127,7 @@ export async function handleCatalog(
     if (request.method === "GET") {
       return successResponse(await getProductBom(dependencies.repository, context, productBomMatch[1]), traceId);
     }
-    if (request.method === "POST") {
+    if (request.method === "POST" || request.method === "PUT") {
       return successResponse(
         await saveProductBom(dependencies.repository, context, productBomMatch[1], await request.json()),
         traceId,

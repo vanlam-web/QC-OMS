@@ -525,14 +525,14 @@ export function CustomersPage({
       }
     >
       {createOpen ? (
-        <div aria-label="Tạo khách hàng" aria-modal="true" className="customer-create-backdrop" role="dialog">
-          <section className="customer-create-modal">
-            <header className="customer-create-modal-header">
+        <div className="management-modal-backdrop">
+          <section aria-label="Tạo khách hàng" aria-modal="true" className="management-modal-dialog" role="dialog">
+            <header className="management-modal-header">
               <div>
                 <h2>Tạo khách hàng</h2>
                 <p>Mã khách hàng sẽ tự sinh nếu để trống.</p>
               </div>
-              <button className="button button-ghost" type="button" aria-label="Đóng tạo khách hàng" onClick={() => setCreateOpen(false)}>
+              <button className="management-icon-button" type="button" aria-label="Đóng tạo khách hàng" onClick={() => setCreateOpen(false)}>
                 ×
               </button>
             </header>
@@ -585,7 +585,7 @@ export function CustomersPage({
               {error ? <p role="alert">{error}</p> : null}
             </form>
 
-            <footer className="customer-create-modal-footer">
+            <footer className="management-modal-footer">
               <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
                 Bỏ qua
               </button>
@@ -659,8 +659,8 @@ export function CustomersPage({
                         label={`Chi tiết khách hàng ${customer.code}`}
                         rowClassName="management-detail-row-selected"
                       >
-                            <div className="customer-detail-tabbar">
-                              <div aria-label="Chi tiết khách hàng" className="customer-detail-tabs" role="tablist">
+                            <div className="inline-detail-tabbar">
+                              <div aria-label="Chi tiết khách hàng" className="inline-detail-tabs" role="tablist">
                                 <button
                                   aria-selected={activeDetailTab === 'info'}
                                   role="tab"
@@ -691,7 +691,7 @@ export function CustomersPage({
                               </div>
                               <button
                                 aria-label="Xem phân tích"
-                                className="customer-analysis-icon-button"
+                                className="management-icon-button"
                                 title="Xem phân tích"
                                 type="button"
                                 onClick={() => setAnalysisCustomer(customer)}
@@ -875,14 +875,14 @@ function CustomerHistoryPanel({
 
 function CustomerAnalysisDialog({ customer, onClose }: { customer: Customer; onClose: () => void }) {
   return (
-    <div aria-label={`Phân tích khách hàng ${customer.code}`} aria-modal="true" className="customer-analysis-backdrop" role="dialog">
-      <section className="customer-analysis-dialog">
-        <header>
+    <div className="management-modal-backdrop">
+      <section aria-label={`Phân tích khách hàng ${customer.code}`} aria-modal="true" className="management-modal-dialog management-modal-dialog-compact customer-analysis-dialog" role="dialog">
+        <header className="management-modal-header">
           <div>
             <h2>Phân tích khách hàng</h2>
             <p>{customer.code} - {customer.name}</p>
           </div>
-          <button aria-label="Đóng phân tích khách hàng" className="button button-ghost" type="button" onClick={onClose}>
+          <button aria-label="Đóng phân tích khách hàng" className="management-icon-button" type="button" onClick={onClose}>
             ×
           </button>
         </header>

@@ -191,7 +191,7 @@ it('uses cached /me data immediately while refreshing the session', async () => 
     request,
   }
   window.sessionStorage.setItem(
-    'qc-oms.auth.current-user.v1',
+    'qc-oms.auth.current-user.v2',
     JSON.stringify({ cached_at: Date.now() - 301_000, data: currentUser }),
   )
 
@@ -222,7 +222,7 @@ it('uses cached /me data immediately while refreshing the session', async () => 
   })
 
   await waitFor(() => {
-    expect(JSON.parse(window.sessionStorage.getItem('qc-oms.auth.current-user.v1') ?? '{}')).toMatchObject({
+    expect(JSON.parse(window.sessionStorage.getItem('qc-oms.auth.current-user.v2') ?? '{}')).toMatchObject({
       data: { user: { display_name: 'Cashier refreshed' } },
     })
   })
@@ -231,7 +231,7 @@ it('uses cached /me data immediately while refreshing the session', async () => 
 it('uses fresh cached /me data without a network refresh during bootstrap', async () => {
   const api = { request: vi.fn().mockResolvedValue(currentUser) }
   window.sessionStorage.setItem(
-    'qc-oms.auth.current-user.v1',
+    'qc-oms.auth.current-user.v2',
     JSON.stringify({ cached_at: Date.now(), data: currentUser }),
   )
 

@@ -514,10 +514,10 @@ export function PriceBookPage({
               </div>
             ))}
             <div className="catalog-formula-actions">
-              <button disabled={previewingFormula} type="submit">
+              <button className="button button-secondary" disabled={previewingFormula} type="submit">
                 Xem trước
               </button>
-              <button disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
+              <button className="button button-primary" disabled={formulaPreview === null || applyingFormula} type="button" onClick={() => void applyFormula()}>
                 Áp dụng công thức
               </button>
             </div>
